@@ -55,7 +55,7 @@ export class ScheduleService {
     return classes.filter(
       (cls) =>
         cls.timeSlotId === timeSlotId &&
-        (grade === undefined || cls.grade === grade)
+        (grade === undefined || cls.grades?.includes(grade))
     );
   }
 

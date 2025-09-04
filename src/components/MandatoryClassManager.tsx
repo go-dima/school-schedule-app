@@ -89,7 +89,7 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({ onUpdate 
           description: cls.description,
           teacher: cls.teacher,
           timeSlotId: cls.timeSlotId,
-          grade: cls.grade,
+          grades: cls.grades,
           isMandatory: cls.isMandatory
         })
       }
@@ -133,10 +133,10 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({ onUpdate 
   }, [])
 
   const filteredClasses = selectedGrade 
-    ? classes.filter(cls => cls.grade === selectedGrade)
+    ? classes.filter(cls => cls.grades?.includes(selectedGrade))
     : classes
 
-  const gradeOptions = Array.from(new Set(classes.map(cls => cls.grade)))
+  const gradeOptions = Array.from(new Set(classes.flatMap(cls => cls.grades || [])))
     .sort((a, b) => a - b)
 
   const columns: ColumnsType<ClassMandatoryStatus> = [

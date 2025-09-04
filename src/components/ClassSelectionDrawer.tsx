@@ -27,6 +27,7 @@ interface ClassSelectionDrawerProps {
   onClassSelect?: (classId: string) => void;
   onClassUnselect?: (classId: string) => void;
   conflictingClasses?: ClassWithTimeSlot[];
+  canSelectClasses?: boolean;
 }
 
 const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
@@ -39,6 +40,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
   onClassSelect,
   onClassUnselect,
   conflictingClasses = [],
+  canSelectClasses = false,
 }) => {
   const dayName = ScheduleService.getDayName(dayOfWeek);
   const timeRange = ScheduleService.formatTimeRange(
@@ -70,23 +72,31 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
         }`}
         size="small"
         hoverable
-        actions={[
-          <Button
-            key="toggle"
-            type={isSelected ? "default" : "primary"}
-            icon={isSelected ? <CheckOutlined /> : undefined}
-            onClick={() => handleClassToggle(cls.id)}
-            block>
-            {isSelected ? "בטל בחירה" : "בחר שיעור"}
-          </Button>,
-        ]}>
+        actions={
+          canSelectClasses
+            ? [
+                <Button
+                  key="toggle"
+                  type={isSelected ? "default" : "primary"}
+                  icon={isSelected ? <CheckOutlined /> : undefined}
+                  onClick={() => handleClassToggle(cls.id)}
+                  block>
+                  {isSelected ? "בטל בחירה" : "בחר שיעור"}
+                </Button>,
+              ]
+            : undefined
+        }>
         <div className="class-card-content">
           <div className="class-header">
             <Title level={5} className="class-title">
               {cls.title}
             </Title>
             <div className="class-header-tags">
-              <Tag color="blue">{ScheduleService.getGradeName(cls.grade)}</Tag>
+              {cls.grades?.map((grade) => (
+                <Tag key={grade} color="blue">
+                  {ScheduleService.getGradeName(grade)}
+                </Tag>
+              ))}
               {cls.isMandatory && <Tag color="red">חובה</Tag>}
             </div>
           </div>
@@ -129,7 +139,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
       title={
         <div className="drawer-title">
           <Title level={4} style={{ margin: 0 }}>
-            בחירת שיעורים
+            {canSelectClasses ? "בחירת שיעורים" : "צפייה בשיעורים"}
           </Title>
           <div className="time-slot-info">
             <Tag color="blue">{dayName}</Tag>

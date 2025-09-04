@@ -1,4 +1,4 @@
--- Migration: 003_fix_classes_rls_policy
+-- Migration: 005_fix_classes_rls_policy
 -- Description: Fix RLS policy for classes INSERT operations
 -- Author: System
 -- Date: Current session
@@ -15,8 +15,8 @@ CREATE POLICY "Staff and admins can delete classes" ON public.classes
     FOR DELETE USING (
         EXISTS (
             SELECT 1 FROM public.user_roles ur
-            WHERE ur.user_id = auth.uid() 
-            AND ur.role IN ('admin', 'staff') 
+            WHERE ur.user_id = auth.uid()
+            AND ur.role IN ('admin', 'staff')
             AND ur.approved = true
         )
     );
@@ -26,27 +26,27 @@ CREATE POLICY "Staff and admins can insert classes" ON public.classes
     FOR INSERT WITH CHECK (
         EXISTS (
             SELECT 1 FROM public.user_roles ur
-            WHERE ur.user_id = auth.uid() 
-            AND ur.role IN ('admin', 'staff') 
+            WHERE ur.user_id = auth.uid()
+            AND ur.role IN ('admin', 'staff')
             AND ur.approved = true
         )
     );
 
 CREATE POLICY "Staff and admins can update classes" ON public.classes
-    FOR UPDATE 
+    FOR UPDATE
     USING (
         EXISTS (
             SELECT 1 FROM public.user_roles ur
-            WHERE ur.user_id = auth.uid() 
-            AND ur.role IN ('admin', 'staff') 
+            WHERE ur.user_id = auth.uid()
+            AND ur.role IN ('admin', 'staff')
             AND ur.approved = true
         )
     )
     WITH CHECK (
         EXISTS (
             SELECT 1 FROM public.user_roles ur
-            WHERE ur.user_id = auth.uid() 
-            AND ur.role IN ('admin', 'staff') 
+            WHERE ur.user_id = auth.uid()
+            AND ur.role IN ('admin', 'staff')
             AND ur.approved = true
         )
     );

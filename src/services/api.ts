@@ -309,7 +309,7 @@ export const classesApi = {
         time_slot:time_slots(*)
       `
       )
-      .order("grade", { ascending: true });
+      .order("title", { ascending: true });
 
     if (error) throw new ApiError(error.message);
     return data.map((cls) => ({
@@ -318,7 +318,7 @@ export const classesApi = {
       description: cls.description,
       teacher: cls.teacher,
       timeSlotId: cls.time_slot_id,
-      grade: cls.grade,
+      grades: cls.grades || [],
       isMandatory: cls.is_mandatory,
       createdAt: cls.created_at,
       updatedAt: cls.updated_at,
@@ -343,7 +343,7 @@ export const classesApi = {
           description: classData.description,
           teacher: classData.teacher,
           time_slot_id: classData.timeSlotId,
-          grade: classData.grade,
+          grades: classData.grades,
           is_mandatory: classData.isMandatory,
         },
       ])
@@ -364,7 +364,7 @@ export const classesApi = {
     if (updates.teacher !== undefined) updateData.teacher = updates.teacher;
     if (updates.timeSlotId !== undefined)
       updateData.time_slot_id = updates.timeSlotId;
-    if (updates.grade !== undefined) updateData.grade = updates.grade;
+    if (updates.grades !== undefined) updateData.grades = updates.grades;
     if (updates.isMandatory !== undefined)
       updateData.is_mandatory = updates.isMandatory;
 
@@ -414,7 +414,7 @@ export const scheduleApi = {
         description: selection.class.description,
         teacher: selection.class.teacher,
         timeSlotId: selection.class.time_slot_id,
-        grade: selection.class.grade,
+        grades: selection.class.grades || [],
         isMandatory: selection.class.is_mandatory,
         createdAt: selection.class.created_at,
         updatedAt: selection.class.updated_at,

@@ -130,11 +130,19 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({ onNavigate })
       width: 150,
     },
     {
-      title: 'כיתה',
-      dataIndex: 'grade',
-      key: 'grade',
-      width: 100,
-      render: (grade: number) => ScheduleService.getGradeName(grade),
+      title: 'כיתות',
+      dataIndex: 'grades',
+      key: 'grades',
+      width: 150,
+      render: (grades: number[]) => (
+        <Space direction="vertical" size="small">
+          {grades?.map(grade => (
+            <Tag key={grade} color="geekblue">
+              {ScheduleService.getGradeName(grade)}
+            </Tag>
+          ))}
+        </Space>
+      ),
     },
     {
       title: 'זמן השיעור',

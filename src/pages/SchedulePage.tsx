@@ -70,6 +70,10 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
   const selectedClasses = userSelections.map((selection) => selection.classId);
   const canSelectClasses =
     currentRole?.role === "child" || currentRole?.role === "parent";
+  
+  const canViewClasses = 
+    canSelectClasses || currentRole?.role === "admin" || currentRole?.role === "staff";
+
 
   if (loading) {
     return (
@@ -103,6 +107,20 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                   </Button>
                 </>
               )}
+              {userRoles.length > 1 && (
+                <Select
+                  value={currentRole?.id}
+                  onChange={handleRoleSwitch}
+                  placeholder="בחר תפקיד"
+                  style={{ minWidth: 120 }}
+                  suffixIcon={<UserSwitchOutlined />}>
+                  {userRoles.map((role) => (
+                    <Option key={role.id} value={role.id}>
+                      {getRoleDisplayName(role.role)}
+                    </Option>
+                  ))}
+                </Select>
+              )}
               <Button
                 icon={<ReloadOutlined />}
                 onClick={loadScheduleData}
@@ -114,25 +132,6 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
               </Button>
             </Space>
           </div>
-
-          {userRoles.length > 1 && (
-            <div className="role-selector">
-              <Space>
-                <UserSwitchOutlined />
-                <Select
-                  value={currentRole?.id}
-                  onChange={handleRoleSwitch}
-                  placeholder="בחר תפקיד"
-                  style={{ minWidth: 120 }}>
-                  {userRoles.map((role) => (
-                    <Option key={role.id} value={role.id}>
-                      {getRoleDisplayName(role.role)}
-                    </Option>
-                  ))}
-                </Select>
-              </Space>
-            </div>
-          )}
 
           <div className="filters-section">
             <Space wrap>
@@ -160,6 +159,40 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
               style={{ marginBottom: 16 }}
             />
           )}
+
+          {!canSelectClasses && (
+            <Alert
+              message="אין הרשאה לבחירת שיעורים"
+              description={
+                userRoles.length === 0 
+                  ? "נדרשת אישור מנהל להפעלת התפקיד. אנא המתן לאישור או פנה למנהל."
+                  : currentRole?.role === "admin" || currentRole?.role === "staff"
+                  ? "מנהלים וצוות יכולים לצפות במערכת השעות אך לא לבחור שיעורים."
+                  : "רק תלמידים והורים יכולים לבחור שיעורים במערכת השעות."
+              }
+              type="warning"
+              showIcon
+              style={{ marginBottom: 16 }}
+              action={
+                userRoles.length > 1 && (currentRole?.role === "admin" || currentRole?.role === "staff") ? (
+                  <Button 
+                    size="small" 
+                    type="primary"
+                    onClick={() => {
+                      const childOrParentRole = userRoles.find(role => 
+                        role.role === "child" || role.role === "parent"
+                      );
+                      if (childOrParentRole) {
+                        switchRole(childOrParentRole);
+                      }
+                    }}
+                  >
+                    החלף לתפקיד מתאים
+                  </Button>
+                ) : undefined
+              }
+            />
+          )}
         </div>
 
         {error && (
@@ -183,6 +216,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
             onClassSelect={handleClassSelect}
             onClassUnselect={handleClassSelect}
             canSelectClasses={canSelectClasses}
+            canViewClasses={canViewClasses}
           />
         </Card>
 

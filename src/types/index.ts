@@ -42,7 +42,7 @@ export interface Class {
   description: string
   teacher: string
   timeSlotId: string
-  grade: number
+  grades: number[] // Changed from single grade to multiple grades
   isMandatory: boolean
   createdAt: string
   updatedAt: string

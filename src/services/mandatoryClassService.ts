@@ -14,7 +14,7 @@ export class MandatoryClassService {
   static async getMandatoryClassesForGrade(grade: number): Promise<ClassWithTimeSlot[]> {
     try {
       const allClasses = await classesApi.getClasses()
-      return allClasses.filter(cls => cls.isMandatory && cls.grade === grade)
+      return allClasses.filter(cls => cls.isMandatory && cls.grades?.includes(grade))
     } catch (error) {
       console.error('Failed to get mandatory classes:', error)
       return []
@@ -127,10 +127,14 @@ export class MandatoryClassService {
         isMandatory: true
       })
 
-      console.log(`Created mandatory class: ${classData.title} for grade ${classData.grade}`)
+      console.log(`Created mandatory class: ${classData.title} for grades ${classData.grades?.join(', ')}`)
       
-      // Auto-select this class for all users in the relevant grade
-      await this.autoSelectForAllUsersInGrade(newClass.id, classData.grade)
+      // Auto-select this class for all users in the relevant grades
+      if (classData.grades && classData.grades.length > 0) {
+        for (const grade of classData.grades) {
+          await this.autoSelectForAllUsersInGrade(newClass.id, grade)
+        }
+      }
       
       return newClass
     } catch (error) {
