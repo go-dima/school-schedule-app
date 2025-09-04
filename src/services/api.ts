@@ -1,100 +1,133 @@
-import { supabase } from './supabase'
-import type { 
-  User, 
-  UserRoleData, 
-  TimeSlot, 
-  Class, 
+import type {
+  Class,
   ClassWithTimeSlot,
-  ScheduleSelection,
   ScheduleSelectionWithClass,
-  UserRole 
-} from '../types'
+  TimeSlot,
+  User,
+  UserRole,
+  UserRoleData,
+} from "../types";
+import { supabase } from "./supabase";
 
 export class ApiError extends Error {
   constructor(message: string, public status?: number) {
-    super(message)
-    this.name = 'ApiError'
+    super(message);
+    this.name = "ApiError";
   }
 }
 
 // Authentication API
 export const authApi = {
   async signUp(email: string, password: string) {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
-    
-    if (error) throw new ApiError(error.message)
-    return data
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw new ApiError(error.message);
+      }
+
+      // If user was created successfully, create their profile in public.users
+      if (data.user) {
+        try {
+          const { error: profileError } = await supabase.from("users").insert([
+            {
+              id: data.user.id,
+              email: data.user.email,
+            },
+          ]);
+
+          if (profileError) {
+            console.warn(
+              "⚠️ Profile creation error (non-fatal):",
+              profileError
+            );
+          }
+        } catch (profileErr) {
+          console.warn(
+            "⚠️ Profile creation exception (non-fatal):",
+            profileErr
+          );
+        }
+      }
+
+      return data;
+    } catch (err) {
+      throw err;
+    }
   },
 
   async signIn(email: string, password: string) {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
-    })
-    
-    if (error) throw new ApiError(error.message)
-    return data
+    });
+
+    if (error) throw new ApiError(error.message);
+    return data;
   },
 
   async signOut() {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw new ApiError(error.message)
+    const { error } = await supabase.auth.signOut();
+    if (error) throw new ApiError(error.message);
   },
 
   async getCurrentUser() {
-    const { data: { user }, error } = await supabase.auth.getUser()
-    if (error) throw new ApiError(error.message)
-    return user
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+    if (error) throw new ApiError(error.message);
+    return user;
   },
 
   onAuthStateChange(callback: (user: any) => void) {
     return supabase.auth.onAuthStateChange((event, session) => {
-      callback(session?.user || null)
-    })
-  }
-}
+      callback(session?.user || null);
+    });
+  },
+};
 
 // Users API
 export const usersApi = {
   async getUserProfile(userId: string): Promise<User> {
     const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single()
+      .from("users")
+      .select("*")
+      .eq("id", userId)
+      .single();
 
-    if (error) throw new ApiError(error.message)
+    if (error) throw new ApiError(error.message);
     return {
       id: data.id,
       email: data.email,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
-    }
+    };
   },
 
   async getUserRoles(userId: string): Promise<UserRoleData[]> {
     const { data, error } = await supabase
-      .from('user_roles')
-      .select('*')
-      .eq('user_id', userId)
+      .from("user_roles")
+      .select("*")
+      .eq("user_id", userId);
 
-    if (error) throw new ApiError(error.message)
-    return data.map(role => ({
+    if (error) throw new ApiError(error.message);
+    return data.map((role) => ({
       id: role.id,
       userId: role.user_id,
       role: role.role as UserRole,
       approved: role.approved,
       createdAt: role.created_at,
       updatedAt: role.updated_at,
-    }))
+    }));
   },
 
   async requestRole(userId: string, role: UserRole) {
     const { data, error } = await supabase
-      .from('user_roles')
+      .from("user_roles")
       .insert([
         {
           user_id: userId,
@@ -102,52 +135,52 @@ export const usersApi = {
           approved: false,
         },
       ])
-      .select()
+      .select();
 
-    if (error) throw new ApiError(error.message)
-    return data[0]
+    if (error) throw new ApiError(error.message);
+    return data[0];
   },
 
   async approveRole(roleId: string) {
     const { data, error } = await supabase
-      .from('user_roles')
+      .from("user_roles")
       .update({ approved: true })
-      .eq('id', roleId)
-      .select()
+      .eq("id", roleId)
+      .select();
 
-    if (error) throw new ApiError(error.message)
-    return data[0]
+    if (error) throw new ApiError(error.message);
+    return data[0];
   },
 
   async getPendingApprovals(): Promise<UserRoleData[]> {
     const { data, error } = await supabase
-      .from('user_roles')
-      .select('*')
-      .eq('approved', false)
+      .from("user_roles")
+      .select("*")
+      .eq("approved", false);
 
-    if (error) throw new ApiError(error.message)
-    return data.map(role => ({
+    if (error) throw new ApiError(error.message);
+    return data.map((role) => ({
       id: role.id,
       userId: role.user_id,
       role: role.role as UserRole,
       approved: role.approved,
       createdAt: role.created_at,
       updatedAt: role.updated_at,
-    }))
-  }
-}
+    }));
+  },
+};
 
 // Time Slots API
 export const timeSlotsApi = {
   async getTimeSlots(): Promise<TimeSlot[]> {
     const { data, error } = await supabase
-      .from('time_slots')
-      .select('*')
-      .order('day_of_week', { ascending: true })
-      .order('start_time', { ascending: true })
+      .from("time_slots")
+      .select("*")
+      .order("day_of_week", { ascending: true })
+      .order("start_time", { ascending: true });
 
-    if (error) throw new ApiError(error.message)
-    return data.map(slot => ({
+    if (error) throw new ApiError(error.message);
+    return data.map((slot) => ({
       id: slot.id,
       name: slot.name,
       startTime: slot.start_time,
@@ -155,12 +188,14 @@ export const timeSlotsApi = {
       dayOfWeek: slot.day_of_week,
       createdAt: slot.created_at,
       updatedAt: slot.updated_at,
-    }))
+    }));
   },
 
-  async createTimeSlot(timeSlot: Omit<TimeSlot, 'id' | 'createdAt' | 'updatedAt'>) {
+  async createTimeSlot(
+    timeSlot: Omit<TimeSlot, "id" | "createdAt" | "updatedAt">
+  ) {
     const { data, error } = await supabase
-      .from('time_slots')
+      .from("time_slots")
       .insert([
         {
           name: timeSlot.name,
@@ -169,52 +204,56 @@ export const timeSlotsApi = {
           day_of_week: timeSlot.dayOfWeek,
         },
       ])
-      .select()
+      .select();
 
-    if (error) throw new ApiError(error.message)
-    return data[0]
+    if (error) throw new ApiError(error.message);
+    return data[0];
   },
 
-  async updateTimeSlot(id: string, updates: Partial<Omit<TimeSlot, 'id' | 'createdAt' | 'updatedAt'>>) {
-    const updateData: any = {}
-    if (updates.name !== undefined) updateData.name = updates.name
-    if (updates.startTime !== undefined) updateData.start_time = updates.startTime
-    if (updates.endTime !== undefined) updateData.end_time = updates.endTime
-    if (updates.dayOfWeek !== undefined) updateData.day_of_week = updates.dayOfWeek
+  async updateTimeSlot(
+    id: string,
+    updates: Partial<Omit<TimeSlot, "id" | "createdAt" | "updatedAt">>
+  ) {
+    const updateData: any = {};
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.startTime !== undefined)
+      updateData.start_time = updates.startTime;
+    if (updates.endTime !== undefined) updateData.end_time = updates.endTime;
+    if (updates.dayOfWeek !== undefined)
+      updateData.day_of_week = updates.dayOfWeek;
 
     const { data, error } = await supabase
-      .from('time_slots')
+      .from("time_slots")
       .update(updateData)
-      .eq('id', id)
-      .select()
+      .eq("id", id)
+      .select();
 
-    if (error) throw new ApiError(error.message)
-    return data[0]
+    if (error) throw new ApiError(error.message);
+    return data[0];
   },
 
   async deleteTimeSlot(id: string) {
-    const { error } = await supabase
-      .from('time_slots')
-      .delete()
-      .eq('id', id)
+    const { error } = await supabase.from("time_slots").delete().eq("id", id);
 
-    if (error) throw new ApiError(error.message)
-  }
-}
+    if (error) throw new ApiError(error.message);
+  },
+};
 
 // Classes API
 export const classesApi = {
   async getClasses(): Promise<ClassWithTimeSlot[]> {
     const { data, error } = await supabase
-      .from('classes')
-      .select(`
+      .from("classes")
+      .select(
+        `
         *,
         time_slot:time_slots(*)
-      `)
-      .order('grade', { ascending: true })
+      `
+      )
+      .order("grade", { ascending: true });
 
-    if (error) throw new ApiError(error.message)
-    return data.map(cls => ({
+    if (error) throw new ApiError(error.message);
+    return data.map((cls) => ({
       id: cls.id,
       title: cls.title,
       description: cls.description,
@@ -232,13 +271,13 @@ export const classesApi = {
         dayOfWeek: cls.time_slot.day_of_week,
         createdAt: cls.time_slot.created_at,
         updatedAt: cls.time_slot.updated_at,
-      }
-    }))
+      },
+    }));
   },
 
-  async createClass(classData: Omit<Class, 'id' | 'createdAt' | 'updatedAt'>) {
+  async createClass(classData: Omit<Class, "id" | "createdAt" | "updatedAt">) {
     const { data, error } = await supabase
-      .from('classes')
+      .from("classes")
       .insert([
         {
           title: classData.title,
@@ -249,57 +288,62 @@ export const classesApi = {
           is_mandatory: classData.isMandatory,
         },
       ])
-      .select()
+      .select();
 
-    if (error) throw new ApiError(error.message)
-    return data[0]
+    if (error) throw new ApiError(error.message);
+    return data[0];
   },
 
-  async updateClass(id: string, updates: Partial<Omit<Class, 'id' | 'createdAt' | 'updatedAt'>>) {
-    const updateData: any = {}
-    if (updates.title !== undefined) updateData.title = updates.title
-    if (updates.description !== undefined) updateData.description = updates.description
-    if (updates.teacher !== undefined) updateData.teacher = updates.teacher
-    if (updates.timeSlotId !== undefined) updateData.time_slot_id = updates.timeSlotId
-    if (updates.grade !== undefined) updateData.grade = updates.grade
-    if (updates.isMandatory !== undefined) updateData.is_mandatory = updates.isMandatory
+  async updateClass(
+    id: string,
+    updates: Partial<Omit<Class, "id" | "createdAt" | "updatedAt">>
+  ) {
+    const updateData: any = {};
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.description !== undefined)
+      updateData.description = updates.description;
+    if (updates.teacher !== undefined) updateData.teacher = updates.teacher;
+    if (updates.timeSlotId !== undefined)
+      updateData.time_slot_id = updates.timeSlotId;
+    if (updates.grade !== undefined) updateData.grade = updates.grade;
+    if (updates.isMandatory !== undefined)
+      updateData.is_mandatory = updates.isMandatory;
 
     const { data, error } = await supabase
-      .from('classes')
+      .from("classes")
       .update(updateData)
-      .eq('id', id)
-      .select()
+      .eq("id", id)
+      .select();
 
-    if (error) throw new ApiError(error.message)
-    return data[0]
+    if (error) throw new ApiError(error.message);
+    return data[0];
   },
 
   async deleteClass(id: string) {
-    const { error } = await supabase
-      .from('classes')
-      .delete()
-      .eq('id', id)
+    const { error } = await supabase.from("classes").delete().eq("id", id);
 
-    if (error) throw new ApiError(error.message)
-  }
-}
+    if (error) throw new ApiError(error.message);
+  },
+};
 
 // Schedule Selections API
 export const scheduleApi = {
   async getUserSchedule(userId: string): Promise<ScheduleSelectionWithClass[]> {
     const { data, error } = await supabase
-      .from('schedule_selections')
-      .select(`
+      .from("schedule_selections")
+      .select(
+        `
         *,
         class:classes(
           *,
           time_slot:time_slots(*)
         )
-      `)
-      .eq('user_id', userId)
+      `
+      )
+      .eq("user_id", userId);
 
-    if (error) throw new ApiError(error.message)
-    return data.map(selection => ({
+    if (error) throw new ApiError(error.message);
+    return data.map((selection) => ({
       id: selection.id,
       userId: selection.user_id,
       classId: selection.class_id,
@@ -323,33 +367,33 @@ export const scheduleApi = {
           dayOfWeek: selection.class.time_slot.day_of_week,
           createdAt: selection.class.time_slot.created_at,
           updatedAt: selection.class.time_slot.updated_at,
-        }
-      }
-    }))
+        },
+      },
+    }));
   },
 
   async selectClass(userId: string, classId: string) {
     const { data, error } = await supabase
-      .from('schedule_selections')
+      .from("schedule_selections")
       .insert([
         {
           user_id: userId,
           class_id: classId,
         },
       ])
-      .select()
+      .select();
 
-    if (error) throw new ApiError(error.message)
-    return data[0]
+    if (error) throw new ApiError(error.message);
+    return data[0];
   },
 
   async unselectClass(userId: string, classId: string) {
     const { error } = await supabase
-      .from('schedule_selections')
+      .from("schedule_selections")
       .delete()
-      .eq('user_id', userId)
-      .eq('class_id', classId)
+      .eq("user_id", userId)
+      .eq("class_id", classId);
 
-    if (error) throw new ApiError(error.message)
-  }
-}
+    if (error) throw new ApiError(error.message);
+  },
+};

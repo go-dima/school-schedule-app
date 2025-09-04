@@ -54,7 +54,32 @@ export class ScheduleService {
   }
 
   static formatTimeRange(startTime: string, endTime: string): string {
-    return `${startTime} - ${endTime}`
+    const formatTime = (time: string): string => {
+      if (!time) return ''
+      
+      // If time is in HH:MM:SS format, convert to HH:MM
+      if (time.includes(':')) {
+        const parts = time.split(':')
+        return `${parts[0]}:${parts[1]}`
+      }
+      
+      return time
+    }
+
+    const formattedStart = formatTime(startTime)
+    const formattedEnd = formatTime(endTime)
+    
+    // If both times are missing, return empty string
+    if (!formattedStart && !formattedEnd) {
+      return ''
+    }
+    
+    // If only one time is missing, return the available one
+    if (!formattedStart) return formattedEnd
+    if (!formattedEnd) return formattedStart
+    
+    // Both times available, return range
+    return `${formattedStart} - ${formattedEnd}`
   }
 
   static getDayName(dayOfWeek: number): string {

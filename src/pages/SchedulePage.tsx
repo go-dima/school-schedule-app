@@ -1,21 +1,39 @@
-import React, { useState } from 'react'
-import { Layout, Card, Typography, Select, Button, Space, Alert, Spin } from 'antd'
-import { ReloadOutlined, UserSwitchOutlined } from '@ant-design/icons'
-import { useAuth } from '../hooks/useAuth'
-import { useSchedule } from '../hooks/useSchedule'
-import ScheduleTable from '../components/ScheduleTable'
-import { GRADES } from '../types'
-import type { UserRoleData } from '../types'
-import './SchedulePage.css'
+import React, { useState } from "react";
+import {
+  Layout,
+  Card,
+  Typography,
+  Select,
+  Button,
+  Space,
+  Alert,
+  Spin,
+} from "antd";
+import {
+  ReloadOutlined,
+  UserSwitchOutlined,
+  SettingOutlined,
+} from "@ant-design/icons";
+import { useAuth } from "../contexts/AuthContext";
+import { useSchedule } from "../hooks/useSchedule";
+import ScheduleTable from "../components/ScheduleTable";
+import { GRADES } from "../types";
+import "./SchedulePage.css";
+import { ScheduleService } from "../services/scheduleService";
 
-const { Content } = Layout
-const { Title } = Typography
-const { Option } = Select
+const { Content } = Layout;
+const { Title } = Typography;
+const { Option } = Select;
 
-const SchedulePage: React.FC = () => {
-  const { user, currentRole, userRoles, switchRole, signOut } = useAuth()
-  const [selectedGrade, setSelectedGrade] = useState<number | undefined>(undefined)
-  
+interface SchedulePageProps {
+  onNavigate?: (page: "schedule" | "class-management") => void;
+}
+
+const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
+  const { user, currentRole, userRoles, switchRole, signOut, isAdmin } =
+    useAuth();
+  const [selectedGrade, setSelectedGrade] = useState<number | undefined>(1);
+
   const {
     classes,
     timeSlots,
@@ -27,39 +45,40 @@ const SchedulePage: React.FC = () => {
     selectClass,
     unselectClass,
     isClassSelected,
-  } = useSchedule(user?.id)
+  } = useSchedule(user?.id);
 
   const handleRoleSwitch = (roleId: string) => {
-    const role = userRoles.find(r => r.id === roleId)
+    const role = userRoles.find((r) => r.id === roleId);
     if (role) {
-      switchRole(role)
+      switchRole(role);
     }
-  }
+  };
 
   const handleClassSelect = async (classId: string) => {
     try {
       if (isClassSelected(classId)) {
-        await unselectClass(classId)
+        await unselectClass(classId);
       } else {
-        await selectClass(classId)
+        await selectClass(classId);
       }
     } catch (err) {
-      console.error('Failed to toggle class selection:', err)
+      // Handle error silently or show user feedback
     }
-  }
+  };
 
-  const selectedClasses = userSelections.map(selection => selection.classId)
-  const canSelectClasses = currentRole?.role === 'child' || currentRole?.role === 'parent'
+  const selectedClasses = userSelections.map((selection) => selection.classId);
+  const canSelectClasses =
+    currentRole?.role === "child" || currentRole?.role === "parent";
 
   if (loading) {
     return (
       <div className="page-loading">
         <Spin size="large" />
-        <Title level={4} style={{ marginTop: 16, color: '#1890ff' }}>
+        <Title level={4} style={{ marginTop: 16, color: "#1890ff" }}>
           טוען את מערכת השעות...
         </Title>
       </div>
-    )
+    );
   }
 
   return (
@@ -69,18 +88,20 @@ const SchedulePage: React.FC = () => {
           <div className="header-main">
             <Title level={2}>מערכת שעות</Title>
             <Space>
-              <Button 
-                icon={<ReloadOutlined />} 
+              {isAdmin() && (
+                <Button
+                  icon={<SettingOutlined />}
+                  onClick={() => onNavigate?.("class-management")}>
+                  ניהול שיעורים
+                </Button>
+              )}
+              <Button
+                icon={<ReloadOutlined />}
                 onClick={loadScheduleData}
-                disabled={loading}
-              >
+                disabled={loading}>
                 רענן
               </Button>
-              <Button 
-                type="primary" 
-                danger 
-                onClick={signOut}
-              >
+              <Button type="primary" danger onClick={signOut}>
                 התנתק
               </Button>
             </Space>
@@ -94,9 +115,8 @@ const SchedulePage: React.FC = () => {
                   value={currentRole?.id}
                   onChange={handleRoleSwitch}
                   placeholder="בחר תפקיד"
-                  style={{ minWidth: 120 }}
-                >
-                  {userRoles.map(role => (
+                  style={{ minWidth: 120 }}>
+                  {userRoles.map((role) => (
                     <Option key={role.id} value={role.id}>
                       {getRoleDisplayName(role.role)}
                     </Option>
@@ -114,11 +134,10 @@ const SchedulePage: React.FC = () => {
                 onChange={setSelectedGrade}
                 placeholder="כל הכיתות"
                 allowClear
-                style={{ minWidth: 120 }}
-              >
-                {GRADES.map(grade => (
+                style={{ minWidth: 120 }}>
+                {GRADES.map((grade) => (
                   <Option key={grade} value={grade}>
-                    כיתה {grade}
+                    {ScheduleService.getGradeName(grade)}
                   </Option>
                 ))}
               </Select>
@@ -162,13 +181,12 @@ const SchedulePage: React.FC = () => {
         {canSelectClasses && userSelections.length > 0 && (
           <Card title="השיעורים שנבחרו" className="selected-classes-summary">
             <Space wrap>
-              {userSelections.map(selection => (
+              {userSelections.map((selection) => (
                 <Button
                   key={selection.id}
                   type="primary"
                   size="small"
-                  onClick={() => handleClassSelect(selection.classId)}
-                >
+                  onClick={() => handleClassSelect(selection.classId)}>
                   {selection.class.title} - {selection.class.teacher}
                 </Button>
               ))}
@@ -177,17 +195,17 @@ const SchedulePage: React.FC = () => {
         )}
       </Content>
     </Layout>
-  )
-}
+  );
+};
 
 function getRoleDisplayName(role: string): string {
   const roleNames = {
-    admin: 'מנהל',
-    parent: 'הורה',
-    child: 'תלמיד',
-    staff: 'צוות',
-  }
-  return roleNames[role as keyof typeof roleNames] || role
+    admin: "מנהל",
+    parent: "הורה",
+    child: "תלמיד",
+    staff: "צוות",
+  };
+  return roleNames[role as keyof typeof roleNames] || role;
 }
 
-export default SchedulePage
+export default SchedulePage;

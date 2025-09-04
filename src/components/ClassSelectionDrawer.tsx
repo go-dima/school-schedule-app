@@ -1,32 +1,32 @@
-import React from 'react'
-import { 
-  Drawer, 
-  Card, 
-  Button, 
-  Tag, 
-  Empty, 
-  Alert, 
+import React from "react";
+import {
+  Drawer,
+  Card,
+  Button,
+  Tag,
+  Empty,
+  Alert,
   Space,
   Typography,
-  Divider 
-} from 'antd'
-import { CheckOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
-import { ScheduleService } from '../services/scheduleService'
-import type { TimeSlot, ClassWithTimeSlot } from '../types'
-import './ClassSelectionDrawer.css'
+  Divider,
+} from "antd";
+import { CheckOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { ScheduleService } from "../services/scheduleService";
+import type { TimeSlot, ClassWithTimeSlot } from "../types";
+import "./ClassSelectionDrawer.css";
 
-const { Title, Text } = Typography
+const { Title, Text } = Typography;
 
 interface ClassSelectionDrawerProps {
-  open: boolean
-  onClose: () => void
-  timeSlot: TimeSlot
-  dayOfWeek: number
-  classes: ClassWithTimeSlot[]
-  selectedClasses?: string[]
-  onClassSelect?: (classId: string) => void
-  onClassUnselect?: (classId: string) => void
-  conflictingClasses?: ClassWithTimeSlot[]
+  open: boolean;
+  onClose: () => void;
+  timeSlot: TimeSlot;
+  dayOfWeek: number;
+  classes: ClassWithTimeSlot[];
+  selectedClasses?: string[];
+  onClassSelect?: (classId: string) => void;
+  onClassUnselect?: (classId: string) => void;
+  conflictingClasses?: ClassWithTimeSlot[];
 }
 
 const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
@@ -38,65 +38,64 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
   selectedClasses = [],
   onClassSelect,
   onClassUnselect,
-  conflictingClasses = []
+  conflictingClasses = [],
 }) => {
-  const dayName = ScheduleService.getDayName(dayOfWeek)
-  const timeRange = ScheduleService.formatTimeRange(timeSlot.startTime, timeSlot.endTime)
+  const dayName = ScheduleService.getDayName(dayOfWeek);
+  const timeRange = ScheduleService.formatTimeRange(
+    timeSlot.startTime,
+    timeSlot.endTime
+  );
 
   const handleClassToggle = (classId: string) => {
-    const isSelected = selectedClasses.includes(classId)
-    
+    const isSelected = selectedClasses.includes(classId);
+
     if (isSelected && onClassUnselect) {
-      onClassUnselect(classId)
+      onClassUnselect(classId);
     } else if (!isSelected && onClassSelect) {
-      onClassSelect(classId)
+      onClassSelect(classId);
     }
-  }
+  };
 
   const renderClassCard = (cls: ClassWithTimeSlot) => {
-    const isSelected = selectedClasses.includes(cls.id)
-    const hasConflict = conflictingClasses.some(conflict => conflict.id === cls.id)
+    const isSelected = selectedClasses.includes(cls.id);
+    const hasConflict = conflictingClasses.some(
+      (conflict) => conflict.id === cls.id
+    );
 
     return (
       <Card
         key={cls.id}
-        className={`class-selection-card ${isSelected ? 'selected' : ''} ${hasConflict ? 'conflict' : ''}`}
+        className={`class-selection-card ${isSelected ? "selected" : ""} ${
+          hasConflict ? "conflict" : ""
+        }`}
         size="small"
         hoverable
         actions={[
           <Button
             key="toggle"
-            type={isSelected ? 'default' : 'primary'}
+            type={isSelected ? "default" : "primary"}
             icon={isSelected ? <CheckOutlined /> : undefined}
             onClick={() => handleClassToggle(cls.id)}
-            block
-          >
-            {isSelected ? 'בטל בחירה' : 'בחר שיעור'}
-          </Button>
-        ]}
-      >
+            block>
+            {isSelected ? "בטל בחירה" : "בחר שיעור"}
+          </Button>,
+        ]}>
         <div className="class-card-content">
           <div className="class-header">
             <Title level={5} className="class-title">
               {cls.title}
             </Title>
             <div className="class-header-tags">
-              <Tag color="blue" size="small">
-                {ScheduleService.getGradeName(cls.grade)}
-              </Tag>
-              {cls.isMandatory && (
-                <Tag color="red" size="small">
-                  חובה
-                </Tag>
-              )}
+              <Tag color="blue">{ScheduleService.getGradeName(cls.grade)}</Tag>
+              {cls.isMandatory && <Tag color="red">חובה</Tag>}
             </div>
           </div>
-          
+
           <div className="class-details">
             <Text strong>מורה: </Text>
             <Text>{cls.teacher}</Text>
           </div>
-          
+
           {cls.description && (
             <div className="class-description">
               <Text>{cls.description}</Text>
@@ -109,18 +108,21 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
               description="שיעור זה חופף עם שיעור אחר שנבחר"
               type="warning"
               showIcon
-              size="small"
               icon={<ExclamationCircleOutlined />}
               className="conflict-alert"
             />
           )}
         </div>
       </Card>
-    )
-  }
+    );
+  };
 
-  const selectedClassesInTimeSlot = classes.filter(cls => selectedClasses.includes(cls.id))
-  const availableClasses = classes.filter(cls => !selectedClasses.includes(cls.id))
+  const selectedClassesInTimeSlot = classes.filter((cls) =>
+    selectedClasses.includes(cls.id)
+  );
+  const availableClasses = classes.filter(
+    (cls) => !selectedClasses.includes(cls.id)
+  );
 
   return (
     <Drawer
@@ -141,20 +143,22 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
       onClose={onClose}
       open={open}
       className="class-selection-drawer rtl-drawer"
-      bodyStyle={{ padding: '16px' }}
-    >
+      styles={{ body: { padding: "16px" } }}>
       <div className="drawer-content">
         {classes.length === 0 ? (
-          <Empty 
+          <Empty
             description="אין שיעורים זמינים בזמן זה"
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
         ) : (
-          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Space direction="vertical" size="middle" style={{ width: "100%" }}>
             {selectedClassesInTimeSlot.length > 0 && (
               <div className="selected-classes-section">
                 <Title level={5}>שיעורים שנבחרו:</Title>
-                <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                <Space
+                  direction="vertical"
+                  size="small"
+                  style={{ width: "100%" }}>
                   {selectedClassesInTimeSlot.map(renderClassCard)}
                 </Space>
                 <Divider />
@@ -164,9 +168,14 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
             {availableClasses.length > 0 && (
               <div className="available-classes-section">
                 <Title level={5}>
-                  {selectedClassesInTimeSlot.length > 0 ? 'שיעורים אחרים זמינים:' : 'שיעורים זמינים:'}
+                  {selectedClassesInTimeSlot.length > 0
+                    ? "שיעורים אחרים זמינים:"
+                    : "שיעורים זמינים:"}
                 </Title>
-                <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                <Space
+                  direction="vertical"
+                  size="small"
+                  style={{ width: "100%" }}>
                   {availableClasses.map(renderClassCard)}
                 </Space>
               </div>
@@ -187,7 +196,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
         )}
       </div>
     </Drawer>
-  )
-}
+  );
+};
 
-export default ClassSelectionDrawer
+export default ClassSelectionDrawer;

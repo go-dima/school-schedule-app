@@ -178,14 +178,20 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       key: 'time',
       width: 120,
       className: 'time-column',
-      render: (timeSlot: TimeSlot) => (
-        <div className="time-cell">
-          <div className="time-range">
-            {ScheduleService.formatTimeRange(timeSlot.startTime, timeSlot.endTime)}
+      render: (timeSlot: TimeSlot) => {
+        const timeRange = ScheduleService.formatTimeRange(timeSlot.startTime, timeSlot.endTime)
+        
+        return (
+          <div className="time-cell">
+            {timeRange && (
+              <div className="time-range">
+                {timeRange}
+              </div>
+            )}
+            <div className="time-name">{timeSlot.name}</div>
           </div>
-          <div className="time-name">{timeSlot.name}</div>
-        </div>
-      )
+        )
+      }
     },
     ...DAYS_OF_WEEK.map(day => ({
       title: day.name,

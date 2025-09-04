@@ -1,0 +1,170 @@
+.class-management-page {
+  min-height: 100vh;
+  background: #f0f2f5;
+}
+
+.class-management-content {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.class-management-header {
+  margin-bottom: 24px;
+}
+
+.header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.header-main h2 {
+  margin: 0;
+  color: #1890ff;
+}
+
+.classes-table-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.classes-table-card .ant-table {
+  direction: rtl;
+}
+
+.classes-table-card .ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+  text-align: right;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.classes-table-card .ant-table-tbody > tr > td {
+  text-align: right;
+  vertical-align: top;
+}
+
+.classes-table-card .ant-table-tbody > tr:hover > td {
+  background: #e6f7ff;
+}
+
+/* Form styling */
+.ant-modal .ant-form {
+  direction: rtl;
+}
+
+.ant-modal .ant-form-item-label {
+  text-align: right;
+}
+
+.ant-modal .ant-form-item-label > label {
+  font-weight: 600;
+}
+
+.ant-modal .ant-input,
+.ant-modal .ant-select-selector,
+.ant-modal .ant-input.ant-input {
+  text-align: right;
+}
+
+.ant-modal .ant-select-dropdown {
+  direction: rtl;
+}
+
+.ant-modal .ant-select-item {
+  text-align: right;
+}
+
+/* Page loading */
+.page-loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f0f2f5;
+}
+
+/* RTL specific adjustments */
+.ant-space {
+  direction: ltr;
+}
+
+.ant-space-item {
+  direction: rtl;
+}
+
+.ant-tag {
+  margin-right: 0;
+  margin-left: 4px;
+}
+
+.ant-btn + .ant-btn {
+  margin-right: 8px;
+  margin-left: 0;
+}
+
+/* Action buttons alignment */
+.ant-table-tbody .ant-space {
+  justify-content: flex-start;
+}
+
+/* Switch component RTL */
+.ant-switch {
+  direction: ltr;
+}
+
+/* Alert RTL */
+.ant-alert {
+  direction: rtl;
+}
+
+.ant-alert-message,
+.ant-alert-description {
+  text-align: right;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .class-management-content {
+    padding: 16px;
+  }
+  
+  .header-main {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .header-main h2 {
+    text-align: center;
+  }
+  
+  .classes-table-card .ant-table {
+    font-size: 12px;
+  }
+}
+
+/* Table column specific styling */
+.ant-table-tbody > tr > td:first-child {
+  font-weight: 600;
+  color: #1890ff;
+}
+
+.ant-table-tbody .ant-tag {
+  font-size: 11px;
+}
+
+/* Modal form styling */
+.ant-modal-body .ant-form-item {
+  margin-bottom: 16px;
+}
+
+.ant-modal-body .ant-form-item-explain {
+  text-align: right;
+}
+
+.ant-modal-body .ant-switch {
+  margin-right: 8px;
+}
