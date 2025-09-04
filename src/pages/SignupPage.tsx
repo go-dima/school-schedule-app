@@ -7,11 +7,9 @@ import {
   Typography,
   Alert,
   Checkbox,
-  Space,
 } from "antd";
-import { UserOutlined, LockOutlined, MailOutlined } from "@ant-design/icons";
+import { LockOutlined, MailOutlined } from "@ant-design/icons";
 import { useAuth } from "../hooks/useAuth";
-import type { UserRole } from "../types";
 import "./AuthPages.css";
 
 const { Title, Text, Link } = Typography;

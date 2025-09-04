@@ -17,7 +17,7 @@ export default loginMeta;
 type LoginStory = StoryObj<typeof loginMeta>;
 
 function LoginWrapper() {
-  const [showSignup, setShowSignup] = useState(false);
+  const [_showSignup, setShowSignup] = useState(false);
   
   return (
     <LoginPage onSwitchToSignup={() => setShowSignup(true)} />
@@ -41,7 +41,7 @@ const signupMeta: Meta<typeof SignupPage> = {
 type SignupStory = StoryObj<typeof signupMeta>;
 
 function SignupWrapper() {
-  const [showLogin, setShowLogin] = useState(false);
+  const [_showLogin, setShowLogin] = useState(false);
   
   return (
     <SignupPage onSwitchToLogin={() => setShowLogin(true)} />

@@ -19,7 +19,7 @@ export type TimeSlotCategory = keyof typeof TIME_SLOT_CATEGORIES
  */
 export function getTimeSlotCategory(timeSlotName: string): TimeSlotCategory | null {
   for (const [category, names] of Object.entries(TIME_SLOT_CATEGORIES)) {
-    if (names.includes(timeSlotName as any)) {
+    if ((names as readonly string[]).includes(timeSlotName)) {
       return category as TimeSlotCategory
     }
   }
@@ -30,21 +30,21 @@ export function getTimeSlotCategory(timeSlotName: string): TimeSlotCategory | nu
  * Check if a time slot is a lesson (can have classes)
  */
 export function isLessonTimeSlot(timeSlot: TimeSlot): boolean {
-  return TIME_SLOT_CATEGORIES.LESSONS.includes(timeSlot.name as any)
+  return (TIME_SLOT_CATEGORIES.LESSONS as readonly string[]).includes(timeSlot.name)
 }
 
 /**
  * Check if a time slot is a break
  */
 export function isBreakTimeSlot(timeSlot: TimeSlot): boolean {
-  return TIME_SLOT_CATEGORIES.BREAKS.includes(timeSlot.name as any)
+  return (TIME_SLOT_CATEGORIES.BREAKS as readonly string[]).includes(timeSlot.name)
 }
 
 /**
  * Check if a time slot is a meeting
  */
 export function isMeetingTimeSlot(timeSlot: TimeSlot): boolean {
-  return TIME_SLOT_CATEGORIES.MEETINGS.includes(timeSlot.name as any)
+  return (TIME_SLOT_CATEGORIES.MEETINGS as readonly string[]).includes(timeSlot.name)
 }
 
 /**
@@ -55,7 +55,7 @@ export function filterTimeSlotsByCategory(
   category: TimeSlotCategory
 ): TimeSlot[] {
   const categoryNames = TIME_SLOT_CATEGORIES[category]
-  return timeSlots.filter(slot => categoryNames.includes(slot.name as any))
+  return timeSlots.filter(slot => (categoryNames as readonly string[]).includes(slot.name))
 }
 
 /**
@@ -89,7 +89,8 @@ export function getDefaultTimeSlotsForDay(dayOfWeek: number): Omit<TimeSlot, 'id
  * Validate time slot name against PRD requirements
  */
 export function isValidTimeSlotName(name: string): boolean {
-  return Object.values(TIME_SLOT_CATEGORIES).flat().includes(name as any)
+  const allNames = Object.values(TIME_SLOT_CATEGORIES).flat() as string[]
+  return allNames.includes(name)
 }
 
 /**
