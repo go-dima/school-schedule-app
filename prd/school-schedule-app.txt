@@ -1,0 +1,11 @@
+This app is used to view and choose classes for an elementary school schedule. It serves from first grade to sixth.
+It allows students to select classes from a list of defined courses.
+
+Each class has a title, description, teacher, time slot, dedicated grade and a unique identifier.
+
+The schedule is viewed in a table format, with days of the week as columns and time slots as rows.
+The learning days are Sunday to Thursday, with Friday and Saturday being weekends.
+The time slots are pre-defined, and can be customized to the entire school schedule by an admin.
+**The schedule is in Hebrew and is displayed from right to left.**
+When clicking on a class, a drawer opens from the left side of the screen, displaying list of classes in the same time slot.
+A lesson can be defined as mandatory for each grade, then it's pre-selected in the schedule

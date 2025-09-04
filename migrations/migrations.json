@@ -1,0 +1,38 @@
+{
+  "migrations": [
+    {
+      "id": "001_initial_schema",
+      "name": "Initial Schema",
+      "description": "Create initial database schema with users, roles, time slots, classes, and selections",
+      "file": "001_initial_schema.sql",
+      "created_at": "2024-01-01T00:00:00Z",
+      "dependencies": []
+    },
+    {
+      "id": "002_rls_policies",
+      "name": "RLS Policies",
+      "description": "Enable Row Level Security and create security policies",
+      "file": "002_rls_policies.sql",
+      "created_at": "2024-01-01T00:01:00Z",
+      "dependencies": ["001_initial_schema"]
+    },
+    {
+      "id": "003_triggers_functions",
+      "name": "Triggers and Functions",
+      "description": "Create database functions and triggers",
+      "file": "003_triggers_functions.sql",
+      "created_at": "2024-01-01T00:02:00Z",
+      "dependencies": ["001_initial_schema"]
+    },
+    {
+      "id": "004_sample_data",
+      "name": "Sample Data",
+      "description": "Insert sample time slots and demo data",
+      "file": "004_sample_data.sql",
+      "created_at": "2024-01-01T00:03:00Z",
+      "dependencies": ["001_initial_schema", "003_triggers_functions"]
+    }
+  ],
+  "version": "1.0.0",
+  "schema_version": 4
+}

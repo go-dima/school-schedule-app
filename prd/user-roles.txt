@@ -1,0 +1,15 @@
+- Admin role:
+    - can edit time slots for the schedule
+    - can add, edit and delete classes
+    - can approve login requests
+    - can modify a user to become an admin
+
+- Parent role:
+    - can view and modify selected schedule for their child
+
+- Child role:
+    - can view their own schedule
+
+- Staff role:
+    - can view and modify classes
+    - can view and modify schedules

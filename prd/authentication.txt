@@ -1,0 +1,7 @@
+- User authentication is handled using Supabase's built-in authentication features.
+- Users can sign up and log in using their email and password.
+- Each signup is pending approval from an admin before the user can log in.
+- A user can have both email/password and OAuth (Google, GitHub) login methods configured.
+
+- Same user can act as a parent, teacher, or admin based on their assigned roles.
+- The user can switch roles within the app for different functionalities.

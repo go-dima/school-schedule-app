@@ -1,0 +1,212 @@
+.schedule-table-container {
+  width: 100%;
+  direction: rtl;
+}
+
+.schedule-table.rtl-table {
+  direction: rtl;
+}
+
+.schedule-table .ant-table-thead > tr > th {
+  background: #f5f5f5;
+  font-weight: 600;
+  text-align: center;
+  border: 1px solid #d9d9d9;
+  padding: 12px 8px;
+}
+
+.schedule-table .ant-table-tbody > tr > td {
+  padding: 4px;
+  border: 1px solid #d9d9d9;
+  vertical-align: top;
+}
+
+.time-column {
+  background: #fafafa !important;
+  min-width: 120px;
+}
+
+.time-cell {
+  text-align: center;
+  padding: 8px 4px;
+}
+
+.time-range {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1890ff;
+  margin-bottom: 2px;
+}
+
+.time-name {
+  font-size: 12px;
+  color: #666;
+}
+
+.day-column {
+  min-width: 160px;
+  max-width: 200px;
+}
+
+.schedule-cell {
+  min-height: 60px;
+  width: 100%;
+  padding: 2px;
+}
+
+.schedule-cell.clickable {
+  cursor: pointer;
+}
+
+.schedule-cell.clickable:hover {
+  background: #e6f7ff;
+  border-radius: 4px;
+}
+
+.schedule-cell.selected {
+  background: #f6ffed;
+  border: 1px solid #52c41a;
+  border-radius: 4px;
+}
+
+.schedule-cell.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 12px;
+}
+
+.schedule-cell.empty .ant-empty {
+  margin: 4px 0;
+}
+
+.schedule-cell.empty .ant-empty-description {
+  color: #999;
+  font-size: 11px;
+}
+
+.class-card {
+  width: 100%;
+  margin: 0;
+}
+
+.class-card .ant-card-body {
+  padding: 8px;
+}
+
+.class-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1890ff;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.class-teacher {
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+
+.class-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.multiple-classes {
+  text-align: center;
+}
+
+.class-count {
+  font-weight: 600;
+  font-size: 12px;
+  color: #1890ff;
+  margin-bottom: 4px;
+}
+
+.multiple-classes .ant-btn {
+  font-size: 10px;
+  padding: 0;
+  height: auto;
+  line-height: 1.2;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .schedule-table-container {
+    overflow-x: auto;
+  }
+  
+  .day-column {
+    min-width: 140px;
+    max-width: 160px;
+  }
+  
+  .class-title {
+    font-size: 12px;
+  }
+  
+  .class-teacher {
+    font-size: 10px;
+  }
+}
+
+/* Non-lesson time slot styles */
+.schedule-cell.break-slot {
+  background: #f6ffed;
+  border: 1px solid #b7eb8f;
+}
+
+.schedule-cell.meeting-slot {
+  background: #e6f7ff;
+  border: 1px solid #91d5ff;
+}
+
+.schedule-cell.unknown-slot {
+  background: #fff2e8;
+  border: 1px solid #ffbb96;
+}
+
+.non-lesson-card {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.non-lesson-card .ant-card-body {
+  padding: 8px 4px;
+  text-align: center;
+}
+
+.non-lesson-content .slot-name {
+  font-weight: 600;
+  font-size: 12px;
+  color: #1890ff;
+  margin-bottom: 2px;
+}
+
+.non-lesson-content .slot-description {
+  font-size: 10px;
+  color: #666;
+  line-height: 1.2;
+}
+
+/* RTL specific adjustments */
+.schedule-table .ant-table-thead > tr > th,
+.schedule-table .ant-table-tbody > tr > td {
+  text-align: right;
+}
+
+.schedule-table .time-column,
+.time-cell {
+  text-align: center;
+}
+
+.schedule-table .ant-tag {
+  margin-right: 0;
+  margin-left: 4px;
+}

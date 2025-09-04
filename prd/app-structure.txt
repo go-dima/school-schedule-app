@@ -1,0 +1,12 @@
+- Schedule page:
+    - Displays the weekly schedule in a table format
+    - Allows users to view and select classes
+    - Provides a drawer for class details and conflicts
+
+- Class modification page:
+    - Allows teachers and staff to create, edit, and delete classes
+    - Validates input and displays error messages
+
+- Pending approvals page:
+    - Displays a list of pending user signups
+    - Allows admins to approve or reject signups

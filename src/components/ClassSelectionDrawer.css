@@ -1,0 +1,181 @@
+.class-selection-drawer {
+  direction: rtl;
+}
+
+.class-selection-drawer .ant-drawer-header {
+  direction: rtl;
+  text-align: right;
+}
+
+.class-selection-drawer .ant-drawer-close {
+  left: 16px;
+  right: auto;
+}
+
+.drawer-title {
+  width: 100%;
+}
+
+.drawer-title .ant-typography {
+  margin-bottom: 8px;
+}
+
+.time-slot-info {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.drawer-content {
+  direction: rtl;
+}
+
+.class-selection-card {
+  width: 100%;
+  margin-bottom: 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.class-selection-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.class-selection-card.selected {
+  border-color: #52c41a;
+  background: #f6ffed;
+}
+
+.class-selection-card.conflict {
+  border-color: #faad14;
+  background: #fffbf0;
+}
+
+.class-card-content {
+  direction: rtl;
+  text-align: right;
+}
+
+.class-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+
+.class-header-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.class-title {
+  margin: 0 !important;
+  color: #1890ff;
+  flex-grow: 1;
+  line-height: 1.3;
+}
+
+.class-details {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.class-description {
+  margin-top: 8px;
+  padding: 8px;
+  background: #fafafa;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #666;
+}
+
+.conflict-alert {
+  margin-top: 12px;
+}
+
+.conflict-alert .ant-alert-message {
+  font-weight: 600;
+}
+
+.selected-classes-section,
+.available-classes-section {
+  width: 100%;
+}
+
+.selected-classes-section .ant-typography,
+.available-classes-section .ant-typography {
+  color: #1890ff;
+  margin-bottom: 12px !important;
+}
+
+.conflict-warning {
+  margin-top: 16px;
+}
+
+/* Action buttons */
+.class-selection-card .ant-card-actions {
+  background: transparent;
+  border-top: 1px solid #f0f0f0;
+}
+
+.class-selection-card .ant-card-actions > li {
+  margin: 8px 0;
+}
+
+.class-selection-card .ant-card-actions .ant-btn {
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.class-selection-card.selected .ant-card-actions .ant-btn {
+  color: #52c41a;
+  border-color: #52c41a;
+}
+
+.class-selection-card.selected .ant-card-actions .ant-btn:hover {
+  color: #73d13d;
+  border-color: #73d13d;
+}
+
+/* RTL specific adjustments */
+.class-selection-drawer .ant-space {
+  width: 100%;
+}
+
+.class-selection-drawer .ant-alert {
+  text-align: right;
+}
+
+.class-selection-drawer .ant-tag {
+  margin-left: 0;
+  margin-right: 4px;
+}
+
+.class-selection-drawer .ant-divider {
+  margin: 16px 0;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .class-selection-drawer .ant-drawer {
+    width: 90% !important;
+  }
+  
+  .class-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .class-title {
+    margin-bottom: 8px !important;
+  }
+  
+  .time-slot-info {
+    justify-content: flex-start;
+  }
+}

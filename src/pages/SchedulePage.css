@@ -1,0 +1,181 @@
+.schedule-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+  direction: rtl;
+}
+
+.schedule-content {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.schedule-header {
+  margin-bottom: 24px;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.header-main .ant-typography h2 {
+  margin: 0;
+  color: #1890ff;
+}
+
+.role-selector {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  border: 1px solid #e8e8e8;
+}
+
+.filters-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 0;
+}
+
+.filters-section span {
+  font-weight: 500;
+  color: #262626;
+}
+
+.schedule-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin-bottom: 24px;
+}
+
+.schedule-card .ant-card-body {
+  padding: 16px;
+}
+
+.selected-classes-summary {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.selected-classes-summary .ant-card-head {
+  background: #f9f9f9;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.selected-classes-summary .ant-card-head-title {
+  color: #1890ff;
+  font-weight: 600;
+}
+
+.selected-classes-summary .ant-space-item .ant-btn {
+  border-radius: 20px;
+  font-size: 12px;
+  height: 28px;
+  padding: 0 12px;
+}
+
+/* RTL specific adjustments */
+.schedule-header .ant-space {
+  direction: rtl;
+}
+
+.schedule-header .ant-select {
+  text-align: right;
+}
+
+.schedule-header .ant-alert {
+  text-align: right;
+}
+
+.schedule-header .ant-alert-message {
+  font-weight: 500;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .schedule-content {
+    padding: 16px;
+  }
+  
+  .schedule-header {
+    padding: 16px;
+  }
+  
+  .header-main {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .header-main .ant-space {
+    justify-content: center;
+  }
+  
+  .filters-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .role-selector {
+    text-align: center;
+  }
+  
+  .schedule-card .ant-card-body {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-main .ant-typography h2 {
+    font-size: 18px;
+    text-align: center;
+  }
+  
+  .selected-classes-summary .ant-space-item .ant-btn {
+    font-size: 11px;
+    height: 26px;
+    padding: 0 8px;
+  }
+}
+
+/* Animation */
+.schedule-card {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loading state */
+.schedule-content .ant-spin-container {
+  min-height: 400px;
+}

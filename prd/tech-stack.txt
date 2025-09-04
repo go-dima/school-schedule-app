@@ -1,0 +1,8 @@
+- Use react + typescript for type safety
+- Use vite for packaging and serving the application
+- Prefer antd for UI components
+- Use supabase database for data storage and retrieval
+- Use storybook for developing and testing UI components in isolation
+- App should be runnable locally
+- Use dotenv for managing environment variables
+- Use dedicated migration files for db management

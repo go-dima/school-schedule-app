@@ -1,0 +1,7 @@
+- Use React hooks to manage component state and side effects
+- Define an API layer for making requests to the Supabase backend
+- Use context providers to manage global state and user authentication
+- Separate concerns by organizing code into components, hooks, and utilities
+- Prefer keeping logic in a dedicated service layer rather than in components, so it can be moved to a backend later if needed
+- Add unit-tests for inner logic
+- Include extensive documentation for app usage and running locally
