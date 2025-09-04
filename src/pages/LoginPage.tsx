@@ -1,42 +1,51 @@
-import React, { useState } from 'react'
-import { Form, Input, Button, Card, Typography, Alert, Space, Divider } from 'antd'
-import { UserOutlined, LockOutlined, GoogleOutlined, GithubOutlined } from '@ant-design/icons'
-import { useAuth } from '../hooks/useAuth'
-import './AuthPages.css'
+import React, { useState } from "react";
+import {
+  Form,
+  Input,
+  Button,
+  Card,
+  Typography,
+  Alert,
+  Space,
+  Divider,
+} from "antd";
+import { UserOutlined, LockOutlined, GoogleOutlined } from "@ant-design/icons";
+import { useAuth } from "../hooks/useAuth";
+import "./AuthPages.css";
 
-const { Title, Text, Link } = Typography
+const { Title, Text, Link } = Typography;
 
 interface LoginFormValues {
-  email: string
-  password: string
+  email: string;
+  password: string;
 }
 
 interface LoginPageProps {
-  onSwitchToSignup: () => void
+  onSwitchToSignup: () => void;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
-  const [form] = Form.useForm()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const { signIn } = useAuth()
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { signIn } = useAuth();
 
   const onFinish = async (values: LoginFormValues) => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
-      await signIn(values.email, values.password)
+      await signIn(values.email, values.password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'שגיאה בהתחברות')
+      setError(err instanceof Error ? err.message : "שגיאה בהתחברות");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const handleOAuthSignIn = (provider: 'google' | 'github') => {
-    console.log(`OAuth sign in with ${provider}`)
-  }
+  const handleOAuthSignIn = (provider: "google") => {
+    console.log(`OAuth sign in with ${provider}`);
+  };
 
   return (
     <div className="auth-page">
@@ -44,9 +53,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
         <Card className="auth-card">
           <div className="auth-header">
             <Title level={2}>התחברות</Title>
-            <Text type="secondary">
-              היכנס למערכת השעות שלך
-            </Text>
+            <Text type="secondary">היכנס למערכת השעות שלך</Text>
           </div>
 
           {error && (
@@ -67,16 +74,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
             onFinish={onFinish}
             layout="vertical"
             requiredMark={false}
-            className="auth-form"
-          >
+            className="auth-form">
             <Form.Item
               name="email"
               label="כתובת דוא״ל"
               rules={[
-                { required: true, message: 'נא להזין כתובת דוא״ל' },
-                { type: 'email', message: 'כתובת דוא״ל לא תקינה' }
-              ]}
-            >
+                { required: true, message: "נא להזין כתובת דוא״ל" },
+                { type: "email", message: "כתובת דוא״ל לא תקינה" },
+              ]}>
               <Input
                 prefix={<UserOutlined />}
                 placeholder="your@email.com"
@@ -87,8 +92,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
             <Form.Item
               name="password"
               label="סיסמה"
-              rules={[{ required: true, message: 'נא להזין סיסמה' }]}
-            >
+              rules={[{ required: true, message: "נא להזין סיסמה" }]}>
               <Input.Password
                 prefix={<LockOutlined />}
                 placeholder="הסיסמה שלך"
@@ -103,13 +107,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
                 size="large"
                 loading={loading}
                 block
-                className="auth-submit-btn"
-              >
+                className="auth-submit-btn">
                 התחבר
               </Button>
             </Form.Item>
           </Form>
 
+          {/* OAuth buttons hidden but logic preserved
           <Divider plain>או</Divider>
 
           <Space direction="vertical" size="small" style={{ width: '100%' }}>
@@ -122,30 +126,19 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
             >
               התחבר עם Google
             </Button>
-            
-            <Button
-              icon={<GithubOutlined />}
-              size="large"
-              block
-              onClick={() => handleOAuthSignIn('github')}
-              className="oauth-btn github-btn"
-            >
-              התחבר עם GitHub
-            </Button>
           </Space>
+          */}
 
           <div className="auth-footer">
             <Text>
-              עדיין אין לך חשבון?{' '}
-              <Link onClick={onSwitchToSignup}>
-                הירשם עכשיו
-              </Link>
+              עדיין אין לך חשבון?{" "}
+              <Link onClick={onSwitchToSignup}>הירשם עכשיו</Link>
             </Text>
           </div>
         </Card>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default LoginPage
+export default LoginPage;

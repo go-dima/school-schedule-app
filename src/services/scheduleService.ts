@@ -94,21 +94,25 @@ export class ScheduleService {
   }
 
   static getGradeName(grade: number): string {
+    return `כיתה ${this.getGradeNameShort(grade)}`;
+  }
+
+  static getGradeNameShort(grade: number): string {
     switch (grade) {
       case 1:
-        return "כיתה א׳";
+        return "א׳";
       case 2:
-        return "כיתה ב׳";
+        return "ב׳";
       case 3:
-        return "כיתה ג׳";
+        return "ג׳";
       case 4:
-        return "כיתה ד׳";
+        return "ד׳";
       case 5:
-        return "כיתה ה׳";
+        return "ה׳";
       case 6:
-        return "כיתה ו׳";
+        return "ו׳";
       default:
-        return `כיתה ${grade}`;
+        return `${grade}`;
     }
   }
 

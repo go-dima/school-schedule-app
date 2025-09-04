@@ -25,7 +25,7 @@ This is a school schedule management application for elementary school (grades 1
 
 ## User Roles & Authentication
 
-- **Authentication**: Supabase built-in auth with email/password and OAuth (Google, GitHub)
+- **Authentication**: Supabase built-in auth with email/password and OAuth (Google)
 - **Approval System**: New signups require admin approval before login
 - **Multi-role Users**: Same user can act as parent, teacher, or admin with role switching
 

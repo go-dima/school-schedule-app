@@ -47,6 +47,29 @@ export const authApi = {
               profileError
             );
           }
+
+          // Automatically create parent role for new users
+          try {
+            const { error: roleError } = await supabase.from("user_roles").insert([
+              {
+                user_id: data.user.id,
+                role: "parent",
+                approved: false, // Requires admin approval
+              },
+            ]);
+
+            if (roleError) {
+              console.warn(
+                "⚠️ Role creation error (non-fatal):",
+                roleError
+              );
+            }
+          } catch (roleErr) {
+            console.warn(
+              "⚠️ Role creation exception (non-fatal):",
+              roleErr
+            );
+          }
         } catch (profileErr) {
           console.warn(
             "⚠️ Profile creation exception (non-fatal):",
@@ -226,6 +249,25 @@ export const usersApi = {
 
     if (error) throw new ApiError(error.message);
     return data[0];
+  },
+
+  async getAllUsersWithRoles(): Promise<any[]> {
+    const { data, error } = await supabase
+      .from("users")
+      .select(`
+        *,
+        user_roles (
+          id,
+          role,
+          approved,
+          created_at,
+          updated_at
+        )
+      `)
+      .order("created_at", { ascending: false });
+
+    if (error) throw new ApiError(error.message);
+    return data || [];
   },
 };
 

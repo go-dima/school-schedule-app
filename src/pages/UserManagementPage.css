@@ -1,0 +1,48 @@
+.user-management-page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.user-management-page .ant-table-thead > tr > th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+.user-management-page .ant-tag {
+  margin-right: 0;
+  margin-left: 4px;
+}
+
+/* RTL adjustments */
+.user-management-page .ant-space {
+  direction: rtl;
+}
+
+.user-management-page .ant-btn {
+  direction: ltr;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .user-management-page {
+    padding: 16px;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

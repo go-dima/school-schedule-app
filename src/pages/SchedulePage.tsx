@@ -14,6 +14,7 @@ import {
   UserSwitchOutlined,
   SettingOutlined,
   UserAddOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import { useAuth } from "../contexts/AuthContext";
 import { useSchedule } from "../hooks/useSchedule";
@@ -27,7 +28,13 @@ const { Title } = Typography;
 const { Option } = Select;
 
 interface SchedulePageProps {
-  onNavigate?: (page: "schedule" | "class-management" | "pending-approvals") => void;
+  onNavigate?: (
+    page:
+      | "schedule"
+      | "class-management"
+      | "pending-approvals"
+      | "user-management"
+  ) => void;
 }
 
 const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
@@ -70,10 +77,11 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
   const selectedClasses = userSelections.map((selection) => selection.classId);
   const canSelectClasses =
     currentRole?.role === "child" || currentRole?.role === "parent";
-  
-  const canViewClasses = 
-    canSelectClasses || currentRole?.role === "admin" || currentRole?.role === "staff";
 
+  const canViewClasses =
+    canSelectClasses ||
+    currentRole?.role === "admin" ||
+    currentRole?.role === "staff";
 
   if (loading) {
     return (
@@ -104,6 +112,11 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                     icon={<SettingOutlined />}
                     onClick={() => onNavigate?.("class-management")}>
                     ניהול שיעורים
+                  </Button>
+                  <Button
+                    icon={<UserOutlined />}
+                    onClick={() => onNavigate?.("user-management")}>
+                    ניהול משתמשים
                   </Button>
                 </>
               )}
@@ -164,9 +177,10 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
             <Alert
               message="אין הרשאה לבחירת שיעורים"
               description={
-                userRoles.length === 0 
+                userRoles.length === 0
                   ? "נדרשת אישור מנהל להפעלת התפקיד. אנא המתן לאישור או פנה למנהל."
-                  : currentRole?.role === "admin" || currentRole?.role === "staff"
+                  : currentRole?.role === "admin" ||
+                    currentRole?.role === "staff"
                   ? "מנהלים וצוות יכולים לצפות במערכת השעות אך לא לבחור שיעורים."
                   : "רק תלמידים והורים יכולים לבחור שיעורים במערכת השעות."
               }
@@ -174,19 +188,21 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
               showIcon
               style={{ marginBottom: 16 }}
               action={
-                userRoles.length > 1 && (currentRole?.role === "admin" || currentRole?.role === "staff") ? (
-                  <Button 
-                    size="small" 
+                userRoles.length > 1 &&
+                (currentRole?.role === "admin" ||
+                  currentRole?.role === "staff") ? (
+                  <Button
+                    size="small"
                     type="primary"
                     onClick={() => {
-                      const childOrParentRole = userRoles.find(role => 
-                        role.role === "child" || role.role === "parent"
+                      const childOrParentRole = userRoles.find(
+                        (role) =>
+                          role.role === "child" || role.role === "parent"
                       );
                       if (childOrParentRole) {
                         switchRole(childOrParentRole);
                       }
-                    }}
-                  >
+                    }}>
                     החלף לתפקיד מתאים
                   </Button>
                 ) : undefined

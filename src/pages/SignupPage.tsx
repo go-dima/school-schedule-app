@@ -1,51 +1,53 @@
-import React, { useState } from 'react'
-import { Form, Input, Button, Card, Typography, Alert, Checkbox, Space } from 'antd'
-import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons'
-import { useAuth } from '../hooks/useAuth'
-import type { UserRole } from '../types'
-import './AuthPages.css'
+import React, { useState } from "react";
+import {
+  Form,
+  Input,
+  Button,
+  Card,
+  Typography,
+  Alert,
+  Checkbox,
+  Space,
+} from "antd";
+import { UserOutlined, LockOutlined, MailOutlined } from "@ant-design/icons";
+import { useAuth } from "../hooks/useAuth";
+import type { UserRole } from "../types";
+import "./AuthPages.css";
 
-const { Title, Text, Link } = Typography
+const { Title, Text, Link } = Typography;
 
 interface SignupFormValues {
-  email: string
-  password: string
-  confirmPassword: string
-  roles: UserRole[]
-  terms: boolean
+  email: string;
+  password: string;
+  confirmPassword: string;
+  terms: boolean;
 }
 
 interface SignupPageProps {
-  onSwitchToLogin: () => void
+  onSwitchToLogin: () => void;
 }
 
 const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
-  const [form] = Form.useForm()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
-  const { signUp } = useAuth()
-
-  const roleOptions = [
-    { value: 'parent' as UserRole, label: 'הורה' },
-    { value: 'child' as UserRole, label: 'תלמיד' },
-    { value: 'staff' as UserRole, label: 'צוות הוראה' },
-  ]
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const { signUp } = useAuth();
 
   const onFinish = async (values: SignupFormValues) => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
-      await signUp(values.email, values.password)
-      setSuccess(true)
-      form.resetFields()
+      await signUp(values.email, values.password);
+      setSuccess(true);
+      form.resetFields();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'שגיאה בהרשמה')
+      setError(err instanceof Error ? err.message : "שגיאה בהרשמה");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   if (success) {
     return (
@@ -60,8 +62,11 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
               message="בקשת הרשמה נשלחה"
               description={
                 <div>
-                  <p>תודה על הרשמתך למערכת השעות!</p>
-                  <p>בקשתך ממתינה לאישור מנהל המערכת. תקבל הודעה למייל כאשר החשבון יאושר.</p>
+                  <p>תודה על הרשמתך למערכת השעות כהורה!</p>
+                  <p>
+                    בקשתך ממתינה לאישור מנהל המערכת. תקבל הודעה למייל כאשר
+                    החשבון יאושר.
+                  </p>
                   <p>בינתיים, תוכל לחזור לעמוד ההתחברות.</p>
                 </div>
               }
@@ -71,19 +76,18 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
             />
 
             <div className="auth-footer">
-              <Button 
-                type="primary" 
-                size="large" 
+              <Button
+                type="primary"
+                size="large"
                 onClick={onSwitchToLogin}
-                block
-              >
+                block>
                 חזור לעמוד ההתחברות
               </Button>
             </div>
           </Card>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -92,9 +96,7 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
         <Card className="auth-card">
           <div className="auth-header">
             <Title level={2}>הרשמה</Title>
-            <Text type="secondary">
-              צור חשבון חדש במערכת השעות
-            </Text>
+            <Text type="secondary">צור חשבון הורה חדש במערכת השעות</Text>
           </div>
 
           {error && (
@@ -115,16 +117,14 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
             onFinish={onFinish}
             layout="vertical"
             requiredMark={false}
-            className="auth-form"
-          >
+            className="auth-form">
             <Form.Item
               name="email"
               label="כתובת דוא״ל"
               rules={[
-                { required: true, message: 'נא להזין כתובת דוא״ל' },
-                { type: 'email', message: 'כתובת דוא״ל לא תקינה' }
-              ]}
-            >
+                { required: true, message: "נא להזין כתובת דוא״ל" },
+                { type: "email", message: "כתובת דוא״ל לא תקינה" },
+              ]}>
               <Input
                 prefix={<MailOutlined />}
                 placeholder="your@email.com"
@@ -136,10 +136,9 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
               name="password"
               label="סיסמה"
               rules={[
-                { required: true, message: 'נא להזין סיסמה' },
-                { min: 6, message: 'הסיסמה חייבת להכיל לפחות 6 תווים' }
-              ]}
-            >
+                { required: true, message: "נא להזין סיסמה" },
+                { min: 6, message: "הסיסמה חייבת להכיל לפחות 6 תווים" },
+              ]}>
               <Input.Password
                 prefix={<LockOutlined />}
                 placeholder="לפחות 6 תווים"
@@ -150,19 +149,18 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
             <Form.Item
               name="confirmPassword"
               label="אימות סיסמה"
-              dependencies={['password']}
+              dependencies={["password"]}
               rules={[
-                { required: true, message: 'נא לאמת את הסיסמה' },
+                { required: true, message: "נא לאמת את הסיסמה" },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
-                    if (!value || getFieldValue('password') === value) {
-                      return Promise.resolve()
+                    if (!value || getFieldValue("password") === value) {
+                      return Promise.resolve();
                     }
-                    return Promise.reject(new Error('הסיסמאות אינן תואמות'))
+                    return Promise.reject(new Error("הסיסמאות אינן תואמות"));
                   },
                 }),
-              ]}
-            >
+              ]}>
               <Input.Password
                 prefix={<LockOutlined />}
                 placeholder="הזן שוב את הסיסמה"
@@ -171,21 +169,10 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
             </Form.Item>
 
             <Form.Item
-              name="roles"
-              label="בחר תפקידים (ניתן לבחור כמה תפקידים)"
-              rules={[{ required: true, message: 'נא לבחור לפחות תפקיד אחד' }]}
-            >
-              <Checkbox.Group options={roleOptions} />
-            </Form.Item>
-
-            <Form.Item
               name="terms"
               valuePropName="checked"
-              rules={[{ required: true, message: 'נא לאשר את תנאי השימוש' }]}
-            >
-              <Checkbox>
-                אני מסכים לתנאי השימוש ומדיניות הפרטיות
-              </Checkbox>
+              rules={[{ required: true, message: "נא לאשר את תנאי השימוש" }]}>
+              <Checkbox>אני מסכים לתנאי השימוש ומדיניות הפרטיות</Checkbox>
             </Form.Item>
 
             <Form.Item>
@@ -195,8 +182,7 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
                 size="large"
                 loading={loading}
                 block
-                className="auth-submit-btn"
-              >
+                className="auth-submit-btn">
                 הירשם
               </Button>
             </Form.Item>
@@ -204,16 +190,14 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
 
           <div className="auth-footer">
             <Text>
-              כבר יש לך חשבון?{' '}
-              <Link onClick={onSwitchToLogin}>
-                התחבר עכשיו
-              </Link>
+              כבר יש לך חשבון?{" "}
+              <Link onClick={onSwitchToLogin}>התחבר עכשיו</Link>
             </Text>
           </div>
         </Card>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SignupPage
+export default SignupPage;

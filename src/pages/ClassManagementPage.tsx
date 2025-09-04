@@ -1,179 +1,207 @@
-import React, { useState, useEffect } from 'react'
-import { 
-  Layout, 
-  Card, 
-  Typography, 
-  Table, 
-  Button, 
-  Space, 
-  Alert, 
-  Spin, 
-  Modal, 
+import React, { useState, useEffect } from "react";
+import {
+  Layout,
+  Card,
+  Typography,
+  Table,
+  Button,
+  Space,
+  Alert,
+  Spin,
+  Modal,
   message,
   Popconfirm,
-  Tag
-} from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined, ArrowLeftOutlined } from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
-import { useAuth } from '../contexts/AuthContext'
-import { classesApi, timeSlotsApi } from '../services/api'
-import { ScheduleService } from '../services/scheduleService'
-import type { ClassWithTimeSlot, TimeSlot, Class } from '../types'
-import ClassForm from '../components/ClassForm'
-import './ClassManagementPage.css'
+  Tag,
+} from "antd";
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  ReloadOutlined,
+  ArrowLeftOutlined,
+} from "@ant-design/icons";
+import type { ColumnsType } from "antd/es/table";
+import { useAuth } from "../contexts/AuthContext";
+import { classesApi, timeSlotsApi } from "../services/api";
+import { ScheduleService } from "../services/scheduleService";
+import type { ClassWithTimeSlot, TimeSlot, Class } from "../types";
+import ClassForm from "../components/ClassForm";
+import "./ClassManagementPage.css";
 
-const { Content } = Layout
-const { Title } = Typography
+const { Content } = Layout;
+const { Title } = Typography;
 
 interface ClassManagementPageProps {
-  onNavigate?: (page: 'schedule' | 'class-management' | 'pending-approvals') => void
+  onNavigate?: (
+    page:
+      | "schedule"
+      | "class-management"
+      | "pending-approvals"
+      | "user-management"
+  ) => void;
 }
 
-const ClassManagementPage: React.FC<ClassManagementPageProps> = ({ onNavigate }) => {
-  const { isAdmin, signOut } = useAuth()
-  const [classes, setClasses] = useState<ClassWithTimeSlot[]>([])
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [modalVisible, setModalVisible] = useState(false)
-  const [editingClass, setEditingClass] = useState<ClassWithTimeSlot | null>(null)
+const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
+  onNavigate,
+}) => {
+  const { isAdmin, signOut } = useAuth();
+  const [classes, setClasses] = useState<ClassWithTimeSlot[]>([]);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingClass, setEditingClass] = useState<ClassWithTimeSlot | null>(
+    null
+  );
 
   useEffect(() => {
-    loadData()
-  }, [])
+    loadData();
+  }, []);
 
   const loadData = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
       const [classesData, timeSlotsData] = await Promise.all([
         classesApi.getClasses(),
-        timeSlotsApi.getTimeSlots()
-      ])
+        timeSlotsApi.getTimeSlots(),
+      ]);
 
-      setClasses(classesData)
-      setTimeSlots(timeSlotsData)
+      setClasses(classesData);
+      setTimeSlots(timeSlotsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data')
+      setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleAddClass = () => {
-    setEditingClass(null)
-    setModalVisible(true)
-  }
+    setEditingClass(null);
+    setModalVisible(true);
+  };
 
   const handleEditClass = (cls: ClassWithTimeSlot) => {
-    setEditingClass(cls)
-    setModalVisible(true)
-  }
+    setEditingClass(cls);
+    setModalVisible(true);
+  };
 
   const handleDeleteClass = async (classId: string) => {
     try {
-      await classesApi.deleteClass(classId)
-      message.success('השיעור נמחק בהצלחה')
-      await loadData()
+      await classesApi.deleteClass(classId);
+      message.success("השיעור נמחק בהצלחה");
+      await loadData();
     } catch (err) {
-      message.error(err instanceof Error ? err.message : 'שגיאה במחיקת השיעור')
+      message.error(err instanceof Error ? err.message : "שגיאה במחיקת השיעור");
     }
-  }
+  };
 
-  const handleFormSubmit = async (classData: Omit<Class, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleFormSubmit = async (
+    classData: Omit<Class, "id" | "createdAt" | "updatedAt">
+  ) => {
     try {
       if (editingClass) {
-        await classesApi.updateClass(editingClass.id, classData)
-        message.success('השיעור עודכן בהצלחה')
+        await classesApi.updateClass(editingClass.id, classData);
+        message.success("השיעור עודכן בהצלחה");
       } else {
-        await classesApi.createClass(classData)
-        message.success('השיעור נוצר בהצלחה')
+        await classesApi.createClass(classData);
+        message.success("השיעור נוצר בהצלחה");
       }
-      
-      setModalVisible(false)
-      await loadData()
+
+      setModalVisible(false);
+      await loadData();
     } catch (err) {
-      message.error(err instanceof Error ? err.message : 'שגיאה בשמירת השיעור')
+      message.error(err instanceof Error ? err.message : "שגיאה בשמירת השיעור");
     }
-  }
+  };
 
   const handleModalCancel = () => {
-    setModalVisible(false)
-    setEditingClass(null)
-  }
+    setModalVisible(false);
+    setEditingClass(null);
+  };
 
   const getTimeSlotDisplay = (timeSlot: TimeSlot) => {
-    const timeRange = ScheduleService.formatTimeRange(timeSlot.startTime, timeSlot.endTime)
-    const dayName = ScheduleService.getDayName(timeSlot.dayOfWeek)
-    return `${dayName} - ${timeSlot.name} ${timeRange ? `(${timeRange})` : ''}`
-  }
+    const timeRange = ScheduleService.formatTimeRange(
+      timeSlot.startTime,
+      timeSlot.endTime
+    );
+    const dayName = ScheduleService.getDayName(timeSlot.dayOfWeek);
+    // return `${dayName} - ${timeSlot.name} ${timeRange ? `(${timeRange})` : ""}`;
+    return (
+      <span>
+        <div>יום {dayName}</div>
+        {timeRange && <div>{timeRange}</div>}
+      </span>
+    );
+  };
 
   const columns: ColumnsType<ClassWithTimeSlot> = [
     {
-      title: 'שם השיעור',
-      dataIndex: 'title',
-      key: 'title',
+      title: "שם השיעור",
+      dataIndex: "title",
+      key: "title",
       width: 200,
     },
     {
-      title: 'תיאור',
-      dataIndex: 'description',
-      key: 'description',
+      title: "תיאור",
+      dataIndex: "description",
+      key: "description",
       width: 250,
       ellipsis: true,
     },
     {
-      title: 'מורה',
-      dataIndex: 'teacher',
-      key: 'teacher',
+      title: "מורה",
+      dataIndex: "teacher",
+      key: "teacher",
       width: 150,
     },
     {
-      title: 'כיתות',
-      dataIndex: 'grades',
-      key: 'grades',
+      title: "כיתות",
+      dataIndex: "grades",
+      key: "grades",
       width: 150,
       render: (grades: number[]) => (
-        <Space direction="vertical" size="small">
-          {grades?.map(grade => (
-            <Tag key={grade} color="geekblue">
-              {ScheduleService.getGradeName(grade)}
-            </Tag>
-          ))}
+        <Space size="small">
+          {grades
+            ?.sort((a, b) => b - a)
+            .map((grade) => (
+              <Tag key={grade} color="geekblue">
+                {ScheduleService.getGradeNameShort(grade)}
+              </Tag>
+            ))}
         </Space>
       ),
     },
     {
-      title: 'זמן השיעור',
-      dataIndex: 'timeSlot',
-      key: 'timeSlot',
-      width: 200,
+      title: "זמן השיעור",
+      dataIndex: "timeSlot",
+      key: "timeSlot",
+      width: 150,
       render: (timeSlot: TimeSlot) => getTimeSlotDisplay(timeSlot),
     },
     {
-      title: 'סוג',
-      dataIndex: 'isMandatory',
-      key: 'isMandatory',
+      title: "סוג",
+      dataIndex: "isMandatory",
+      key: "isMandatory",
       width: 80,
       render: (isMandatory: boolean) => (
-        <Tag color={isMandatory ? 'red' : 'blue'}>
-          {isMandatory ? 'חובה' : 'בחירה'}
+        <Tag color={isMandatory ? "red" : "blue"}>
+          {isMandatory ? "חובה" : "בחירה"}
         </Tag>
       ),
     },
     {
-      title: 'פעולות',
-      key: 'actions',
+      title: "פעולות",
+      key: "actions",
       width: 120,
       render: (_, record) => (
-        <Space>
+        <Space direction="vertical">
           <Button
             type="link"
             icon={<EditOutlined />}
             onClick={() => handleEditClass(record)}
-            size="small"
-          >
+            size="small">
             ערוך
           </Button>
           <Popconfirm
@@ -181,21 +209,15 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({ onNavigate })
             description="פעולה זו תמחק את השיעור ואת כל הבחירות הקשורות אליו"
             onConfirm={() => handleDeleteClass(record.id)}
             okText="כן"
-            cancelText="לא"
-          >
-            <Button
-              type="link"
-              icon={<DeleteOutlined />}
-              danger
-              size="small"
-            >
+            cancelText="לא">
+            <Button type="link" icon={<DeleteOutlined />} danger size="small">
               מחק
             </Button>
           </Popconfirm>
         </Space>
       ),
     },
-  ]
+  ];
 
   if (!isAdmin()) {
     return (
@@ -209,18 +231,18 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({ onNavigate })
           />
         </Content>
       </Layout>
-    )
+    );
   }
 
   if (loading) {
     return (
       <div className="page-loading">
         <Spin size="large" />
-        <Title level={4} style={{ marginTop: 16, color: '#1890ff' }}>
+        <Title level={4} style={{ marginTop: 16, color: "#1890ff" }}>
           טוען נתוני שיעורים...
         </Title>
       </div>
-    )
+    );
   }
 
   return (
@@ -230,31 +252,30 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({ onNavigate })
           <div className="header-main">
             <Title level={2}>ניהול שיעורים</Title>
             <Space>
-              <Button 
+              <Button
                 icon={<ArrowLeftOutlined />}
-                onClick={() => onNavigate?.('schedule')}
-              >
+                onClick={() => onNavigate?.("schedule")}>
                 חזרה למערכת השעות
               </Button>
-              <Button 
-                type="primary" 
+              <Button onClick={() => onNavigate?.("pending-approvals")}>
+                אישורי הרשמה
+              </Button>
+              <Button onClick={() => onNavigate?.("user-management")}>
+                ניהול משתמשים
+              </Button>
+              <Button
+                type="primary"
                 icon={<PlusOutlined />}
-                onClick={handleAddClass}
-              >
+                onClick={handleAddClass}>
                 הוסף שיעור חדש
               </Button>
-              <Button 
-                icon={<ReloadOutlined />} 
+              <Button
+                icon={<ReloadOutlined />}
                 onClick={loadData}
-                disabled={loading}
-              >
+                disabled={loading}>
                 רענן
               </Button>
-              <Button 
-                type="primary" 
-                danger 
-                onClick={signOut}
-              >
+              <Button type="primary" danger onClick={signOut}>
                 התנתק
               </Button>
             </Space>
@@ -289,8 +310,8 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({ onNavigate })
               pageSize: 20,
               showSizeChanger: true,
               showQuickJumper: true,
-              showTotal: (total, range) => 
-                `${range[0]}-${range[1]} מתוך ${total} שיעורים`
+              showTotal: (total, range) =>
+                `${range[0]}-${range[1]} מתוך ${total} שיעורים`,
             }}
             scroll={{ x: 1000 }}
             size="small"
@@ -298,13 +319,12 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({ onNavigate })
         </Card>
 
         <Modal
-          title={editingClass ? 'ערוך שיעור' : 'הוסף שיעור חדש'}
+          title={editingClass ? "ערוך שיעור" : "הוסף שיעור חדש"}
           open={modalVisible}
           onCancel={handleModalCancel}
           footer={null}
           width={600}
-          destroyOnClose
-        >
+          destroyOnClose>
           <ClassForm
             initialValues={editingClass}
             timeSlots={timeSlots}
@@ -315,7 +335,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({ onNavigate })
         </Modal>
       </Content>
     </Layout>
-  )
-}
+  );
+};
 
-export default ClassManagementPage
+export default ClassManagementPage;

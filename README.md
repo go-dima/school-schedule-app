@@ -14,7 +14,7 @@ A modern schedule management system for elementary schools (grades 1-6) with ful
 - **Multiple Roles**: Admin, Parent, Student, Staff
 - **Role Switching**: Users can switch between different roles
 - **Approval System**: New registrations require admin approval
-- **Multi-Channel Authentication**: Email/password + OAuth (Google, GitHub)
+- **Multi-Channel Authentication**: Email/password + OAuth (Google)
 
 ### 🔒 Security and Access Control
 - **Row Level Security**: Database-level protection

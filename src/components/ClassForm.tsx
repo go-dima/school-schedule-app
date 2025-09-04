@@ -100,11 +100,8 @@ const ClassForm: React.FC<ClassFormProps> = ({
 
       <Form.Item
         name="description"
-        label="תיאור השיעור"
-        rules={[
-          { required: true, message: "נא להזין תיאור לשיעור" },
-          { min: 5, message: "התיאור חייב להכיל לפחות 5 תווים" },
-        ]}>
+        label="תיאור השיעור (אופציונלי)"
+        rules={[{ min: 5, message: "התיאור חייב להכיל לפחות 5 תווים" }]}>
         <TextArea
           rows={3}
           placeholder="תיאור קצר על השיעור, הנושאים שנלמדים וכו'"
