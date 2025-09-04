@@ -16,6 +16,16 @@ export interface UserRoleData {
   updatedAt: string
 }
 
+export interface PendingApproval {
+  id: string
+  userId: string
+  role: UserRole
+  approved: boolean
+  createdAt: string
+  updatedAt: string
+  user: User
+}
+
 export interface TimeSlot {
   id: string
   name: string

@@ -1,0 +1,129 @@
+.pending-approvals-page {
+  min-height: 100vh;
+  background: #f0f2f5;
+}
+
+.pending-approvals-content {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.pending-approvals-header {
+  margin-bottom: 24px;
+}
+
+.header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.header-main h2 {
+  margin: 0;
+  color: #1890ff;
+}
+
+.pending-approvals-table-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pending-approvals-table-card .ant-table {
+  direction: rtl;
+}
+
+.pending-approvals-table-card .ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+  text-align: right;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.pending-approvals-table-card .ant-table-tbody > tr > td {
+  text-align: right;
+  vertical-align: top;
+}
+
+.pending-approvals-table-card .ant-table-tbody > tr:hover > td {
+  background: #e6f7ff;
+}
+
+/* Page loading */
+.page-loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f0f2f5;
+}
+
+/* RTL specific adjustments */
+.ant-space {
+  direction: ltr;
+}
+
+.ant-space-item {
+  direction: rtl;
+}
+
+.ant-tag {
+  margin-right: 0;
+  margin-left: 4px;
+}
+
+.ant-btn + .ant-btn {
+  margin-right: 8px;
+  margin-left: 0;
+}
+
+/* Action buttons alignment */
+.ant-table-tbody .ant-space {
+  justify-content: flex-start;
+}
+
+/* Alert RTL */
+.ant-alert {
+  direction: rtl;
+}
+
+.ant-alert-message,
+.ant-alert-description {
+  text-align: right;
+}
+
+/* Badge positioning for RTL */
+.ant-badge {
+  direction: ltr;
+}
+
+/* Popconfirm RTL */
+.ant-popover {
+  direction: rtl;
+}
+
+.ant-popover-inner-content {
+  text-align: right;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .pending-approvals-content {
+    padding: 16px;
+  }
+  
+  .header-main {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .header-main h2 {
+    text-align: center;
+  }
+  
+  .pending-approvals-table-card .ant-table {
+    font-size: 12px;
+  }
+}

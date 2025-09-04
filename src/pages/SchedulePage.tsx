@@ -13,6 +13,7 @@ import {
   ReloadOutlined,
   UserSwitchOutlined,
   SettingOutlined,
+  UserAddOutlined,
 } from "@ant-design/icons";
 import { useAuth } from "../contexts/AuthContext";
 import { useSchedule } from "../hooks/useSchedule";
@@ -26,7 +27,7 @@ const { Title } = Typography;
 const { Option } = Select;
 
 interface SchedulePageProps {
-  onNavigate?: (page: "schedule" | "class-management") => void;
+  onNavigate?: (page: "schedule" | "class-management" | "pending-approvals") => void;
 }
 
 const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
@@ -89,11 +90,18 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
             <Title level={2}>מערכת שעות</Title>
             <Space>
               {isAdmin() && (
-                <Button
-                  icon={<SettingOutlined />}
-                  onClick={() => onNavigate?.("class-management")}>
-                  ניהול שיעורים
-                </Button>
+                <>
+                  <Button
+                    icon={<UserAddOutlined />}
+                    onClick={() => onNavigate?.("pending-approvals")}>
+                    בקשות ממתינות
+                  </Button>
+                  <Button
+                    icon={<SettingOutlined />}
+                    onClick={() => onNavigate?.("class-management")}>
+                    ניהול שיעורים
+                  </Button>
+                </>
               )}
               <Button
                 icon={<ReloadOutlined />}

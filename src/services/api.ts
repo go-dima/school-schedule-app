@@ -1,6 +1,7 @@
 import type {
   Class,
   ClassWithTimeSlot,
+  PendingApproval,
   ScheduleSelectionWithClass,
   TimeSlot,
   User,
@@ -8,6 +9,7 @@ import type {
   UserRoleData,
 } from "../types";
 import { supabase } from "./supabase";
+import { NotificationService } from "./notificationService";
 
 export class ApiError extends Error {
   constructor(message: string, public status?: number) {
@@ -138,6 +140,20 @@ export const usersApi = {
       .select();
 
     if (error) throw new ApiError(error.message);
+    
+    // Get user email for notification
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("email")
+      .eq("id", userId)
+      .single();
+
+    // Send in-app notification to admins (non-blocking)
+    if (userData?.email) {
+      NotificationService.notifyAdminsOfPendingApproval(userData.email, role)
+        .catch(err => console.warn('Notification logging failed:', err));
+    }
+
     return data[0];
   },
 
@@ -167,6 +183,49 @@ export const usersApi = {
       createdAt: role.created_at,
       updatedAt: role.updated_at,
     }));
+  },
+
+  async getPendingApprovalsWithUsers(): Promise<PendingApproval[]> {
+    const { data, error } = await supabase
+      .from("user_roles")
+      .select(`
+        *,
+        users:user_id (
+          id,
+          email,
+          created_at,
+          updated_at
+        )
+      `)
+      .eq("approved", false)
+      .order("created_at", { ascending: false });
+
+    if (error) throw new ApiError(error.message);
+    return data.map((role) => ({
+      id: role.id,
+      userId: role.user_id,
+      role: role.role as UserRole,
+      approved: role.approved,
+      createdAt: role.created_at,
+      updatedAt: role.updated_at,
+      user: {
+        id: role.users.id,
+        email: role.users.email,
+        createdAt: role.users.created_at,
+        updatedAt: role.users.updated_at,
+      },
+    }));
+  },
+
+  async rejectRole(roleId: string) {
+    const { data, error } = await supabase
+      .from("user_roles")
+      .delete()
+      .eq("id", roleId)
+      .select();
+
+    if (error) throw new ApiError(error.message);
+    return data[0];
   },
 };
 

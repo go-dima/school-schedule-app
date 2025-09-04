@@ -26,7 +26,7 @@ const { Content } = Layout
 const { Title } = Typography
 
 interface ClassManagementPageProps {
-  onNavigate?: (page: 'schedule' | 'class-management') => void
+  onNavigate?: (page: 'schedule' | 'class-management' | 'pending-approvals') => void
 }
 
 const ClassManagementPage: React.FC<ClassManagementPageProps> = ({ onNavigate }) => {

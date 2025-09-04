@@ -4,10 +4,11 @@ import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import SchedulePage from './pages/SchedulePage'
 import ClassManagementPage from './pages/ClassManagementPage'
+import PendingApprovalsPage from './pages/PendingApprovalsPage'
 import { Spin } from 'antd'
 import './App.css'
 
-type Page = 'schedule' | 'class-management'
+type Page = 'schedule' | 'class-management' | 'pending-approvals'
 
 function AppContent() {
   const { user, loading } = useAuth()
@@ -38,6 +39,8 @@ function AppContent() {
   switch (currentPage) {
     case 'class-management':
       return <ClassManagementPage onNavigate={setCurrentPage} />
+    case 'pending-approvals':
+      return <PendingApprovalsPage onNavigate={setCurrentPage} />
     default:
       return <SchedulePage onNavigate={setCurrentPage} />
   }

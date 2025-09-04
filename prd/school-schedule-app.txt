@@ -9,3 +9,4 @@ The time slots are pre-defined, and can be customized to the entire school sched
 **The schedule is in Hebrew and is displayed from right to left.**
 When clicking on a class, a drawer opens from the left side of the screen, displaying list of classes in the same time slot.
 A lesson can be defined as mandatory for each grade, then it's pre-selected in the schedule
+Same time slot can have several classes for the same grade, then the student can choose one of them.
