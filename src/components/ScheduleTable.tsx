@@ -18,6 +18,8 @@ interface ScheduleTableProps {
   onClassUnselect?: (classId: string) => void;
   canSelectClasses?: boolean;
   canViewClasses?: boolean;
+  isAdmin?: boolean;
+  onCreateClass?: (timeSlotId: string, dayOfWeek: number) => void;
 }
 
 interface ScheduleRow {
@@ -36,6 +38,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   onClassUnselect,
   canSelectClasses = false,
   canViewClasses = false,
+  isAdmin = false,
+  onCreateClass,
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(
@@ -239,6 +243,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           onClassSelect={onClassSelect}
           onClassUnselect={onClassUnselect}
           canSelectClasses={canSelectClasses}
+          isAdmin={isAdmin}
+          onCreateClass={onCreateClass}
         />
       )}
     </div>

@@ -8,6 +8,8 @@ import {
   Space,
   Alert,
   Spin,
+  Modal,
+  message,
 } from "antd";
 import {
   ReloadOutlined,
@@ -19,7 +21,10 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { useSchedule } from "../hooks/useSchedule";
 import ScheduleTable from "../components/ScheduleTable";
+import ClassForm from "../components/ClassForm";
+import { classesApi, timeSlotsApi } from "../services/api";
 import { GRADES } from "../types";
+import type { Class, TimeSlot } from "../types";
 import "./SchedulePage.css";
 import { ScheduleService } from "../services/scheduleService";
 
@@ -41,6 +46,15 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
   const { user, currentRole, userRoles, switchRole, signOut, isAdmin } =
     useAuth();
   const [selectedGrade, setSelectedGrade] = useState<number | undefined>(1);
+  const [createClassModalOpen, setCreateClassModalOpen] = useState(false);
+  const [createClassTimeSlotId, setCreateClassTimeSlotId] = useState<
+    string | null
+  >(null);
+  const [createClassDayOfWeek, setCreateClassDayOfWeek] = useState<
+    number | null
+  >(null);
+  const [allTimeSlots, setAllTimeSlots] = useState<TimeSlot[]>([]);
+  const [modalLoading, setModalLoading] = useState(false);
 
   const {
     classes,
@@ -71,6 +85,56 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
       }
     } catch (err) {
       // Handle error silently or show user feedback
+    }
+  };
+
+  const handleCreateClass = async (timeSlotId: string, dayOfWeek: number) => {
+    // Load all time slots for the form if not already loaded
+    let slotsToUse = allTimeSlots;
+    if (allTimeSlots.length === 0) {
+      try {
+        const allSlots = await timeSlotsApi.getTimeSlots();
+        setAllTimeSlots(allSlots);
+        slotsToUse = allSlots;
+      } catch (err) {
+        message.error("שגיאה בטעינת נתוני השעות");
+        return;
+      }
+    }
+
+    // Verify the timeSlot exists before setting state
+    const foundTimeSlot = slotsToUse.find((slot) => slot.id === timeSlotId);
+
+    if (!foundTimeSlot) {
+      message.error("שגיאה: לא נמצא זמן השיעור המבוקש");
+      return;
+    }
+
+    setCreateClassTimeSlotId(timeSlotId);
+    setCreateClassDayOfWeek(dayOfWeek);
+    setCreateClassModalOpen(true);
+  };
+
+  const handleCloseCreateModal = () => {
+    setCreateClassModalOpen(false);
+    setCreateClassTimeSlotId(null);
+    setCreateClassDayOfWeek(null);
+  };
+
+  const handleFormSubmit = async (
+    classData: Omit<Class, "id" | "createdAt" | "updatedAt">
+  ) => {
+    setModalLoading(true);
+    try {
+      await classesApi.createClass(classData);
+      message.success("השיעור נוצר בהצלחה");
+      handleCloseCreateModal();
+      // Reload schedule data to show the new class
+      await loadScheduleData();
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : "שגיאה ביצירת השיעור");
+    } finally {
+      setModalLoading(false);
     }
   };
 
@@ -233,6 +297,8 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
             onClassUnselect={handleClassSelect}
             canSelectClasses={canSelectClasses}
             canViewClasses={canViewClasses}
+            isAdmin={isAdmin()}
+            onCreateClass={handleCreateClass}
           />
         </Card>
 
@@ -252,6 +318,50 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
           </Card>
         )}
       </Content>
+
+      <Modal
+        title="צור שיעור חדש"
+        open={createClassModalOpen}
+        onCancel={handleCloseCreateModal}
+        footer={null}
+        width={600}
+        destroyOnHidden>
+        {createClassTimeSlotId &&
+          createClassDayOfWeek !== null &&
+          allTimeSlots.length > 0 &&
+          (() => {
+            const selectedTimeSlot = allTimeSlots.find(
+              (slot) => slot.id === createClassTimeSlotId
+            );
+            if (!selectedTimeSlot) {
+              return null; // Don't render if timeSlot not found
+            }
+
+            const initialValues = {
+              timeSlotId: createClassTimeSlotId,
+              title: "",
+              description: "",
+              teacher: "",
+              grades: [],
+              isMandatory: false,
+              id: createClassTimeSlotId,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              timeSlot: selectedTimeSlot,
+            };
+
+            return (
+              <ClassForm
+                initialValues={initialValues}
+                timeSlots={allTimeSlots}
+                onSubmit={handleFormSubmit}
+                onCancel={handleCloseCreateModal}
+                loading={modalLoading}
+                isNewLesson={true}
+              />
+            );
+          })()}
+      </Modal>
     </Layout>
   );
 };

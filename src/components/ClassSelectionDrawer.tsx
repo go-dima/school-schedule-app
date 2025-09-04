@@ -8,11 +8,11 @@ import {
   Alert,
   Space,
   Typography,
-  Divider,
 } from "antd";
 import { CheckOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
 import { ScheduleService } from "../services/scheduleService";
 import type { TimeSlot, ClassWithTimeSlot } from "../types";
+import CreateClassButton from "./CreateClassButton";
 import "./ClassSelectionDrawer.css";
 
 const { Title, Text } = Typography;
@@ -28,6 +28,8 @@ interface ClassSelectionDrawerProps {
   onClassUnselect?: (classId: string) => void;
   conflictingClasses?: ClassWithTimeSlot[];
   canSelectClasses?: boolean;
+  isAdmin?: boolean;
+  onCreateClass?: (timeSlotId: string, dayOfWeek: number) => void;
 }
 
 const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
@@ -41,6 +43,8 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
   onClassUnselect,
   conflictingClasses = [],
   canSelectClasses = false,
+  isAdmin = false,
+  onCreateClass,
 }) => {
   const dayName = ScheduleService.getDayName(dayOfWeek);
   const timeRange = ScheduleService.formatTimeRange(
@@ -158,8 +162,16 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
         {classes.length === 0 ? (
           <Empty
             description="אין שיעורים זמינים בזמן זה"
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-          />
+            image={Empty.PRESENTED_IMAGE_SIMPLE}>
+            {isAdmin && onCreateClass && (
+              <CreateClassButton
+                onCreateClass={onCreateClass}
+                timeSlotId={timeSlot.id}
+                dayOfWeek={dayOfWeek}
+                style={{ marginTop: 16 }}
+              />
+            )}
+          </Empty>
         ) : (
           <Space direction="vertical" size="middle" style={{ width: "100%" }}>
             {selectedClassesInTimeSlot.length > 0 && (
@@ -171,7 +183,6 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
                   style={{ width: "100%" }}>
                   {selectedClassesInTimeSlot.map(renderClassCard)}
                 </Space>
-                <Divider />
               </div>
             )}
 
@@ -189,6 +200,14 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
                   {availableClasses.map(renderClassCard)}
                 </Space>
               </div>
+            )}
+
+            {isAdmin && onCreateClass && (
+              <CreateClassButton
+                onCreateClass={onCreateClass}
+                timeSlotId={timeSlot.id}
+                dayOfWeek={dayOfWeek}
+              />
             )}
 
             {conflictingClasses.length > 0 && (

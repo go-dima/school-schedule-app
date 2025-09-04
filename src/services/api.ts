@@ -415,7 +415,7 @@ export const classesApi = {
       .update(updateData)
       .eq("id", id)
       .select();
-
+    
     if (error) throw new ApiError(error.message);
     return data[0];
   },

@@ -53,6 +53,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
   const [editingClass, setEditingClass] = useState<ClassWithTimeSlot | null>(
     null
   );
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -68,6 +69,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
         timeSlotsApi.getTimeSlots(),
       ]);
 
+      
       setClasses(classesData);
       setTimeSlots(timeSlotsData);
     } catch (err) {
@@ -100,6 +102,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
   const handleFormSubmit = async (
     classData: Omit<Class, "id" | "createdAt" | "updatedAt">
   ) => {
+    setSubmitting(true);
     try {
       if (editingClass) {
         await classesApi.updateClass(editingClass.id, classData);
@@ -112,7 +115,10 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
       setModalVisible(false);
       await loadData();
     } catch (err) {
+      console.error('ClassManagementPage submission error:', err);
       message.error(err instanceof Error ? err.message : "שגיאה בשמירת השיעור");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -122,12 +128,16 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
   };
 
   const getTimeSlotDisplay = (timeSlot: TimeSlot) => {
+    if (!timeSlot) {
+      return 'No Time Slot';
+    }
+    
     const timeRange = ScheduleService.formatTimeRange(
       timeSlot.startTime,
       timeSlot.endTime
     );
     const dayName = ScheduleService.getDayName(timeSlot.dayOfWeek);
-    // return `${dayName} - ${timeSlot.name} ${timeRange ? `(${timeRange})` : ""}`;
+    
     return (
       <span>
         <div>יום {dayName}</div>
@@ -324,13 +334,14 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
           onCancel={handleModalCancel}
           footer={null}
           width={600}
-          destroyOnClose>
+          destroyOnHidden>
           <ClassForm
             initialValues={editingClass}
             timeSlots={timeSlots}
             onSubmit={handleFormSubmit}
             onCancel={handleModalCancel}
-            loading={loading}
+            loading={submitting}
+            isNewLesson={!editingClass}
           />
         </Modal>
       </Content>
