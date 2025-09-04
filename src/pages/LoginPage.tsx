@@ -34,9 +34,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
     }
   };
 
-  const handleOAuthSignIn = (provider: "google") => {
-    console.log(`OAuth sign in with ${provider}`);
-  };
+  // const handleOAuthSignIn = (provider: "google") => {
+  //   console.log(`OAuth sign in with ${provider}`);
+  // };
 
   return (
     <div className="auth-page">
