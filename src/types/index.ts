@@ -36,6 +36,8 @@ export interface TimeSlot {
   updatedAt: string
 }
 
+export type ClassScope = 'test' | 'prod'
+
 export interface Class {
   id: string
   title: string
@@ -44,6 +46,7 @@ export interface Class {
   timeSlotId: string
   grades: number[] // Changed from single grade to multiple grades
   isMandatory: boolean
+  scope: ClassScope
   createdAt: string
   updatedAt: string
 }
