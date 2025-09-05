@@ -86,12 +86,12 @@
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .mandatory-class-manager .action-buttons {
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .mandatory-class-manager .ant-table-scroll {
     overflow-x: auto;
   }

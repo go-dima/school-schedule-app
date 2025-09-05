@@ -131,16 +131,16 @@
   .class-management-content {
     padding: 16px;
   }
-  
+
   .header-main {
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .header-main h2 {
     text-align: center;
   }
-  
+
   .classes-table-card .ant-table {
     font-size: 12px;
   }

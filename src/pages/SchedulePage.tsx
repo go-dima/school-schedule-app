@@ -70,7 +70,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
   } = useSchedule(user?.id);
 
   const handleRoleSwitch = (roleId: string) => {
-    const role = userRoles.find((r) => r.id === roleId);
+    const role = userRoles.find(r => r.id === roleId);
     if (role) {
       switchRole(role);
     }
@@ -103,7 +103,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     }
 
     // Verify the timeSlot exists before setting state
-    const foundTimeSlot = slotsToUse.find((slot) => slot.id === timeSlotId);
+    const foundTimeSlot = slotsToUse.find(slot => slot.id === timeSlotId);
 
     if (!foundTimeSlot) {
       message.error("שגיאה: לא נמצא זמן השיעור המבוקש");
@@ -138,7 +138,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     }
   };
 
-  const selectedClasses = userSelections.map((selection) => selection.classId);
+  const selectedClasses = userSelections.map(selection => selection.classId);
   const canSelectClasses =
     currentRole?.role === "child" || currentRole?.role === "parent";
 
@@ -191,7 +191,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                   placeholder="בחר תפקיד"
                   style={{ minWidth: 120 }}
                   suffixIcon={<UserSwitchOutlined />}>
-                  {userRoles.map((role) => (
+                  {userRoles.map(role => (
                     <Option key={role.id} value={role.id}>
                       {getRoleDisplayName(role.role)}
                     </Option>
@@ -219,7 +219,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                 placeholder="כל הכיתות"
                 allowClear
                 style={{ minWidth: 120 }}>
-                {GRADES.map((grade) => (
+                {GRADES.map(grade => (
                   <Option key={grade} value={grade}>
                     {ScheduleService.getGradeName(grade)}
                   </Option>
@@ -244,9 +244,9 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                 userRoles.length === 0
                   ? "נדרשת אישור מנהל להפעלת התפקיד. אנא המתן לאישור או פנה למנהל."
                   : currentRole?.role === "admin" ||
-                    currentRole?.role === "staff"
-                  ? "מנהלים וצוות יכולים לצפות במערכת השעות אך לא לבחור שיעורים."
-                  : "רק תלמידים והורים יכולים לבחור שיעורים במערכת השעות."
+                      currentRole?.role === "staff"
+                    ? "מנהלים וצוות יכולים לצפות במערכת השעות אך לא לבחור שיעורים."
+                    : "רק תלמידים והורים יכולים לבחור שיעורים במערכת השעות."
               }
               type="warning"
               showIcon
@@ -260,8 +260,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                     type="primary"
                     onClick={() => {
                       const childOrParentRole = userRoles.find(
-                        (role) =>
-                          role.role === "child" || role.role === "parent"
+                        role => role.role === "child" || role.role === "parent"
                       );
                       if (childOrParentRole) {
                         switchRole(childOrParentRole);
@@ -305,7 +304,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
         {canSelectClasses && userSelections.length > 0 && (
           <Card title="השיעורים שנבחרו" className="selected-classes-summary">
             <Space wrap>
-              {userSelections.map((selection) => (
+              {userSelections.map(selection => (
                 <Button
                   key={selection.id}
                   type="primary"
@@ -331,7 +330,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
           allTimeSlots.length > 0 &&
           (() => {
             const selectedTimeSlot = allTimeSlots.find(
-              (slot) => slot.id === createClassTimeSlotId
+              slot => slot.id === createClassTimeSlotId
             );
             if (!selectedTimeSlot) {
               return null; // Don't render if timeSlot not found
@@ -344,7 +343,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
               teacher: "",
               grades: [],
               isMandatory: false,
-              scope: 'test' as const,
+              scope: "test" as const,
               id: createClassTimeSlotId,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),

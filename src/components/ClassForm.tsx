@@ -34,14 +34,17 @@ const ClassForm: React.FC<ClassFormProps> = ({
   const lessonTimeSlots = getLessonTimeSlots(timeSlots);
 
   // Group time slots by day for better organization
-  const timeSlotsByDay = lessonTimeSlots.reduce((acc, slot) => {
-    const day = slot.dayOfWeek;
-    if (!acc[day]) {
-      acc[day] = [];
-    }
-    acc[day].push(slot);
-    return acc;
-  }, {} as Record<number, TimeSlot[]>);
+  const timeSlotsByDay = lessonTimeSlots.reduce(
+    (acc, slot) => {
+      const day = slot.dayOfWeek;
+      if (!acc[day]) {
+        acc[day] = [];
+      }
+      acc[day].push(slot);
+      return acc;
+    },
+    {} as Record<number, TimeSlot[]>
+  );
 
   // Get available days
   const availableDays = Object.keys(timeSlotsByDay)
@@ -61,7 +64,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
     } else if (initialValues?.timeSlotId) {
       // Find timeSlot from timeSlotId
       const initialTimeSlot = lessonTimeSlots.find(
-        (slot) => slot.id === initialValues.timeSlotId
+        slot => slot.id === initialValues.timeSlotId
       );
       if (initialTimeSlot) {
         const dayOfWeek = initialTimeSlot.dayOfWeek;
@@ -108,7 +111,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
       form={form}
       layout="vertical"
       onFinish={handleSubmit}
-      onFinishFailed={(errorInfo) => {
+      onFinishFailed={errorInfo => {
         console.error("Form validation failed:", errorInfo);
       }}
       initialValues={
@@ -171,7 +174,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
             label="כיתות"
             rules={[{ required: true, message: "נא לבחור לפחות כיתה אחת" }]}>
             <Select mode="multiple" placeholder="בחר כיתות" allowClear>
-              {GRADES.map((grade) => (
+              {GRADES.map(grade => (
                 <Option key={grade} value={grade}>
                   {ScheduleService.getGradeName(grade)}
                 </Option>
@@ -209,7 +212,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
             label="יום"
             rules={[{ required: true, message: "נא לבחור יום לשיעור" }]}>
             <Select placeholder="בחר יום">
-              {availableDays.map((day) => (
+              {availableDays.map(day => (
                 <Option key={day} value={day}>
                   {ScheduleService.getDayName(day)}
                 </Option>
@@ -237,7 +240,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
               }>
               {availableTimeSlots
                 .sort((a, b) => a.startTime.localeCompare(b.startTime))
-                .map((slot) => (
+                .map(slot => (
                   <Option key={slot.id} value={slot.id}>
                     {slot.name} -{" "}
                     {ScheduleService.formatTimeRange(

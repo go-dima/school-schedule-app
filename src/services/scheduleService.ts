@@ -8,7 +8,7 @@ export class ScheduleService {
   static buildWeeklySchedule(classes: ClassWithTimeSlot[]): WeeklySchedule {
     const schedule: WeeklySchedule = {};
 
-    classes.forEach((cls) => {
+    classes.forEach(cls => {
       const { dayOfWeek } = cls.timeSlot;
       const timeSlotId = cls.timeSlotId;
 
@@ -32,12 +32,12 @@ export class ScheduleService {
   ): ClassWithTimeSlot[] {
     return userSelections
       .filter(
-        (selection) =>
+        selection =>
           selection.class.timeSlot.dayOfWeek === newClass.timeSlot.dayOfWeek &&
           selection.class.timeSlotId === newClass.timeSlotId &&
           selection.class.id !== newClass.id
       )
-      .map((selection) => selection.class);
+      .map(selection => selection.class);
   }
 
   static hasTimeConflict(
@@ -53,7 +53,7 @@ export class ScheduleService {
     grade?: number
   ): ClassWithTimeSlot[] {
     return classes.filter(
-      (cls) =>
+      cls =>
         cls.timeSlotId === timeSlotId &&
         (grade === undefined || cls.grades?.includes(grade))
     );

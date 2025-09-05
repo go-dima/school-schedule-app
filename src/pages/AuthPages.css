@@ -160,24 +160,24 @@
   .auth-page {
     padding: 16px;
   }
-  
+
   .auth-card .ant-card-body {
     padding: 24px;
   }
-  
+
   .auth-header {
     margin-bottom: 24px;
   }
-  
+
   .auth-header .ant-typography h2 {
     font-size: 20px;
   }
-  
+
   .auth-submit-btn {
     height: 44px;
     font-size: 15px;
   }
-  
+
   .oauth-btn {
     height: 40px;
     font-size: 14px;

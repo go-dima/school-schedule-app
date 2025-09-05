@@ -1,13 +1,5 @@
 import React, { useState } from "react";
-import {
-  Form,
-  Input,
-  Button,
-  Card,
-  Typography,
-  Alert,
-  Checkbox,
-} from "antd";
+import { Form, Input, Button, Card, Typography, Alert, Checkbox } from "antd";
 import { LockOutlined, MailOutlined } from "@ant-design/icons";
 import { useAuth } from "../hooks/useAuth";
 import "./AuthPages.css";

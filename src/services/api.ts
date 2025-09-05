@@ -12,7 +12,10 @@ import { supabase } from "./supabase";
 import { NotificationService } from "./notificationService";
 
 export class ApiError extends Error {
-  constructor(message: string, public status?: number) {
+  constructor(
+    message: string,
+    public status?: number
+  ) {
     super(message);
     this.name = "ApiError";
   }
@@ -41,39 +44,29 @@ export const authApi = {
         ]);
 
         if (profileError) {
-          console.warn(
-            "⚠️ Profile creation error (non-fatal):",
-            profileError
-          );
+          console.warn("⚠️ Profile creation error (non-fatal):", profileError);
         }
 
         // Automatically create parent role for new users
         try {
-          const { error: roleError } = await supabase.from("user_roles").insert([
-            {
-              user_id: data.user.id,
-              role: "parent",
-              approved: false, // Requires admin approval
-            },
-          ]);
+          const { error: roleError } = await supabase
+            .from("user_roles")
+            .insert([
+              {
+                user_id: data.user.id,
+                role: "parent",
+                approved: false, // Requires admin approval
+              },
+            ]);
 
           if (roleError) {
-            console.warn(
-              "⚠️ Role creation error (non-fatal):",
-              roleError
-            );
+            console.warn("⚠️ Role creation error (non-fatal):", roleError);
           }
         } catch (roleErr) {
-          console.warn(
-            "⚠️ Role creation exception (non-fatal):",
-            roleErr
-          );
+          console.warn("⚠️ Role creation exception (non-fatal):", roleErr);
         }
       } catch (profileErr) {
-        console.warn(
-          "⚠️ Profile creation exception (non-fatal):",
-          profileErr
-        );
+        console.warn("⚠️ Profile creation exception (non-fatal):", profileErr);
       }
     }
 
@@ -136,7 +129,7 @@ export const usersApi = {
       .eq("user_id", userId);
 
     if (error) throw new ApiError(error.message);
-    return data.map((role) => ({
+    return data.map(role => ({
       id: role.id,
       userId: role.user_id,
       role: role.role as UserRole,
@@ -159,7 +152,7 @@ export const usersApi = {
       .select();
 
     if (error) throw new ApiError(error.message);
-    
+
     // Get user email for notification
     const { data: userData } = await supabase
       .from("users")
@@ -169,8 +162,10 @@ export const usersApi = {
 
     // Send in-app notification to admins (non-blocking)
     if (userData?.email) {
-      NotificationService.notifyAdminsOfPendingApproval(userData.email, role)
-        .catch(err => console.warn('Notification logging failed:', err));
+      NotificationService.notifyAdminsOfPendingApproval(
+        userData.email,
+        role
+      ).catch(err => console.warn("Notification logging failed:", err));
     }
 
     return data[0];
@@ -194,7 +189,7 @@ export const usersApi = {
       .eq("approved", false);
 
     if (error) throw new ApiError(error.message);
-    return data.map((role) => ({
+    return data.map(role => ({
       id: role.id,
       userId: role.user_id,
       role: role.role as UserRole,
@@ -207,7 +202,8 @@ export const usersApi = {
   async getPendingApprovalsWithUsers(): Promise<PendingApproval[]> {
     const { data, error } = await supabase
       .from("user_roles")
-      .select(`
+      .select(
+        `
         *,
         users:user_id (
           id,
@@ -215,12 +211,13 @@ export const usersApi = {
           created_at,
           updated_at
         )
-      `)
+      `
+      )
       .eq("approved", false)
       .order("created_at", { ascending: false });
 
     if (error) throw new ApiError(error.message);
-    return data.map((role) => ({
+    return data.map(role => ({
       id: role.id,
       userId: role.user_id,
       role: role.role as UserRole,
@@ -250,7 +247,8 @@ export const usersApi = {
   async getAllUsersWithRoles(): Promise<any[]> {
     const { data, error } = await supabase
       .from("users")
-      .select(`
+      .select(
+        `
         *,
         user_roles (
           id,
@@ -259,7 +257,8 @@ export const usersApi = {
           created_at,
           updated_at
         )
-      `)
+      `
+      )
       .order("created_at", { ascending: false });
 
     if (error) throw new ApiError(error.message);
@@ -277,7 +276,7 @@ export const timeSlotsApi = {
       .order("start_time", { ascending: true });
 
     if (error) throw new ApiError(error.message);
-    return data.map((slot) => ({
+    return data.map(slot => ({
       id: slot.id,
       name: slot.name,
       startTime: slot.start_time,
@@ -339,25 +338,23 @@ export const timeSlotsApi = {
 // Classes API
 export const classesApi = {
   async getClasses(): Promise<ClassWithTimeSlot[]> {
-    const isProduction = process.env.NODE_ENV === 'production';
-    let query = supabase
-      .from("classes")
-      .select(
-        `
+    const isProduction = process.env.NODE_ENV === "production";
+    let query = supabase.from("classes").select(
+      `
         *,
         time_slot:time_slots(*)
       `
-      );
+    );
 
     // Filter out test classes in production
     if (isProduction) {
-      query = query.neq('scope', 'test');
+      query = query.neq("scope", "test");
     }
 
     const { data, error } = await query.order("title", { ascending: true });
 
     if (error) throw new ApiError(error.message);
-    return data.map((cls) => ({
+    return data.map(cls => ({
       id: cls.id,
       title: cls.title,
       description: cls.description,
@@ -421,7 +418,7 @@ export const classesApi = {
       .update(updateData)
       .eq("id", id)
       .select();
-    
+
     if (error) throw new ApiError(error.message);
     return data[0];
   },
@@ -436,7 +433,7 @@ export const classesApi = {
 // Schedule Selections API
 export const scheduleApi = {
   async getUserSchedule(userId: string): Promise<ScheduleSelectionWithClass[]> {
-    const isProduction = process.env.NODE_ENV === 'production';
+    const isProduction = process.env.NODE_ENV === "production";
     let query = supabase
       .from("schedule_selections")
       .select(
@@ -453,13 +450,13 @@ export const scheduleApi = {
     const { data, error } = await query;
 
     if (error) throw new ApiError(error.message);
-    
+
     // Filter out schedule selections with test classes in production
     let filteredData = data;
     if (isProduction) {
-      filteredData = data.filter(selection => selection.class.scope !== 'test');
+      filteredData = data.filter(selection => selection.class.scope !== "test");
     }
-    return filteredData.map((selection) => ({
+    return filteredData.map(selection => ({
       id: selection.id,
       userId: selection.user_id,
       classId: selection.class_id,

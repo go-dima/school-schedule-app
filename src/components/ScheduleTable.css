@@ -164,16 +164,16 @@
   .schedule-table-container {
     overflow-x: auto;
   }
-  
+
   .day-column {
     min-width: 140px;
     max-width: 160px;
   }
-  
+
   .class-title {
     font-size: 12px;
   }
-  
+
   .class-teacher {
     font-size: 10px;
   }

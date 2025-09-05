@@ -70,7 +70,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   const renderClassCell = (timeSlot: TimeSlot, dayOfWeek: number) => {
     const dayClasses = weeklySchedule[dayOfWeek]?.[timeSlot.id] || [];
     const filteredClasses = userGrade
-      ? dayClasses.filter((cls) => cls.grades?.includes(userGrade))
+      ? dayClasses.filter(cls => cls.grades?.includes(userGrade))
       : dayClasses;
 
     const displayInfo = getTimeSlotDisplayInfo(timeSlot);
@@ -122,7 +122,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
             <div className="class-title">{cls.title}</div>
             <div className="class-teacher">{cls.teacher}</div>
             <div className="class-tags">
-              {cls.grades?.map((grade) => (
+              {cls.grades?.map(grade => (
                 <Tag key={grade} color={isSelected ? "green" : "blue"}>
                   {ScheduleService.getGradeName(grade)}
                 </Tag>
@@ -146,7 +146,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
             <Button
               type="link"
               size="small"
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 handleCellClick(timeSlot, dayOfWeek);
               }}>
@@ -161,7 +161,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   const createScheduleData = (): ScheduleRow[] => {
     const uniqueTimeSlots = timeSlots.reduce((acc, slot) => {
       const key = `${slot.startTime}-${slot.endTime}-${slot.name}`;
-      if (!acc.find((s) => `${s.startTime}-${s.endTime}-${s.name}` === key)) {
+      if (!acc.find(s => `${s.startTime}-${s.endTime}-${s.name}` === key)) {
         acc.push(slot);
       }
       return acc;
@@ -169,13 +169,13 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 
     return uniqueTimeSlots
       .sort((a, b) => a.startTime.localeCompare(b.startTime))
-      .map((slot) => {
+      .map(slot => {
         const row: ScheduleRow = {
           key: `${slot.startTime}-${slot.endTime}`,
           timeSlot: slot,
         };
 
-        DAYS_OF_WEEK.forEach((day) => {
+        DAYS_OF_WEEK.forEach(day => {
           row[`day_${day.key}`] = renderClassCell(slot, day.key);
         });
 
@@ -204,7 +204,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
         );
       },
     },
-    ...DAYS_OF_WEEK.map((day) => ({
+    ...DAYS_OF_WEEK.map(day => ({
       title: day.name,
       dataIndex: `day_${day.key}`,
       key: `day_${day.key}`,
@@ -234,7 +234,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           timeSlot={selectedTimeSlot}
           dayOfWeek={selectedDayOfWeek}
           classes={classes.filter(
-            (cls) =>
+            cls =>
               cls.timeSlotId === selectedTimeSlot.id &&
               cls.timeSlot.dayOfWeek === selectedDayOfWeek &&
               (!userGrade || cls.grades?.includes(userGrade))

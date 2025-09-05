@@ -54,7 +54,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
     try {
       const usersData = await usersApi.getAllUsersWithRoles();
 
-      const transformedUsers: UserWithRoles[] = usersData.map((user) => ({
+      const transformedUsers: UserWithRoles[] = usersData.map(user => ({
         id: user.id,
         email: user.email,
         createdAt: user.created_at,
@@ -92,7 +92,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
       // Get the newly created role and approve it immediately
       const userRoles = await usersApi.getUserRoles(selectedUser.id);
       const adminRole = userRoles.find(
-        (role) => role.role === "admin" && !role.approved
+        role => role.role === "admin" && !role.approved
       );
 
       if (adminRole) {
@@ -152,7 +152,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
       key: "roles",
       render: (_, record) => (
         <Space wrap>
-          {record.roles.map((role) => (
+          {record.roles.map(role => (
             <Tag
               key={role.id}
               color={getRoleColor(role.role)}
@@ -172,7 +172,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
       key: "actions",
       render: (_, record) => {
         const isAdmin = record.roles.some(
-          (role) => role.role === "admin" && role.approved
+          role => role.role === "admin" && role.approved
         );
 
         return (

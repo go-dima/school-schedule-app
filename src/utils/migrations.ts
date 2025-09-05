@@ -86,7 +86,7 @@ export class MigrationRunner {
         return [];
       }
 
-      return data.map((row) => row.id);
+      return data.map(row => row.id);
     } catch (error) {
       console.warn("Error fetching migrations:", error);
       return [];
@@ -163,9 +163,7 @@ export class MigrationRunner {
     migration: Migration,
     appliedMigrations: string[]
   ): boolean {
-    return migration.dependencies.every((dep) =>
-      appliedMigrations.includes(dep)
-    );
+    return migration.dependencies.every(dep => appliedMigrations.includes(dep));
   }
 
   /**
@@ -177,7 +175,7 @@ export class MigrationRunner {
 
       const appliedMigrations = await this.getAppliedMigrations();
       const pendingMigrations = this.manifest.migrations.filter(
-        (migration) => !appliedMigrations.includes(migration.id)
+        migration => !appliedMigrations.includes(migration.id)
       );
 
       if (pendingMigrations.length === 0) {
@@ -236,7 +234,7 @@ export class MigrationRunner {
       visiting.add(migration.id);
 
       for (const depId of migration.dependencies) {
-        const dep = migrations.find((m) => m.id === depId);
+        const dep = migrations.find(m => m.id === depId);
         if (dep) {
           visit(dep);
         }
@@ -265,8 +263,8 @@ export class MigrationRunner {
   }> {
     const appliedMigrations = await this.getAppliedMigrations();
     const pendingMigrations = this.manifest.migrations
-      .filter((m) => !appliedMigrations.includes(m.id))
-      .map((m) => m.id);
+      .filter(m => !appliedMigrations.includes(m.id))
+      .map(m => m.id);
 
     return {
       applied: appliedMigrations,

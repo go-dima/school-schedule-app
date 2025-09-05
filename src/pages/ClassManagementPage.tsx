@@ -69,7 +69,6 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
         timeSlotsApi.getTimeSlots(),
       ]);
 
-      
       setClasses(classesData);
       setTimeSlots(timeSlotsData);
     } catch (err) {
@@ -115,7 +114,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
       setModalVisible(false);
       await loadData();
     } catch (err) {
-      console.error('ClassManagementPage submission error:', err);
+      console.error("ClassManagementPage submission error:", err);
       message.error(err instanceof Error ? err.message : "שגיאה בשמירת השיעור");
     } finally {
       setSubmitting(false);
@@ -129,15 +128,15 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
 
   const getTimeSlotDisplay = (timeSlot: TimeSlot) => {
     if (!timeSlot) {
-      return 'No Time Slot';
+      return "No Time Slot";
     }
-    
+
     const timeRange = ScheduleService.formatTimeRange(
       timeSlot.startTime,
       timeSlot.endTime
     );
     const dayName = ScheduleService.getDayName(timeSlot.dayOfWeek);
-    
+
     return (
       <span>
         <div>יום {dayName}</div>
@@ -175,7 +174,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
         <Space size="small">
           {grades
             ?.sort((a, b) => b - a)
-            .map((grade) => (
+            .map(grade => (
               <Tag key={grade} color="geekblue">
                 {ScheduleService.getGradeNameShort(grade)}
               </Tag>

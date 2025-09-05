@@ -65,7 +65,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
   const renderClassCard = (cls: ClassWithTimeSlot) => {
     const isSelected = selectedClasses.includes(cls.id);
     const hasConflict = conflictingClasses.some(
-      (conflict) => conflict.id === cls.id
+      conflict => conflict.id === cls.id
     );
 
     return (
@@ -96,7 +96,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
               {cls.title}
             </Title>
             <div className="class-header-tags">
-              {cls.grades?.map((grade) => (
+              {cls.grades?.map(grade => (
                 <Tag key={grade} color="blue">
                   {ScheduleService.getGradeName(grade)}
                 </Tag>
@@ -131,11 +131,11 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
     );
   };
 
-  const selectedClassesInTimeSlot = classes.filter((cls) =>
+  const selectedClassesInTimeSlot = classes.filter(cls =>
     selectedClasses.includes(cls.id)
   );
   const availableClasses = classes.filter(
-    (cls) => !selectedClasses.includes(cls.id)
+    cls => !selectedClasses.includes(cls.id)
   );
 
   return (

@@ -165,16 +165,16 @@
   .class-selection-drawer .ant-drawer {
     width: 90% !important;
   }
-  
+
   .class-header {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .class-title {
     margin-bottom: 8px !important;
   }
-  
+
   .time-slot-info {
     justify-content: flex-start;
   }

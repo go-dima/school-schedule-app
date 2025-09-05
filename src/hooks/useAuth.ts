@@ -1,136 +1,140 @@
-import { useState, useEffect } from 'react'
-import { User } from '@supabase/supabase-js'
-import { authApi, usersApi } from '../services/api'
-import type { UserRoleData } from '../types'
+import { useState, useEffect } from "react";
+import { User } from "@supabase/supabase-js";
+import { authApi, usersApi } from "../services/api";
+import type { UserRoleData } from "../types";
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null)
-  const [userRoles, setUserRoles] = useState<UserRoleData[]>([])
-  const [currentRole, setCurrentRole] = useState<UserRoleData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [user, setUser] = useState<User | null>(null);
+  const [userRoles, setUserRoles] = useState<UserRoleData[]>([]);
+  const [currentRole, setCurrentRole] = useState<UserRoleData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let mounted = true
+    let mounted = true;
 
     const initAuth = async () => {
       try {
-        const user = await authApi.getCurrentUser()
+        const user = await authApi.getCurrentUser();
         if (mounted) {
-          setUser(user)
+          setUser(user);
           if (user) {
-            await loadUserRoles(user.id)
+            await loadUserRoles(user.id);
           }
         }
       } catch (err) {
         if (mounted) {
-          setError(err instanceof Error ? err.message : 'Authentication error')
+          setError(err instanceof Error ? err.message : "Authentication error");
         }
       } finally {
         if (mounted) {
-          setLoading(false)
+          setLoading(false);
         }
       }
-    }
+    };
 
     const loadUserRoles = async (userId: string) => {
       try {
-        const roles = await usersApi.getUserRoles(userId)
-        const approvedRoles = roles.filter(role => role.approved)
-        
+        const roles = await usersApi.getUserRoles(userId);
+        const approvedRoles = roles.filter(role => role.approved);
+
         if (mounted) {
-          setUserRoles(approvedRoles)
-          setCurrentRole(approvedRoles[0] || null)
+          setUserRoles(approvedRoles);
+          setCurrentRole(approvedRoles[0] || null);
         }
       } catch (err) {
         if (mounted) {
-          setError(err instanceof Error ? err.message : 'Failed to load user roles')
+          setError(
+            err instanceof Error ? err.message : "Failed to load user roles"
+          );
         }
       }
-    }
+    };
 
-    initAuth()
+    initAuth();
 
-    const { data: { subscription } } = authApi.onAuthStateChange(async (user) => {
+    const {
+      data: { subscription },
+    } = authApi.onAuthStateChange(async user => {
       if (mounted) {
-        setUser(user)
-        setError(null)
-        
+        setUser(user);
+        setError(null);
+
         if (user) {
-          await loadUserRoles(user.id)
+          await loadUserRoles(user.id);
         } else {
-          setUserRoles([])
-          setCurrentRole(null)
+          setUserRoles([]);
+          setCurrentRole(null);
         }
       }
-    })
+    });
 
     return () => {
-      mounted = false
-      subscription?.unsubscribe()
-    }
-  }, [])
+      mounted = false;
+      subscription?.unsubscribe();
+    };
+  }, []);
 
   const signIn = async (email: string, password: string) => {
-    setError(null)
-    setLoading(true)
-    
+    setError(null);
+    setLoading(true);
+
     try {
-      await authApi.signIn(email, password)
+      await authApi.signIn(email, password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign in failed')
-      throw err
+      setError(err instanceof Error ? err.message : "Sign in failed");
+      throw err;
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const signUp = async (email: string, password: string) => {
-    setError(null)
-    setLoading(true)
-    
+    setError(null);
+    setLoading(true);
+
     try {
-      await authApi.signUp(email, password)
+      await authApi.signUp(email, password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign up failed')
-      throw err
+      setError(err instanceof Error ? err.message : "Sign up failed");
+      throw err;
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const signOut = async () => {
-    setError(null)
-    
+    setError(null);
+
     try {
-      await authApi.signOut()
+      await authApi.signOut();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign out failed')
-      throw err
+      setError(err instanceof Error ? err.message : "Sign out failed");
+      throw err;
     }
-  }
+  };
 
   const switchRole = (role: UserRoleData) => {
     if (userRoles.some(r => r.id === role.id)) {
-      setCurrentRole(role)
+      setCurrentRole(role);
     }
-  }
+  };
 
   const hasRole = (role: string): boolean => {
-    return userRoles.some(r => r.role === role)
-  }
+    return userRoles.some(r => r.role === role);
+  };
 
   const isAdmin = (): boolean => {
-    return hasRole('admin')
-  }
+    return hasRole("admin");
+  };
 
   const canManageClasses = (): boolean => {
-    return hasRole('admin') || hasRole('staff')
-  }
+    return hasRole("admin") || hasRole("staff");
+  };
 
   const canViewAllSchedules = (): boolean => {
-    return hasRole('admin') || hasRole('staff')
-  }
+    return hasRole("admin") || hasRole("staff");
+  };
 
   return {
     user,
@@ -146,5 +150,5 @@ export function useAuth() {
     isAdmin,
     canManageClasses,
     canViewAllSchedules,
-  }
+  };
 }
