@@ -37,7 +37,7 @@ export function getEnvironmentConfig(): EnvironmentConfig {
     supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
     supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
     appTitle: import.meta.env.VITE_APP_TITLE || 'School Schedule Management System',
-    isDev: import.meta.env.VITE_DEV_MODE === 'true' || import.meta.env.DEV,
+    isDev: import.meta.env.VITE_DEV_MODE === 'true' || import.meta.env.MODE === 'development',
   }
 }
 
@@ -51,6 +51,7 @@ declare global {
     readonly VITE_SUPABASE_ANON_KEY: string
     readonly VITE_APP_TITLE?: string
     readonly VITE_DEV_MODE?: string
+    readonly MODE?: string
   }
 
   interface ImportMeta {

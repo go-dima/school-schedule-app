@@ -3,7 +3,6 @@
  * Handles automatic selection and management of mandatory classes
  */
 
-import { supabase } from './supabase'
 import { scheduleApi, classesApi } from './api'
 import type { ClassWithTimeSlot, UserRoleData } from '../types'
 
@@ -26,7 +25,7 @@ export class MandatoryClassService {
    */
   static async autoSelectMandatoryClasses(
     userId: string, 
-    userRole: UserRoleData,
+    _userRole: UserRoleData,
     userGrade?: number
   ): Promise<void> {
     if (!userGrade) {

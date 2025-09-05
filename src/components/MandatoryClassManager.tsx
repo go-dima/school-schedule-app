@@ -14,7 +14,7 @@ import {
 } from 'antd'
 import { SaveOutlined, ReloadOutlined } from '@ant-design/icons'
 import { ScheduleService } from '../services/scheduleService'
-import { MandatoryClassService } from '../services/mandatoryClassService'
+import { classesApi } from '../services/api'
 import type { ClassWithTimeSlot } from '../types'
 import type { ColumnsType } from 'antd/es/table'
 import './MandatoryClassManager.css'
@@ -41,7 +41,7 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({ onUpdate 
   const loadClasses = async () => {
     setLoading(true)
     try {
-      const allClasses = await ScheduleService.getClasses()
+      const allClasses = await classesApi.getClasses()
       const classesWithStatus: ClassMandatoryStatus[] = allClasses.map(cls => ({
         ...cls,
         isMandatoryOriginal: cls.isMandatory,
@@ -84,7 +84,7 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({ onUpdate 
       const changedClasses = classes.filter(cls => cls.isDirty)
       
       for (const cls of changedClasses) {
-        await ScheduleService.updateClass(cls.id, {
+        await classesApi.updateClass(cls.id, {
           title: cls.title,
           description: cls.description,
           teacher: cls.teacher,
@@ -199,7 +199,7 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({ onUpdate 
             size="small"
           />
           {record.isDirty && (
-            <Tag color="orange" size="small">שונה</Tag>
+            <Tag color="orange">שונה</Tag>
           )}
         </Space>
       )

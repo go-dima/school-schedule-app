@@ -109,7 +109,7 @@ export const authApi = {
   },
 
   onAuthStateChange(callback: (user: any) => void) {
-    return supabase.auth.onAuthStateChange((event, session) => {
+    return supabase.auth.onAuthStateChange((_event, session) => {
       callback(session?.user || null);
     });
   },
@@ -165,7 +165,7 @@ export const usersApi = {
     if (error) throw new ApiError(error.message);
     
     // Get user email for notification
-    const { data: userData, error: userError } = await supabase
+    const { data: userData } = await supabase
       .from("users")
       .select("email")
       .eq("id", userId)

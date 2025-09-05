@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Form, Input, Button, Card, Typography, Alert } from "antd";
-import { UserOutlined, LockOutlined, GoogleOutlined } from "@ant-design/icons";
+import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useAuth } from "../hooks/useAuth";
 import "./AuthPages.css";
 
@@ -34,9 +34,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
     }
   };
 
-  const handleOAuthSignIn = (provider: "google") => {
-    console.log(`OAuth sign in with ${provider}`);
-  };
+  // const handleOAuthSignIn = (provider: "google") => {
+  //   console.log(`OAuth sign in with ${provider}`);
+  // };
 
   return (
     <div className="auth-page">
