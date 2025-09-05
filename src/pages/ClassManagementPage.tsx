@@ -126,21 +126,47 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
     setEditingClass(null);
   };
 
-  const getTimeSlotDisplay = (timeSlot: TimeSlot) => {
+  const getTimeSlotDisplay = (timeSlot: TimeSlot, cls?: ClassWithTimeSlot) => {
     if (!timeSlot) {
       return "No Time Slot";
     }
 
+    const dayName = ScheduleService.getDayName(timeSlot.dayOfWeek);
+
+    // For double lessons, show combined time range and both slot names
+    if (cls?.isDouble) {
+      const nextTimeSlot = ScheduleService.getNextConsecutiveTimeSlot(
+        timeSlot,
+        timeSlots
+      );
+      if (nextTimeSlot) {
+        const combinedTimeRange = ScheduleService.formatTimeRange(
+          timeSlot.startTime,
+          nextTimeSlot.endTime
+        );
+        return (
+          <span>
+            <div>יום {dayName}</div>
+            {combinedTimeRange && <div>{combinedTimeRange}</div>}
+            <div style={{ fontSize: "12px", color: "#666" }}>
+              {timeSlot.name} + {nextTimeSlot.name}
+            </div>
+          </span>
+        );
+      }
+    }
+
+    // For regular lessons, show standard time range
     const timeRange = ScheduleService.formatTimeRange(
       timeSlot.startTime,
       timeSlot.endTime
     );
-    const dayName = ScheduleService.getDayName(timeSlot.dayOfWeek);
 
     return (
       <span>
         <div>יום {dayName}</div>
         {timeRange && <div>{timeRange}</div>}
+        <div style={{ fontSize: "12px", color: "#666" }}>{timeSlot.name}</div>
       </span>
     );
   };
@@ -166,6 +192,13 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
       width: 150,
     },
     {
+      title: "כיתה",
+      dataIndex: "room",
+      key: "room",
+      width: 120,
+      render: (room: string) => room || "לא צוין",
+    },
+    {
       title: "כיתות",
       dataIndex: "grades",
       key: "grades",
@@ -187,17 +220,20 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
       dataIndex: "timeSlot",
       key: "timeSlot",
       width: 150,
-      render: (timeSlot: TimeSlot) => getTimeSlotDisplay(timeSlot),
+      render: (timeSlot: TimeSlot, record: ClassWithTimeSlot) =>
+        getTimeSlotDisplay(timeSlot, record),
     },
     {
       title: "סוג",
-      dataIndex: "isMandatory",
-      key: "isMandatory",
-      width: 80,
-      render: (isMandatory: boolean) => (
-        <Tag color={isMandatory ? "red" : "blue"}>
-          {isMandatory ? "ליבה" : "בחירה"}
-        </Tag>
+      key: "classType",
+      width: 120,
+      render: (_, record) => (
+        <Space direction="vertical" size="small">
+          <Tag color={record.isMandatory ? "red" : "blue"}>
+            {record.isMandatory ? "ליבה" : "בחירה"}
+          </Tag>
+          {record.isDouble && <Tag color="orange">שיעור כפול</Tag>}
+        </Space>
       ),
     },
     {

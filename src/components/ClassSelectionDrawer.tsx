@@ -30,6 +30,7 @@ interface ClassSelectionDrawerProps {
   canSelectClasses?: boolean;
   isAdmin?: boolean;
   onCreateClass?: (timeSlotId: string, dayOfWeek: number) => void;
+  timeSlots?: TimeSlot[]; // Add timeSlots for calculating double lesson ranges
 }
 
 const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
@@ -45,12 +46,58 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
   canSelectClasses = false,
   isAdmin = false,
   onCreateClass,
+  timeSlots = [],
 }) => {
   const dayName = ScheduleService.getDayName(dayOfWeek);
   const timeRange = ScheduleService.formatTimeRange(
     timeSlot.startTime,
     timeSlot.endTime
   );
+
+  // Helper function to get combined time range for double lessons
+  const getDoubleTimeRange = (
+    cls: ClassWithTimeSlot,
+    allTimeSlots: TimeSlot[]
+  ): string => {
+    if (!cls.isDouble)
+      return ScheduleService.formatTimeRange(
+        cls.timeSlot.startTime,
+        cls.timeSlot.endTime
+      );
+
+    // Find the next consecutive time slot
+    const nextTimeSlot = ScheduleService.getNextConsecutiveTimeSlot(
+      cls.timeSlot,
+      allTimeSlots
+    );
+    if (nextTimeSlot) {
+      return ScheduleService.formatTimeRange(
+        cls.timeSlot.startTime,
+        nextTimeSlot.endTime
+      );
+    }
+
+    // Fallback to original time if next slot not found
+    return ScheduleService.formatTimeRange(
+      cls.timeSlot.startTime,
+      cls.timeSlot.endTime
+    );
+  };
+
+  // Use passed timeSlots or extract from classes as fallback
+  const allTimeSlots =
+    timeSlots.length > 0
+      ? timeSlots
+          .filter(slot => slot.dayOfWeek === dayOfWeek)
+          .sort((a, b) => a.startTime.localeCompare(b.startTime))
+      : classes
+          .map(cls => cls.timeSlot)
+          .filter(slot => slot.dayOfWeek === dayOfWeek)
+          .filter(
+            (slot, index, self) =>
+              self.findIndex(s => s.id === slot.id) === index
+          )
+          .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
   const handleClassToggle = (classId: string) => {
     const isSelected = selectedClasses.includes(classId);
@@ -109,6 +156,23 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
           <div className="class-details">
             <Text strong>מורה: </Text>
             <Text>{cls.teacher}</Text>
+          </div>
+
+          <div className="class-details">
+            <Text strong>זמן: </Text>
+            <Text>{getDoubleTimeRange(cls, allTimeSlots)}</Text>
+            {cls.isDouble && (
+              <Text
+                type="secondary"
+                style={{ fontSize: "12px", marginRight: "8px" }}>
+                (שיעור כפול - {cls.timeSlot.name} +{" "}
+                {ScheduleService.getNextConsecutiveTimeSlot(
+                  cls.timeSlot,
+                  allTimeSlots
+                )?.name || "הבא"}
+                )
+              </Text>
+            )}
           </div>
 
           {cls.room && (

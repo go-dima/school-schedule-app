@@ -26,6 +26,18 @@ const mockTimeSlot: TimeSlot = {
   updatedAt: "2024-01-01T00:00:00Z",
 };
 
+const mockTimeSlot2: TimeSlot = {
+  id: "2",
+  name: "שיעור שני",
+  startTime: "09:55",
+  endTime: "10:35",
+  dayOfWeek: 0,
+  createdAt: "2024-01-01T00:00:00Z",
+  updatedAt: "2024-01-01T00:00:00Z",
+};
+
+const mockTimeSlots: TimeSlot[] = [mockTimeSlot, mockTimeSlot2];
+
 const mockClasses: ClassWithTimeSlot[] = [
   {
     id: "class-1",
@@ -106,6 +118,7 @@ function DrawerWrapper(args: any) {
         selectedClasses={selectedClasses}
         onClassSelect={handleClassSelect}
         onClassUnselect={handleClassUnselect}
+        timeSlots={mockTimeSlots}
       />
     </div>
   );
@@ -117,6 +130,7 @@ export const Default: Story = {
     timeSlot: mockTimeSlot,
     dayOfWeek: 0,
     classes: mockClasses,
+    timeSlots: mockTimeSlots,
   },
 };
 
@@ -127,6 +141,7 @@ export const WithSelectedClasses: Story = {
     dayOfWeek: 0,
     classes: mockClasses,
     selectedClasses: ["class-1"],
+    timeSlots: mockTimeSlots,
   },
 };
 
@@ -138,6 +153,7 @@ export const WithConflicts: Story = {
     classes: mockClasses,
     selectedClasses: ["class-2"],
     conflictingClasses: conflictingClasses,
+    timeSlots: mockTimeSlots,
   },
 };
 
@@ -147,6 +163,7 @@ export const EmptyClassList: Story = {
     timeSlot: mockTimeSlot,
     dayOfWeek: 0,
     classes: [],
+    timeSlots: mockTimeSlots,
   },
 };
 
@@ -156,6 +173,7 @@ export const SingleClass: Story = {
     timeSlot: mockTimeSlot,
     dayOfWeek: 0,
     classes: [mockClasses[0]],
+    timeSlots: mockTimeSlots,
   },
 };
 
@@ -166,5 +184,6 @@ export const WithMandatoryClasses: Story = {
     dayOfWeek: 0,
     classes: mockClasses,
     selectedClasses: ["class-1"], // Mandatory math class is pre-selected
+    timeSlots: mockTimeSlots,
   },
 };

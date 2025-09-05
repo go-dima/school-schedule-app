@@ -338,6 +338,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           onClose={handleCloseDrawer}
           timeSlot={selectedTimeSlot}
           dayOfWeek={selectedDayOfWeek}
+          timeSlots={timeSlots}
           classes={classes.filter(cls => {
             // Show classes that are directly in this time slot
             if (
