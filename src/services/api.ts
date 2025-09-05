@@ -21,67 +21,63 @@ export class ApiError extends Error {
 // Authentication API
 export const authApi = {
   async signUp(email: string, password: string) {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
 
-      if (error) {
-        throw new ApiError(error.message);
-      }
+    if (error) {
+      throw new ApiError(error.message);
+    }
 
-      // If user was created successfully, create their profile in public.users
-      if (data.user) {
+    // If user was created successfully, create their profile in public.users
+    if (data.user) {
+      try {
+        const { error: profileError } = await supabase.from("users").insert([
+          {
+            id: data.user.id,
+            email: data.user.email,
+          },
+        ]);
+
+        if (profileError) {
+          console.warn(
+            "⚠️ Profile creation error (non-fatal):",
+            profileError
+          );
+        }
+
+        // Automatically create parent role for new users
         try {
-          const { error: profileError } = await supabase.from("users").insert([
+          const { error: roleError } = await supabase.from("user_roles").insert([
             {
-              id: data.user.id,
-              email: data.user.email,
+              user_id: data.user.id,
+              role: "parent",
+              approved: false, // Requires admin approval
             },
           ]);
 
-          if (profileError) {
+          if (roleError) {
             console.warn(
-              "⚠️ Profile creation error (non-fatal):",
-              profileError
+              "⚠️ Role creation error (non-fatal):",
+              roleError
             );
           }
-
-          // Automatically create parent role for new users
-          try {
-            const { error: roleError } = await supabase.from("user_roles").insert([
-              {
-                user_id: data.user.id,
-                role: "parent",
-                approved: false, // Requires admin approval
-              },
-            ]);
-
-            if (roleError) {
-              console.warn(
-                "⚠️ Role creation error (non-fatal):",
-                roleError
-              );
-            }
-          } catch (roleErr) {
-            console.warn(
-              "⚠️ Role creation exception (non-fatal):",
-              roleErr
-            );
-          }
-        } catch (profileErr) {
+        } catch (roleErr) {
           console.warn(
-            "⚠️ Profile creation exception (non-fatal):",
-            profileErr
+            "⚠️ Role creation exception (non-fatal):",
+            roleErr
           );
         }
+      } catch (profileErr) {
+        console.warn(
+          "⚠️ Profile creation exception (non-fatal):",
+          profileErr
+        );
       }
-
-      return data;
-    } catch (err) {
-      throw err;
     }
+
+    return data;
   },
 
   async signIn(email: string, password: string) {
