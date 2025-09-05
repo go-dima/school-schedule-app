@@ -29,7 +29,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [selectedDay, setSelectedDay] = useState<number | undefined>(undefined);
-  
+
   // Filter to only show lesson time slots (not breaks or meetings)
   const lessonTimeSlots = getLessonTimeSlots(timeSlots);
 
@@ -71,15 +71,15 @@ const ClassForm: React.FC<ClassFormProps> = ({
   }, [initialValues, lessonTimeSlots]);
 
   // Watch for dayOfWeek field changes from form and update selectedDay
-  const dayOfWeekValue = Form.useWatch('dayOfWeek', form);
-  
+  const dayOfWeekValue = Form.useWatch("dayOfWeek", form);
+
   useEffect(() => {
     if (dayOfWeekValue !== undefined) {
       // Clear time slot if day actually changed to a different day
       if (selectedDay !== undefined && selectedDay !== dayOfWeekValue) {
         form.setFieldsValue({ timeSlotId: undefined });
       }
-      
+
       setSelectedDay(dayOfWeekValue);
     }
   }, [dayOfWeekValue, selectedDay, form]);
@@ -93,11 +93,12 @@ const ClassForm: React.FC<ClassFormProps> = ({
         timeSlotId: values.timeSlotId,
         grades: values.grades || [],
         isMandatory: values.isMandatory || false,
+        scope: values.scope || "test",
       };
 
       await onSubmit(classData);
     } catch (error) {
-      console.error('ClassForm submission error:', error);
+      console.error("ClassForm submission error:", error);
       throw error; // Re-throw to let parent handle
     }
   };
@@ -108,7 +109,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
       layout="vertical"
       onFinish={handleSubmit}
       onFinishFailed={(errorInfo) => {
-        console.error('Form validation failed:', errorInfo);
+        console.error("Form validation failed:", errorInfo);
       }}
       initialValues={
         initialValues
@@ -120,9 +121,11 @@ const ClassForm: React.FC<ClassFormProps> = ({
               timeSlotId: initialValues.timeSlotId,
               grades: initialValues.grades || [],
               isMandatory: initialValues.isMandatory,
+              scope: initialValues.scope,
             }
           : {
               isMandatory: false,
+              scope: "test",
             }
       }>
       <Row gutter={16}>
@@ -177,12 +180,24 @@ const ClassForm: React.FC<ClassFormProps> = ({
           </Form.Item>
         </Col>
 
-        <Col span={12}>
+        <Col span={8}>
           <Form.Item
             name="isMandatory"
             label="סוג השיעור"
             valuePropName="checked">
             <Switch checkedChildren="חובה" unCheckedChildren="בחירה" />
+          </Form.Item>
+        </Col>
+
+        <Col span={4}>
+          <Form.Item
+            name="scope"
+            label="סביבה"
+            rules={[{ required: true, message: "נא לבחור סביבה" }]}>
+            <Select placeholder="בחר סביבה">
+              <Option value="test">בדיקות</Option>
+              <Option value="prod">מערכת</Option>
+            </Select>
           </Form.Item>
         </Col>
       </Row>
@@ -193,8 +208,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
             name="dayOfWeek"
             label="יום"
             rules={[{ required: true, message: "נא לבחור יום לשיעור" }]}>
-            <Select
-              placeholder="בחר יום">
+            <Select placeholder="בחר יום">
               {availableDays.map((day) => (
                 <Option key={day} value={day}>
                   {ScheduleService.getDayName(day)}

@@ -343,15 +343,22 @@ export const timeSlotsApi = {
 // Classes API
 export const classesApi = {
   async getClasses(): Promise<ClassWithTimeSlot[]> {
-    const { data, error } = await supabase
+    const isProduction = process.env.NODE_ENV === 'production';
+    let query = supabase
       .from("classes")
       .select(
         `
         *,
         time_slot:time_slots(*)
       `
-      )
-      .order("title", { ascending: true });
+      );
+
+    // Filter out test classes in production
+    if (isProduction) {
+      query = query.neq('scope', 'test');
+    }
+
+    const { data, error } = await query.order("title", { ascending: true });
 
     if (error) throw new ApiError(error.message);
     return data.map((cls) => ({
@@ -362,6 +369,7 @@ export const classesApi = {
       timeSlotId: cls.time_slot_id,
       grades: cls.grades || [],
       isMandatory: cls.is_mandatory,
+      scope: cls.scope,
       createdAt: cls.created_at,
       updatedAt: cls.updated_at,
       timeSlot: {
@@ -387,6 +395,7 @@ export const classesApi = {
           time_slot_id: classData.timeSlotId,
           grades: classData.grades,
           is_mandatory: classData.isMandatory,
+          scope: classData.scope,
         },
       ])
       .select();
@@ -409,6 +418,7 @@ export const classesApi = {
     if (updates.grades !== undefined) updateData.grades = updates.grades;
     if (updates.isMandatory !== undefined)
       updateData.is_mandatory = updates.isMandatory;
+    if (updates.scope !== undefined) updateData.scope = updates.scope;
 
     const { data, error } = await supabase
       .from("classes")
@@ -430,7 +440,8 @@ export const classesApi = {
 // Schedule Selections API
 export const scheduleApi = {
   async getUserSchedule(userId: string): Promise<ScheduleSelectionWithClass[]> {
-    const { data, error } = await supabase
+    const isProduction = process.env.NODE_ENV === 'production';
+    let query = supabase
       .from("schedule_selections")
       .select(
         `
@@ -443,8 +454,16 @@ export const scheduleApi = {
       )
       .eq("user_id", userId);
 
+    const { data, error } = await query;
+
     if (error) throw new ApiError(error.message);
-    return data.map((selection) => ({
+    
+    // Filter out schedule selections with test classes in production
+    let filteredData = data;
+    if (isProduction) {
+      filteredData = data.filter(selection => selection.class.scope !== 'test');
+    }
+    return filteredData.map((selection) => ({
       id: selection.id,
       userId: selection.user_id,
       classId: selection.class_id,
@@ -458,6 +477,7 @@ export const scheduleApi = {
         timeSlotId: selection.class.time_slot_id,
         grades: selection.class.grades || [],
         isMandatory: selection.class.is_mandatory,
+        scope: selection.class.scope,
         createdAt: selection.class.created_at,
         updatedAt: selection.class.updated_at,
         timeSlot: {
