@@ -101,7 +101,8 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
                   {ScheduleService.getGradeName(grade)}
                 </Tag>
               ))}
-              {cls.isMandatory && <Tag color="red">חובה</Tag>}
+              {cls.isMandatory && <Tag color="red">ליבה</Tag>}
+              {cls.isDouble && <Tag color="orange">שיעור כפול</Tag>}
             </div>
           </div>
 
@@ -109,6 +110,13 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
             <Text strong>מורה: </Text>
             <Text>{cls.teacher}</Text>
           </div>
+
+          {cls.room && (
+            <div className="class-details">
+              <Text strong>כיתה: </Text>
+              <Text>{cls.room}</Text>
+            </div>
+          )}
 
           {cls.description && (
             <div className="class-description">

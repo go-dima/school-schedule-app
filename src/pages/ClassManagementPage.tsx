@@ -196,7 +196,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
       width: 80,
       render: (isMandatory: boolean) => (
         <Tag color={isMandatory ? "red" : "blue"}>
-          {isMandatory ? "חובה" : "בחירה"}
+          {isMandatory ? "ליבה" : "בחירה"}
         </Tag>
       ),
     },

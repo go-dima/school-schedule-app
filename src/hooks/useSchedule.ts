@@ -36,7 +36,48 @@ export function useSchedule(userId?: string) {
       setClasses(classesData);
       setTimeSlots(timeSlotsData);
       setUserSelections(userSchedule);
-      setWeeklySchedule(ScheduleService.buildWeeklySchedule(classesData));
+
+      // Debug logging for double lessons and data validation
+      const doubleLessons = classesData.filter(cls => cls.isDouble);
+      if (doubleLessons.length > 0) {
+        console.log(
+          "🔍 Double lessons loaded from API:",
+          doubleLessons.map(cls => ({
+            id: cls.id,
+            title: cls.title,
+            timeSlotId: cls.timeSlotId,
+            isDouble: cls.isDouble,
+            room: cls.room,
+            scope: cls.scope,
+            grades: cls.grades,
+            gradesType: typeof cls.grades?.[0],
+            dayOfWeek: cls.timeSlot.dayOfWeek,
+            timeSlotName: cls.timeSlot.name,
+          }))
+        );
+
+        // Check for orphaned classes (classes referencing non-existent time slots)
+        const orphanedClasses = classesData.filter(
+          cls => !timeSlotsData.find(slot => slot.id === cls.timeSlotId)
+        );
+        if (orphanedClasses.length > 0) {
+          console.warn(
+            "⚠️ Found classes with missing time slots:",
+            orphanedClasses.map(cls => ({
+              id: cls.id,
+              title: cls.title,
+              timeSlotId: cls.timeSlotId,
+            }))
+          );
+        }
+      }
+
+      const weeklySchedule = ScheduleService.buildWeeklySchedule(
+        classesData,
+        timeSlotsData
+      );
+      console.log("🗓️ Built weekly schedule:", weeklySchedule);
+      setWeeklySchedule(weeklySchedule);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load schedule data"

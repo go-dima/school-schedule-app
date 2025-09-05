@@ -360,8 +360,12 @@ export const classesApi = {
       description: cls.description,
       teacher: cls.teacher,
       timeSlotId: cls.time_slot_id,
-      grades: cls.grades || [],
+      grades: (cls.grades || []).map(grade =>
+        typeof grade === "string" ? parseInt(grade, 10) : grade
+      ),
       isMandatory: cls.is_mandatory,
+      isDouble: cls.is_double,
+      room: cls.room,
       scope: cls.scope,
       createdAt: cls.created_at,
       updatedAt: cls.updated_at,
@@ -388,6 +392,8 @@ export const classesApi = {
           time_slot_id: classData.timeSlotId,
           grades: classData.grades,
           is_mandatory: classData.isMandatory,
+          is_double: classData.isDouble,
+          room: classData.room,
           scope: classData.scope,
         },
       ])
@@ -411,6 +417,8 @@ export const classesApi = {
     if (updates.grades !== undefined) updateData.grades = updates.grades;
     if (updates.isMandatory !== undefined)
       updateData.is_mandatory = updates.isMandatory;
+    if (updates.isDouble !== undefined) updateData.is_double = updates.isDouble;
+    if (updates.room !== undefined) updateData.room = updates.room;
     if (updates.scope !== undefined) updateData.scope = updates.scope;
 
     const { data, error } = await supabase
@@ -468,8 +476,12 @@ export const scheduleApi = {
         description: selection.class.description,
         teacher: selection.class.teacher,
         timeSlotId: selection.class.time_slot_id,
-        grades: selection.class.grades || [],
+        grades: (selection.class.grades || []).map(grade =>
+          typeof grade === "string" ? parseInt(grade, 10) : grade
+        ),
         isMandatory: selection.class.is_mandatory,
+        isDouble: selection.class.is_double,
+        room: selection.class.room,
         scope: selection.class.scope,
         createdAt: selection.class.created_at,
         updatedAt: selection.class.updated_at,

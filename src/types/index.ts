@@ -46,6 +46,8 @@ export interface Class {
   timeSlotId: string;
   grades: number[]; // Changed from single grade to multiple grades
   isMandatory: boolean;
+  isDouble: boolean; // Whether this lesson takes two consecutive time slots
+  room: string; // Room/location where the lesson takes place
   scope: ClassScope;
   createdAt: string;
   updatedAt: string;

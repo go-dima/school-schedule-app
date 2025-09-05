@@ -343,6 +343,8 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
               teacher: "",
               grades: [],
               isMandatory: false,
+              isDouble: false,
+              room: "",
               scope: "test" as const,
               id: createClassTimeSlotId,
               createdAt: new Date().toISOString(),
