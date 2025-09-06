@@ -32,6 +32,9 @@ coverage/
 *.sqlite
 *.sqlite3
 
+# Sensitive migration files (contain user data)
+migrations/*_manual_*.sql
+
 # IDE and Editor files
 .vscode/*
 !.vscode/extensions.json
