@@ -161,6 +161,18 @@ export const usersApi = {
   },
 
   async requestRole(userId: string, role: UserRole) {
+    // First check if user already has this role
+    const { data: existingRoles } = await supabase
+      .from("user_roles")
+      .select("id, approved")
+      .eq("user_id", userId)
+      .eq("role", role);
+
+    if (existingRoles && existingRoles.length > 0) {
+      // Role already exists, return the existing role
+      return existingRoles[0];
+    }
+
     const { data, error } = await supabase
       .from("user_roles")
       .insert([
