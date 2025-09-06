@@ -338,6 +338,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
 
             const initialValues = {
               timeSlotId: createClassTimeSlotId,
+              dayOfWeek: createClassDayOfWeek,
               title: "",
               description: "",
               teacher: "",

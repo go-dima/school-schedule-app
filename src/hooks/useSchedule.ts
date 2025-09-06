@@ -51,7 +51,7 @@ export function useSchedule(userId?: string) {
             scope: cls.scope,
             grades: cls.grades,
             gradesType: typeof cls.grades?.[0],
-            dayOfWeek: cls.timeSlot.dayOfWeek,
+            dayOfWeek: cls.dayOfWeek,
             timeSlotName: cls.timeSlot.name,
           }))
         );

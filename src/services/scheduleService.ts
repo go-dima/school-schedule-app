@@ -4,6 +4,7 @@ import type {
   WeeklySchedule,
   TimeSlot,
 } from "../types";
+import { isLessonTimeSlot } from "../utils/timeSlots";
 
 export class ScheduleService {
   static buildWeeklySchedule(
@@ -19,7 +20,7 @@ export class ScheduleService {
     });
 
     classes.forEach(cls => {
-      const { dayOfWeek } = cls.timeSlot;
+      const dayOfWeek = cls.dayOfWeek;
       const timeSlotId = cls.timeSlotId;
 
       if (!schedule[dayOfWeek]) {
@@ -86,7 +87,7 @@ export class ScheduleService {
     const primaryConflicts = userSelections
       .filter(
         selection =>
-          selection.class.timeSlot.dayOfWeek === newClass.timeSlot.dayOfWeek &&
+          selection.class.dayOfWeek === newClass.dayOfWeek &&
           selection.class.timeSlotId === newClass.timeSlotId &&
           selection.class.id !== newClass.id
       )
@@ -104,8 +105,7 @@ export class ScheduleService {
         const nextSlotConflicts = userSelections
           .filter(
             selection =>
-              selection.class.timeSlot.dayOfWeek ===
-                newClass.timeSlot.dayOfWeek &&
+              selection.class.dayOfWeek === newClass.dayOfWeek &&
               selection.class.timeSlotId === nextTimeSlot.id &&
               selection.class.id !== newClass.id
           )
@@ -130,7 +130,7 @@ export class ScheduleService {
           return (
             existingNextSlot &&
             existingNextSlot.id === newClass.timeSlotId &&
-            existingClass.timeSlot.dayOfWeek === newClass.timeSlot.dayOfWeek &&
+            existingClass.dayOfWeek === newClass.dayOfWeek &&
             existingClass.id !== newClass.id
           );
         }
@@ -164,7 +164,7 @@ export class ScheduleService {
   ): TimeSlot | null {
     // Filter lesson time slots for the same day and sort by start time
     const daySlots = allTimeSlots
-      .filter(slot => slot.dayOfWeek === currentTimeSlot.dayOfWeek)
+      .filter(slot => isLessonTimeSlot(slot))
       .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
     // Find the current slot index
