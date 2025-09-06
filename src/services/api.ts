@@ -360,7 +360,7 @@ export const classesApi = {
       description: cls.description,
       teacher: cls.teacher,
       timeSlotId: cls.time_slot_id,
-      grades: (cls.grades || []).map(grade =>
+      grades: (cls.grades || []).map((grade: string | number) =>
         typeof grade === "string" ? parseInt(grade, 10) : grade
       ),
       isMandatory: cls.is_mandatory,
@@ -476,7 +476,7 @@ export const scheduleApi = {
         description: selection.class.description,
         teacher: selection.class.teacher,
         timeSlotId: selection.class.time_slot_id,
-        grades: (selection.class.grades || []).map(grade =>
+        grades: (selection.class.grades || []).map((grade: string | number) =>
           typeof grade === "string" ? parseInt(grade, 10) : grade
         ),
         isMandatory: selection.class.is_mandatory,
