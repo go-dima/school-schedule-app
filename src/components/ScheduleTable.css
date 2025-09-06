@@ -234,3 +234,49 @@
   margin-right: 0;
   margin-left: 4px;
 }
+
+/* Double lesson styles */
+.schedule-cell.double-main {
+  border-bottom: 2px solid #fa8c16 !important;
+}
+
+.schedule-cell.double-continuation {
+  border-top: none !important;
+  border-top: 2px solid #fa8c16 !important;
+  background: #fff7e6;
+  cursor: default !important;
+}
+
+.schedule-cell.double-continuation:hover {
+  background: #fff7e6 !important;
+  transform: none !important;
+  border-radius: 0 !important;
+}
+
+.double-card {
+  border-color: #fa8c16;
+  background: #fff7e6;
+}
+
+.double-continuation-indicator {
+  text-align: center;
+  color: #fa8c16;
+}
+
+.class-title-small {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.continuation-text {
+  font-size: 10px;
+  font-style: italic;
+}
+
+.class-room {
+  font-size: 10px;
+  color: #666;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}

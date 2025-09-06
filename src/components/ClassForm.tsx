@@ -91,11 +91,13 @@ const ClassForm: React.FC<ClassFormProps> = ({
     try {
       const classData: Omit<Class, "id" | "createdAt" | "updatedAt"> = {
         title: values.title,
-        description: values.description,
+        description: values.description || "",
         teacher: values.teacher,
         timeSlotId: values.timeSlotId,
         grades: values.grades || [],
         isMandatory: values.isMandatory || false,
+        isDouble: values.isDouble || false,
+        room: values.room || "",
         scope: values.scope || "test",
       };
 
@@ -124,10 +126,15 @@ const ClassForm: React.FC<ClassFormProps> = ({
               timeSlotId: initialValues.timeSlotId,
               grades: initialValues.grades || [],
               isMandatory: initialValues.isMandatory,
+              isDouble: initialValues.isDouble,
+              room: initialValues.room,
               scope: initialValues.scope,
             }
           : {
+              description: "",
               isMandatory: false,
+              isDouble: false,
+              room: "",
               scope: "test",
             }
       }>
@@ -160,11 +167,32 @@ const ClassForm: React.FC<ClassFormProps> = ({
       <Form.Item
         name="description"
         label="תיאור השיעור (אופציונלי)"
-        rules={[{ min: 5, message: "התיאור חייב להכיל לפחות 5 תווים" }]}>
+        rules={[
+          {
+            validator: (_, value) => {
+              if (!value || value.length === 0) {
+                return Promise.resolve(); // Allow empty description
+              }
+              if (value.length < 5) {
+                return Promise.reject(
+                  new Error("התיאור חייב להכיל לפחות 5 תווים")
+                );
+              }
+              return Promise.resolve();
+            },
+          },
+        ]}>
         <TextArea
           rows={3}
           placeholder="תיאור קצר על השיעור, הנושאים שנלמדים וכו'"
         />
+      </Form.Item>
+
+      <Form.Item
+        name="room"
+        label="כיתה/חדר"
+        rules={[{ min: 1, message: "נא להזין מיקום הכיתה" }]}>
+        <Input placeholder="למשל: כיתה 101, מעבדה מדעים" />
       </Form.Item>
 
       <Row gutter={16}>
@@ -188,7 +216,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
             name="isMandatory"
             label="סוג השיעור"
             valuePropName="checked">
-            <Switch checkedChildren="חובה" unCheckedChildren="בחירה" />
+            <Switch checkedChildren="ליבה" unCheckedChildren="בחירה" />
           </Form.Item>
         </Col>
 
@@ -201,6 +229,18 @@ const ClassForm: React.FC<ClassFormProps> = ({
               <Option value="test">בדיקות</Option>
               <Option value="prod">מערכת</Option>
             </Select>
+          </Form.Item>
+        </Col>
+      </Row>
+
+      <Row gutter={16}>
+        <Col span={12}>
+          <Form.Item name="isDouble" label="שיעור כפול" valuePropName="checked">
+            <Switch
+              checkedChildren="שיעור כפול"
+              unCheckedChildren="שיעור רגיל"
+              style={{ width: 120 }}
+            />
           </Form.Item>
         </Col>
       </Row>

@@ -196,7 +196,7 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
       ),
     },
     {
-      title: "חובה",
+      title: "ליבה",
       key: "mandatory",
       width: 100,
       render: (_, record: ClassMandatoryStatus) => (
@@ -224,7 +224,7 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
       title={
         <Space>
           <Title level={4} style={{ margin: 0 }}>
-            ניהול שיעורי חובה
+            ניהול שיעורי ליבה
           </Title>
           <ReloadOutlined
             onClick={loadClasses}
@@ -276,7 +276,7 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
           <Divider type="vertical" />
 
           <Text>
-            סה"כ שיעורי חובה: <Tag color="red">{mandatoryCount}</Tag>
+            סה"כ שיעורי ליבה: <Tag color="red">{mandatoryCount}</Tag>
           </Text>
 
           {selectedGrade && (
