@@ -272,7 +272,6 @@ export const timeSlotsApi = {
     const { data, error } = await supabase
       .from("time_slots")
       .select("*")
-      .order("day_of_week", { ascending: true })
       .order("start_time", { ascending: true });
 
     if (error) throw new ApiError(error.message);
@@ -281,7 +280,6 @@ export const timeSlotsApi = {
       name: slot.name,
       startTime: slot.start_time,
       endTime: slot.end_time,
-      dayOfWeek: slot.day_of_week,
       createdAt: slot.created_at,
       updatedAt: slot.updated_at,
     }));
@@ -297,7 +295,6 @@ export const timeSlotsApi = {
           name: timeSlot.name,
           start_time: timeSlot.startTime,
           end_time: timeSlot.endTime,
-          day_of_week: timeSlot.dayOfWeek,
         },
       ])
       .select();
@@ -315,8 +312,6 @@ export const timeSlotsApi = {
     if (updates.startTime !== undefined)
       updateData.start_time = updates.startTime;
     if (updates.endTime !== undefined) updateData.end_time = updates.endTime;
-    if (updates.dayOfWeek !== undefined)
-      updateData.day_of_week = updates.dayOfWeek;
 
     const { data, error } = await supabase
       .from("time_slots")
@@ -359,6 +354,7 @@ export const classesApi = {
       title: cls.title,
       description: cls.description,
       teacher: cls.teacher,
+      dayOfWeek: cls.day_of_week,
       timeSlotId: cls.time_slot_id,
       grades: (cls.grades || []).map((grade: string | number) =>
         typeof grade === "string" ? parseInt(grade, 10) : grade
@@ -374,7 +370,6 @@ export const classesApi = {
         name: cls.time_slot.name,
         startTime: cls.time_slot.start_time,
         endTime: cls.time_slot.end_time,
-        dayOfWeek: cls.time_slot.day_of_week,
         createdAt: cls.time_slot.created_at,
         updatedAt: cls.time_slot.updated_at,
       },
@@ -389,6 +384,7 @@ export const classesApi = {
           title: classData.title,
           description: classData.description,
           teacher: classData.teacher,
+          day_of_week: classData.dayOfWeek,
           time_slot_id: classData.timeSlotId,
           grades: classData.grades,
           is_mandatory: classData.isMandatory,
@@ -412,6 +408,8 @@ export const classesApi = {
     if (updates.description !== undefined)
       updateData.description = updates.description;
     if (updates.teacher !== undefined) updateData.teacher = updates.teacher;
+    if (updates.dayOfWeek !== undefined)
+      updateData.day_of_week = updates.dayOfWeek;
     if (updates.timeSlotId !== undefined)
       updateData.time_slot_id = updates.timeSlotId;
     if (updates.grades !== undefined) updateData.grades = updates.grades;
@@ -475,6 +473,7 @@ export const scheduleApi = {
         title: selection.class.title,
         description: selection.class.description,
         teacher: selection.class.teacher,
+        dayOfWeek: selection.class.day_of_week,
         timeSlotId: selection.class.time_slot_id,
         grades: (selection.class.grades || []).map((grade: string | number) =>
           typeof grade === "string" ? parseInt(grade, 10) : grade
@@ -490,7 +489,6 @@ export const scheduleApi = {
           name: selection.class.time_slot.name,
           startTime: selection.class.time_slot.start_time,
           endTime: selection.class.time_slot.end_time,
-          dayOfWeek: selection.class.time_slot.day_of_week,
           createdAt: selection.class.time_slot.created_at,
           updatedAt: selection.class.time_slot.updated_at,
         },

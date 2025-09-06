@@ -21,7 +21,6 @@ const mockTimeSlot: TimeSlot = {
   name: "שיעור ראשון",
   startTime: "09:15",
   endTime: "09:55",
-  dayOfWeek: 0,
   createdAt: "2024-01-01T00:00:00Z",
   updatedAt: "2024-01-01T00:00:00Z",
 };
@@ -31,7 +30,6 @@ const mockTimeSlot2: TimeSlot = {
   name: "שיעור שני",
   startTime: "09:55",
   endTime: "10:35",
-  dayOfWeek: 0,
   createdAt: "2024-01-01T00:00:00Z",
   updatedAt: "2024-01-01T00:00:00Z",
 };
@@ -45,6 +43,7 @@ const mockClasses: ClassWithTimeSlot[] = [
     description:
       "שיעור מתמטיקה מתקדם לכיתה ג. נלמדות פעולות חשבון, גיאומטריה בסיסית ופתרון בעיות.",
     teacher: "מורה שרה כהן",
+    dayOfWeek: 0,
     timeSlotId: "1",
     grades: [3],
     isMandatory: true,
@@ -61,6 +60,7 @@ const mockClasses: ClassWithTimeSlot[] = [
     description:
       "שיעור אנגלית לכיתה ג - שיעור כפול. למידת אוצר מילים, דקדוק בסיסי וביטוי בכתב.",
     teacher: "מורה ג'ון סמית",
+    dayOfWeek: 0,
     timeSlotId: "1",
     grades: [3],
     isMandatory: false,
@@ -76,6 +76,7 @@ const mockClasses: ClassWithTimeSlot[] = [
     title: "אומנות",
     description: "שיעור אומנות יצירתי לכיתה ג. ציור, פיסול וביטוי אמנותי.",
     teacher: "מורה מיכל לוי",
+    dayOfWeek: 0,
     timeSlotId: "1",
     grades: [3],
     isMandatory: false,

@@ -87,12 +87,9 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
   // Use passed timeSlots or extract from classes as fallback
   const allTimeSlots =
     timeSlots.length > 0
-      ? timeSlots
-          .filter(slot => slot.dayOfWeek === dayOfWeek)
-          .sort((a, b) => a.startTime.localeCompare(b.startTime))
+      ? timeSlots.sort((a, b) => a.startTime.localeCompare(b.startTime))
       : classes
           .map(cls => cls.timeSlot)
-          .filter(slot => slot.dayOfWeek === dayOfWeek)
           .filter(
             (slot, index, self) =>
               self.findIndex(s => s.id === slot.id) === index

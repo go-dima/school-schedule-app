@@ -131,7 +131,9 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
       return "No Time Slot";
     }
 
-    const dayName = ScheduleService.getDayName(timeSlot.dayOfWeek);
+    const dayName = cls
+      ? ScheduleService.getDayName(cls.dayOfWeek)
+      : "Unknown Day";
 
     // For double lessons, show combined time range and both slot names
     if (cls?.isDouble) {

@@ -31,7 +31,6 @@ export interface TimeSlot {
   name: string;
   startTime: string;
   endTime: string;
-  dayOfWeek: number; // 0=Sunday, 1=Monday, etc.
   createdAt: string;
   updatedAt: string;
 }
@@ -43,6 +42,7 @@ export interface Class {
   title: string;
   description: string;
   teacher: string;
+  dayOfWeek: number; // 0=Sunday, 1=Monday, etc.
   timeSlotId: string;
   grades: number[]; // Changed from single grade to multiple grades
   isMandatory: boolean;

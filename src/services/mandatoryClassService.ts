@@ -118,7 +118,7 @@ export class MandatoryClassService {
 
       return mandatoryClasses.filter(
         mandatoryClass =>
-          mandatoryClass.timeSlot.dayOfWeek === newClass.timeSlot.dayOfWeek &&
+          mandatoryClass.dayOfWeek === newClass.dayOfWeek &&
           mandatoryClass.timeSlotId === newClass.timeSlotId &&
           mandatoryClass.id !== newClass.id
       );

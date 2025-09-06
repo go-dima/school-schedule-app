@@ -3,7 +3,7 @@ import { Form, Input, Select, Button, Space, Switch, Row, Col } from "antd";
 import { ScheduleService } from "../services/scheduleService";
 import { getLessonTimeSlots } from "../utils/timeSlots";
 import type { ClassWithTimeSlot, TimeSlot, Class } from "../types";
-import { GRADES } from "../types";
+import { GRADES, DAYS_OF_WEEK } from "../types";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -33,59 +33,24 @@ const ClassForm: React.FC<ClassFormProps> = ({
   // Filter to only show lesson time slots (not breaks or meetings)
   const lessonTimeSlots = getLessonTimeSlots(timeSlots);
 
-  // Group time slots by day for better organization
-  const timeSlotsByDay = lessonTimeSlots.reduce(
-    (acc, slot) => {
-      const day = slot.dayOfWeek;
-      if (!acc[day]) {
-        acc[day] = [];
-      }
-      acc[day].push(slot);
-      return acc;
-    },
-    {} as Record<number, TimeSlot[]>
-  );
-
-  // Get available days
-  const availableDays = Object.keys(timeSlotsByDay)
-    .map(Number)
-    .sort((a, b) => a - b);
-
-  // Get time slots for selected day
-  const availableTimeSlots =
-    selectedDay !== undefined ? timeSlotsByDay[selectedDay] || [] : [];
+  // Time slots are now day-independent, so we can use them directly
+  const availableTimeSlots = lessonTimeSlots;
 
   // Initialize form values and set initial day
   useEffect(() => {
-    if (initialValues?.timeSlot) {
-      // Use timeSlot from initialValues if available (preferred for pre-filled forms)
-      const dayOfWeek = initialValues.timeSlot.dayOfWeek;
-      setSelectedDay(dayOfWeek);
-    } else if (initialValues?.timeSlotId) {
-      // Find timeSlot from timeSlotId
-      const initialTimeSlot = lessonTimeSlots.find(
-        slot => slot.id === initialValues.timeSlotId
-      );
-      if (initialTimeSlot) {
-        const dayOfWeek = initialTimeSlot.dayOfWeek;
-        setSelectedDay(dayOfWeek);
-      }
+    if (initialValues) {
+      setSelectedDay(initialValues.dayOfWeek);
     }
-  }, [initialValues, lessonTimeSlots]);
+  }, [initialValues]);
 
   // Watch for dayOfWeek field changes from form and update selectedDay
   const dayOfWeekValue = Form.useWatch("dayOfWeek", form);
 
   useEffect(() => {
     if (dayOfWeekValue !== undefined) {
-      // Clear time slot if day actually changed to a different day
-      if (selectedDay !== undefined && selectedDay !== dayOfWeekValue) {
-        form.setFieldsValue({ timeSlotId: undefined });
-      }
-
       setSelectedDay(dayOfWeekValue);
     }
-  }, [dayOfWeekValue, selectedDay, form]);
+  }, [dayOfWeekValue]);
 
   const handleSubmit = async (values: any) => {
     try {
@@ -93,6 +58,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
         title: values.title,
         description: values.description || "",
         teacher: values.teacher,
+        dayOfWeek: values.dayOfWeek,
         timeSlotId: values.timeSlotId,
         grades: values.grades || [],
         isMandatory: values.isMandatory || false,
@@ -122,7 +88,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
               title: initialValues.title,
               description: initialValues.description,
               teacher: initialValues.teacher,
-              dayOfWeek: initialValues.timeSlot?.dayOfWeek,
+              dayOfWeek: initialValues.dayOfWeek,
               timeSlotId: initialValues.timeSlotId,
               grades: initialValues.grades || [],
               isMandatory: initialValues.isMandatory,
@@ -252,9 +218,9 @@ const ClassForm: React.FC<ClassFormProps> = ({
             label="יום"
             rules={[{ required: true, message: "נא לבחור יום לשיעור" }]}>
             <Select placeholder="בחר יום">
-              {availableDays.map(day => (
-                <Option key={day} value={day}>
-                  {ScheduleService.getDayName(day)}
+              {DAYS_OF_WEEK.map((day: any) => (
+                <Option key={day.key} value={day.key}>
+                  {day.name}
                 </Option>
               ))}
             </Select>

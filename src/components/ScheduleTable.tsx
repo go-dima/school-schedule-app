@@ -94,19 +94,16 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       if (!isSelected) return false;
 
       // Check if this is a double lesson that actually starts in the previous slot
-      const previousTimeSlotIndex = timeSlots
-        .filter(slot => slot.dayOfWeek === dayOfWeek && isLessonTimeSlot(slot))
-        .sort((a, b) => a.startTime.localeCompare(b.startTime))
-        .findIndex(slot => slot.id === timeSlot.id);
+      const dayTimeSlots = timeSlots
+        .filter(slot => isLessonTimeSlot(slot))
+        .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-      if (previousTimeSlotIndex > 0) {
-        const previousTimeSlots = timeSlots
-          .filter(
-            slot => slot.dayOfWeek === dayOfWeek && isLessonTimeSlot(slot)
-          )
-          .sort((a, b) => a.startTime.localeCompare(b.startTime));
-        const previousSlot = previousTimeSlots[previousTimeSlotIndex - 1];
+      const currentTimeSlotIndex = dayTimeSlots.findIndex(
+        slot => slot.id === timeSlot.id
+      );
 
+      if (currentTimeSlotIndex > 0) {
+        const previousSlot = dayTimeSlots[currentTimeSlotIndex - 1];
         return cls.isDouble && cls.timeSlotId === previousSlot.id;
       }
       return false;
@@ -241,7 +238,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   };
 
   const createScheduleData = (): ScheduleRow[] => {
-    // Get unique time periods (start-end-name combinations) across all days
+    // Get unique time periods (start-end-name combinations) since time slots are now day-independent
     const uniqueTimePeriods = timeSlots.reduce((acc, slot) => {
       const key = `${slot.startTime}-${slot.endTime}-${slot.name}`;
       if (!acc.includes(key)) {
@@ -253,9 +250,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     // For each unique time period, create a row with cells for each day
     return uniqueTimePeriods
       .map(timePeriod => {
-        // Extract components for future use if needed
-        // const [startTime, endTime, name] = timePeriod.split("-");
-
         // Find a representative time slot for this period (for display purposes)
         const representativeSlot = timeSlots.find(
           slot =>
@@ -270,16 +264,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
         };
 
         DAYS_OF_WEEK.forEach(day => {
-          // Find the specific time slot for this day and time period
-          const dayTimeSlot = timeSlots.find(
-            slot =>
-              slot.dayOfWeek === day.key &&
-              `${slot.startTime}-${slot.endTime}-${slot.name}` === timePeriod
-          );
-
-          // Use the day-specific time slot if found, otherwise use representative
-          const slotToUse = dayTimeSlot || representativeSlot;
-          row[`day_${day.key}`] = renderClassCell(slotToUse, day.key);
+          // Use the representative slot for all days (since slots are now day-independent)
+          row[`day_${day.key}`] = renderClassCell(representativeSlot, day.key);
         });
 
         return row;
@@ -340,30 +326,30 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           dayOfWeek={selectedDayOfWeek}
           timeSlots={timeSlots}
           classes={classes.filter(cls => {
-            // Show classes that are directly in this time slot
+            // Show classes that are directly in this time slot for the selected day
             if (
               cls.timeSlotId === selectedTimeSlot.id &&
-              cls.timeSlot.dayOfWeek === selectedDayOfWeek &&
+              cls.dayOfWeek === selectedDayOfWeek &&
               (!userGrade || cls.grades?.includes(userGrade))
             ) {
               return true;
             }
 
             // Also show double lessons from the previous slot that extend into this slot
-            const previousTimeSlotIndex = timeSlots
-              .filter(slot => slot.dayOfWeek === selectedDayOfWeek)
-              .sort((a, b) => a.startTime.localeCompare(b.startTime))
-              .findIndex(slot => slot.id === selectedTimeSlot.id);
+            const dayTimeSlots = timeSlots
+              .filter(slot => isLessonTimeSlot(slot))
+              .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-            if (previousTimeSlotIndex > 0) {
-              const previousTimeSlots = timeSlots
-                .filter(slot => slot.dayOfWeek === selectedDayOfWeek)
-                .sort((a, b) => a.startTime.localeCompare(b.startTime));
-              const previousSlot = previousTimeSlots[previousTimeSlotIndex - 1];
+            const currentTimeSlotIndex = dayTimeSlots.findIndex(
+              slot => slot.id === selectedTimeSlot.id
+            );
+
+            if (currentTimeSlotIndex > 0) {
+              const previousSlot = dayTimeSlots[currentTimeSlotIndex - 1];
 
               return (
                 cls.timeSlotId === previousSlot.id &&
-                cls.timeSlot.dayOfWeek === selectedDayOfWeek &&
+                cls.dayOfWeek === selectedDayOfWeek &&
                 cls.isDouble &&
                 (!userGrade || cls.grades?.includes(userGrade))
               );

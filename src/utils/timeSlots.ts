@@ -83,24 +83,25 @@ export function getLessonTimeSlots(timeSlots: TimeSlot[]): TimeSlot[] {
 }
 
 /**
- * Get default time slots for a day (based on PRD)
+ * Get default time slots (based on PRD)
  */
-export function getDefaultTimeSlotsForDay(
-  dayOfWeek: number
-): Omit<TimeSlot, "id" | "createdAt" | "updatedAt">[] {
+export function getDefaultTimeSlots(): Omit<
+  TimeSlot,
+  "id" | "createdAt" | "updatedAt"
+>[] {
   return [
-    { name: "מפגש בוקר", startTime: "08:30", endTime: "09:00", dayOfWeek },
-    { name: "הפסקת אוכל", startTime: "09:00", endTime: "09:15", dayOfWeek },
-    { name: "שיעור ראשון", startTime: "09:15", endTime: "09:55", dayOfWeek },
-    { name: "שיעור שני", startTime: "09:55", endTime: "10:30", dayOfWeek },
-    { name: "הפסקה", startTime: "10:30", endTime: "11:00", dayOfWeek },
-    { name: "שיעור שלישי", startTime: "11:00", endTime: "11:45", dayOfWeek },
-    { name: "שיעור רביעי", startTime: "11:45", endTime: "12:20", dayOfWeek },
-    { name: "הפסקה קטנה", startTime: "12:20", endTime: "12:30", dayOfWeek },
-    { name: "מפגש צהריים", startTime: "12:30", endTime: "12:45", dayOfWeek },
-    { name: "ארוחת צהריים", startTime: "12:45", endTime: "13:30", dayOfWeek },
-    { name: "שיעור חמישי", startTime: "13:30", endTime: "14:15", dayOfWeek },
-    { name: "שיעור שישי", startTime: "14:15", endTime: "15:00", dayOfWeek },
+    { name: "מפגש בוקר", startTime: "08:30", endTime: "09:00" },
+    { name: "הפסקת אוכל", startTime: "09:00", endTime: "09:15" },
+    { name: "שיעור ראשון", startTime: "09:15", endTime: "09:55" },
+    { name: "שיעור שני", startTime: "09:55", endTime: "10:30" },
+    { name: "הפסקה", startTime: "10:30", endTime: "11:00" },
+    { name: "שיעור שלישי", startTime: "11:00", endTime: "11:45" },
+    { name: "שיעור רביעי", startTime: "11:45", endTime: "12:20" },
+    { name: "הפסקה קטנה", startTime: "12:20", endTime: "12:30" },
+    { name: "מפגש צהריים", startTime: "12:30", endTime: "12:45" },
+    { name: "ארוחת צהריים", startTime: "12:45", endTime: "13:30" },
+    { name: "שיעור חמישי", startTime: "13:30", endTime: "14:15" },
+    { name: "שיעור שישי", startTime: "14:15", endTime: "15:00" },
   ];
 }
 
