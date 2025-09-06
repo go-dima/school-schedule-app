@@ -117,9 +117,30 @@ export const usersApi = {
     return {
       id: data.id,
       email: data.email,
+      firstName: data.first_name,
+      lastName: data.last_name,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
+  },
+
+  async updateUserProfile(
+    userId: string,
+    updates: { firstName?: string; lastName?: string }
+  ) {
+    const updateData: any = {};
+    if (updates.firstName !== undefined)
+      updateData.first_name = updates.firstName;
+    if (updates.lastName !== undefined) updateData.last_name = updates.lastName;
+
+    const { data, error } = await supabase
+      .from("users")
+      .update(updateData)
+      .eq("id", userId)
+      .select();
+
+    if (error) throw new ApiError(error.message);
+    return data[0];
   },
 
   async getUserRoles(userId: string): Promise<UserRoleData[]> {
@@ -238,6 +259,8 @@ export const usersApi = {
         user: {
           id: user.id,
           email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
           createdAt: user.created_at,
           updatedAt: user.updated_at,
         },

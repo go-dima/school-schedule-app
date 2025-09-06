@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { User } from "@supabase/supabase-js";
 import { authApi, usersApi } from "../services/api";
-import type { UserRoleData } from "../types";
+import type { UserRoleData, User } from "../types";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -15,12 +14,13 @@ export function useAuth() {
 
     const initAuth = async () => {
       try {
-        const user = await authApi.getCurrentUser();
-        if (mounted) {
-          setUser(user);
-          if (user) {
-            await loadUserRoles(user.id);
-          }
+        const supabaseUser = await authApi.getCurrentUser();
+        if (mounted && supabaseUser) {
+          const userProfile = await usersApi.getUserProfile(supabaseUser.id);
+          setUser(userProfile);
+          await loadUserRoles(supabaseUser.id);
+        } else if (mounted) {
+          setUser(null);
         }
       } catch (err) {
         if (mounted) {
@@ -55,14 +55,22 @@ export function useAuth() {
 
     const {
       data: { subscription },
-    } = authApi.onAuthStateChange(async user => {
+    } = authApi.onAuthStateChange(async supabaseUser => {
       if (mounted) {
-        setUser(user);
         setError(null);
 
-        if (user) {
-          await loadUserRoles(user.id);
+        if (supabaseUser) {
+          try {
+            const userProfile = await usersApi.getUserProfile(supabaseUser.id);
+            setUser(userProfile);
+            await loadUserRoles(supabaseUser.id);
+          } catch (err) {
+            setUser(null);
+            setUserRoles([]);
+            setCurrentRole(null);
+          }
         } else {
+          setUser(null);
           setUserRoles([]);
           setCurrentRole(null);
         }
@@ -136,6 +144,22 @@ export function useAuth() {
     return hasRole("admin") || hasRole("staff");
   };
 
+  const refreshProfile = async () => {
+    if (!user) return;
+
+    try {
+      const supabaseUser = await authApi.getCurrentUser();
+      if (supabaseUser) {
+        const userProfile = await usersApi.getUserProfile(supabaseUser.id);
+        setUser(userProfile);
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to refresh profile"
+      );
+    }
+  };
+
   return {
     user,
     userRoles,
@@ -145,6 +169,7 @@ export function useAuth() {
     signIn,
     signUp,
     signOut,
+    refreshProfile,
     switchRole,
     hasRole,
     isAdmin,

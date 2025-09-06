@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import PendingApprovalPage from "./pages/PendingApprovalPage";
+import ProfileSetupPage from "./pages/ProfileSetupPage";
 import SchedulePage from "./pages/SchedulePage";
 import ClassManagementPage from "./pages/ClassManagementPage";
 import PendingApprovalsPage from "./pages/PendingApprovalsPage";
@@ -45,6 +46,11 @@ function AppContent() {
   // If user is authenticated but has no approved roles, show pending approval page
   if (user && userRoles.length === 0) {
     return <PendingApprovalPage />;
+  }
+
+  // If user has approved roles but hasn't completed profile setup, show profile setup page
+  if (user && userRoles.length > 0 && (!user.firstName || !user.lastName)) {
+    return <ProfileSetupPage />;
   }
 
   // Render current page

@@ -17,11 +17,13 @@ import {
   SettingOutlined,
   UserAddOutlined,
   UserOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import { useAuth } from "../contexts/AuthContext";
 import { useSchedule } from "../hooks/useSchedule";
 import ScheduleTable from "../components/ScheduleTable";
 import ClassForm from "../components/ClassForm";
+import ProfileEditModal from "../components/ProfileEditModal";
 import { classesApi, timeSlotsApi } from "../services/api";
 import { GRADES } from "../types";
 import type { Class, TimeSlot } from "../types";
@@ -43,8 +45,15 @@ interface SchedulePageProps {
 }
 
 const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
-  const { user, currentRole, userRoles, switchRole, signOut, isAdmin } =
-    useAuth();
+  const {
+    user,
+    currentRole,
+    userRoles,
+    switchRole,
+    signOut,
+    isAdmin,
+    refreshProfile,
+  } = useAuth();
   const [selectedGrade, setSelectedGrade] = useState<number | undefined>(1);
   const [createClassModalOpen, setCreateClassModalOpen] = useState(false);
   const [createClassTimeSlotId, setCreateClassTimeSlotId] = useState<
@@ -55,6 +64,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
   >(null);
   const [allTimeSlots, setAllTimeSlots] = useState<TimeSlot[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   const {
     classes,
@@ -203,6 +213,11 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                 onClick={loadScheduleData}
                 disabled={loading}>
                 רענן
+              </Button>
+              <Button
+                icon={<EditOutlined />}
+                onClick={() => setProfileModalOpen(true)}>
+                פרופיל
               </Button>
               <Button type="primary" danger onClick={signOut}>
                 התנתק
@@ -365,6 +380,12 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
             );
           })()}
       </Modal>
+
+      <ProfileEditModal
+        visible={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+        onSuccess={refreshProfile}
+      />
     </Layout>
   );
 };
