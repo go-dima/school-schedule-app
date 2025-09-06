@@ -11,6 +11,7 @@ export interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
   switchRole: (role: UserRoleData) => void;
   hasRole: (role: string) => boolean;
   isAdmin: () => boolean;

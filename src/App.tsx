@@ -2,6 +2,8 @@ import { useState } from "react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
+import PendingApprovalPage from "./pages/PendingApprovalPage";
+import ProfileSetupPage from "./pages/ProfileSetupPage";
 import SchedulePage from "./pages/SchedulePage";
 import ClassManagementPage from "./pages/ClassManagementPage";
 import PendingApprovalsPage from "./pages/PendingApprovalsPage";
@@ -16,7 +18,7 @@ type Page =
   | "user-management";
 
 function AppContent() {
-  const { user, loading } = useAuth();
+  const { user, userRoles, loading } = useAuth();
   const [showSignup, setShowSignup] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>("schedule");
 
@@ -39,6 +41,16 @@ function AppContent() {
       return <SignupPage onSwitchToLogin={() => setShowSignup(false)} />;
     }
     return <LoginPage onSwitchToSignup={() => setShowSignup(true)} />;
+  }
+
+  // If user is authenticated but hasn't completed profile setup, show profile setup page first
+  if (user && (!user.firstName || !user.lastName)) {
+    return <ProfileSetupPage />;
+  }
+
+  // If user has profile but no approved roles, show pending approval page
+  if (user && userRoles.length === 0) {
+    return <PendingApprovalPage />;
   }
 
   // Render current page

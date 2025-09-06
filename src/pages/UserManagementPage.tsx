@@ -36,6 +36,8 @@ interface UserManagementPageProps {
 interface UserWithRoles {
   id: string;
   email: string;
+  firstName?: string;
+  lastName?: string;
   createdAt: string;
   roles: UserRoleData[];
 }
@@ -57,6 +59,8 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
       const transformedUsers: UserWithRoles[] = usersData.map(user => ({
         id: user.id,
         email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
         createdAt: user.created_at,
         roles: user.user_roles.map((role: any) => ({
           id: role.id,
@@ -138,14 +142,32 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
     {
       title: "משתמש",
       key: "user",
-      render: (_, record) => (
-        <Space direction="vertical" size="small">
-          <Text strong>{record.email}</Text>
-          <Text type="secondary" style={{ fontSize: "12px" }}>
-            נרשם: {new Date(record.createdAt).toLocaleDateString("he-IL")}
-          </Text>
-        </Space>
-      ),
+      render: (_, record) => {
+        const firstName = record.firstName || "";
+        const lastName = record.lastName || "";
+        const fullName = `${firstName} ${lastName}`.trim();
+
+        return (
+          <Space direction="vertical" size="small">
+            <Space>
+              <UserOutlined />
+              <div>
+                {fullName ? (
+                  <Text strong>{fullName}</Text>
+                ) : (
+                  <Text type="secondary">לא הוזן שם</Text>
+                )}
+              </div>
+            </Space>
+            <Text type="secondary" style={{ fontSize: "12px" }}>
+              {record.email}
+            </Text>
+            <Text type="secondary" style={{ fontSize: "12px" }}>
+              נרשם: {new Date(record.createdAt).toLocaleDateString("he-IL")}
+            </Text>
+          </Space>
+        );
+      },
     },
     {
       title: "תפקידים",

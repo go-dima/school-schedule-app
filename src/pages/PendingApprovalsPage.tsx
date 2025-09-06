@@ -141,16 +141,34 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = ({
 
   const columns: ColumnsType<PendingApproval> = [
     {
+      title: "שם מלא",
+      key: "fullName",
+      width: 200,
+      render: (_, record) => {
+        const firstName = record.user.firstName || "";
+        const lastName = record.user.lastName || "";
+        const fullName = `${firstName} ${lastName}`.trim();
+
+        return (
+          <Space>
+            <UserOutlined />
+            <div>
+              {fullName ? (
+                <Text strong>{fullName}</Text>
+              ) : (
+                <Text type="secondary">לא הוזן שם</Text>
+              )}
+            </div>
+          </Space>
+        );
+      },
+    },
+    {
       title: "כתובת אימייל",
       dataIndex: ["user", "email"],
       key: "email",
-      width: 250,
-      render: (email: string) => (
-        <Space>
-          <UserOutlined />
-          <Text strong>{email}</Text>
-        </Space>
-      ),
+      width: 220,
+      render: (email: string) => <Text>{email}</Text>,
     },
     {
       title: "תפקיד מבוקש",

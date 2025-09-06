@@ -117,9 +117,30 @@ export const usersApi = {
     return {
       id: data.id,
       email: data.email,
+      firstName: data.first_name,
+      lastName: data.last_name,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
+  },
+
+  async updateUserProfile(
+    userId: string,
+    updates: { firstName?: string; lastName?: string }
+  ) {
+    const updateData: any = {};
+    if (updates.firstName !== undefined)
+      updateData.first_name = updates.firstName;
+    if (updates.lastName !== undefined) updateData.last_name = updates.lastName;
+
+    const { data, error } = await supabase
+      .from("users")
+      .update(updateData)
+      .eq("id", userId)
+      .select();
+
+    if (error) throw new ApiError(error.message);
+    return data[0];
   },
 
   async getUserRoles(userId: string): Promise<UserRoleData[]> {
@@ -140,6 +161,18 @@ export const usersApi = {
   },
 
   async requestRole(userId: string, role: UserRole) {
+    // First check if user already has this role
+    const { data: existingRoles } = await supabase
+      .from("user_roles")
+      .select("id, approved")
+      .eq("user_id", userId)
+      .eq("role", role);
+
+    if (existingRoles && existingRoles.length > 0) {
+      // Role already exists, return the existing role
+      return existingRoles[0];
+    }
+
     const { data, error } = await supabase
       .from("user_roles")
       .insert([
@@ -200,37 +233,51 @@ export const usersApi = {
   },
 
   async getPendingApprovalsWithUsers(): Promise<PendingApproval[]> {
-    const { data, error } = await supabase
+    // First get pending user roles
+    const { data: userRoles, error: rolesError } = await supabase
       .from("user_roles")
-      .select(
-        `
-        *,
-        users:user_id (
-          id,
-          email,
-          created_at,
-          updated_at
-        )
-      `
-      )
+      .select("*")
       .eq("approved", false)
       .order("created_at", { ascending: false });
 
-    if (error) throw new ApiError(error.message);
-    return data.map(role => ({
-      id: role.id,
-      userId: role.user_id,
-      role: role.role as UserRole,
-      approved: role.approved,
-      createdAt: role.created_at,
-      updatedAt: role.updated_at,
-      user: {
-        id: role.users.id,
-        email: role.users.email,
-        createdAt: role.users.created_at,
-        updatedAt: role.users.updated_at,
-      },
-    }));
+    if (rolesError) throw new ApiError(rolesError.message);
+    if (!userRoles || userRoles.length === 0) return [];
+
+    // Get user IDs to fetch user details
+    const userIds = userRoles.map(role => role.user_id);
+
+    // Get user details
+    const { data: users, error: usersError } = await supabase
+      .from("users")
+      .select("*")
+      .in("id", userIds);
+
+    if (usersError) throw new ApiError(usersError.message);
+
+    // Combine the data
+    return userRoles.map(role => {
+      const user = users?.find(u => u.id === role.user_id);
+      if (!user) {
+        throw new ApiError(`User not found for role ${role.id}`);
+      }
+
+      return {
+        id: role.id,
+        userId: role.user_id,
+        role: role.role as UserRole,
+        approved: role.approved,
+        createdAt: role.created_at,
+        updatedAt: role.updated_at,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          createdAt: user.created_at,
+          updatedAt: user.updated_at,
+        },
+      };
+    });
   },
 
   async rejectRole(roleId: string) {
