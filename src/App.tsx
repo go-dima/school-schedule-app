@@ -43,14 +43,14 @@ function AppContent() {
     return <LoginPage onSwitchToSignup={() => setShowSignup(true)} />;
   }
 
-  // If user is authenticated but has no approved roles, show pending approval page
-  if (user && userRoles.length === 0) {
-    return <PendingApprovalPage />;
+  // If user is authenticated but hasn't completed profile setup, show profile setup page first
+  if (user && (!user.firstName || !user.lastName)) {
+    return <ProfileSetupPage />;
   }
 
-  // If user has approved roles but hasn't completed profile setup, show profile setup page
-  if (user && userRoles.length > 0 && (!user.firstName || !user.lastName)) {
-    return <ProfileSetupPage />;
+  // If user has profile but no approved roles, show pending approval page
+  if (user && userRoles.length === 0) {
+    return <PendingApprovalPage />;
   }
 
   // Render current page
