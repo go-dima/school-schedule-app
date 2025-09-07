@@ -1,23 +1,8 @@
 import React, { useState } from "react";
-import {
-  Form,
-  Input,
-  Button,
-  Card,
-  Typography,
-  Alert,
-  Space,
-  Select,
-} from "antd";
-import {
-  UserOutlined,
-  SaveOutlined,
-  TeamOutlined,
-  HomeOutlined,
-} from "@ant-design/icons";
+import { Form, Input, Button, Card, Typography, Alert, Space } from "antd";
+import { UserOutlined, SaveOutlined } from "@ant-design/icons";
 import { useAuth } from "../contexts/AuthContext";
 import { usersApi } from "../services/api";
-import type { UserRole } from "../types";
 import "./AuthPages.css";
 
 const { Title, Text } = Typography;
@@ -25,7 +10,6 @@ const { Title, Text } = Typography;
 interface ProfileFormValues {
   firstName: string;
   lastName: string;
-  role: UserRole;
 }
 
 const ProfileSetupPage: React.FC = () => {
@@ -46,9 +30,6 @@ const ProfileSetupPage: React.FC = () => {
         lastName: values.lastName,
       });
 
-      // Request the selected role for approval
-      await usersApi.requestRole(user.id, values.role);
-
       // Refresh user profile to trigger flow to pending approval page
       await refreshProfile();
     } catch (err) {
@@ -66,9 +47,7 @@ const ProfileSetupPage: React.FC = () => {
             <Space direction="vertical" size="large" style={{ width: "100%" }}>
               <UserOutlined style={{ fontSize: 64, color: "#1890ff" }} />
               <Title level={2}>השלמת פרטים אישיים</Title>
-              <Text type="secondary">
-                אנא הזן את הפרטים האישיים שלך ובחר את התפקיד המתאים
-              </Text>
+              <Text type="secondary">אנא הזן את הפרטים האישיים שלך</Text>
             </Space>
           </div>
 
@@ -119,36 +98,6 @@ const ProfileSetupPage: React.FC = () => {
               />
             </Form.Item>
 
-            <Form.Item
-              name="role"
-              label="תפקיד במערכת"
-              rules={[{ required: true, message: "נא לבחור תפקיד" }]}>
-              <Select
-                size="large"
-                placeholder="בחר את התפקיד שלך"
-                options={[
-                  {
-                    value: "parent",
-                    label: (
-                      <Space>
-                        <HomeOutlined />
-                        הורה
-                      </Space>
-                    ),
-                  },
-                  {
-                    value: "staff",
-                    label: (
-                      <Space>
-                        <TeamOutlined />
-                        צוות
-                      </Space>
-                    ),
-                  },
-                ]}
-              />
-            </Form.Item>
-
             <Form.Item>
               <Button
                 type="primary"
@@ -165,8 +114,7 @@ const ProfileSetupPage: React.FC = () => {
 
           <div className="auth-footer">
             <Text type="secondary">
-              פרטים אלו יעזרו לנו לזהות אותך במערכת. התפקיד שתבחר יישלח לאישור
-              מנהל.
+              פרטים אלו יעזרו לנו לזהות אותך במערכת. חשבונך ממתין לאישור מנהל.
             </Text>
           </div>
         </Card>

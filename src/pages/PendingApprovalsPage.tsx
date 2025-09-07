@@ -12,6 +12,9 @@ import {
   message,
   Popconfirm,
   Badge,
+  Select,
+  Modal,
+  Form,
 } from "antd";
 import {
   CheckOutlined,
@@ -20,6 +23,9 @@ import {
   ArrowLeftOutlined,
   UserOutlined,
   ClockCircleOutlined,
+  TeamOutlined,
+  HomeOutlined,
+  CrownOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useAuth } from "../contexts/AuthContext";
@@ -51,6 +57,10 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [roleModalVisible, setRoleModalVisible] = useState(false);
+  const [selectedApproval, setSelectedApproval] =
+    useState<PendingApproval | null>(null);
+  const [form] = Form.useForm();
 
   useEffect(() => {
     loadData();
@@ -73,18 +83,25 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = ({
     }
   };
 
-  const handleApprove = async (
-    approvalId: string,
-    userEmail: string,
-    role: UserRole
-  ) => {
-    setActionLoading(approvalId);
+  const handleApproveWithRole = (approval: PendingApproval) => {
+    setSelectedApproval(approval);
+    form.setFieldsValue({ role: approval.role }); // Set default role
+    setRoleModalVisible(true);
+  };
+
+  const handleConfirmApproval = async (values: { role: UserRole }) => {
+    if (!selectedApproval) return;
+
+    setActionLoading(selectedApproval.id);
     try {
-      await usersApi.approveRole(approvalId);
+      await usersApi.approveUserWithRole(selectedApproval.userId, values.role);
       message.success(
-        `המשתמש ${userEmail} אושר בהצלחה לתפקיד ${getRoleDisplayName(role)}`
+        `המשתמש ${selectedApproval.user.email} אושר בהצלחה לתפקיד ${getRoleDisplayName(values.role)}`
       );
       await loadData();
+      setRoleModalVisible(false);
+      setSelectedApproval(null);
+      form.resetFields();
     } catch (err) {
       message.error(err instanceof Error ? err.message : "שגיאה באישור המשתמש");
     } finally {
@@ -128,6 +145,45 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = ({
     };
     return roleColors[role] || "default";
   };
+
+  const getRoleOptions = () => [
+    {
+      value: "parent" as UserRole,
+      label: (
+        <Space>
+          <HomeOutlined />
+          הורה
+        </Space>
+      ),
+    },
+    {
+      value: "staff" as UserRole,
+      label: (
+        <Space>
+          <TeamOutlined />
+          צוות
+        </Space>
+      ),
+    },
+    {
+      value: "child" as UserRole,
+      label: (
+        <Space>
+          <UserOutlined />
+          תלמיד
+        </Space>
+      ),
+    },
+    {
+      value: "admin" as UserRole,
+      label: (
+        <Space>
+          <CrownOutlined />
+          מנהל
+        </Space>
+      ),
+    },
+  ];
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("he-IL", {
@@ -197,30 +253,19 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = ({
       width: 200,
       render: (_, record) => (
         <Space>
-          <Popconfirm
-            title={`אישור תפקיד ${getRoleDisplayName(record.role)}`}
-            description={`האם אתה בטוח שברצונך לאשר את ${
-              record.user.email
-            } לתפקיד ${getRoleDisplayName(record.role)}?`}
-            onConfirm={() =>
-              handleApprove(record.id, record.user.email, record.role)
-            }
-            okText="אשר"
-            cancelText="ביטול"
-            placement="topRight">
-            <Button
-              type="primary"
-              icon={<CheckOutlined />}
-              loading={actionLoading === record.id}
-              size="small">
-              אשר
-            </Button>
-          </Popconfirm>
+          <Button
+            type="primary"
+            icon={<CheckOutlined />}
+            loading={actionLoading === record.id}
+            size="small"
+            onClick={() => handleApproveWithRole(record)}>
+            אשר עם תפקיד
+          </Button>
           <Popconfirm
             title="דחיית בקשה"
             description={`האם אתה בטוח שברצונך לדחות את בקשת ${
               record.user.email
-            } לתפקיד ${getRoleDisplayName(record.role)}?`}
+            }?`}
             onConfirm={() =>
               handleReject(record.id, record.user.email, record.role)
             }
@@ -364,6 +409,86 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = ({
             />
           )}
         </Card>
+
+        {/* Role Assignment Modal */}
+        <Modal
+          title={
+            <Space>
+              <UserOutlined />
+              בחירת תפקיד למשתמש
+            </Space>
+          }
+          open={roleModalVisible}
+          onCancel={() => {
+            setRoleModalVisible(false);
+            setSelectedApproval(null);
+            form.resetFields();
+          }}
+          footer={null}
+          width={500}>
+          {selectedApproval && (
+            <>
+              <Alert
+                message={`אישור משתמש: ${selectedApproval.user.email}`}
+                description={
+                  <div>
+                    <p>
+                      <strong>שם:</strong>{" "}
+                      {`${selectedApproval.user.firstName || ""} ${
+                        selectedApproval.user.lastName || ""
+                      }`.trim() || "לא הוזן"}
+                    </p>
+                    <p>
+                      <strong>תפקיד מבוקש במקור:</strong>{" "}
+                      {getRoleDisplayName(selectedApproval.role)}
+                    </p>
+                    <p>אנא בחר את התפקיד הסופי למשתמש זה במערכת:</p>
+                  </div>
+                }
+                type="info"
+                showIcon
+                style={{ marginBottom: 24 }}
+              />
+
+              <Form
+                form={form}
+                onFinish={handleConfirmApproval}
+                layout="vertical">
+                <Form.Item
+                  name="role"
+                  label="תפקיד במערכת"
+                  rules={[{ required: true, message: "נא לבחור תפקיד" }]}>
+                  <Select
+                    size="large"
+                    placeholder="בחר תפקיד למשתמש"
+                    options={getRoleOptions()}
+                  />
+                </Form.Item>
+
+                <Form.Item style={{ marginBottom: 0, textAlign: "left" }}>
+                  <Space>
+                    <Button
+                      onClick={() => {
+                        setRoleModalVisible(false);
+                        setSelectedApproval(null);
+                        form.resetFields();
+                      }}
+                      disabled={actionLoading === selectedApproval?.id}>
+                      ביטול
+                    </Button>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      loading={actionLoading === selectedApproval?.id}
+                      icon={<CheckOutlined />}>
+                      אשר משתמש
+                    </Button>
+                  </Space>
+                </Form.Item>
+              </Form>
+            </>
+          )}
+        </Modal>
       </Content>
     </Layout>
   );

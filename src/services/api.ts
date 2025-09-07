@@ -35,38 +35,32 @@ export const authApi = {
 
     // If user was created successfully, create their profile in public.users
     if (data.user) {
-      try {
-        const { error: profileError } = await supabase.from("users").insert([
-          {
-            id: data.user.id,
-            email: data.user.email,
-          },
-        ]);
+      const { error: profileError } = await supabase.from("users").insert([
+        {
+          id: data.user.id,
+          email: data.user.email,
+        },
+      ]);
 
-        if (profileError) {
-          console.warn("⚠️ Profile creation error (non-fatal):", profileError);
-        }
+      if (profileError) {
+        console.error("❌ Profile creation failed:", profileError);
+        throw new ApiError(
+          "Failed to create user profile: " + profileError.message
+        );
+      }
 
-        // Automatically create parent role for new users
-        try {
-          const { error: roleError } = await supabase
-            .from("user_roles")
-            .insert([
-              {
-                user_id: data.user.id,
-                role: "parent",
-                approved: false, // Requires admin approval
-              },
-            ]);
+      // Automatically create parent role for new users
+      const { error: roleError } = await supabase.from("user_roles").insert([
+        {
+          user_id: data.user.id,
+          role: "parent",
+          approved: false, // Requires admin approval
+        },
+      ]);
 
-          if (roleError) {
-            console.warn("⚠️ Role creation error (non-fatal):", roleError);
-          }
-        } catch (roleErr) {
-          console.warn("⚠️ Role creation exception (non-fatal):", roleErr);
-        }
-      } catch (profileErr) {
-        console.warn("⚠️ Profile creation exception (non-fatal):", profileErr);
+      if (roleError) {
+        console.error("❌ Role creation failed:", roleError);
+        throw new ApiError("Failed to create user role: " + roleError.message);
       }
     }
 
@@ -209,6 +203,32 @@ export const usersApi = {
       .from("user_roles")
       .update({ approved: true })
       .eq("id", roleId)
+      .select();
+
+    if (error) throw new ApiError(error.message);
+    return data[0];
+  },
+
+  async approveUserWithRole(userId: string, assignedRole: UserRole) {
+    // First, delete any existing unapproved roles for this user
+    const { error: deleteError } = await supabase
+      .from("user_roles")
+      .delete()
+      .eq("user_id", userId)
+      .eq("approved", false);
+
+    if (deleteError) throw new ApiError(deleteError.message);
+
+    // Create and approve the new role in one step
+    const { data, error } = await supabase
+      .from("user_roles")
+      .insert([
+        {
+          user_id: userId,
+          role: assignedRole,
+          approved: true,
+        },
+      ])
       .select();
 
     if (error) throw new ApiError(error.message);
