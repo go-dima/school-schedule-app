@@ -99,13 +99,14 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 
     if (currentTimeSlotIndex > 0) {
       const previousSlot = dayTimeSlots[currentTimeSlotIndex - 1];
-      const previousSlotClasses =
-        weeklySchedule[dayOfWeek]?.[previousSlot.id] || [];
 
-      doubleContinuationClasses = previousSlotClasses.filter(cls => {
+      // Get double lessons from the original classes array instead of weeklySchedule
+      doubleContinuationClasses = classes.filter(cls => {
         // Find double lessons from the previous slot that extend into this slot
         const isDoubleFromPrevious =
-          cls.isDouble && cls.timeSlotId === previousSlot.id;
+          cls.isDouble &&
+          cls.timeSlotId === previousSlot.id &&
+          cls.dayOfWeek === dayOfWeek;
         // Filter by user grade if needed
         const matchesGrade = !userGrade || cls.grades?.includes(userGrade);
         return isDoubleFromPrevious && matchesGrade;
@@ -154,19 +155,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
             </Card>
           </div>
         );
-      } else {
-        // Don't show anything for unselected double lessons in their second slot
-        // They should only appear in their first slot
-        return (
-          <div className="schedule-cell empty">
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="אין שיעורים"
-              style={{ margin: "8px 0" }}
-            />
-          </div>
-        );
       }
+      // If double lesson exists but is not selected, fall through to show regular classes
     }
 
     // Handle non-lesson time slots (breaks, meetings)
@@ -239,21 +229,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                   {cls.isMandatory && <Tag color="red">ליבה</Tag>}
                   {isDoubleLesson && <Tag color="orange">שיעור כפול</Tag>}
                 </div>
-                {canSelectClasses && (
-                  <Button
-                    type="default"
-                    size="small"
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleCellClick(timeSlot, dayOfWeek);
-                    }}
-                    style={{
-                      marginTop: 8,
-                      width: "100%",
-                    }}>
-                    בחר שיעור אחר
-                  </Button>
-                )}
               </Card>
             );
           })}
@@ -261,12 +236,26 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       );
     }
 
+    // Combine regular classes with unselected double lesson continuations for display
+    const unselectedDoubleContinuations = doubleContinuationClasses.filter(
+      cls => !selectedClasses.includes(cls.id)
+    );
+    const allUnselectedClasses = [
+      ...filteredClasses,
+      ...unselectedDoubleContinuations,
+    ];
+
+    // Remove duplicates (in case a class appears in both lists)
+    const uniqueUnselectedClasses = allUnselectedClasses.filter(
+      (cls, index, self) => self.findIndex(c => c.id === cls.id) === index
+    );
+
     // For unselected classes, show as multiple classes interface for consistency
-    if (filteredClasses.length >= 1) {
+    if (uniqueUnselectedClasses.length >= 1) {
       const classCountText =
-        filteredClasses.length === 1
+        uniqueUnselectedClasses.length === 1
           ? "שיעור אחד"
-          : `${filteredClasses.length} שיעורים`;
+          : `${uniqueUnselectedClasses.length} שיעורים`;
 
       return (
         <div
@@ -394,38 +383,43 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           timeSlot={selectedTimeSlot}
           dayOfWeek={selectedDayOfWeek}
           timeSlots={timeSlots}
-          classes={classes.filter(cls => {
-            // Show classes that are directly in this time slot for the selected day
-            if (
-              cls.timeSlotId === selectedTimeSlot.id &&
-              cls.dayOfWeek === selectedDayOfWeek &&
-              (!userGrade || cls.grades?.includes(userGrade))
-            ) {
-              return true;
-            }
+          classes={(() => {
+            // Filter classes from the original classes array to get proper ClassWithTimeSlot objects
+            return classes.filter(cls => {
+              // Filter by grade first
+              if (userGrade && !cls.grades?.includes(userGrade)) {
+                return false;
+              }
 
-            // Also show double lessons from the previous slot that extend into this slot
-            const dayTimeSlots = timeSlots
-              .filter(slot => isLessonTimeSlot(slot))
-              .sort((a, b) => a.startTime.localeCompare(b.startTime));
+              // Filter by day
+              if (cls.dayOfWeek !== selectedDayOfWeek) {
+                return false;
+              }
 
-            const currentTimeSlotIndex = dayTimeSlots.findIndex(
-              slot => slot.id === selectedTimeSlot.id
-            );
+              const dayTimeSlots = timeSlots
+                .filter(slot => isLessonTimeSlot(slot))
+                .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-            if (currentTimeSlotIndex > 0) {
-              const previousSlot = dayTimeSlots[currentTimeSlotIndex - 1];
-
-              return (
-                cls.timeSlotId === previousSlot.id &&
-                cls.dayOfWeek === selectedDayOfWeek &&
-                cls.isDouble &&
-                (!userGrade || cls.grades?.includes(userGrade))
+              const currentTimeSlotIndex = dayTimeSlots.findIndex(
+                slot => slot.id === selectedTimeSlot.id
               );
-            }
 
-            return false;
-          })}
+              // 1. Show classes that directly start in this time slot
+              if (cls.timeSlotId === selectedTimeSlot.id) {
+                return true;
+              }
+
+              // 2. Show double lessons from the previous slot that extend into this slot
+              if (currentTimeSlotIndex > 0) {
+                const previousSlot = dayTimeSlots[currentTimeSlotIndex - 1];
+                if (cls.timeSlotId === previousSlot.id && cls.isDouble) {
+                  return true;
+                }
+              }
+
+              return false;
+            });
+          })()}
           selectedClasses={selectedClasses}
           onClassSelect={onClassSelect}
           onClassUnselect={onClassUnselect}

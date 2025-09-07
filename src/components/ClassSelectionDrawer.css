@@ -53,6 +53,25 @@
   background: #fffbf0;
 }
 
+.class-selection-card.grayed-out {
+  opacity: 0.4;
+  background: #f5f5f5;
+  border-color: #e0e0e0;
+}
+
+.class-selection-card.grayed-out:hover {
+  box-shadow: none;
+  opacity: 0.4;
+}
+
+.class-selection-card.grayed-out .class-card-content {
+  color: #999;
+}
+
+.class-selection-card.grayed-out .class-title {
+  color: #999 !important;
+}
+
 .class-card-content {
   direction: rtl;
   text-align: right;
