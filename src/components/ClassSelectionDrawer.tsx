@@ -106,7 +106,10 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
     }
   };
 
-  const renderClassCard = (cls: ClassWithTimeSlot) => {
+  const renderClassCard = (
+    cls: ClassWithTimeSlot,
+    isGrayedOut: boolean = false
+  ) => {
     const isSelected = selectedClasses.includes(cls.id);
     const hasConflict = conflictingClasses.some(
       conflict => conflict.id === cls.id
@@ -117,9 +120,9 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
         key={cls.id}
         className={`class-selection-card ${isSelected ? "selected" : ""} ${
           hasConflict ? "conflict" : ""
-        }`}
+        } ${isGrayedOut ? "grayed-out" : ""}`}
         size="small"
-        hoverable
+        hoverable={!isGrayedOut}
         actions={
           canSelectClasses
             ? [
@@ -128,6 +131,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
                   type={isSelected ? "default" : "primary"}
                   icon={isSelected ? <CheckOutlined /> : undefined}
                   onClick={() => handleClassToggle(cls.id)}
+                  disabled={isGrayedOut}
                   block>
                   {isSelected ? "בטל בחירה" : "בחר שיעור"}
                 </Button>,
@@ -250,7 +254,9 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
                   direction="vertical"
                   size="small"
                   style={{ width: "100%" }}>
-                  {selectedClassesInTimeSlot.map(renderClassCard)}
+                  {selectedClassesInTimeSlot.map(cls =>
+                    renderClassCard(cls, false)
+                  )}
                 </Space>
               </div>
             )}
@@ -266,7 +272,9 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
                   direction="vertical"
                   size="small"
                   style={{ width: "100%" }}>
-                  {availableClasses.map(renderClassCard)}
+                  {availableClasses.map(cls =>
+                    renderClassCard(cls, selectedClassesInTimeSlot.length > 0)
+                  )}
                 </Space>
               </div>
             )}

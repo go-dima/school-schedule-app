@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Layout,
   Card,
@@ -12,6 +12,9 @@ import {
   message,
   Popconfirm,
   Tag,
+  Select,
+  Row,
+  Col,
 } from "antd";
 import {
   PlusOutlined,
@@ -19,12 +22,14 @@ import {
   DeleteOutlined,
   ReloadOutlined,
   ArrowLeftOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useAuth } from "../contexts/AuthContext";
 import { classesApi, timeSlotsApi } from "../services/api";
 import { ScheduleService } from "../services/scheduleService";
-import type { ClassWithTimeSlot, TimeSlot, Class } from "../types";
+import type { ClassWithTimeSlot, TimeSlot, Class, ClassScope } from "../types";
+import { DAYS_OF_WEEK, GRADES } from "../types";
 import ClassForm from "../components/ClassForm";
 import "./ClassManagementPage.css";
 
@@ -55,9 +60,49 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
   );
   const [submitting, setSubmitting] = useState(false);
 
+  // Filter states
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
+  const [selectedScope, setSelectedScope] = useState<ClassScope | null>(null);
+
   useEffect(() => {
     loadData();
   }, []);
+
+  // Filter and sort classes based on selected filters
+  const filteredClasses = useMemo(() => {
+    let filtered = classes;
+
+    if (selectedDay !== null) {
+      filtered = filtered.filter(cls => cls.dayOfWeek === selectedDay);
+    }
+
+    if (selectedGrade !== null) {
+      filtered = filtered.filter(cls => cls.grades?.includes(selectedGrade));
+    }
+
+    if (selectedScope !== null) {
+      filtered = filtered.filter(cls => cls.scope === selectedScope);
+    }
+
+    // Sort by day, then by time slot, then by grade (lowest first)
+    return filtered.sort((a, b) => {
+      // First sort by day of week
+      if (a.dayOfWeek !== b.dayOfWeek) {
+        return a.dayOfWeek - b.dayOfWeek;
+      }
+
+      // Then sort by time slot (start time)
+      if (a.timeSlot.startTime !== b.timeSlot.startTime) {
+        return a.timeSlot.startTime.localeCompare(b.timeSlot.startTime);
+      }
+
+      // Finally sort by lowest grade in the grades array
+      const aMinGrade = Math.min(...(a.grades || []));
+      const bMinGrade = Math.min(...(b.grades || []));
+      return aMinGrade - bMinGrade;
+    });
+  }, [classes, selectedDay, selectedGrade, selectedScope]);
 
   const loadData = async () => {
     setLoading(true);
@@ -239,6 +284,17 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
       ),
     },
     {
+      title: "סביבה",
+      dataIndex: "scope",
+      key: "scope",
+      width: 100,
+      render: (scope: ClassScope) => (
+        <Tag color={scope === "prod" ? "green" : "orange"}>
+          {scope === "prod" ? "מערכת" : "בדיקות"}
+        </Tag>
+      ),
+    },
+    {
       title: "פעולות",
       key: "actions",
       width: 120,
@@ -335,6 +391,121 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
             showIcon
             style={{ marginBottom: 24 }}
           />
+
+          {/* Filters */}
+          <Card title="מסננים" style={{ marginBottom: 24 }}>
+            <Row gutter={[16, 16]} align="middle">
+              <Col xs={24} sm={8} md={6}>
+                <Space direction="vertical" style={{ width: "100%" }}>
+                  <Space
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      width: "100%",
+                    }}>
+                    <label>יום בשבוע:</label>
+                    {selectedDay !== null && (
+                      <Button
+                        type="text"
+                        size="small"
+                        icon={<CloseOutlined />}
+                        onClick={() => setSelectedDay(null)}
+                        style={{ padding: 0 }}
+                      />
+                    )}
+                  </Space>
+                  <Select
+                    placeholder="בחר יום"
+                    allowClear
+                    style={{ width: "100%" }}
+                    value={selectedDay}
+                    onChange={setSelectedDay}>
+                    {DAYS_OF_WEEK.map(day => (
+                      <Select.Option key={day.key} value={day.key}>
+                        {day.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Space>
+              </Col>
+
+              <Col xs={24} sm={8} md={6}>
+                <Space direction="vertical" style={{ width: "100%" }}>
+                  <Space
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      width: "100%",
+                    }}>
+                    <label>כיתה:</label>
+                    {selectedGrade !== null && (
+                      <Button
+                        type="text"
+                        size="small"
+                        icon={<CloseOutlined />}
+                        onClick={() => setSelectedGrade(null)}
+                        style={{ padding: 0 }}
+                      />
+                    )}
+                  </Space>
+                  <Select
+                    placeholder="בחר כיתה"
+                    allowClear
+                    style={{ width: "100%" }}
+                    value={selectedGrade}
+                    onChange={setSelectedGrade}>
+                    {GRADES.map(grade => (
+                      <Select.Option key={grade} value={grade}>
+                        {ScheduleService.getGradeName(grade)}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Space>
+              </Col>
+
+              <Col xs={24} sm={8} md={6}>
+                <Space direction="vertical" style={{ width: "100%" }}>
+                  <Space
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      width: "100%",
+                    }}>
+                    <label>סביבה:</label>
+                    {selectedScope !== null && (
+                      <Button
+                        type="text"
+                        size="small"
+                        icon={<CloseOutlined />}
+                        onClick={() => setSelectedScope(null)}
+                        style={{ padding: 0 }}
+                      />
+                    )}
+                  </Space>
+                  <Select
+                    placeholder="בחר סביבה"
+                    allowClear
+                    style={{ width: "100%" }}
+                    value={selectedScope}
+                    onChange={setSelectedScope}>
+                    <Select.Option value="test">בדיקות</Select.Option>
+                    <Select.Option value="prod">מערכת</Select.Option>
+                  </Select>
+                </Space>
+              </Col>
+
+              <Col xs={24} sm={24} md={6}>
+                <Button
+                  onClick={() => {
+                    setSelectedDay(null);
+                    setSelectedGrade(null);
+                    setSelectedScope(null);
+                  }}>
+                  נקה מסננים
+                </Button>
+              </Col>
+            </Row>
+          </Card>
         </div>
 
         {error && (
@@ -351,14 +522,18 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
         <Card className="classes-table-card">
           <Table<ClassWithTimeSlot>
             columns={columns}
-            dataSource={classes}
+            dataSource={filteredClasses}
             rowKey="id"
             pagination={{
               pageSize: 20,
               showSizeChanger: true,
               showQuickJumper: true,
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} מתוך ${total} שיעורים`,
+              showTotal: (total, range) => {
+                const totalClasses = classes.length;
+                return total === totalClasses
+                  ? `${range[0]}-${range[1]} מתוך ${total} שיעורים`
+                  : `${range[0]}-${range[1]} מתוך ${total} שיעורים (${totalClasses} סה"כ)`;
+              },
             }}
             scroll={{ x: 1000 }}
             size="small"
