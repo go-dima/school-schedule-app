@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ChildProvider } from "./contexts/ChildContext";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import PendingApprovalPage from "./pages/PendingApprovalPage";
@@ -8,6 +9,7 @@ import SchedulePage from "./pages/SchedulePage";
 import ClassManagementPage from "./pages/ClassManagementPage";
 import PendingApprovalsPage from "./pages/PendingApprovalsPage";
 import UserManagementPage from "./pages/UserManagementPage";
+import SharedChildPage from "./pages/SharedChildPage";
 import { Spin } from "antd";
 import "./App.css";
 
@@ -21,6 +23,17 @@ function AppContent() {
   const { user, userRoles, loading } = useAuth();
   const [showSignup, setShowSignup] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>("schedule");
+  const [sharedChildToken, setSharedChildToken] = useState<string | null>(null);
+
+  // Simple routing based on URL path
+  useEffect(() => {
+    const path = window.location.pathname;
+    const sharedChildMatch = path.match(/^\/shared-child\/(.+)$/);
+
+    if (sharedChildMatch) {
+      setSharedChildToken(sharedChildMatch[1]);
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -34,6 +47,11 @@ function AppContent() {
         <Spin size="large" />
       </div>
     );
+  }
+
+  // Handle shared child page
+  if (sharedChildToken) {
+    return <SharedChildPage token={sharedChildToken} />;
   }
 
   if (!user) {
@@ -69,7 +87,9 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <ChildProvider>
+        <AppContent />
+      </ChildProvider>
     </AuthProvider>
   );
 }

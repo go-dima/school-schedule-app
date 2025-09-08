@@ -20,15 +20,18 @@ import {
   EditOutlined,
 } from "@ant-design/icons";
 import { useAuth } from "../contexts/AuthContext";
+import { useChildContext } from "../contexts/ChildContext";
 import { useSchedule } from "../hooks/useSchedule";
+import { useChildSchedule } from "../hooks/useChildSchedule";
 import ScheduleTable from "../components/ScheduleTable";
 import ClassForm from "../components/ClassForm";
 import ProfileEditModal from "../components/ProfileEditModal";
+import { ChildSelector } from "../components/ChildSelector";
 import { classesApi, timeSlotsApi } from "../services/api";
 import { GRADES } from "../types";
 import type { Class, TimeSlot } from "../types";
 import "./SchedulePage.css";
-import { ScheduleService } from "../services/scheduleService";
+import { GetGradeName } from "@/utils/grades";
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -52,8 +55,17 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     switchRole,
     signOut,
     isAdmin,
+    hasRole,
     refreshProfile,
   } = useAuth();
+  const {
+    selectedChild,
+    setSelectedChild,
+    children: userChildren,
+    loading: childrenLoading,
+    error: childrenError,
+  } = useChildContext();
+
   const [selectedGrade, setSelectedGrade] = useState<number | undefined>(1);
   const [createClassModalOpen, setCreateClassModalOpen] = useState(false);
   const [createClassTimeSlotId, setCreateClassTimeSlotId] = useState<
@@ -66,18 +78,35 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
   const [modalLoading, setModalLoading] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
 
+  const isParent = hasRole("parent");
+
+  // For parents, use child schedule; for others, use user schedule
   const {
     classes,
     timeSlots,
     userSelections,
     weeklySchedule,
-    loading,
-    error,
+    loading: scheduleLoading,
+    error: scheduleError,
     loadScheduleData,
     selectClass,
     unselectClass,
-    isClassSelected,
-  } = useSchedule(user?.id);
+    isClassSelected: isUserClassSelected,
+  } = useSchedule(isParent ? null : user?.id);
+
+  const {
+    schedule: childSchedule,
+    loading: childScheduleLoading,
+    error: childScheduleError,
+    selectClassForChild,
+    unselectClassForChild,
+    isClassSelected: isChildClassSelected,
+  } = useChildSchedule(selectedChild);
+
+  const loading = isParent
+    ? scheduleLoading || childScheduleLoading || childrenLoading
+    : scheduleLoading;
+  const error = scheduleError || childScheduleError || childrenError;
 
   const handleRoleSwitch = (roleId: string) => {
     const role = userRoles.find(r => r.id === roleId);
@@ -88,14 +117,34 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
 
   const handleClassSelect = async (classId: string) => {
     try {
-      if (isClassSelected(classId)) {
-        await unselectClass(classId);
-      } else {
-        await selectClass(classId);
+      if (isParent && selectedChild) {
+        if (isChildClassSelected(classId)) {
+          await unselectClassForChild(classId);
+        } else {
+          await selectClassForChild(classId);
+        }
+      } else if (!isParent && user?.id) {
+        if (isUserClassSelected(classId)) {
+          await unselectClass(classId);
+        } else {
+          await selectClass(classId);
+        }
       }
     } catch (err) {
-      // Handle error silently or show user feedback
+      message.error(
+        err instanceof Error ? err.message : "שגיאה בעדכון בחירת השיעור"
+      );
     }
+  };
+
+  const getSelectedClasses = () => {
+    return isParent
+      ? childSchedule.map(selection => selection.classId)
+      : userSelections.map(selection => selection.classId);
+  };
+
+  const getSelectedSchedule = () => {
+    return isParent ? childSchedule : userSelections;
   };
 
   const handleCreateClass = async (timeSlotId: string, dayOfWeek: number) => {
@@ -148,9 +197,10 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     }
   };
 
-  const selectedClasses = userSelections.map(selection => selection.classId);
+  const selectedClasses = getSelectedClasses();
   const canSelectClasses =
-    currentRole?.role === "child" || currentRole?.role === "parent";
+    (currentRole?.role === "child" || currentRole?.role === "parent") &&
+    (!isParent || selectedChild !== null);
 
   const canViewClasses =
     canSelectClasses ||
@@ -227,19 +277,43 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
 
           <div className="filters-section">
             <Space wrap>
-              <span>סנן לפי כיתה:</span>
-              <Select
-                value={selectedGrade}
-                onChange={setSelectedGrade}
-                placeholder="כל הכיתות"
-                allowClear
-                style={{ minWidth: 120 }}>
-                {GRADES.map(grade => (
-                  <Option key={grade} value={grade}>
-                    {ScheduleService.getGradeName(grade)}
-                  </Option>
+              {isParent && userChildren.length && (
+                <>
+                  <span>בחר ילד:</span>
+                  <ChildSelector
+                    children={userChildren}
+                    selectedChildId={selectedChild?.id || null}
+                    onChildSelect={childId => {
+                      const child = userChildren.find(c => c.id === childId);
+                      setSelectedChild(child || null);
+                      // Auto-update grade filter based on selected child
+                      if (child) {
+                        setSelectedGrade(child.grade);
+                      }
+                    }}
+                    style={{ minWidth: 200 }}
+                    disabled={childrenLoading}
+                  />
+                </>
+              )}
+              {!isParent ||
+                (!userChildren.length && (
+                  <>
+                    <span>סנן לפי כיתה:</span>
+                    <Select
+                      value={selectedGrade}
+                      onChange={setSelectedGrade}
+                      placeholder="כל הכיתות"
+                      allowClear
+                      style={{ minWidth: 120 }}>
+                      {GRADES.map(grade => (
+                        <Option key={grade} value={grade}>
+                          {GetGradeName(grade)}
+                        </Option>
+                      ))}
+                    </Select>
+                  </>
                 ))}
-              </Select>
             </Space>
           </div>
 
@@ -252,7 +326,32 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
             />
           )}
 
-          {!canSelectClasses && (
+          {isParent && userChildren.length === 0 && (
+            <Alert
+              message="לא נמצאו ילדים"
+              description="אין ילדים רשומים בחשבון שלך. הוסף ילד בפרופיל כדי להתחיל לבחור שיעורים."
+              type="info"
+              showIcon
+              style={{ marginBottom: 16 }}
+              action={
+                <Button size="small" onClick={() => setProfileModalOpen(true)}>
+                  הוסף ילד
+                </Button>
+              }
+            />
+          )}
+
+          {isParent && userChildren.length > 0 && !selectedChild && (
+            <Alert
+              message="לא נבחר ילד"
+              description="בחר ילד מהרשימה כדי לצפות ולערוך את מערכת השעות שלו."
+              type="warning"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+          )}
+
+          {!canSelectClasses && !isParent && (
             <Alert
               message="אין הרשאה לבחירת שיעורים"
               description={
@@ -316,10 +415,16 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
           />
         </Card>
 
-        {canSelectClasses && userSelections.length > 0 && (
-          <Card title="השיעורים שנבחרו" className="selected-classes-summary">
+        {canSelectClasses && getSelectedSchedule().length > 0 && (
+          <Card
+            title={
+              isParent && selectedChild
+                ? `השיעורים שנבחרו עבור ${selectedChild.firstName} ${selectedChild.lastName}`
+                : "השיעורים שנבחרו"
+            }
+            className="selected-classes-summary">
             <Space wrap>
-              {userSelections.map(selection => (
+              {getSelectedSchedule().map(selection => (
                 <Button
                   key={selection.id}
                   type="primary"

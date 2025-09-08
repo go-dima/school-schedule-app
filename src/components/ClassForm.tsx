@@ -4,6 +4,7 @@ import { ScheduleService } from "../services/scheduleService";
 import { getLessonTimeSlots } from "../utils/timeSlots";
 import type { ClassWithTimeSlot, TimeSlot, Class } from "../types";
 import { GRADES, DAYS_OF_WEEK } from "../types";
+import { GetGradeName } from "@/utils/grades";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -170,7 +171,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
             <Select mode="multiple" placeholder="בחר כיתות" allowClear>
               {GRADES.map(grade => (
                 <Option key={grade} value={grade}>
-                  {ScheduleService.getGradeName(grade)}
+                  {GetGradeName(grade)}
                 </Option>
               ))}
             </Select>

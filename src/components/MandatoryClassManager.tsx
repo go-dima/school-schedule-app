@@ -17,6 +17,7 @@ import { ScheduleService } from "../services/scheduleService";
 import { classesApi } from "../services/api";
 import type { ClassWithTimeSlot } from "../types";
 import type { ColumnsType } from "antd/es/table";
+import { GetGradeName } from "@/utils/grades";
 import "./MandatoryClassManager.css";
 
 const { Title, Text } = Typography;
@@ -173,9 +174,7 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
       dataIndex: "grade",
       key: "grade",
       width: 80,
-      render: (grade: number) => (
-        <Tag color="blue">{ScheduleService.getGradeName(grade)}</Tag>
-      ),
+      render: (grade: number) => <Tag color="blue">{GetGradeName(grade)}</Tag>,
     },
     {
       title: "זמן",
@@ -268,7 +267,7 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
             allowClear>
             {gradeOptions.map(grade => (
               <Option key={grade} value={grade}>
-                {ScheduleService.getGradeName(grade)}
+                {GetGradeName(grade)}
               </Option>
             ))}
           </Select>
@@ -282,7 +281,7 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
           {selectedGrade && (
             <Text type="secondary">
               מתוך {filteredClasses.length} שיעורים לכיתה{" "}
-              {ScheduleService.getGradeName(selectedGrade)}
+              {GetGradeName(selectedGrade)}
             </Text>
           )}
         </Space>

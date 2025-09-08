@@ -13,6 +13,7 @@ import { CheckOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
 import { ScheduleService } from "../services/scheduleService";
 import type { TimeSlot, ClassWithTimeSlot } from "../types";
 import CreateClassButton from "./CreateClassButton";
+import { GetGradeName } from "@/utils/grades";
 import "./ClassSelectionDrawer.css";
 
 const { Title, Text } = Typography;
@@ -146,7 +147,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
             <div className="class-header-tags">
               {cls.grades?.map(grade => (
                 <Tag key={grade} color="blue">
-                  {ScheduleService.getGradeName(grade)}
+                  {GetGradeName(grade)}
                 </Tag>
               ))}
               {cls.isMandatory && <Tag color="red">ליבה</Tag>}

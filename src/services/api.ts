@@ -1,4 +1,7 @@
 import type {
+  Child,
+  ChildShareToken,
+  ChildWithParents,
   Class,
   ClassWithTimeSlot,
   PendingApproval,
@@ -8,8 +11,8 @@ import type {
   UserRole,
   UserRoleData,
 } from "../types";
-import { supabase } from "./supabase";
 import { NotificationService } from "./notificationService";
+import { supabase } from "./supabase";
 
 export class ApiError extends Error {
   constructor(
@@ -586,5 +589,302 @@ export const scheduleApi = {
       .eq("class_id", classId);
 
     if (error) throw new ApiError(error.message);
+  },
+
+  async getChildSchedule(
+    childId: string
+  ): Promise<ScheduleSelectionWithClass[]> {
+    const isProduction = process.env.NODE_ENV === "production";
+    let query = supabase
+      .from("schedule_selections")
+      .select(
+        `
+        *,
+        class:classes(
+          *,
+          time_slot:time_slots(*)
+        )
+      `
+      )
+      .eq("child_id", childId);
+
+    const { data, error } = await query;
+
+    if (error) throw new ApiError(error.message);
+
+    let filteredData = data;
+    if (isProduction) {
+      filteredData = data.filter(selection => selection.class.scope !== "test");
+    }
+    return filteredData.map(selection => ({
+      id: selection.id,
+      userId: selection.user_id,
+      classId: selection.class_id,
+      createdAt: selection.created_at,
+      updatedAt: selection.updated_at,
+      class: {
+        id: selection.class.id,
+        title: selection.class.title,
+        description: selection.class.description,
+        teacher: selection.class.teacher,
+        dayOfWeek: selection.class.day_of_week,
+        timeSlotId: selection.class.time_slot_id,
+        grades: (selection.class.grades || []).map((grade: string | number) =>
+          typeof grade === "string" ? parseInt(grade, 10) : grade
+        ),
+        isMandatory: selection.class.is_mandatory,
+        isDouble: selection.class.is_double,
+        room: selection.class.room,
+        scope: selection.class.scope,
+        createdAt: selection.class.created_at,
+        updatedAt: selection.class.updated_at,
+        timeSlot: {
+          id: selection.class.time_slot.id,
+          name: selection.class.time_slot.name,
+          startTime: selection.class.time_slot.start_time,
+          endTime: selection.class.time_slot.end_time,
+          createdAt: selection.class.time_slot.created_at,
+          updatedAt: selection.class.time_slot.updated_at,
+        },
+      },
+    }));
+  },
+
+  async selectClassForChild(childId: string, classId: string) {
+    // Get current user ID (parent making the selection)
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new ApiError("User not authenticated");
+
+    const { data, error } = await supabase
+      .from("schedule_selections")
+      .insert([
+        {
+          user_id: user.id,
+          child_id: childId,
+          class_id: classId,
+        },
+      ])
+      .select();
+
+    if (error) throw new ApiError(error.message);
+    return data[0];
+  },
+
+  async unselectClassForChild(childId: string, classId: string) {
+    const { error } = await supabase
+      .from("schedule_selections")
+      .delete()
+      .eq("child_id", childId)
+      .eq("class_id", classId);
+
+    if (error) throw new ApiError(error.message);
+  },
+};
+
+// Children API
+export const childrenApi = {
+  async getParentChildren(parentId: string): Promise<Child[]> {
+    const { data, error } = await supabase
+      .from("parent_child_relationships")
+      .select(
+        `
+        child:children(*)
+      `
+      )
+      .eq("parent_id", parentId);
+
+    if (error) throw new ApiError(error.message);
+
+    return data.map((rel: any) => ({
+      id: rel.child.id,
+      firstName: rel.child.first_name,
+      lastName: rel.child.last_name,
+      grade: rel.child.grade,
+      groupNumber: rel.child.group_number,
+      createdAt: rel.child.created_at,
+      updatedAt: rel.child.updated_at,
+    }));
+  },
+
+  async createChild(
+    firstName: string,
+    lastName: string,
+    grade: number,
+    groupNumber: number = 1
+  ): Promise<Child> {
+    const { data, error } = await supabase.rpc(
+      "create_child_with_relationship",
+      {
+        p_first_name: firstName,
+        p_last_name: lastName,
+        p_grade: grade,
+        p_group_number: groupNumber,
+      }
+    );
+
+    if (error) throw new ApiError(error.message);
+
+    // The function returns the full child record, no need for additional fetch
+    return {
+      id: data.id,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      grade: data.grade,
+      groupNumber: data.group_number,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+  },
+
+  async updateChild(
+    childId: string,
+    updates: {
+      firstName?: string;
+      lastName?: string;
+      grade?: number;
+      groupNumber?: number;
+    }
+  ): Promise<Child> {
+    const updateData: any = {};
+    if (updates.firstName !== undefined)
+      updateData.first_name = updates.firstName;
+    if (updates.lastName !== undefined) updateData.last_name = updates.lastName;
+    if (updates.grade !== undefined) updateData.grade = updates.grade;
+    if (updates.groupNumber !== undefined)
+      updateData.group_number = updates.groupNumber;
+
+    const { data, error } = await supabase
+      .from("children")
+      .update(updateData)
+      .eq("id", childId)
+      .select()
+      .single();
+
+    if (error) throw new ApiError(error.message);
+
+    return {
+      id: data.id,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      grade: data.grade,
+      groupNumber: data.group_number,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+  },
+
+  async removeChildFromParent(
+    parentId: string,
+    childId: string
+  ): Promise<void> {
+    const { error } = await supabase
+      .from("parent_child_relationships")
+      .delete()
+      .eq("parent_id", parentId)
+      .eq("child_id", childId);
+
+    if (error) throw new ApiError(error.message);
+  },
+
+  async deleteChild(childId: string): Promise<void> {
+    const { error } = await supabase
+      .from("children")
+      .delete()
+      .eq("id", childId);
+
+    if (error) throw new ApiError(error.message);
+  },
+
+  async generateShareToken(
+    childId: string,
+    expiresInHours: number = 48
+  ): Promise<string> {
+    const { data, error } = await supabase.rpc("generate_child_share_token", {
+      p_child_id: childId,
+      p_expires_in_hours: expiresInHours,
+    });
+
+    if (error) throw new ApiError(error.message);
+    return data;
+  },
+
+  async acceptSharedChild(token: string): Promise<string> {
+    const { data, error } = await supabase.rpc("accept_shared_child", {
+      p_token: token,
+    });
+
+    if (error) throw new ApiError(error.message);
+    return data;
+  },
+
+  async getChildShareTokens(childId: string): Promise<ChildShareToken[]> {
+    const { data, error } = await supabase
+      .from("child_share_tokens")
+      .select("*")
+      .eq("child_id", childId)
+      .eq("used_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false });
+
+    if (error) throw new ApiError(error.message);
+    return data.map(token => ({
+      id: token.id,
+      childId: token.child_id,
+      token: token.token,
+      sharedByUserId: token.shared_by_user_id,
+      expiresAt: token.expires_at,
+      usedAt: token.used_at,
+      usedByUserId: token.used_by_user_id,
+      createdAt: token.created_at,
+    }));
+  },
+
+  async getChildById(childId: string): Promise<Child> {
+    const { data, error } = await supabase
+      .from("children")
+      .select("*")
+      .eq("id", childId)
+      .single();
+
+    if (error) throw new ApiError(error.message);
+
+    return {
+      id: data.id,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      grade: data.grade,
+      groupNumber: data.group_number,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+  },
+
+  async getChildWithParents(childId: string): Promise<ChildWithParents> {
+    const { data, error } = await supabase
+      .from("children_with_parents")
+      .select("*")
+      .eq("id", childId)
+      .single();
+
+    if (error) throw new ApiError(error.message);
+
+    return {
+      id: data.id,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      grade: data.grade,
+      groupNumber: data.group_number,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      parents: data.parents.map((parent: any) => ({
+        userId: parent.user_id,
+        email: parent.email,
+        firstName: parent.first_name,
+        lastName: parent.last_name,
+        isPrimary: parent.is_primary,
+      })),
+    };
   },
 };

@@ -86,3 +86,48 @@ export const DAYS_OF_WEEK = [
 ] as const;
 
 export const GRADES = [1, 2, 3, 4, 5, 6] as const;
+
+export interface Child {
+  id: string;
+  firstName: string;
+  lastName: string;
+  grade: number;
+  groupNumber: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ParentChildRelationship {
+  id: string;
+  parentId: string;
+  childId: string;
+  isPrimary: boolean;
+  createdAt: string;
+}
+
+export interface ChildWithParents extends Child {
+  parents: Array<{
+    userId: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    isPrimary: boolean;
+  }>;
+}
+
+export interface ChildShareToken {
+  id: string;
+  childId: string;
+  token: string;
+  sharedByUserId: string;
+  expiresAt: string;
+  usedAt?: string;
+  usedByUserId?: string;
+  createdAt: string;
+}
+
+export interface ScheduleSelectionWithChild
+  extends Omit<ScheduleSelection, "userId"> {
+  childId: string;
+  child: Child;
+}

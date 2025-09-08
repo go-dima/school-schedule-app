@@ -32,6 +32,7 @@ import type { ClassWithTimeSlot, TimeSlot, Class, ClassScope } from "../types";
 import { DAYS_OF_WEEK, GRADES } from "../types";
 import ClassForm from "../components/ClassForm";
 import "./ClassManagementPage.css";
+import { GetGradeName, GetGradeNameShort } from "@/utils/grades";
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -256,7 +257,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
             ?.sort((a, b) => b - a)
             .map(grade => (
               <Tag key={grade} color="geekblue">
-                {ScheduleService.getGradeNameShort(grade)}
+                {GetGradeNameShort(grade)}
               </Tag>
             ))}
         </Space>
@@ -456,7 +457,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
                     onChange={setSelectedGrade}>
                     {GRADES.map(grade => (
                       <Select.Option key={grade} value={grade}>
-                        {ScheduleService.getGradeName(grade)}
+                        {GetGradeName(grade)}
                       </Select.Option>
                     ))}
                   </Select>

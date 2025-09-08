@@ -7,6 +7,7 @@ import { getTimeSlotDisplayInfo, isLessonTimeSlot } from "../utils/timeSlots";
 import type { TimeSlot, ClassWithTimeSlot, WeeklySchedule } from "../types";
 import ClassSelectionDrawer from "./ClassSelectionDrawer";
 import "./ScheduleTable.css";
+import { GetGradeName } from "@/utils/grades";
 
 interface ScheduleTableProps {
   timeSlots: TimeSlot[];
@@ -135,7 +136,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               <div className="class-tags">
                 {doubleClass.grades?.map(grade => (
                   <Tag key={grade} color="green">
-                    {ScheduleService.getGradeName(grade)}
+                    {GetGradeName(grade)}
                   </Tag>
                 ))}
                 {doubleClass.isMandatory && <Tag color="red">ליבה</Tag>}
@@ -223,7 +224,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                 <div className="class-tags">
                   {cls.grades?.map(grade => (
                     <Tag key={grade} color={tagColor}>
-                      {ScheduleService.getGradeName(grade)}
+                      {GetGradeName(grade)}
                     </Tag>
                   ))}
                   {cls.isMandatory && <Tag color="red">ליבה</Tag>}
