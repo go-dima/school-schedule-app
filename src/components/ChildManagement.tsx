@@ -12,6 +12,7 @@ import {
   Empty,
   Tag,
 } from "antd";
+import { useTranslation } from "react-i18next";
 import {
   PlusOutlined,
   EditOutlined,
@@ -29,6 +30,7 @@ import { GetGradeName } from "@/utils/grades";
 const { Title, Text } = Typography;
 
 export function ChildManagement() {
+  const { t } = useTranslation();
   const { children, loading, error, createChild, updateChild, removeChild } =
     useChildren();
 
@@ -81,10 +83,12 @@ export function ChildManagement() {
   const handleDeleteChild = async (childId: string) => {
     try {
       await removeChild(childId);
-      message.success("הילד הוסר בהצלחה");
+      message.success(t("child.management.removeSuccess"));
     } catch (error) {
       message.error(
-        error instanceof Error ? error.message : "שגיאה בהסרת הילד"
+        error instanceof Error
+          ? error.message
+          : t("child.management.removeError")
       );
     }
   };
@@ -130,19 +134,19 @@ export function ChildManagement() {
           alignItems: "center",
         }}>
         <Title level={4} style={{ margin: 0 }}>
-          ילדים
+          {t("child.management.title")}
         </Title>
         <Space>
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={openCreateModal}>
-            הוסף ילד
+            {t("child.management.addButton")}
           </Button>
           <Button
             icon={<UserAddOutlined />}
             onClick={() => setIsAcceptModalOpen(true)}>
-            קבל ילד משותף
+            {t("child.management.acceptSharedButton")}
           </Button>
         </Space>
       </div>
@@ -156,13 +160,13 @@ export function ChildManagement() {
       {children.length === 0 ? (
         <Card>
           <Empty
-            description="אין ילדים רשומים"
+            description={t("child.management.noChildren")}
             image={Empty.PRESENTED_IMAGE_SIMPLE}>
             <Button
               type="primary"
               icon={<PlusOutlined />}
               onClick={openCreateModal}>
-              הוסף את הילד הראשון
+              {t("child.management.addFirstChild")}
             </Button>
           </Empty>
         </Card>
@@ -179,24 +183,24 @@ export function ChildManagement() {
                     type="text"
                     icon={<EditOutlined />}
                     onClick={() => openEditModal(child)}>
-                    ערוך
+                    {t("child.management.editButton")}
                   </Button>,
                   <Button
                     key="share"
                     type="text"
                     icon={<ShareAltOutlined />}
                     onClick={() => openShareModal(child)}>
-                    שתף
+                    {t("child.management.shareButton")}
                   </Button>,
                   <Popconfirm
                     key="delete"
-                    title="האם אתה בטוח שברצונך להסיר את הילד?"
-                    description="פעולה זו תסיר את הילד מהחשבון שלך ותמחק את כל בחירות השעורים שלו."
+                    title={t("child.management.deleteConfirmTitle")}
+                    description={t("child.management.deleteConfirmDescription")}
                     onConfirm={() => handleDeleteChild(child.id)}
-                    okText="כן, הסר"
-                    cancelText="ביטול">
+                    okText={t("child.management.confirmDelete")}
+                    cancelText={t("common.buttons.cancel")}>
                     <Button type="text" danger icon={<DeleteOutlined />}>
-                      הסר
+                      {t("child.management.removeButton")}
                     </Button>
                   </Popconfirm>,
                 ]}>
@@ -221,8 +225,11 @@ export function ChildManagement() {
                   description={
                     <div>
                       <Text type="secondary">
-                        נוצר:{" "}
-                        {new Date(child.createdAt).toLocaleDateString("he-IL")}
+                        {t("child.management.createdDate", {
+                          date: new Date(child.createdAt).toLocaleDateString(
+                            "he-IL"
+                          ),
+                        })}
                       </Text>
                     </div>
                   }
@@ -234,7 +241,11 @@ export function ChildManagement() {
       )}
 
       <Modal
-        title={editingChild ? "עריכת פרטי ילד" : "הוספת ילד חדש"}
+        title={
+          editingChild
+            ? t("child.management.editModalTitle")
+            : t("child.management.addModalTitle")
+        }
         open={isFormModalOpen}
         onCancel={closeModals}
         footer={null}

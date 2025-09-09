@@ -4,6 +4,7 @@
  */
 
 import { supabase } from "../services/supabase";
+import log from "./logger";
 
 interface Migration {
   id: string;
@@ -38,9 +39,7 @@ export class MigrationRunner {
 
     if (error) {
       // Fallback: SQL would need to be run manually in production
-      console.warn(
-        "Migration table creation requires manual setup in production"
-      );
+      log.warn("Migration table creation requires manual setup in production");
       // // Fallback: create table with raw SQL
       // const { error: createError } = await supabase.sql`
       //   CREATE TABLE IF NOT EXISTS public.migrations (
@@ -82,13 +81,15 @@ export class MigrationRunner {
         .order("applied_at");
 
       if (error) {
-        console.warn("Could not fetch applied migrations:", error.message);
+        log.warn("Could not fetch applied migrations", {
+          error: error.message,
+        });
         return [];
       }
 
       return data.map(row => row.id);
     } catch (error) {
-      console.warn("Error fetching migrations:", error);
+      log.warn("Error fetching migrations:", { error });
       return [];
     }
   }
@@ -105,16 +106,14 @@ export class MigrationRunner {
       });
 
       if (error) {
-        console.warn(
-          `Could not mark migration ${migration.id} as applied:`,
-          error.message
-        );
+        log.warn(`Could not mark migration ${migration.id} as applied`, {
+          error: error.message,
+        });
       }
     } catch (error) {
-      console.warn(
-        `Error marking migration ${migration.id} as applied:`,
-        error
-      );
+      log.warn(`Error marking migration ${migration.id} as applied:`, {
+        error,
+      });
     }
   }
 
@@ -136,22 +135,22 @@ export class MigrationRunner {
    */
   async runMigration(migration: Migration): Promise<boolean> {
     try {
-      console.log(`Running migration: ${migration.id} - ${migration.name}`);
+      log.info(`Running migration: ${migration.id} - ${migration.name}`);
 
       // Load and execute migration SQL
       const sql = await this.loadMigrationSql(migration.file);
 
       // Note: In a real implementation, you would execute the SQL here
       // For development, migrations should be run manually in Supabase SQL editor
-      console.log(`Migration SQL for ${migration.id}:`);
-      console.log(sql);
+      log.info(`Migration SQL for ${migration.id}:`);
+      log.info(sql);
 
       // Mark as applied
       await this.markMigrationApplied(migration);
 
       return true;
     } catch (error) {
-      console.error(`Failed to run migration ${migration.id}:`, error);
+      log.error(`Failed to run migration ${migration.id}:`, { error });
       return false;
     }
   }
@@ -179,36 +178,34 @@ export class MigrationRunner {
       );
 
       if (pendingMigrations.length === 0) {
-        console.log("No pending migrations");
+        log.info("No pending migrations");
         return true;
       }
 
-      console.log(`Found ${pendingMigrations.length} pending migrations`);
+      log.info(`Found ${pendingMigrations.length} pending migrations`);
 
       // Sort migrations by dependencies
       const sortedMigrations = this.topologicalSort(pendingMigrations);
 
       for (const migration of sortedMigrations) {
         if (!this.areDependenciesSatisfied(migration, appliedMigrations)) {
-          console.error(
-            `Migration ${migration.id} has unsatisfied dependencies`
-          );
+          log.error(`Migration ${migration.id} has unsatisfied dependencies`);
           return false;
         }
 
         const success = await this.runMigration(migration);
         if (!success) {
-          console.error(`Failed to run migration ${migration.id}`);
+          log.error(`Failed to run migration ${migration.id}`);
           return false;
         }
 
         appliedMigrations.push(migration.id);
       }
 
-      console.log("All migrations completed successfully");
+      log.info("All migrations completed successfully");
       return true;
     } catch (error) {
-      console.error("Error running migrations:", error);
+      log.error("Error running migrations:", { error });
       return false;
     }
   }
@@ -280,7 +277,7 @@ export const migrationRunner = new MigrationRunner();
 
 // Development helper to log migration instructions
 export function logMigrationInstructions(): void {
-  console.log(`
+  log.info(`
 🗄️  Database Migration Instructions:
 
 To set up your database, run these migrations in order in your Supabase SQL Editor:

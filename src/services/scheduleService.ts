@@ -1,9 +1,10 @@
 import type {
   ClassWithTimeSlot,
   ScheduleSelectionWithClass,
-  WeeklySchedule,
   TimeSlot,
+  WeeklySchedule,
 } from "../types";
+import log from "../utils/logger";
 import { isLessonTimeSlot } from "../utils/timeSlots";
 
 export class ScheduleService {
@@ -12,12 +13,6 @@ export class ScheduleService {
     allTimeSlots: TimeSlot[] = []
   ): WeeklySchedule {
     const schedule: WeeklySchedule = {};
-
-    console.log("🏗️ Building weekly schedule with:", {
-      classCount: classes.length,
-      timeSlotCount: allTimeSlots.length,
-      doubleClassCount: classes.filter(cls => cls.isDouble).length,
-    });
 
     classes.forEach(cls => {
       const dayOfWeek = cls.dayOfWeek;
@@ -33,16 +28,8 @@ export class ScheduleService {
 
       schedule[dayOfWeek][timeSlotId].push(cls);
 
-      if (cls.isDouble) {
-        console.log(`📝 Adding double lesson "${cls.title}" to primary slot:`, {
-          dayOfWeek,
-          timeSlotId,
-          timeSlotName: cls.timeSlot.name,
-        });
-      }
-
       // For double lessons, also add to the next consecutive time slot
-      if (cls.isDouble && allTimeSlots.length > 0) {
+      if (cls.isDouble && allTimeSlots.length) {
         const nextTimeSlot = this.getNextConsecutiveTimeSlot(
           cls.timeSlot,
           allTimeSlots
@@ -56,19 +43,8 @@ export class ScheduleService {
             ...cls,
             // We could add a flag here but the rendering logic handles it
           });
-
-          console.log(
-            `➕ Adding double lesson "${cls.title}" to continuation slot:`,
-            {
-              dayOfWeek,
-              nextTimeSlotId: nextTimeSlot.id,
-              nextTimeSlotName: nextTimeSlot.name,
-            }
-          );
         } else {
-          console.warn(
-            `⚠️ No next time slot found for double lesson "${cls.title}"`
-          );
+          log.warn(`No next time slot found for double lesson "${cls.title}"`);
         }
       }
     });

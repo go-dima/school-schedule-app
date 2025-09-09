@@ -5,6 +5,7 @@
 
 import { scheduleApi, classesApi } from "./api";
 import type { ClassWithTimeSlot, UserRoleData } from "../types";
+import log from "../utils/logger";
 
 export class MandatoryClassService {
   /**
@@ -19,7 +20,7 @@ export class MandatoryClassService {
         cls => cls.isMandatory && cls.grades?.includes(grade)
       );
     } catch (error) {
-      console.error("Failed to get mandatory classes:", error);
+      log.error("Failed to get mandatory classes", { error });
       return [];
     }
   }
@@ -33,7 +34,7 @@ export class MandatoryClassService {
     userGrade?: number
   ): Promise<void> {
     if (!userGrade) {
-      console.warn("No grade specified for mandatory class selection");
+      log.warn("No grade specified for mandatory class selection");
       return;
     }
 
@@ -43,7 +44,7 @@ export class MandatoryClassService {
         await this.getMandatoryClassesForGrade(userGrade);
 
       if (mandatoryClasses.length === 0) {
-        console.log(`No mandatory classes found for grade ${userGrade}`);
+        log.info(`No mandatory classes found for grade ${userGrade}`);
         return;
       }
 
@@ -58,7 +59,7 @@ export class MandatoryClassService {
         cls => !selectedClassIds.includes(cls.id)
       );
 
-      console.log(
+      log.info(
         `Auto-selecting ${classesToSelect.length} mandatory classes for user ${userId}`
       );
 
@@ -66,16 +67,16 @@ export class MandatoryClassService {
       for (const mandatoryClass of classesToSelect) {
         try {
           await scheduleApi.selectClass(userId, mandatoryClass.id);
-          console.log(`Auto-selected mandatory class: ${mandatoryClass.title}`);
+          log.info(`Auto-selected mandatory class: ${mandatoryClass.title}`);
         } catch (error) {
-          console.error(
-            `Failed to auto-select mandatory class ${mandatoryClass.title}:`,
-            error
+          log.error(
+            `Failed to auto-select mandatory class ${mandatoryClass.title}`,
+            { error }
           );
         }
       }
     } catch (error) {
-      console.error("Failed to auto-select mandatory classes:", error);
+      log.error("Failed to auto-select mandatory classes", { error });
     }
   }
 
@@ -143,7 +144,7 @@ export class MandatoryClassService {
         isMandatory: true,
       });
 
-      console.log(
+      log.info(
         `Created mandatory class: ${classData.title} for grades ${classData.grades?.join(", ")}`
       );
 
@@ -156,7 +157,7 @@ export class MandatoryClassService {
 
       return newClass;
     } catch (error) {
-      console.error("Failed to create mandatory class:", error);
+      log.error("Failed to create mandatory class", { error });
       throw error;
     }
   }
@@ -172,7 +173,7 @@ export class MandatoryClassService {
       // This would require additional database queries to get all users in a grade
       // For now, we'll log the action - in a real implementation, you'd query
       // for all users with the 'child' role in the specified grade
-      console.log(
+      log.info(
         `Would auto-select class ${classId} for all students in grade ${grade}`
       );
 
@@ -199,7 +200,7 @@ export class MandatoryClassService {
       return;
     }
 
-    console.log(
+    log.info(
       `Handling new user registration: auto-selecting mandatory classes for grade ${userGrade}`
     );
 

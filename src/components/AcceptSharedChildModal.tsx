@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Modal, Button, Input, Typography, message, Form } from "antd";
 import { UserAddOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import { useChildren } from "../hooks/useChildren";
 
 const { Text } = Typography;
@@ -14,6 +15,7 @@ export function AcceptSharedChildModal({
   open,
   onClose,
 }: AcceptSharedChildModalProps) {
+  const { t } = useTranslation();
   const { acceptSharedChild } = useChildren();
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
@@ -33,17 +35,19 @@ export function AcceptSharedChildModal({
       }
 
       if (!token) {
-        message.error("קישור לא תקין");
+        message.error(t("acceptSharedChild.modal.invalidLink"));
         return;
       }
 
       await acceptSharedChild(token);
-      message.success("הילד נוסף בהצלחה לחשבון שלך");
+      message.success(t("acceptSharedChild.modal.childAddedSuccess"));
       form.resetFields();
       onClose();
     } catch (error) {
       message.error(
-        error instanceof Error ? error.message : "שגיאה בקבלת הילד המשותף"
+        error instanceof Error
+          ? error.message
+          : t("acceptSharedChild.modal.acceptError")
       );
     } finally {
       setLoading(false);
@@ -57,22 +61,23 @@ export function AcceptSharedChildModal({
 
   return (
     <Modal
-      title="קבלת ילד משותף"
+      title={t("acceptSharedChild.modal.title")}
       open={open}
       onCancel={handleCancel}
       footer={null}>
       <div style={{ marginBottom: 16 }}>
-        <Text>
-          הזן את קישור השיתוף שקיבלת מהורה אחר כדי להוסיף את הילד לחשבון שלך.
-        </Text>
+        <Text>{t("acceptSharedChild.modal.description")}</Text>
       </div>
 
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
         <Form.Item
-          label="קישור שיתוף"
+          label={t("acceptSharedChild.modal.shareLinkLabel")}
           name="shareLink"
           rules={[
-            { required: true, message: "נא להזין קישור שיתוף" },
+            {
+              required: true,
+              message: t("acceptSharedChild.modal.shareLinkRequired"),
+            },
             {
               validator: (_, value) => {
                 if (!value) return Promise.resolve();
@@ -85,12 +90,14 @@ export function AcceptSharedChildModal({
                   return Promise.resolve();
                 }
 
-                return Promise.reject(new Error("קישור לא תקין"));
+                return Promise.reject(
+                  new Error(t("acceptSharedChild.modal.invalidLink"))
+                );
               },
             },
           ]}>
           <Input.TextArea
-            placeholder="הדבק כאן את קישור השיתוף או את האסימון..."
+            placeholder={t("acceptSharedChild.modal.placeholder")}
             rows={3}
             autoSize={{ minRows: 3, maxRows: 5 }}
           />
@@ -98,13 +105,13 @@ export function AcceptSharedChildModal({
 
         <Form.Item style={{ marginBottom: 0 }}>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-            <Button onClick={handleCancel}>ביטול</Button>
+            <Button onClick={handleCancel}>{t("common.buttons.cancel")}</Button>
             <Button
               type="primary"
               htmlType="submit"
               icon={<UserAddOutlined />}
               loading={loading}>
-              הוסף ילד
+              {t("acceptSharedChild.modal.addChildButton")}
             </Button>
           </div>
         </Form.Item>

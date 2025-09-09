@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { ConfigProvider } from "antd";
 import heIL from "antd/locale/he_IL";
 import { env } from "./utils/env";
+import "./utils/i18n";
 import App from "./App.tsx";
 import "./index.css";
 

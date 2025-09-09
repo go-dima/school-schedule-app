@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Form, Input, Button, Card, Typography, Alert } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
 import "./AuthPages.css";
 
@@ -16,6 +17,7 @@ interface LoginPageProps {
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +30,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
     try {
       await signIn(values.email, values.password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "שגיאה בהתחברות");
+      setError(err instanceof Error ? err.message : t("auth.login.error"));
     } finally {
       setLoading(false);
     }
@@ -43,13 +45,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
       <div className="auth-container">
         <Card className="auth-card">
           <div className="auth-header">
-            <Title level={2}>התחברות</Title>
-            <Text type="secondary">היכנס למערכת השעות שלך</Text>
+            <Title level={2}>{t("auth.login.title")}</Title>
+            <Text type="secondary">{t("auth.login.subtitle")}</Text>
           </div>
 
           {error && (
             <Alert
-              message="שגיאה בהתחברות"
+              message={t("auth.login.error")}
               description={error}
               type="error"
               showIcon
@@ -68,25 +70,27 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
             className="auth-form">
             <Form.Item
               name="email"
-              label="כתובת דוא״ל"
+              label={t("auth.login.emailLabel")}
               rules={[
-                { required: true, message: "נא להזין כתובת דוא״ל" },
-                { type: "email", message: "כתובת דוא״ל לא תקינה" },
+                { required: true, message: t("auth.login.emailRequired") },
+                { type: "email", message: t("auth.login.emailInvalid") },
               ]}>
               <Input
                 prefix={<UserOutlined />}
-                placeholder="your@email.com"
+                placeholder={t("auth.login.emailPlaceholder")}
                 size="large"
               />
             </Form.Item>
 
             <Form.Item
               name="password"
-              label="סיסמה"
-              rules={[{ required: true, message: "נא להזין סיסמה" }]}>
+              label={t("auth.login.passwordLabel")}
+              rules={[
+                { required: true, message: t("auth.login.passwordRequired") },
+              ]}>
               <Input.Password
                 prefix={<LockOutlined />}
-                placeholder="הסיסמה שלך"
+                placeholder={t("auth.login.passwordPlaceholder")}
                 size="large"
               />
             </Form.Item>
@@ -99,7 +103,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
                 loading={loading}
                 block
                 className="auth-submit-btn">
-                התחבר
+                {t("auth.login.loginButton")}
               </Button>
             </Form.Item>
           </Form>
@@ -122,8 +126,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
 
           <div className="auth-footer">
             <Text>
-              עדיין אין לך חשבון?{" "}
-              <Link onClick={onSwitchToSignup}>הירשם עכשיו</Link>
+              {t("auth.login.signupPrompt")}{" "}
+              <Link onClick={onSwitchToSignup}>
+                {t("auth.login.signupLink")}
+              </Link>
             </Text>
           </div>
         </Card>

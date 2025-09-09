@@ -1,3 +1,5 @@
+import log from "../utils/logger";
+
 export class NotificationService {
   /**
    * Log notification about new user pending approval (in-app only)
@@ -16,15 +18,15 @@ export class NotificationService {
 
       const roleDisplay = roleDisplayNames[requestedRole] || requestedRole;
 
-      console.log(
-        `🔔 בקשה חדשה לאישור - ${userEmail} מבקש תפקיד: ${roleDisplay}`
+      log.info(
+        `New approval request - ${userEmail} requesting role: ${roleDisplay}`
       );
-      console.log(`📅 תאריך בקשה: ${new Date().toLocaleDateString("he-IL")}`);
+      log.info(`Request date: ${new Date().toLocaleDateString("he-IL")}`);
 
       // In the future, this could store in-app notifications in a database table
       // For now, we rely on the PendingApprovalsPage to show new requests
     } catch (error) {
-      console.error("❌ Failed to log notification:", error);
+      log.error("Failed to log notification", { error });
       // Don't throw - notification failure shouldn't block user signup
     }
   }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Form, Input, Button, Alert, Space, Tabs } from "antd";
 import { UserOutlined, SaveOutlined, UserAddOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import { usersApi } from "../services/api";
 import { ChildManagement } from "./ChildManagement";
@@ -21,6 +22,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +54,9 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       onSuccess();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "שגיאה בעדכון הפרופיל");
+      setError(
+        err instanceof Error ? err.message : t("profile.modal.updateError")
+      );
     } finally {
       setLoading(false);
     }
@@ -73,14 +77,14 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       label: (
         <Space>
           <UserOutlined />
-          פרטים אישיים
+          {t("profile.modal.personalInfoTab")}
         </Space>
       ),
       children: (
         <div>
           {error && (
             <Alert
-              message="שגיאה בעדכון הפרופיל"
+              message={t("profile.modal.updateError")}
               description={error}
               type="error"
               showIcon
@@ -98,28 +102,34 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
             requiredMark={false}>
             <Form.Item
               name="firstName"
-              label="שם פרטי"
+              label={t("profile.modal.firstNameLabel")}
               rules={[
-                { required: true, message: "נא להזין שם פרטי" },
-                { min: 2, message: "שם פרטי חייב להכיל לפחות 2 תווים" },
+                {
+                  required: true,
+                  message: t("profile.modal.firstNameRequired"),
+                },
+                { min: 2, message: t("profile.modal.firstNameMinLength") },
               ]}>
               <Input
                 prefix={<UserOutlined />}
-                placeholder="הזן את השם הפרטי שלך"
+                placeholder={t("profile.modal.firstNamePlaceholder")}
                 size="large"
               />
             </Form.Item>
 
             <Form.Item
               name="lastName"
-              label="שם משפחה"
+              label={t("profile.modal.lastNameLabel")}
               rules={[
-                { required: true, message: "נא להזין שם משפחה" },
-                { min: 2, message: "שם משפחה חייב להכיל לפחות 2 תווים" },
+                {
+                  required: true,
+                  message: t("profile.modal.lastNameRequired"),
+                },
+                { min: 2, message: t("profile.modal.lastNameMinLength") },
               ]}>
               <Input
                 prefix={<UserOutlined />}
-                placeholder="הזן את שם המשפחה שלך"
+                placeholder={t("profile.modal.lastNamePlaceholder")}
                 size="large"
               />
             </Form.Item>
@@ -127,14 +137,14 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
             <Form.Item style={{ marginBottom: 0, textAlign: "left" }}>
               <Space>
                 <Button onClick={handleCancel} disabled={loading}>
-                  ביטול
+                  {t("common.buttons.cancel")}
                 </Button>
                 <Button
                   type="primary"
                   htmlType="submit"
                   loading={loading}
                   icon={<SaveOutlined />}>
-                  שמור שינויים
+                  {t("common.buttons.save")}
                 </Button>
               </Space>
             </Form.Item>
@@ -151,7 +161,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       label: (
         <Space>
           <UserAddOutlined />
-          ילדים
+          {t("profile.modal.childrenTab")}
         </Space>
       ),
       children: <ChildManagement />,
@@ -160,7 +170,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
 
   return (
     <Modal
-      title="ניהול פרופיל"
+      title={t("profile.modal.title")}
       open={visible}
       onCancel={handleCancel}
       footer={null}

@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
-import { classesApi, timeSlotsApi, scheduleApi } from "../services/api";
+import { useEffect, useState } from "react";
+import { classesApi, scheduleApi, timeSlotsApi } from "../services/api";
 import { ScheduleService } from "../services/scheduleService";
 import type {
   ClassWithTimeSlot,
-  TimeSlot,
   ScheduleSelectionWithClass,
+  TimeSlot,
   WeeklySchedule,
 } from "../types";
+import log from "../utils/logger";
 
 export function useSchedule(userId?: string) {
   const [classes, setClasses] = useState<ClassWithTimeSlot[]>([]);
@@ -39,30 +40,14 @@ export function useSchedule(userId?: string) {
 
       // Debug logging for double lessons and data validation
       const doubleLessons = classesData.filter(cls => cls.isDouble);
-      if (doubleLessons.length > 0) {
-        console.log(
-          "🔍 Double lessons loaded from API:",
-          doubleLessons.map(cls => ({
-            id: cls.id,
-            title: cls.title,
-            timeSlotId: cls.timeSlotId,
-            isDouble: cls.isDouble,
-            room: cls.room,
-            scope: cls.scope,
-            grades: cls.grades,
-            gradesType: typeof cls.grades?.[0],
-            dayOfWeek: cls.dayOfWeek,
-            timeSlotName: cls.timeSlot.name,
-          }))
-        );
-
+      if (doubleLessons.length) {
         // Check for orphaned classes (classes referencing non-existent time slots)
         const orphanedClasses = classesData.filter(
           cls => !timeSlotsData.find(slot => slot.id === cls.timeSlotId)
         );
         if (orphanedClasses.length > 0) {
-          console.warn(
-            "⚠️ Found classes with missing time slots:",
+          log.warn(
+            "Found classes with missing time slots",
             orphanedClasses.map(cls => ({
               id: cls.id,
               title: cls.title,
@@ -76,7 +61,6 @@ export function useSchedule(userId?: string) {
         classesData,
         timeSlotsData
       );
-      console.log("🗓️ Built weekly schedule:", weeklySchedule);
       setWeeklySchedule(weeklySchedule);
     } catch (err) {
       setError(

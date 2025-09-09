@@ -11,6 +11,7 @@ import type {
   UserRole,
   UserRoleData,
 } from "../types";
+import log from "../utils/logger";
 import { NotificationService } from "./notificationService";
 import { supabase } from "./supabase";
 
@@ -46,7 +47,7 @@ export const authApi = {
       ]);
 
       if (profileError) {
-        console.error("❌ Profile creation failed:", profileError);
+        log.error("Profile creation failed", { error: profileError });
         throw new ApiError(
           "Failed to create user profile: " + profileError.message
         );
@@ -62,7 +63,7 @@ export const authApi = {
       ]);
 
       if (roleError) {
-        console.error("❌ Role creation failed:", roleError);
+        log.error("Role creation failed", { error: roleError });
         throw new ApiError("Failed to create user role: " + roleError.message);
       }
     }
@@ -195,7 +196,7 @@ export const usersApi = {
       NotificationService.notifyAdminsOfPendingApproval(
         userData.email,
         role
-      ).catch(err => console.warn("Notification logging failed:", err));
+      ).catch(err => log.warn("Notification logging failed", { error: err }));
     }
 
     return data[0];

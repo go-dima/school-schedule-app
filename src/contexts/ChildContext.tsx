@@ -23,12 +23,12 @@ export function ChildProvider({
   const { children, loading, error } = useChildren();
   const isParent = hasRole("parent");
 
-  // Auto-select first child if there's only one and user is a parent
+  // Auto-select first child if user is a parent and no child is selected
   useEffect(() => {
-    if (isParent && children.length === 1 && !selectedChild) {
+    if (isParent && children.length && !selectedChild && !loading) {
       setSelectedChild(children[0]);
     }
-  }, [children, selectedChild, isParent]);
+  }, [children, selectedChild, isParent, loading]);
 
   // Clear selected child if user is not a parent
   useEffect(() => {

@@ -11,6 +11,7 @@ import {
   Modal,
   message,
 } from "antd";
+import { useTranslation } from "react-i18next";
 import {
   ReloadOutlined,
   UserSwitchOutlined,
@@ -48,6 +49,12 @@ interface SchedulePageProps {
 }
 
 const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
+  const { t } = useTranslation();
+
+  const getRoleDisplayName = (role: string): string => {
+    const roleKey = `roles.${role}`;
+    return t(roleKey, role); // fallback to role if translation not found
+  };
   const {
     user,
     currentRole,
@@ -79,6 +86,13 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
   const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   const isParent = hasRole("parent");
+
+  // Auto-update grade filter when selected child changes
+  React.useEffect(() => {
+    if (selectedChild) {
+      setSelectedGrade(selectedChild.grade);
+    }
+  }, [selectedChild]);
 
   // For parents, use child schedule; for others, use user schedule
   const {
@@ -132,7 +146,9 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
       }
     } catch (err) {
       message.error(
-        err instanceof Error ? err.message : "שגיאה בעדכון בחירת השיעור"
+        err instanceof Error
+          ? err.message
+          : t("schedule.page.error.updateClassSelection")
       );
     }
   };
@@ -156,7 +172,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
         setAllTimeSlots(allSlots);
         slotsToUse = allSlots;
       } catch (err) {
-        message.error("שגיאה בטעינת נתוני השעות");
+        message.error(t("schedule.page.error.loadTimeSlots"));
         return;
       }
     }
@@ -165,7 +181,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     const foundTimeSlot = slotsToUse.find(slot => slot.id === timeSlotId);
 
     if (!foundTimeSlot) {
-      message.error("שגיאה: לא נמצא זמן השיעור המבוקש");
+      message.error(t("schedule.page.error.timeSlotNotFound"));
       return;
     }
 
@@ -186,12 +202,16 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     setModalLoading(true);
     try {
       await classesApi.createClass(classData);
-      message.success("השיעור נוצר בהצלחה");
+      message.success(t("schedule.page.success.classCreated"));
       handleCloseCreateModal();
       // Reload schedule data to show the new class
       await loadScheduleData();
     } catch (err) {
-      message.error(err instanceof Error ? err.message : "שגיאה ביצירת השיעור");
+      message.error(
+        err instanceof Error
+          ? err.message
+          : t("schedule.page.error.createClass")
+      );
     } finally {
       setModalLoading(false);
     }
@@ -212,7 +232,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
       <div className="page-loading">
         <Spin size="large" />
         <Title level={4} style={{ marginTop: 16, color: "#1890ff" }}>
-          טוען את מערכת השעות...
+          {t("schedule.page.loading")}
         </Title>
       </div>
     );
@@ -223,24 +243,24 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
       <Content className="schedule-content">
         <div className="schedule-header">
           <div className="header-main">
-            <Title level={2}>מערכת שעות</Title>
+            <Title level={2}>{t("schedule.page.title")}</Title>
             <Space>
               {isAdmin() && (
                 <>
                   <Button
                     icon={<UserAddOutlined />}
                     onClick={() => onNavigate?.("pending-approvals")}>
-                    בקשות ממתינות
+                    {t("schedule.page.buttons.pendingRequests")}
                   </Button>
                   <Button
                     icon={<SettingOutlined />}
                     onClick={() => onNavigate?.("class-management")}>
-                    ניהול שיעורים
+                    {t("schedule.page.buttons.classManagement")}
                   </Button>
                   <Button
                     icon={<UserOutlined />}
                     onClick={() => onNavigate?.("user-management")}>
-                    ניהול משתמשים
+                    {t("schedule.page.buttons.userManagement")}
                   </Button>
                 </>
               )}
@@ -248,7 +268,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                 <Select
                   value={currentRole?.id}
                   onChange={handleRoleSwitch}
-                  placeholder="בחר תפקיד"
+                  placeholder={t("schedule.page.placeholders.selectRole")}
                   style={{ minWidth: 120 }}
                   suffixIcon={<UserSwitchOutlined />}>
                   {userRoles.map(role => (
@@ -262,15 +282,15 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                 icon={<ReloadOutlined />}
                 onClick={loadScheduleData}
                 disabled={loading}>
-                רענן
+                {t("common.buttons.refresh")}
               </Button>
               <Button
                 icon={<EditOutlined />}
                 onClick={() => setProfileModalOpen(true)}>
-                פרופיל
+                {t("schedule.page.profileButton")}
               </Button>
               <Button type="primary" danger onClick={signOut}>
-                התנתק
+                {t("common.buttons.logout")}
               </Button>
             </Space>
           </div>
@@ -279,7 +299,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
             <Space wrap>
               {isParent && userChildren.length && (
                 <>
-                  <span>בחר ילד:</span>
+                  <span>{t("schedule.page.labels.selectChild")}:</span>
                   <ChildSelector
                     children={userChildren}
                     selectedChildId={selectedChild?.id || null}
@@ -299,11 +319,11 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
               {!isParent ||
                 (!userChildren.length && (
                   <>
-                    <span>סנן לפי כיתה:</span>
+                    <span>{t("schedule.page.labels.filterByGrade")}:</span>
                     <Select
                       value={selectedGrade}
                       onChange={setSelectedGrade}
-                      placeholder="כל הכיתות"
+                      placeholder={t("schedule.page.placeholders.allGrades")}
                       allowClear
                       style={{ minWidth: 120 }}>
                       {GRADES.map(grade => (
@@ -319,7 +339,9 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
 
           {currentRole && (
             <Alert
-              message={`תפקיד נוכחי: ${getRoleDisplayName(currentRole.role)}`}
+              message={t("schedule.page.currentRoleAlert", {
+                role: getRoleDisplayName(currentRole.role),
+              })}
               type="info"
               showIcon
               style={{ marginBottom: 16 }}
@@ -328,14 +350,16 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
 
           {isParent && userChildren.length === 0 && (
             <Alert
-              message="לא נמצאו ילדים"
-              description="אין ילדים רשומים בחשבון שלך. הוסף ילד בפרופיל כדי להתחיל לבחור שיעורים."
+              message={t("schedule.page.alerts.noChildrenFound.title")}
+              description={t(
+                "schedule.page.alerts.noChildrenFound.description"
+              )}
               type="info"
               showIcon
               style={{ marginBottom: 16 }}
               action={
                 <Button size="small" onClick={() => setProfileModalOpen(true)}>
-                  הוסף ילד
+                  {t("schedule.page.buttons.addChild")}
                 </Button>
               }
             />
@@ -343,8 +367,10 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
 
           {isParent && userChildren.length > 0 && !selectedChild && (
             <Alert
-              message="לא נבחר ילד"
-              description="בחר ילד מהרשימה כדי לצפות ולערוך את מערכת השעות שלו."
+              message={t("schedule.page.alerts.noChildSelected.title")}
+              description={t(
+                "schedule.page.alerts.noChildSelected.description"
+              )}
               type="warning"
               showIcon
               style={{ marginBottom: 16 }}
@@ -353,14 +379,14 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
 
           {!canSelectClasses && !isParent && (
             <Alert
-              message="אין הרשאה לבחירת שיעורים"
+              message={t("schedule.page.alerts.noPermission.title")}
               description={
                 userRoles.length === 0
-                  ? "נדרשת אישור מנהל להפעלת התפקיד. אנא המתן לאישור או פנה למנהל."
+                  ? t("schedule.page.alerts.noPermission.needsApproval")
                   : currentRole?.role === "admin" ||
                       currentRole?.role === "staff"
-                    ? "מנהלים וצוות יכולים לצפות במערכת השעות אך לא לבחור שיעורים."
-                    : "רק תלמידים והורים יכולים לבחור שיעורים במערכת השעות."
+                    ? t("schedule.page.alerts.noPermission.adminStaffViewOnly")
+                    : t("schedule.page.alerts.noPermission.studentsParentsOnly")
               }
               type="warning"
               showIcon
@@ -380,7 +406,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                         switchRole(childOrParentRole);
                       }
                     }}>
-                    החלף לתפקיד מתאים
+                    {t("schedule.page.buttons.switchToAppropriateRole")}
                   </Button>
                 ) : undefined
               }
@@ -390,7 +416,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
 
         {error && (
           <Alert
-            message="שגיאה בטעינת הנתונים"
+            message={t("schedule.page.error.loadData")}
             description={error}
             type="error"
             showIcon
@@ -419,8 +445,11 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
           <Card
             title={
               isParent && selectedChild
-                ? `השיעורים שנבחרו עבור ${selectedChild.firstName} ${selectedChild.lastName}`
-                : "השיעורים שנבחרו"
+                ? t("schedule.page.selectedClassesForChild", {
+                    firstName: selectedChild.firstName,
+                    lastName: selectedChild.lastName,
+                  })
+                : t("schedule.page.selectedClassesTitle")
             }
             className="selected-classes-summary">
             <Space wrap>
@@ -439,7 +468,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
       </Content>
 
       <Modal
-        title="צור שיעור חדש"
+        title={t("schedule.page.createNewClassModal")}
         open={createClassModalOpen}
         onCancel={handleCloseCreateModal}
         footer={null}
@@ -494,15 +523,5 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     </Layout>
   );
 };
-
-function getRoleDisplayName(role: string): string {
-  const roleNames = {
-    admin: "מנהל",
-    parent: "הורה",
-    child: "תלמיד",
-    staff: "צוות",
-  };
-  return roleNames[role as keyof typeof roleNames] || role;
-}
 
 export default SchedulePage;

@@ -1,4 +1,5 @@
 import { Form, Input, Select, Button, Space, message } from "antd";
+import { useTranslation } from "react-i18next";
 import type { Child } from "../types";
 import { GRADES } from "../types";
 import { GetGradeName } from "@/utils/grades";
@@ -21,6 +22,7 @@ export function ChildForm({
   onCancel,
   loading = false,
 }: ChildFormProps) {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const isEditing = !!child;
 
@@ -32,10 +34,12 @@ export function ChildForm({
         grade: values.grade,
         groupNumber: values.groupNumber,
       });
-      message.success(isEditing ? "הילד עודכן בהצלחה" : "הילד נוסף בהצלחה");
+      message.success(
+        isEditing ? t("form.child.updateSuccess") : t("form.child.addSuccess")
+      );
     } catch (error) {
       message.error(
-        error instanceof Error ? error.message : "שגיאה בשמירת פרטי הילד"
+        error instanceof Error ? error.message : t("form.child.saveError")
       );
     }
   };
@@ -52,24 +56,26 @@ export function ChildForm({
         groupNumber: child?.groupNumber || 1,
       }}>
       <Form.Item
-        label="שם פרטי"
+        label={t("form.child.firstNameLabel")}
         name="firstName"
-        rules={[{ required: true, message: "נא להזין שם פרטי" }]}>
-        <Input placeholder="הזן שם פרטי" />
+        rules={[
+          { required: true, message: t("form.child.firstNameRequired") },
+        ]}>
+        <Input placeholder={t("form.child.firstNamePlaceholder")} />
       </Form.Item>
 
       <Form.Item
-        label="שם משפחה"
+        label={t("form.child.lastNameLabel")}
         name="lastName"
-        rules={[{ required: true, message: "נא להזין שם משפחה" }]}>
-        <Input placeholder="הזן שם משפחה" />
+        rules={[{ required: true, message: t("form.child.lastNameRequired") }]}>
+        <Input placeholder={t("form.child.lastNamePlaceholder")} />
       </Form.Item>
 
       <Form.Item
-        label="כיתה"
+        label={t("form.child.gradeLabel")}
         name="grade"
-        rules={[{ required: true, message: "נא לבחור כיתה" }]}>
-        <Select placeholder="בחר כיתה">
+        rules={[{ required: true, message: t("form.child.gradeRequired") }]}>
+        <Select placeholder={t("form.child.gradePlaceholder")}>
           {GRADES.map(grade => (
             <Select.Option key={grade} value={grade}>
               {GetGradeName(grade)}
@@ -79,21 +85,23 @@ export function ChildForm({
       </Form.Item>
 
       <Form.Item
-        label="קבוצה"
+        label={t("form.child.groupLabel")}
         name="groupNumber"
-        rules={[{ required: true, message: "נא לבחור קבוצה" }]}>
-        <Select placeholder="בחר קבוצה">
-          <Select.Option value={1}>קבוצה 1</Select.Option>
-          <Select.Option value={2}>קבוצה 2</Select.Option>
+        rules={[{ required: true, message: t("form.child.groupRequired") }]}>
+        <Select placeholder={t("form.child.groupPlaceholder")}>
+          <Select.Option value={1}>{t("form.child.group1")}</Select.Option>
+          <Select.Option value={2}>{t("form.child.group2")}</Select.Option>
         </Select>
       </Form.Item>
 
       <Form.Item>
         <Space>
           <Button type="primary" htmlType="submit" loading={loading}>
-            {isEditing ? "עדכן" : "הוסף"}
+            {isEditing
+              ? t("form.child.updateButton")
+              : t("form.child.addButton")}
           </Button>
-          <Button onClick={onCancel}>ביטול</Button>
+          <Button onClick={onCancel}>{t("common.buttons.cancel")}</Button>
         </Space>
       </Form.Item>
     </Form>

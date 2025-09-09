@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import ScheduleTable from "../components/ScheduleTable";
+import { ScheduleService } from "../services/scheduleService";
 import type { TimeSlot, ClassWithTimeSlot, WeeklySchedule } from "../types";
 
 const meta: Meta<typeof ScheduleTable> = {
@@ -108,17 +109,11 @@ const mockClasses: ClassWithTimeSlot[] = [
   },
 ];
 
-const mockWeeklySchedule: WeeklySchedule = {
-  0: {
-    // Sunday
-    "1": [mockClasses[0], mockClasses[2]], // Multiple classes in same time slot
-    "2": [mockClasses[1]], // Single class
-  },
-  1: {
-    // Monday
-    "3": [mockClasses[3]],
-  },
-};
+// Build the weekly schedule properly to handle double lessons
+const mockWeeklySchedule: WeeklySchedule = ScheduleService.buildWeeklySchedule(
+  mockClasses,
+  mockTimeSlots
+);
 
 export const Default: Story = {
   args: {

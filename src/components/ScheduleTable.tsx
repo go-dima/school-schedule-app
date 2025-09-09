@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Table, Card, Tag, Button, Empty } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { useTranslation } from "react-i18next";
 import { DAYS_OF_WEEK } from "../types";
 import { ScheduleService } from "../services/scheduleService";
 import { getTimeSlotDisplayInfo, isLessonTimeSlot } from "../utils/timeSlots";
@@ -42,6 +43,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   isAdmin = false,
   onCreateClass,
 }) => {
+  const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(
     null
@@ -75,89 +77,69 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       ? dayClasses.filter(cls => cls.grades?.includes(userGrade))
       : dayClasses;
 
-    // Filter out continuation classes (double lessons that don't actually start in this slot)
-    filteredClasses = filteredClasses.filter(cls => {
-      if (cls.isDouble && cls.timeSlotId !== timeSlot.id) {
-        // This is a continuation class (double lesson placed in second slot), don't render it in the normal flow
-        return false;
-      }
-      return true;
-    });
-
     const displayInfo = getTimeSlotDisplayInfo(timeSlot);
     const isSelectableSlot = displayInfo.isSelectable && canViewClasses;
 
-    // Check if this slot has double lessons from the previous slot (continuation slot)
-    const dayTimeSlots = timeSlots
-      .filter(slot => isLessonTimeSlot(slot))
-      .sort((a, b) => a.startTime.localeCompare(b.startTime));
-
-    const currentTimeSlotIndex = dayTimeSlots.findIndex(
-      slot => slot.id === timeSlot.id
+    // Separate primary classes from continuation classes
+    const primaryClasses = filteredClasses.filter(
+      cls => cls.timeSlotId === timeSlot.id
+    );
+    const continuationClasses = filteredClasses.filter(
+      cls => cls.isDouble && cls.timeSlotId !== timeSlot.id
     );
 
-    let doubleContinuationClasses: ClassWithTimeSlot[] = [];
+    // Handle double lesson continuations - but only for SELECTED classes
+    const selectedContinuationClasses = continuationClasses.filter(cls =>
+      selectedClasses.includes(cls.id)
+    );
 
-    if (currentTimeSlotIndex > 0) {
-      const previousSlot = dayTimeSlots[currentTimeSlotIndex - 1];
+    if (selectedContinuationClasses.length) {
+      // This is the second slot of a SELECTED double lesson
+      const doubleClass = selectedContinuationClasses[0];
+      const isMandatory = doubleClass.isMandatory;
 
-      // Get double lessons from the original classes array instead of weeklySchedule
-      doubleContinuationClasses = classes.filter(cls => {
-        // Find double lessons from the previous slot that extend into this slot
-        const isDoubleFromPrevious =
-          cls.isDouble &&
-          cls.timeSlotId === previousSlot.id &&
-          cls.dayOfWeek === dayOfWeek;
-        // Filter by user grade if needed
-        const matchesGrade = !userGrade || cls.grades?.includes(userGrade);
-        return isDoubleFromPrevious && matchesGrade;
-      });
-    }
-
-    if (doubleContinuationClasses.length > 0) {
-      // This is the second slot of a double lesson
-      const doubleClass = doubleContinuationClasses[0]; // Assuming only one double class per slot
-      const isSelected = selectedClasses.includes(doubleClass.id);
-
-      if (isSelected) {
-        // Show full class details in second slot when selected
-        return (
-          <div
-            className={`schedule-cell selected-classes double-continuation selected ${
-              isSelectableSlot ? "clickable" : ""
-            }`}
-            onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
-            <Card size="small" className="class-card selected-card double-card">
-              <div className="class-title">{doubleClass.title}</div>
-              <div className="class-teacher">{doubleClass.teacher}</div>
-              {doubleClass.room && (
-                <div className="class-room">כיתה: {doubleClass.room}</div>
+      // Show full class details in second slot when selected
+      return (
+        <div
+          className={`schedule-cell selected-classes double-continuation selected ${
+            isMandatory ? "mandatory-cell" : ""
+          } ${isSelectableSlot ? "clickable" : ""}`}
+          onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
+          <Card
+            size="small"
+            className={`class-card selected-card double-card ${isMandatory ? "mandatory-card" : ""}`}>
+            <div className="class-title">{doubleClass.title}</div>
+            <div className="class-teacher">{doubleClass.teacher}</div>
+            {doubleClass.room && (
+              <div className="class-room">
+                {t("schedule.table.room", { room: doubleClass.room })}
+              </div>
+            )}
+            <div className="class-tags">
+              {doubleClass.grades?.map(grade => (
+                <Tag key={grade} color="green">
+                  {GetGradeName(grade)}
+                </Tag>
+              ))}
+              {doubleClass.isMandatory && (
+                <Tag color="red">{t("schedule.table.mandatoryTag")}</Tag>
               )}
-              <div className="class-tags">
-                {doubleClass.grades?.map(grade => (
-                  <Tag key={grade} color="green">
-                    {GetGradeName(grade)}
-                  </Tag>
-                ))}
-                {doubleClass.isMandatory && <Tag color="red">ליבה</Tag>}
-                <Tag color="orange">שיעור כפול</Tag>
-              </div>
-              <div
-                className="continuation-text"
-                style={{
-                  marginTop: 4,
-                  fontSize: "10px",
-                  fontStyle: "italic",
-                  color: "#fa8c16",
-                  textAlign: "center",
-                }}>
-                (המשך)
-              </div>
-            </Card>
-          </div>
-        );
-      }
-      // If double lesson exists but is not selected, fall through to show regular classes
+              <Tag color="orange">{t("schedule.table.doubleLessonTag")}</Tag>
+            </div>
+            <div
+              className="continuation-text"
+              style={{
+                marginTop: 4,
+                fontSize: "10px",
+                fontStyle: "italic",
+                color: "#fa8c16",
+                textAlign: "center",
+              }}>
+              {t("schedule.table.continuationText")}
+            </div>
+          </Card>
+        </div>
+      );
     }
 
     // Handle non-lesson time slots (breaks, meetings)
@@ -176,7 +158,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       );
     }
 
-    if (filteredClasses.length === 0) {
+    if (primaryClasses.length === 0) {
       return (
         <div
           className={`schedule-cell empty ${
@@ -185,7 +167,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="אין שיעורים"
+            description={t("schedule.table.noClasses")}
             style={{ margin: "8px 0" }}
           />
         </div>
@@ -193,20 +175,25 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     }
 
     // Check for selected classes to display individually
-    const selectedFilteredClasses = filteredClasses.filter(cls =>
+    const selectedPrimaryClasses = primaryClasses.filter(cls =>
       selectedClasses.includes(cls.id)
     );
 
     // If there are selected classes, show them individually
-    if (selectedFilteredClasses.length > 0) {
+    if (selectedPrimaryClasses.length > 0) {
+      const hasMandatoryClass = selectedPrimaryClasses.some(
+        cls => cls.isMandatory
+      );
+
       return (
         <div
           className={`schedule-cell selected-classes ${
-            isSelectableSlot ? "clickable" : ""
-          }`}
+            hasMandatoryClass ? "mandatory-cell" : ""
+          } ${isSelectableSlot ? "clickable" : ""}`}
           onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
-          {selectedFilteredClasses.map(cls => {
+          {selectedPrimaryClasses.map(cls => {
             const isDoubleLesson = cls.isDouble;
+            const isMandatory = cls.isMandatory;
             const displayState = "selected";
             const tagColor = "green";
 
@@ -214,21 +201,31 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               <Card
                 key={cls.id}
                 size="small"
-                className={`class-card ${displayState}-card ${isDoubleLesson ? "double-card" : ""}`}
+                className={`class-card ${displayState}-card ${isDoubleLesson ? "double-card" : ""} ${isMandatory ? "mandatory-card" : ""}`}
                 style={{
-                  marginBottom: selectedFilteredClasses.length > 1 ? 4 : 0,
+                  marginBottom: selectedPrimaryClasses.length > 1 ? 4 : 0,
                 }}>
                 <div className="class-title">{cls.title}</div>
                 <div className="class-teacher">{cls.teacher}</div>
-                {cls.room && <div className="class-room">כיתה: {cls.room}</div>}
+                {cls.room && (
+                  <div className="class-room">
+                    {t("schedule.table.room", { room: cls.room })}
+                  </div>
+                )}
                 <div className="class-tags">
                   {cls.grades?.map(grade => (
                     <Tag key={grade} color={tagColor}>
                       {GetGradeName(grade)}
                     </Tag>
                   ))}
-                  {cls.isMandatory && <Tag color="red">ליבה</Tag>}
-                  {isDoubleLesson && <Tag color="orange">שיעור כפול</Tag>}
+                  {cls.isMandatory && (
+                    <Tag color="red">{t("schedule.table.mandatoryTag")}</Tag>
+                  )}
+                  {isDoubleLesson && (
+                    <Tag color="orange">
+                      {t("schedule.table.doubleLessonTag")}
+                    </Tag>
+                  )}
                 </div>
               </Card>
             );
@@ -237,13 +234,18 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       );
     }
 
-    // Combine regular classes with unselected double lesson continuations for display
-    const unselectedDoubleContinuations = doubleContinuationClasses.filter(
+    // Show unselected classes (both primary and continuation classes)
+    const unselectedPrimaryClasses = primaryClasses.filter(
       cls => !selectedClasses.includes(cls.id)
     );
+    const unselectedContinuationClasses = continuationClasses.filter(
+      cls => !selectedClasses.includes(cls.id)
+    );
+
+    // Combine unselected primary and continuation classes for selection
     const allUnselectedClasses = [
-      ...filteredClasses,
-      ...unselectedDoubleContinuations,
+      ...unselectedPrimaryClasses,
+      ...unselectedContinuationClasses,
     ];
 
     // Remove duplicates (in case a class appears in both lists)
@@ -255,8 +257,10 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     if (uniqueUnselectedClasses.length >= 1) {
       const classCountText =
         uniqueUnselectedClasses.length === 1
-          ? "שיעור אחד"
-          : `${uniqueUnselectedClasses.length} שיעורים`;
+          ? t("schedule.table.oneClass")
+          : t("schedule.table.multipleClasses", {
+              count: uniqueUnselectedClasses.length,
+            });
 
       return (
         <div
@@ -274,7 +278,9 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                   e.stopPropagation();
                   handleCellClick(timeSlot, dayOfWeek);
                 }}>
-                {canSelectClasses ? "לחץ לבחירה" : "לחץ לצפייה"}
+                {canSelectClasses
+                  ? t("schedule.table.clickToSelect")
+                  : t("schedule.table.clickToView")}
               </Button>
             </div>
           </Card>
@@ -289,7 +295,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
         onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description="אין שיעורים"
+          description={t("schedule.table.noClasses")}
           style={{ margin: "8px 0" }}
         />
       </div>
@@ -335,7 +341,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 
   const columns: ColumnsType<ScheduleRow> = [
     {
-      title: "זמן",
+      title: t("schedule.table.timeColumn"),
       dataIndex: "timeSlot",
       key: "time",
       width: 120,

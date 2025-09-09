@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Form, Input, Select, Button, Space, Switch, Row, Col } from "antd";
+import { useTranslation } from "react-i18next";
 import { ScheduleService } from "../services/scheduleService";
 import { getLessonTimeSlots } from "../utils/timeSlots";
 import type { ClassWithTimeSlot, TimeSlot, Class } from "../types";
@@ -28,6 +29,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
   loading = false,
   isNewLesson = true,
 }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [selectedDay, setSelectedDay] = useState<number | undefined>(undefined);
 
@@ -109,31 +111,31 @@ const ClassForm: React.FC<ClassFormProps> = ({
         <Col span={12}>
           <Form.Item
             name="title"
-            label="שם השיעור"
+            label={t("form.class.nameLabel")}
             rules={[
-              { required: true, message: "נא להזין שם לשיעור" },
-              { min: 2, message: "שם השיעור חייב להכיל לפחות 2 תווים" },
+              { required: true, message: t("form.class.nameRequired") },
+              { min: 2, message: t("form.class.nameMinLength") },
             ]}>
-            <Input placeholder="למשל: מתמטיקה" />
+            <Input placeholder={t("form.class.namePlaceholder")} />
           </Form.Item>
         </Col>
 
         <Col span={12}>
           <Form.Item
             name="teacher"
-            label="שם המורה"
+            label={t("form.class.teacherLabel")}
             rules={[
-              { required: true, message: "נא להזין שם המורה" },
-              { min: 2, message: "שם המורה חייב להכיל לפחות 2 תווים" },
+              { required: true, message: t("form.class.teacherRequired") },
+              { min: 2, message: t("form.class.teacherMinLength") },
             ]}>
-            <Input placeholder="למשל: יעל כהן" />
+            <Input placeholder={t("form.class.teacherPlaceholder")} />
           </Form.Item>
         </Col>
       </Row>
 
       <Form.Item
         name="description"
-        label="תיאור השיעור (אופציונלי)"
+        label={t("form.class.descriptionLabel")}
         rules={[
           {
             validator: (_, value) => {
@@ -142,7 +144,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
               }
               if (value.length < 5) {
                 return Promise.reject(
-                  new Error("התיאור חייב להכיל לפחות 5 תווים")
+                  new Error(t("form.class.descriptionMinLength"))
                 );
               }
               return Promise.resolve();
@@ -151,24 +153,29 @@ const ClassForm: React.FC<ClassFormProps> = ({
         ]}>
         <TextArea
           rows={3}
-          placeholder="תיאור קצר על השיעור, הנושאים שנלמדים וכו'"
+          placeholder={t("form.class.descriptionPlaceholder")}
         />
       </Form.Item>
 
       <Form.Item
         name="room"
-        label="כיתה/חדר"
-        rules={[{ min: 1, message: "נא להזין מיקום הכיתה" }]}>
-        <Input placeholder="למשל: כיתה 101, מעבדה מדעים" />
+        label={t("form.class.roomLabel")}
+        rules={[{ min: 1, message: t("form.class.roomRequired") }]}>
+        <Input placeholder={t("form.class.roomPlaceholder")} />
       </Form.Item>
 
       <Row gutter={16}>
         <Col span={12}>
           <Form.Item
             name="grades"
-            label="כיתות"
-            rules={[{ required: true, message: "נא לבחור לפחות כיתה אחת" }]}>
-            <Select mode="multiple" placeholder="בחר כיתות" allowClear>
+            label={t("form.class.gradesLabel")}
+            rules={[
+              { required: true, message: t("form.class.gradesRequired") },
+            ]}>
+            <Select
+              mode="multiple"
+              placeholder={t("form.class.gradesPlaceholder")}
+              allowClear>
               {GRADES.map(grade => (
                 <Option key={grade} value={grade}>
                   {GetGradeName(grade)}
@@ -181,20 +188,27 @@ const ClassForm: React.FC<ClassFormProps> = ({
         <Col span={8}>
           <Form.Item
             name="isMandatory"
-            label="סוג השיעור"
+            label={t("form.class.typeLabel")}
             valuePropName="checked">
-            <Switch checkedChildren="ליבה" unCheckedChildren="בחירה" />
+            <Switch
+              checkedChildren={t("form.class.mandatoryOption")}
+              unCheckedChildren={t("form.class.electiveOption")}
+            />
           </Form.Item>
         </Col>
 
         <Col span={4}>
           <Form.Item
             name="scope"
-            label="סביבה"
-            rules={[{ required: true, message: "נא לבחור סביבה" }]}>
-            <Select placeholder="בחר סביבה">
-              <Option value="test">בדיקות</Option>
-              <Option value="prod">מערכת</Option>
+            label={t("form.class.environmentLabel")}
+            rules={[
+              { required: true, message: t("form.class.environmentRequired") },
+            ]}>
+            <Select placeholder={t("form.class.environmentPlaceholder")}>
+              <Option value="test">{t("form.class.testEnvironment")}</Option>
+              <Option value="prod">
+                {t("form.class.productionEnvironment")}
+              </Option>
             </Select>
           </Form.Item>
         </Col>
@@ -202,10 +216,13 @@ const ClassForm: React.FC<ClassFormProps> = ({
 
       <Row gutter={16}>
         <Col span={12}>
-          <Form.Item name="isDouble" label="שיעור כפול" valuePropName="checked">
+          <Form.Item
+            name="isDouble"
+            label={t("form.class.doubleLessonLabel")}
+            valuePropName="checked">
             <Switch
-              checkedChildren="שיעור כפול"
-              unCheckedChildren="שיעור רגיל"
+              checkedChildren={t("form.class.doubleLessonChecked")}
+              unCheckedChildren={t("form.class.doubleLessonUnchecked")}
               style={{ width: 120 }}
             />
           </Form.Item>
@@ -216,9 +233,9 @@ const ClassForm: React.FC<ClassFormProps> = ({
         <Col span={12}>
           <Form.Item
             name="dayOfWeek"
-            label="יום"
-            rules={[{ required: true, message: "נא לבחור יום לשיעור" }]}>
-            <Select placeholder="בחר יום">
+            label={t("form.class.dayLabel")}
+            rules={[{ required: true, message: t("form.class.dayRequired") }]}>
+            <Select placeholder={t("form.class.dayPlaceholder")}>
               {DAYS_OF_WEEK.map((day: any) => (
                 <Option key={day.key} value={day.key}>
                   {day.name}
@@ -231,11 +248,13 @@ const ClassForm: React.FC<ClassFormProps> = ({
         <Col span={12}>
           <Form.Item
             name="timeSlotId"
-            label="שעה"
-            rules={[{ required: true, message: "נא לבחור שעת השיעור" }]}>
+            label={t("form.class.timeLabel")}
+            rules={[{ required: true, message: t("form.class.timeRequired") }]}>
             <Select
               placeholder={
-                selectedDay !== undefined ? "בחר שעה" : "בחר יום תחילה"
+                selectedDay !== undefined
+                  ? t("form.class.timePlaceholder")
+                  : t("form.class.selectDayFirst")
               }
               disabled={selectedDay === undefined}
               showSearch
@@ -264,9 +283,11 @@ const ClassForm: React.FC<ClassFormProps> = ({
       <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
         <Space>
           <Button type="primary" htmlType="submit" loading={loading}>
-            {isNewLesson ? "צור שיעור" : "עדכן שיעור"}
+            {isNewLesson
+              ? t("form.class.createButton")
+              : t("form.class.updateButton")}
           </Button>
-          <Button onClick={onCancel}>ביטול</Button>
+          <Button onClick={onCancel}>{t("common.buttons.cancel")}</Button>
         </Space>
       </Form.Item>
     </Form>

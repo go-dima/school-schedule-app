@@ -5,12 +5,14 @@ import {
   LogoutOutlined,
   UserOutlined,
 } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import "./AuthPages.css";
 
 const { Title, Text, Paragraph } = Typography;
 
 const PendingApprovalPage: React.FC = () => {
+  const { t } = useTranslation();
   const { user, signOut } = useAuth();
 
   const handleSignOut = async () => {
@@ -28,26 +30,26 @@ const PendingApprovalPage: React.FC = () => {
           <div className="auth-header">
             <Space direction="vertical" size="large" style={{ width: "100%" }}>
               <ClockCircleOutlined style={{ fontSize: 64, color: "#faad14" }} />
-              <Title level={2}>ממתין לאישור מנהל</Title>
+              <Title level={2}>{t("auth.pendingApproval.title")}</Title>
             </Space>
           </div>
 
           <Alert
-            message="חשבונך נוצר בהצלחה"
+            message={t("auth.pendingApproval.alertTitle")}
             description={
               <div style={{ textAlign: "right" }}>
                 <Paragraph>
-                  שלום {user?.email ? `${user.email}` : "משתמש חדש"}!
+                  {t("auth.pendingApproval.greeting", {
+                    email:
+                      user?.email || t("auth.pendingApproval.defaultGreeting"),
+                  })}
                 </Paragraph>
-                <Paragraph>
-                  חשבונך נוצר בהצלחה במערכת השעות. כדי להתחיל להשתמש במערכת, יש
-                  צורך באישור מנהל.
-                </Paragraph>
+                <Paragraph>{t("auth.pendingApproval.description1")}</Paragraph>
                 <Paragraph strong>
-                  המנהל יאשר את הבקשה שלך בהקדם האפשרי.
+                  {t("auth.pendingApproval.description2")}
                 </Paragraph>
                 <Paragraph type="secondary">
-                  לאחר האישור, תוכל להיכנס למערכת ולהתחיל לנהל את לוח השעות שלך.
+                  {t("auth.pendingApproval.description3")}
                 </Paragraph>
               </div>
             }
@@ -59,7 +61,7 @@ const PendingApprovalPage: React.FC = () => {
 
           <Space direction="vertical" size="middle" style={{ width: "100%" }}>
             <Text type="secondary">
-              אם יש לך שאלות, ניתן לפנות למנהל המערכת
+              {t("auth.pendingApproval.contactInfo")}
             </Text>
 
             <Button
@@ -68,7 +70,7 @@ const PendingApprovalPage: React.FC = () => {
               onClick={handleSignOut}
               size="large"
               style={{ marginTop: 16 }}>
-              התנתק מהמערכת
+              {t("common.buttons.logout")}
             </Button>
           </Space>
         </Card>
