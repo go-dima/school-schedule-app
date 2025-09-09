@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Form, Input, Button, Card, Typography, Alert, Checkbox } from "antd";
 import { LockOutlined, MailOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
 import "./AuthPages.css";
 
@@ -18,6 +19,7 @@ interface SignupPageProps {
 }
 
 const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +35,7 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
       setSuccess(true);
       form.resetFields();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "שגיאה בהרשמה");
+      setError(err instanceof Error ? err.message : t("auth.signup.error"));
     } finally {
       setLoading(false);
     }
@@ -45,19 +47,16 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
         <div className="auth-container">
           <Card className="auth-card">
             <div className="auth-header">
-              <Title level={2}>הרשמה הושלמה בהצלחה!</Title>
+              <Title level={2}>{t("auth.signup.successTitle")}</Title>
             </div>
 
             <Alert
-              message="בקשת הרשמה נשלחה"
+              message={t("auth.signup.successAlertTitle")}
               description={
                 <div>
-                  <p>תודה על הרשמתך למערכת השעות כהורה!</p>
-                  <p>
-                    בקשתך ממתינה לאישור מנהל המערכת. תקבל הודעה למייל כאשר
-                    החשבון יאושר.
-                  </p>
-                  <p>בינתיים, תוכל לחזור לעמוד ההתחברות.</p>
+                  <p>{t("auth.signup.successMessage1")}</p>
+                  <p>{t("auth.signup.successMessage2")}</p>
+                  <p>{t("auth.signup.successMessage3")}</p>
                 </div>
               }
               type="success"
@@ -71,7 +70,7 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
                 size="large"
                 onClick={onSwitchToLogin}
                 block>
-                חזור לעמוד ההתחברות
+                {t("auth.signup.returnToLogin")}
               </Button>
             </div>
           </Card>
@@ -85,13 +84,13 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
       <div className="auth-container">
         <Card className="auth-card">
           <div className="auth-header">
-            <Title level={2}>הרשמה</Title>
-            <Text type="secondary">צור חשבון הורה חדש במערכת השעות</Text>
+            <Title level={2}>{t("auth.signup.title")}</Title>
+            <Text type="secondary">{t("auth.signup.subtitle")}</Text>
           </div>
 
           {error && (
             <Alert
-              message="שגיאה בהרשמה"
+              message={t("auth.signup.error")}
               description={error}
               type="error"
               showIcon
@@ -110,10 +109,10 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
             className="auth-form">
             <Form.Item
               name="email"
-              label="כתובת דוא״ל"
+              label={t("auth.signup.emailLabel")}
               rules={[
-                { required: true, message: "נא להזין כתובת דוא״ל" },
-                { type: "email", message: "כתובת דוא״ל לא תקינה" },
+                { required: true, message: t("auth.signup.emailRequired") },
+                { type: "email", message: t("auth.login.emailInvalid") },
               ]}>
               <Input
                 prefix={<MailOutlined />}
@@ -124,36 +123,41 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
 
             <Form.Item
               name="password"
-              label="סיסמה"
+              label={t("auth.signup.passwordLabel")}
               rules={[
-                { required: true, message: "נא להזין סיסמה" },
-                { min: 6, message: "הסיסמה חייבת להכיל לפחות 6 תווים" },
+                { required: true, message: t("auth.login.passwordRequired") },
+                { min: 6, message: t("auth.signup.passwordMinLength") },
               ]}>
               <Input.Password
                 prefix={<LockOutlined />}
-                placeholder="לפחות 6 תווים"
+                placeholder={t("auth.signup.passwordPlaceholder")}
                 size="large"
               />
             </Form.Item>
 
             <Form.Item
               name="confirmPassword"
-              label="אימות סיסמה"
+              label={t("auth.signup.confirmPasswordLabel")}
               dependencies={["password"]}
               rules={[
-                { required: true, message: "נא לאמת את הסיסמה" },
+                {
+                  required: true,
+                  message: t("auth.signup.confirmPasswordRequired"),
+                },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
                     if (!value || getFieldValue("password") === value) {
                       return Promise.resolve();
                     }
-                    return Promise.reject(new Error("הסיסמאות אינן תואמות"));
+                    return Promise.reject(
+                      new Error(t("auth.signup.passwordMismatch"))
+                    );
                   },
                 }),
               ]}>
               <Input.Password
                 prefix={<LockOutlined />}
-                placeholder="הזן שוב את הסיסמה"
+                placeholder={t("auth.signup.confirmPasswordPlaceholder")}
                 size="large"
               />
             </Form.Item>
@@ -161,8 +165,10 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
             <Form.Item
               name="terms"
               valuePropName="checked"
-              rules={[{ required: true, message: "נא לאשר את תנאי השימוש" }]}>
-              <Checkbox>אני מסכים לתנאי השימוש ומדיניות הפרטיות</Checkbox>
+              rules={[
+                { required: true, message: t("auth.signup.termsRequired") },
+              ]}>
+              <Checkbox>{t("auth.signup.termsCheckbox")}</Checkbox>
             </Form.Item>
 
             <Form.Item>
@@ -173,15 +179,17 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
                 loading={loading}
                 block
                 className="auth-submit-btn">
-                הירשם
+                {t("auth.signup.signupButton")}
               </Button>
             </Form.Item>
           </Form>
 
           <div className="auth-footer">
             <Text>
-              כבר יש לך חשבון?{" "}
-              <Link onClick={onSwitchToLogin}>התחבר עכשיו</Link>
+              {t("auth.signup.loginPrompt")}{" "}
+              <Link onClick={onSwitchToLogin}>
+                {t("auth.signup.loginLink")}
+              </Link>
             </Text>
           </div>
         </Card>

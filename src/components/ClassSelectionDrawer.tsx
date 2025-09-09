@@ -10,9 +10,11 @@ import {
   Typography,
 } from "antd";
 import { CheckOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import { ScheduleService } from "../services/scheduleService";
 import type { TimeSlot, ClassWithTimeSlot } from "../types";
 import CreateClassButton from "./CreateClassButton";
+import { GetGradeName } from "@/utils/grades";
 import "./ClassSelectionDrawer.css";
 
 const { Title, Text } = Typography;
@@ -48,6 +50,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
   onCreateClass,
   timeSlots = [],
 }) => {
+  const { t } = useTranslation();
   const dayName = ScheduleService.getDayName(dayOfWeek);
   const timeRange = ScheduleService.formatTimeRange(
     timeSlot.startTime,
@@ -133,7 +136,9 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
                   onClick={() => handleClassToggle(cls.id)}
                   disabled={isGrayedOut}
                   block>
-                  {isSelected ? "בטל בחירה" : "בחר שיעור"}
+                  {isSelected
+                    ? t("schedule.drawer.unselectButton")
+                    : t("schedule.drawer.selectButton")}
                 </Button>,
               ]
             : undefined
@@ -146,31 +151,35 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
             <div className="class-header-tags">
               {cls.grades?.map(grade => (
                 <Tag key={grade} color="blue">
-                  {ScheduleService.getGradeName(grade)}
+                  {GetGradeName(grade)}
                 </Tag>
               ))}
-              {cls.isMandatory && <Tag color="red">ליבה</Tag>}
-              {cls.isDouble && <Tag color="orange">שיעור כפול</Tag>}
+              {cls.isMandatory && (
+                <Tag color="red">{t("schedule.drawer.mandatoryTag")}</Tag>
+              )}
+              {cls.isDouble && (
+                <Tag color="orange">{t("schedule.drawer.doubleLessonTag")}</Tag>
+              )}
             </div>
           </div>
 
           <div className="class-details">
-            <Text strong>מורה: </Text>
+            <Text strong>{t("schedule.drawer.teacherLabel")}</Text>
             <Text>{cls.teacher}</Text>
           </div>
 
           <div className="class-details">
-            <Text strong>זמן: </Text>
+            <Text strong>{t("schedule.drawer.timeLabel")}</Text>
             <Text>{getDoubleTimeRange(cls, allTimeSlots)}</Text>
             {cls.isDouble && (
               <Text
                 type="secondary"
                 style={{ fontSize: "12px", marginRight: "8px" }}>
-                (שיעור כפול - {cls.timeSlot.name} +{" "}
+                ({t("schedule.drawer.doubleLessonTag")} - {cls.timeSlot.name} +{" "}
                 {ScheduleService.getNextConsecutiveTimeSlot(
                   cls.timeSlot,
                   allTimeSlots
-                )?.name || "הבא"}
+                )?.name || t("common.next")}
                 )
               </Text>
             )}
@@ -178,7 +187,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
 
           {cls.room && (
             <div className="class-details">
-              <Text strong>כיתה: </Text>
+              <Text strong>{t("schedule.drawer.roomLabel")}</Text>
               <Text>{cls.room}</Text>
             </div>
           )}
@@ -191,8 +200,8 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
 
           {hasConflict && (
             <Alert
-              message="קיים חפיפה בזמן"
-              description="שיעור זה חופף עם שיעור אחר שנבחר"
+              message={t("schedule.drawer.timeConflictTitle")}
+              description={t("schedule.drawer.timeConflictDescription")}
               type="warning"
               showIcon
               icon={<ExclamationCircleOutlined />}
@@ -216,7 +225,9 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
       title={
         <div className="drawer-title">
           <Title level={4} style={{ margin: 0 }}>
-            {canSelectClasses ? "בחירת שיעורים" : "צפייה בשיעורים"}
+            {canSelectClasses
+              ? t("schedule.drawer.selectionTitle")
+              : t("schedule.drawer.viewTitle")}
           </Title>
           <div className="time-slot-info">
             <Tag color="blue">{dayName}</Tag>
@@ -234,7 +245,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
       <div className="drawer-content">
         {classes.length === 0 ? (
           <Empty
-            description="אין שיעורים זמינים בזמן זה"
+            description={t("schedule.drawer.noClassesAvailable")}
             image={Empty.PRESENTED_IMAGE_SIMPLE}>
             {isAdmin && onCreateClass && (
               <CreateClassButton
@@ -249,7 +260,9 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
           <Space direction="vertical" size="middle" style={{ width: "100%" }}>
             {selectedClassesInTimeSlot.length > 0 && (
               <div className="selected-classes-section">
-                <Title level={5}>שיעורים שנבחרו:</Title>
+                <Title level={5}>
+                  {t("schedule.drawer.selectedClassesSection")}
+                </Title>
                 <Space
                   direction="vertical"
                   size="small"
@@ -265,8 +278,8 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
               <div className="available-classes-section">
                 <Title level={5}>
                   {selectedClassesInTimeSlot.length > 0
-                    ? "שיעורים אחרים זמינים:"
-                    : "שיעורים זמינים:"}
+                    ? t("schedule.drawer.otherAvailableClasses")
+                    : t("schedule.drawer.availableClasses")}
                 </Title>
                 <Space
                   direction="vertical"
@@ -290,8 +303,10 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
             {conflictingClasses.length > 0 && (
               <div className="conflict-warning">
                 <Alert
-                  message="שים לב לחפיפות"
-                  description={`ישנם ${conflictingClasses.length} שיעורים עם חפיפה בזמן. בחירת שיעור חדש תבטל אוטומטית את השיעורים החופפים.`}
+                  message={t("schedule.drawer.conflictWarningTitle")}
+                  description={t("schedule.drawer.conflictDescription", {
+                    count: conflictingClasses.length,
+                  })}
                   type="info"
                   showIcon
                   closable

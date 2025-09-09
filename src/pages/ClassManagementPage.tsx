@@ -25,6 +25,7 @@ import {
   CloseOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import { classesApi, timeSlotsApi } from "../services/api";
 import { ScheduleService } from "../services/scheduleService";
@@ -32,6 +33,7 @@ import type { ClassWithTimeSlot, TimeSlot, Class, ClassScope } from "../types";
 import { DAYS_OF_WEEK, GRADES } from "../types";
 import ClassForm from "../components/ClassForm";
 import "./ClassManagementPage.css";
+import { GetGradeName, GetGradeNameShort } from "@/utils/grades";
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -49,6 +51,7 @@ interface ClassManagementPageProps {
 const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
   onNavigate,
 }) => {
+  const { t } = useTranslation();
   const { isAdmin, signOut } = useAuth();
   const [classes, setClasses] = useState<ClassWithTimeSlot[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
@@ -117,7 +120,11 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
       setClasses(classesData);
       setTimeSlots(timeSlotsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load data");
+      setError(
+        err instanceof Error
+          ? err.message
+          : t("classManagement.page.loadDataError")
+      );
     } finally {
       setLoading(false);
     }
@@ -136,10 +143,14 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
   const handleDeleteClass = async (classId: string) => {
     try {
       await classesApi.deleteClass(classId);
-      message.success("השיעור נמחק בהצלחה");
+      message.success(t("classManagement.page.classDeletedSuccess"));
       await loadData();
     } catch (err) {
-      message.error(err instanceof Error ? err.message : "שגיאה במחיקת השיעור");
+      message.error(
+        err instanceof Error
+          ? err.message
+          : t("classManagement.page.classDeleteError")
+      );
     }
   };
 
@@ -150,17 +161,21 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
     try {
       if (editingClass) {
         await classesApi.updateClass(editingClass.id, classData);
-        message.success("השיעור עודכן בהצלחה");
+        message.success(t("classManagement.page.classUpdatedSuccess"));
       } else {
         await classesApi.createClass(classData);
-        message.success("השיעור נוצר בהצלחה");
+        message.success(t("classManagement.page.classCreatedSuccess"));
       }
 
       setModalVisible(false);
       await loadData();
     } catch (err) {
       console.error("ClassManagementPage submission error:", err);
-      message.error(err instanceof Error ? err.message : "שגיאה בשמירת השיעור");
+      message.error(
+        err instanceof Error
+          ? err.message
+          : t("classManagement.page.classSaveError")
+      );
     } finally {
       setSubmitting(false);
     }
@@ -173,12 +188,12 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
 
   const getTimeSlotDisplay = (timeSlot: TimeSlot, cls?: ClassWithTimeSlot) => {
     if (!timeSlot) {
-      return "No Time Slot";
+      return t("classManagement.table.noTimeSlot");
     }
 
     const dayName = cls
       ? ScheduleService.getDayName(cls.dayOfWeek)
-      : "Unknown Day";
+      : t("classManagement.table.unknownDay");
 
     // For double lessons, show combined time range and both slot names
     if (cls?.isDouble) {
@@ -193,7 +208,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
         );
         return (
           <span>
-            <div>יום {dayName}</div>
+            <div>{t("classManagement.table.dayPrefix", { dayName })}</div>
             {combinedTimeRange && <div>{combinedTimeRange}</div>}
             <div style={{ fontSize: "12px", color: "#666" }}>
               {timeSlot.name} + {nextTimeSlot.name}
@@ -211,7 +226,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
 
     return (
       <span>
-        <div>יום {dayName}</div>
+        <div>{t("classManagement.table.dayPrefix", { dayName })}</div>
         {timeRange && <div>{timeRange}</div>}
         <div style={{ fontSize: "12px", color: "#666" }}>{timeSlot.name}</div>
       </span>
@@ -220,33 +235,34 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
 
   const columns: ColumnsType<ClassWithTimeSlot> = [
     {
-      title: "שם השיעור",
+      title: t("classManagement.table.nameColumn"),
       dataIndex: "title",
       key: "title",
       width: 200,
     },
     {
-      title: "תיאור",
+      title: t("classManagement.table.descriptionColumn"),
       dataIndex: "description",
       key: "description",
       width: 250,
       ellipsis: true,
     },
     {
-      title: "מורה",
+      title: t("classManagement.table.teacherColumn"),
       dataIndex: "teacher",
       key: "teacher",
       width: 150,
     },
     {
-      title: "כיתה",
+      title: t("classManagement.table.roomColumn"),
       dataIndex: "room",
       key: "room",
       width: 120,
-      render: (room: string) => room || "לא צוין",
+      render: (room: string) =>
+        room || t("classManagement.table.roomNotSpecified"),
     },
     {
-      title: "כיתות",
+      title: t("classManagement.table.gradesColumn"),
       dataIndex: "grades",
       key: "grades",
       width: 150,
@@ -256,14 +272,14 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
             ?.sort((a, b) => b - a)
             .map(grade => (
               <Tag key={grade} color="geekblue">
-                {ScheduleService.getGradeNameShort(grade)}
+                {GetGradeNameShort(grade)}
               </Tag>
             ))}
         </Space>
       ),
     },
     {
-      title: "זמן השיעור",
+      title: t("classManagement.table.timeColumn"),
       dataIndex: "timeSlot",
       key: "timeSlot",
       width: 150,
@@ -271,31 +287,39 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
         getTimeSlotDisplay(timeSlot, record),
     },
     {
-      title: "סוג",
+      title: t("classManagement.table.typeColumn"),
       key: "classType",
       width: 120,
       render: (_, record) => (
         <Space direction="vertical" size="small">
           <Tag color={record.isMandatory ? "red" : "blue"}>
-            {record.isMandatory ? "ליבה" : "בחירה"}
+            {record.isMandatory
+              ? t("classManagement.table.mandatoryType")
+              : t("classManagement.table.electiveType")}
           </Tag>
-          {record.isDouble && <Tag color="orange">שיעור כפול</Tag>}
+          {record.isDouble && (
+            <Tag color="orange">
+              {t("classManagement.table.doubleLessonLabel")}
+            </Tag>
+          )}
         </Space>
       ),
     },
     {
-      title: "סביבה",
+      title: t("classManagement.table.environmentColumn"),
       dataIndex: "scope",
       key: "scope",
       width: 100,
       render: (scope: ClassScope) => (
         <Tag color={scope === "prod" ? "green" : "orange"}>
-          {scope === "prod" ? "מערכת" : "בדיקות"}
+          {scope === "prod"
+            ? t("classManagement.table.productionEnvironment")
+            : t("classManagement.table.testEnvironment")}
         </Tag>
       ),
     },
     {
-      title: "פעולות",
+      title: t("classManagement.table.actionsColumn"),
       key: "actions",
       width: 120,
       render: (_, record) => (
@@ -305,16 +329,16 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
             icon={<EditOutlined />}
             onClick={() => handleEditClass(record)}
             size="small">
-            ערוך
+            {t("classManagement.table.editButton")}
           </Button>
           <Popconfirm
-            title="האם אתה בטוח שברצונך למחוק את השיעור?"
-            description="פעולה זו תמחק את השיעור ואת כל הבחירות הקשורות אליו"
+            title={t("classManagement.table.deleteConfirmTitle")}
+            description={t("classManagement.table.deleteConfirmDescription")}
             onConfirm={() => handleDeleteClass(record.id)}
-            okText="כן"
-            cancelText="לא">
+            okText={t("classManagement.table.confirmYes")}
+            cancelText={t("classManagement.table.confirmNo")}>
             <Button type="link" icon={<DeleteOutlined />} danger size="small">
-              מחק
+              {t("classManagement.table.deleteButton")}
             </Button>
           </Popconfirm>
         </Space>
@@ -327,8 +351,8 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
       <Layout className="class-management-page">
         <Content className="class-management-content">
           <Alert
-            message="אין הרשאה"
-            description="רק מנהלים יכולים לגשת לדף זה"
+            message={t("classManagement.page.noPermissionTitle")}
+            description={t("classManagement.page.adminOnlyAccess")}
             type="error"
             showIcon
           />
@@ -342,7 +366,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
       <div className="page-loading">
         <Spin size="large" />
         <Title level={4} style={{ marginTop: 16, color: "#1890ff" }}>
-          טוען נתוני שיעורים...
+          {t("classManagement.page.loading")}
         </Title>
       </div>
     );
@@ -353,47 +377,49 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
       <Content className="class-management-content">
         <div className="class-management-header">
           <div className="header-main">
-            <Title level={2}>ניהול שיעורים</Title>
+            <Title level={2}>{t("classManagement.page.title")}</Title>
             <Space>
               <Button
                 icon={<ArrowLeftOutlined />}
                 onClick={() => onNavigate?.("schedule")}>
-                חזרה למערכת השעות
+                {t("classManagement.page.backToSchedule")}
               </Button>
               <Button onClick={() => onNavigate?.("pending-approvals")}>
-                אישורי הרשמה
+                {t("classManagement.page.registrationApprovals")}
               </Button>
               <Button onClick={() => onNavigate?.("user-management")}>
-                ניהול משתמשים
+                {t("classManagement.page.userManagement")}
               </Button>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={handleAddClass}>
-                הוסף שיעור חדש
+                {t("classManagement.page.addNewClass")}
               </Button>
               <Button
                 icon={<ReloadOutlined />}
                 onClick={loadData}
                 disabled={loading}>
-                רענן
+                {t("common.buttons.refresh")}
               </Button>
               <Button type="primary" danger onClick={signOut}>
-                התנתק
+                {t("common.buttons.logout")}
               </Button>
             </Space>
           </div>
 
           <Alert
-            message="ניהול שיעורים"
-            description="כאן תוכל להוסיף, לערוך ולמחוק שיעורים. שים לב שמחיקת שיעור תמחק גם את כל הבחירות הקשורות אליו."
+            message={t("classManagement.page.managementAlertTitle")}
+            description={t("classManagement.page.managementDescription")}
             type="info"
             showIcon
             style={{ marginBottom: 24 }}
           />
 
           {/* Filters */}
-          <Card title="מסננים" style={{ marginBottom: 24 }}>
+          <Card
+            title={t("classManagement.page.filtersTitle")}
+            style={{ marginBottom: 24 }}>
             <Row gutter={[16, 16]} align="middle">
               <Col xs={24} sm={8} md={6}>
                 <Space direction="vertical" style={{ width: "100%" }}>
@@ -403,7 +429,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
                       justifyContent: "space-between",
                       width: "100%",
                     }}>
-                    <label>יום בשבוע:</label>
+                    <label>{t("classManagement.page.dayFilterLabel")}</label>
                     {selectedDay !== null && (
                       <Button
                         type="text"
@@ -415,7 +441,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
                     )}
                   </Space>
                   <Select
-                    placeholder="בחר יום"
+                    placeholder={t("classManagement.page.dayFilterPlaceholder")}
                     allowClear
                     style={{ width: "100%" }}
                     value={selectedDay}
@@ -437,7 +463,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
                       justifyContent: "space-between",
                       width: "100%",
                     }}>
-                    <label>כיתה:</label>
+                    <label>{t("classManagement.page.gradeFilterLabel")}</label>
                     {selectedGrade !== null && (
                       <Button
                         type="text"
@@ -449,14 +475,16 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
                     )}
                   </Space>
                   <Select
-                    placeholder="בחר כיתה"
+                    placeholder={t(
+                      "classManagement.page.gradeFilterPlaceholder"
+                    )}
                     allowClear
                     style={{ width: "100%" }}
                     value={selectedGrade}
                     onChange={setSelectedGrade}>
                     {GRADES.map(grade => (
                       <Select.Option key={grade} value={grade}>
-                        {ScheduleService.getGradeName(grade)}
+                        {GetGradeName(grade)}
                       </Select.Option>
                     ))}
                   </Select>
@@ -471,7 +499,9 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
                       justifyContent: "space-between",
                       width: "100%",
                     }}>
-                    <label>סביבה:</label>
+                    <label>
+                      {t("classManagement.page.environmentFilterLabel")}
+                    </label>
                     {selectedScope !== null && (
                       <Button
                         type="text"
@@ -483,13 +513,19 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
                     )}
                   </Space>
                   <Select
-                    placeholder="בחר סביבה"
+                    placeholder={t(
+                      "classManagement.page.environmentFilterPlaceholder"
+                    )}
                     allowClear
                     style={{ width: "100%" }}
                     value={selectedScope}
                     onChange={setSelectedScope}>
-                    <Select.Option value="test">בדיקות</Select.Option>
-                    <Select.Option value="prod">מערכת</Select.Option>
+                    <Select.Option value="test">
+                      {t("classManagement.page.testEnvironmentOption")}
+                    </Select.Option>
+                    <Select.Option value="prod">
+                      {t("classManagement.page.productionEnvironmentOption")}
+                    </Select.Option>
                   </Select>
                 </Space>
               </Col>
@@ -501,7 +537,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
                     setSelectedGrade(null);
                     setSelectedScope(null);
                   }}>
-                  נקה מסננים
+                  {t("classManagement.page.clearFiltersButton")}
                 </Button>
               </Col>
             </Row>
@@ -510,7 +546,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
 
         {error && (
           <Alert
-            message="שגיאה בטעינת הנתונים"
+            message={t("classManagement.page.dataLoadingError")}
             description={error}
             type="error"
             showIcon
@@ -531,8 +567,17 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
               showTotal: (total, range) => {
                 const totalClasses = classes.length;
                 return total === totalClasses
-                  ? `${range[0]}-${range[1]} מתוך ${total} שיעורים`
-                  : `${range[0]}-${range[1]} מתוך ${total} שיעורים (${totalClasses} סה"כ)`;
+                  ? t("classManagement.table.paginationText", {
+                      start: range[0],
+                      end: range[1],
+                      total,
+                    })
+                  : t("classManagement.table.paginationFilteredText", {
+                      start: range[0],
+                      end: range[1],
+                      total,
+                      totalClasses,
+                    });
               },
             }}
             scroll={{ x: 1000 }}
@@ -541,7 +586,11 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
         </Card>
 
         <Modal
-          title={editingClass ? "ערוך שיעור" : "הוסף שיעור חדש"}
+          title={
+            editingClass
+              ? t("classManagement.table.editModalTitle")
+              : t("classManagement.table.addModalTitle")
+          }
           open={modalVisible}
           onCancel={handleModalCancel}
           footer={null}

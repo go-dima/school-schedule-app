@@ -13,10 +13,12 @@ import {
   Divider,
 } from "antd";
 import { SaveOutlined, ReloadOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import { ScheduleService } from "../services/scheduleService";
 import { classesApi } from "../services/api";
 import type { ClassWithTimeSlot } from "../types";
 import type { ColumnsType } from "antd/es/table";
+import { GetGradeName } from "@/utils/grades";
 import "./MandatoryClassManager.css";
 
 const { Title, Text } = Typography;
@@ -34,6 +36,7 @@ interface ClassMandatoryStatus extends ClassWithTimeSlot {
 const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
   onUpdate,
 }) => {
+  const { t } = useTranslation();
   const [classes, setClasses] = useState<ClassMandatoryStatus[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -52,7 +55,7 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
       setClasses(classesWithStatus);
     } catch (error) {
       console.error("Error loading classes:", error);
-      message.error("שגיאה בטעינת השיעורים");
+      message.error(t("mandatoryClassManager.loadError"));
     } finally {
       setLoading(false);
     }
@@ -96,7 +99,9 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
         });
       }
 
-      message.success(`עודכנו ${changedClasses.length} שיעורים בהצלחה`);
+      message.success(
+        t("mandatoryClassManager.saveSuccess", { count: changedClasses.length })
+      );
 
       // Reset dirty status
       setClasses(prevClasses =>
@@ -113,7 +118,7 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
       }
     } catch (error) {
       console.error("Error saving changes:", error);
-      message.error("שגיאה בשמירת השינויים");
+      message.error(t("mandatoryClassManager.saveError"));
     } finally {
       setSaving(false);
     }
@@ -144,7 +149,7 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
 
   const columns: ColumnsType<ClassMandatoryStatus> = [
     {
-      title: "שם השיעור",
+      title: t("mandatoryClassManager.table.nameColumn"),
       dataIndex: "title",
       key: "title",
       render: (text: string, record: ClassMandatoryStatus) => (
@@ -163,22 +168,20 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
       ),
     },
     {
-      title: "מורה",
+      title: t("mandatoryClassManager.table.teacherColumn"),
       dataIndex: "teacher",
       key: "teacher",
       width: 120,
     },
     {
-      title: "כיתה",
+      title: t("mandatoryClassManager.table.gradeColumn"),
       dataIndex: "grade",
       key: "grade",
       width: 80,
-      render: (grade: number) => (
-        <Tag color="blue">{ScheduleService.getGradeName(grade)}</Tag>
-      ),
+      render: (grade: number) => <Tag color="blue">{GetGradeName(grade)}</Tag>,
     },
     {
-      title: "זמן",
+      title: t("mandatoryClassManager.table.timeColumn"),
       key: "timeSlot",
       width: 120,
       render: (_, record: ClassMandatoryStatus) => (
@@ -196,7 +199,7 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
       ),
     },
     {
-      title: "ליבה",
+      title: t("mandatoryClassManager.table.mandatoryColumn"),
       key: "mandatory",
       width: 100,
       render: (_, record: ClassMandatoryStatus) => (
@@ -209,7 +212,9 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
             onChange={checked => handleMandatoryToggle(record.id, checked)}
             size="small"
           />
-          {record.isDirty && <Tag color="orange">שונה</Tag>}
+          {record.isDirty && (
+            <Tag color="orange">{t("mandatoryClassManager.changedTag")}</Tag>
+          )}
         </Space>
       ),
     },
@@ -224,26 +229,28 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
       title={
         <Space>
           <Title level={4} style={{ margin: 0 }}>
-            ניהול שיעורי ליבה
+            {t("mandatoryClassManager.title")}
           </Title>
           <ReloadOutlined
             onClick={loadClasses}
             style={{ cursor: "pointer", color: "#1890ff" }}
-            title="רענן רשימה"
+            title={t("mandatoryClassManager.refreshTitle")}
           />
         </Space>
       }>
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
         {hasUnsavedChanges && (
           <Alert
-            message="יש שינויים שלא נשמרו"
-            description={`${dirtyCount} שיעורים שונו ולא נשמרו עדיין`}
+            message={t("mandatoryClassManager.unsavedChangesTitle")}
+            description={t("mandatoryClassManager.unsavedChangesDescription", {
+              count: dirtyCount,
+            })}
             type="warning"
             showIcon
             action={
               <Space>
                 <Button size="small" onClick={handleResetChanges}>
-                  בטל שינויים
+                  {t("mandatoryClassManager.cancelChangesButton")}
                 </Button>
                 <Button
                   type="primary"
@@ -251,7 +258,7 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
                   icon={<SaveOutlined />}
                   loading={saving}
                   onClick={handleSaveChanges}>
-                  שמור שינויים
+                  {t("common.buttons.saveChanges")}
                 </Button>
               </Space>
             }
@@ -259,16 +266,16 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
         )}
 
         <Space wrap>
-          <Text>סינון לפי כיתה:</Text>
+          <Text>{t("mandatoryClassManager.gradeFilterLabel")}</Text>
           <Select
             style={{ width: 120 }}
-            placeholder="כל הכיתות"
+            placeholder={t("mandatoryClassManager.allGradesPlaceholder")}
             value={selectedGrade}
             onChange={setSelectedGrade}
             allowClear>
             {gradeOptions.map(grade => (
               <Option key={grade} value={grade}>
-                {ScheduleService.getGradeName(grade)}
+                {GetGradeName(grade)}
               </Option>
             ))}
           </Select>
@@ -276,13 +283,16 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
           <Divider type="vertical" />
 
           <Text>
-            סה"כ שיעורי ליבה: <Tag color="red">{mandatoryCount}</Tag>
+            {t("mandatoryClassManager.totalMandatoryClasses")}{" "}
+            <Tag color="red">{mandatoryCount}</Tag>
           </Text>
 
           {selectedGrade && (
             <Text type="secondary">
-              מתוך {filteredClasses.length} שיעורים לכיתה{" "}
-              {ScheduleService.getGradeName(selectedGrade)}
+              {t("mandatoryClassManager.filteredClassesText", {
+                count: filteredClasses.length,
+                gradeName: GetGradeName(selectedGrade),
+              })}
             </Text>
           )}
         </Space>
@@ -300,13 +310,17 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
 
         {hasUnsavedChanges && (
           <Space style={{ width: "100%", justifyContent: "center" }}>
-            <Button onClick={handleResetChanges}>בטל שינויים</Button>
+            <Button onClick={handleResetChanges}>
+              {t("mandatoryClassManager.cancelChangesButton")}
+            </Button>
             <Button
               type="primary"
               icon={<SaveOutlined />}
               loading={saving}
               onClick={handleSaveChanges}>
-              שמור כל השינויים ({dirtyCount})
+              {t("common.buttons.saveAllChanges", {
+                count: dirtyCount,
+              })}
             </Button>
           </Space>
         )}

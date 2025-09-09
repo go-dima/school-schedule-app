@@ -1,0 +1,37 @@
+# Child-Parent Roles Flow
+
+This document outlines the flow and requirements for implementing child-parent roles in the application.
+It covers flows, pages and database changes needed to support this feature.
+This is a high-level overview and may require further refinement during development.
+
+## Child Management
+- The parent can add or remove children from their account
+- Each parent can have multiple children, and a parent can share the same child with another parent.
+- Child has first name, last name, grade level and group (1 or 2).
+- Parent can add a child by entering the child's details.
+- Parent can remove a child from their account (add message: "Are you sure you want to remove this child?").
+
+## Schedule page
+- On top, the parent sees a dropdown to select which child they want to view the schedule for.
+- Below the dropdown, the schedule for the selected child is displayed.
+- The schedule selection is associated with the child's unique ID.
+- The schedule and class selection are filtered based on the selected child as it's grade level.
+
+## Profile page
+- In the profile section, the parent can see a list of their children.
+- Each child entry has an "Edit" button to modify the child's details and a "Remove" button to delete the child from the account.
+- There is an "Add Child" button that opens a form to enter new child details.
+- The child has an action to "Share Child" which generates a unique link that can be sent to another parent to add the same child to their account.
+- When a parent shares a child, the child appears in both parents' profiles and schedules.
+
+## Child Share
+- When a parent shares a child, a unique link is generated.
+- The receiving parent clicks the link and is prompted to log in or create an account.
+- After logging in, the child is added to the receiving parent's account.
+
+## DB changes (possible, may vary based on existing schema)
+- Create a `children` table with fields: `id`, `first_name`, `last_name`, `grade`, `parent_id`.
+- Update the `users` table to include a `role` field to distinguish between parents and children.
+- Ensure that the `schedules` table references the `children` table via a foreign key.
+- Implement necessary relationships in the ORM models to link parents and children.
+- For current schedules, create a dummy child entry for each existing parent to maintain data integrity (user will be able to change the name and grade of the dummy child).
