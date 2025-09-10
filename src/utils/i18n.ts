@@ -25,8 +25,8 @@ i18n
       // Remove the custom format function as it might be interfering
     },
 
-    // Enable debug mode in development
-    debug: import.meta.env.MODE === "development",
+    // Disable debug mode to reduce console noise
+    debug: false,
 
     // Add cache settings to ensure fresh load
     cache: {

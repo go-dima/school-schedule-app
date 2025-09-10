@@ -18,19 +18,15 @@ import {
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { usersApi } from "../services/api";
-import type { UserRoleData, UserRole } from "../types";
+import type { UserRoleData, UserRole, AppOnNavigate } from "../types";
 import "./UserManagementPage.css";
+import { PendingApprovalsButton } from "@/buttons/PendingApprovalsButton";
+import { ClassManagementButton } from "@/buttons/ClassManagementButton";
 
 const { Title, Text } = Typography;
 
 interface UserManagementPageProps {
-  onNavigate?: (
-    page:
-      | "schedule"
-      | "class-management"
-      | "pending-approvals"
-      | "user-management"
-  ) => void;
+  onNavigate?: AppOnNavigate;
 }
 
 interface UserWithRoles {
@@ -236,12 +232,8 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
                 onClick={() => onNavigate?.("schedule")}>
                 חזרה למערכת השעות
               </Button>
-              <Button onClick={() => onNavigate?.("class-management")}>
-                ניהול שיעורים
-              </Button>
-              <Button onClick={() => onNavigate?.("pending-approvals")}>
-                אישורי הרשמה
-              </Button>
+              <ClassManagementButton onNavigate={onNavigate} />
+              <PendingApprovalsButton onNavigate={onNavigate} />
               <Button
                 icon={<ReloadOutlined />}
                 onClick={loadUsers}

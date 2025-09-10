@@ -69,14 +69,6 @@
       "classSelectionError": "שגיאה בעדכון בחירת השיעור",
       "dataLoadingError": "שגיאה בטעינת הנתונים",
       "profileButton": "פרופיל",
-      "pendingApprovalsButton": "בקשות ממתינות",
-      "classManagementButton": "ניהול שיעורים",
-      "userManagementButton": "ניהול משתמשים",
-      "buttons": {
-        "pendingRequests": "בקשות ממתינות",
-        "classManagement": "ניהול שיעורים",
-        "userManagement": "ניהול משתמשים"
-      },
       "roleSelectorPlaceholder": "בחר תפקיד",
       "labels": {
         "selectChild": "בחר ילד",
@@ -372,7 +364,10 @@
       "saveAllChanges": "שמור כל השינויים ({{count}}})",
       "refresh": "רענן",
       "cancel": "ביטול",
-      "logout": "התנתק"
+      "logout": "התנתק",
+      "pendingRequests": "בקשות ממתינות",
+      "classManagement": "ניהול שיעורים",
+      "userManagement": "ניהול משתמשים"
     }
   }
 }

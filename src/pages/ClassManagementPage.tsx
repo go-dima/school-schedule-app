@@ -29,23 +29,25 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import { classesApi, timeSlotsApi } from "../services/api";
 import { ScheduleService } from "../services/scheduleService";
-import type { ClassWithTimeSlot, TimeSlot, Class, ClassScope } from "../types";
+import type {
+  ClassWithTimeSlot,
+  TimeSlot,
+  Class,
+  ClassScope,
+  AppOnNavigate,
+} from "../types";
 import { DAYS_OF_WEEK, GRADES } from "../types";
 import ClassForm from "../components/ClassForm";
 import "./ClassManagementPage.css";
 import { GetGradeName, GetGradeNameShort } from "@/utils/grades";
+import { PendingApprovalsButton } from "@/buttons/PendingApprovalsButton";
+import { UserManagementButton } from "@/buttons/UserManagementButton";
 
 const { Content } = Layout;
 const { Title } = Typography;
 
 interface ClassManagementPageProps {
-  onNavigate?: (
-    page:
-      | "schedule"
-      | "class-management"
-      | "pending-approvals"
-      | "user-management"
-  ) => void;
+  onNavigate?: AppOnNavigate;
 }
 
 const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
@@ -384,12 +386,8 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
                 onClick={() => onNavigate?.("schedule")}>
                 {t("classManagement.page.backToSchedule")}
               </Button>
-              <Button onClick={() => onNavigate?.("pending-approvals")}>
-                {t("classManagement.page.registrationApprovals")}
-              </Button>
-              <Button onClick={() => onNavigate?.("user-management")}>
-                {t("classManagement.page.userManagement")}
-              </Button>
+              <PendingApprovalsButton onNavigate={onNavigate} />
+              <UserManagementButton onNavigate={onNavigate} />
               <Button
                 type="primary"
                 icon={<PlusOutlined />}

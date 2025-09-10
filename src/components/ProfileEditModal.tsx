@@ -175,7 +175,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
       onCancel={handleCancel}
       footer={null}
       width={800}
-      destroyOnClose>
+      destroyOnHidden>
       <Tabs
         activeKey={activeTab}
         onChange={setActiveTab}

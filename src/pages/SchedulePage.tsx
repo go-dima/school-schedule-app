@@ -15,9 +15,6 @@ import { useTranslation } from "react-i18next";
 import {
   ReloadOutlined,
   UserSwitchOutlined,
-  SettingOutlined,
-  UserAddOutlined,
-  UserOutlined,
   EditOutlined,
 } from "@ant-design/icons";
 import { useAuth } from "../contexts/AuthContext";
@@ -30,22 +27,19 @@ import ProfileEditModal from "../components/ProfileEditModal";
 import { ChildSelector } from "../components/ChildSelector";
 import { classesApi, timeSlotsApi } from "../services/api";
 import { GRADES } from "../types";
-import type { Class, TimeSlot } from "../types";
+import type { AppOnNavigate, Class, TimeSlot } from "../types";
 import "./SchedulePage.css";
 import { GetGradeName } from "@/utils/grades";
+import { PendingApprovalsButton } from "@/buttons/PendingApprovalsButton";
+import { ClassManagementButton } from "@/buttons/ClassManagementButton";
+import { UserManagementButton } from "@/buttons/UserManagementButton";
 
 const { Content } = Layout;
 const { Title } = Typography;
 const { Option } = Select;
 
 interface SchedulePageProps {
-  onNavigate?: (
-    page:
-      | "schedule"
-      | "class-management"
-      | "pending-approvals"
-      | "user-management"
-  ) => void;
+  onNavigate?: AppOnNavigate;
 }
 
 const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
@@ -247,21 +241,9 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
             <Space>
               {isAdmin() && (
                 <>
-                  <Button
-                    icon={<UserAddOutlined />}
-                    onClick={() => onNavigate?.("pending-approvals")}>
-                    {t("schedule.page.buttons.pendingRequests")}
-                  </Button>
-                  <Button
-                    icon={<SettingOutlined />}
-                    onClick={() => onNavigate?.("class-management")}>
-                    {t("schedule.page.buttons.classManagement")}
-                  </Button>
-                  <Button
-                    icon={<UserOutlined />}
-                    onClick={() => onNavigate?.("user-management")}>
-                    {t("schedule.page.buttons.userManagement")}
-                  </Button>
+                  <PendingApprovalsButton onNavigate={onNavigate} />
+                  <ClassManagementButton onNavigate={onNavigate} />
+                  <UserManagementButton onNavigate={onNavigate} />
                 </>
               )}
               {userRoles.length > 1 && (
