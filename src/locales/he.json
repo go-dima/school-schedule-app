@@ -12,6 +12,9 @@
       "passwordPlaceholder": "הסיסמה שלך",
       "passwordRequired": "נא להזין סיסמה",
       "loginButton": "התחבר",
+      "or": "או",
+      "googleButton": "התחבר עם Google",
+      "googleError": "שגיאה בהתחברות עם Google",
       "signupPrompt": "עדיין אין לך חשבון?",
       "signupLink": "הירשם עכשיו"
     },
@@ -37,6 +40,9 @@
       "termsRequired": "נא לאשר את תנאי השימוש",
       "termsCheckbox": "אני מסכים לתנאי השימוש ומדיניות הפרטיות",
       "signupButton": "הירשם",
+      "or": "או",
+      "googleButton": "הירשם עם Google",
+      "googleError": "שגיאה בהרשמה עם Google",
       "loginPrompt": "כבר יש לך חשבון?",
       "loginLink": "התחבר עכשיו"
     },
@@ -73,7 +79,8 @@
       },
       "roleSelectorPlaceholder": "בחר תפקיד",
       "labels": {
-        "selectChild": "בחר ילד"
+        "selectChild": "בחר ילד",
+        "filterByGrade": "סנן לפי כיתה"
       },
       "childSelectorLabel": "בחר ילד:",
       "gradeFilterLabel": "סנן לפי כיתה:",
@@ -87,10 +94,12 @@
         "noPermission": {
           "title": "אין הרשאה לבחירת שיעורים",
           "adminStaffViewOnly": "מנהלים וצוות יכולים לצפות במערכת השעות אך לא לבחור שיעורים."
+        },
+        "noChildrenFound": {
+          "title": "לא נמצאו ילדים",
+          "description": "אין ילדים רשומים בחשבון שלך. הוסף ילד בפרופיל כדי להתחיל לבחור שיעורים."
         }
       },
-      "noChildrenTitle": "לא נמצאו ילדים",
-      "noChildrenDescription": "אין ילדים רשומים בחשבון שלך. הוסף ילד בפרופיל כדי להתחיל לבחור שיעורים.",
       "addChildButton": "הוסף ילד",
       "noChildSelectedAlert": "לא נבחר ילד",
       "noChildSelectedPrompt": "בחר ילד מהרשימה כדי לצפות ולערוך את מערכת השעות שלו.",

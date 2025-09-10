@@ -297,7 +297,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
 
           <div className="filters-section">
             <Space wrap>
-              {isParent && userChildren.length && (
+              {isParent && userChildren.length > 0 && (
                 <>
                   <span>{t("schedule.page.labels.selectChild")}:</span>
                   <ChildSelector
@@ -359,7 +359,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
               style={{ marginBottom: 16 }}
               action={
                 <Button size="small" onClick={() => setProfileModalOpen(true)}>
-                  {t("schedule.page.buttons.addChild")}
+                  {t("schedule.page.addChildButton")}
                 </Button>
               }
             />

@@ -97,6 +97,20 @@ export function useAuth() {
     }
   };
 
+  const signInWithGoogle = async () => {
+    setError(null);
+    setLoading(true);
+
+    try {
+      await authApi.signInWithGoogle();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Google sign in failed");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const signUp = async (email: string, password: string) => {
     setError(null);
     setLoading(true);
@@ -167,6 +181,7 @@ export function useAuth() {
     loading,
     error,
     signIn,
+    signInWithGoogle,
     signUp,
     signOut,
     refreshProfile,

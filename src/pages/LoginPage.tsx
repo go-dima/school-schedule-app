@@ -1,6 +1,15 @@
 import React, { useState } from "react";
-import { Form, Input, Button, Card, Typography, Alert } from "antd";
-import { UserOutlined, LockOutlined } from "@ant-design/icons";
+import {
+  Form,
+  Input,
+  Button,
+  Card,
+  Typography,
+  Alert,
+  Divider,
+  Space,
+} from "antd";
+import { UserOutlined, LockOutlined, GoogleOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../hooks/useAuth";
 import "./AuthPages.css";
@@ -20,8 +29,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
   const { t } = useTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [oauthLoading, setOAuthLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
 
   const onFinish = async (values: LoginFormValues) => {
     setLoading(true);
@@ -36,9 +46,20 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
     }
   };
 
-  // const handleOAuthSignIn = (provider: "google") => {
-  //   console.log(`OAuth sign in with ${provider}`);
-  // };
+  const handleGoogleSignIn = async () => {
+    setOAuthLoading(true);
+    setError(null);
+
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : t("auth.login.googleError")
+      );
+    } finally {
+      setOAuthLoading(false);
+    }
+  };
 
   return (
     <div className="auth-page">
@@ -101,6 +122,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
                 htmlType="submit"
                 size="large"
                 loading={loading}
+                disabled={oauthLoading}
                 block
                 className="auth-submit-btn">
                 {t("auth.login.loginButton")}
@@ -108,21 +130,20 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
             </Form.Item>
           </Form>
 
-          {/* OAuth buttons hidden but logic preserved
-          <Divider plain>או</Divider>
+          <Divider plain>{t("auth.login.or")}</Divider>
 
-          <Space direction="vertical" size="small" style={{ width: '100%' }}>
+          <Space direction="vertical" size="small" style={{ width: "100%" }}>
             <Button
               icon={<GoogleOutlined />}
               size="large"
               block
-              onClick={() => handleOAuthSignIn('google')}
-              className="oauth-btn google-btn"
-            >
-              התחבר עם Google
+              loading={oauthLoading}
+              disabled={loading}
+              onClick={handleGoogleSignIn}
+              className="oauth-btn google-btn">
+              {t("auth.login.googleButton")}
             </Button>
           </Space>
-          */}
 
           <div className="auth-footer">
             <Text>

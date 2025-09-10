@@ -81,6 +81,18 @@ export const authApi = {
     return data;
   },
 
+  async signInWithGoogle() {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+
+    if (error) throw new ApiError(error.message);
+    return data;
+  },
+
   async signOut() {
     const { error } = await supabase.auth.signOut();
     if (error) throw new ApiError(error.message);
@@ -96,8 +108,52 @@ export const authApi = {
   },
 
   onAuthStateChange(callback: (user: any) => void) {
-    return supabase.auth.onAuthStateChange((_event, session) => {
-      callback(session?.user || null);
+    return supabase.auth.onAuthStateChange(async (_event, session) => {
+      const user = session?.user || null;
+
+      // If user signed in with OAuth and doesn't exist in our users table, create profile
+      if (user && session && _event === "SIGNED_IN") {
+        const { data: existingUser } = await supabase
+          .from("users")
+          .select("id")
+          .eq("id", user.id)
+          .single();
+
+        if (!existingUser) {
+          // Create user profile
+          const { error: profileError } = await supabase.from("users").insert([
+            {
+              id: user.id,
+              email: user.email,
+              first_name: user.user_metadata?.full_name?.split(" ")[0] || "",
+              last_name:
+                user.user_metadata?.full_name?.split(" ").slice(1).join(" ") ||
+                "",
+            },
+          ]);
+
+          if (profileError) {
+            log.error("OAuth profile creation failed", { error: profileError });
+          }
+
+          // Create parent role for OAuth users
+          const { error: roleError } = await supabase
+            .from("user_roles")
+            .insert([
+              {
+                user_id: user.id,
+                role: "parent",
+                approved: false, // Requires admin approval
+              },
+            ]);
+
+          if (roleError) {
+            log.error("OAuth role creation failed", { error: roleError });
+          }
+        }
+      }
+
+      callback(user);
     });
   },
 };
