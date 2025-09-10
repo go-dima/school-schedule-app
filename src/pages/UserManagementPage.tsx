@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  Card,
   Table,
   Button,
   Tag,
@@ -10,24 +9,15 @@ import {
   Modal,
   Alert,
 } from "antd";
-import {
-  UserOutlined,
-  CrownOutlined,
-  ReloadOutlined,
-  ArrowLeftOutlined,
-} from "@ant-design/icons";
+import { UserOutlined, CrownOutlined, ReloadOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { usersApi } from "../services/api";
-import type { UserRoleData, UserRole, AppOnNavigate } from "../types";
+import type { UserRoleData, UserRole } from "../types";
 import "./UserManagementPage.css";
-import { PendingApprovalsButton } from "@/buttons/PendingApprovalsButton";
-import { ClassManagementButton } from "@/buttons/ClassManagementButton";
 
 const { Title, Text } = Typography;
 
-interface UserManagementPageProps {
-  onNavigate?: AppOnNavigate;
-}
+interface UserManagementPageProps {}
 
 interface UserWithRoles {
   id: string;
@@ -38,9 +28,7 @@ interface UserWithRoles {
   roles: UserRoleData[];
 }
 
-const UserManagementPage: React.FC<UserManagementPageProps> = ({
-  onNavigate,
-}) => {
+const UserManagementPage: React.FC<UserManagementPageProps> = () => {
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
@@ -216,53 +204,37 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
   ];
 
   return (
-    <div className="user-management-page">
-      <Card>
-        <div className="page-header">
-          <div className="header-content">
-            <Space>
-              <UserOutlined style={{ fontSize: "24px", color: "#1890ff" }} />
-              <Title level={2} style={{ margin: 0 }}>
-                ניהול משתמשים
-              </Title>
-            </Space>
-            <Space>
-              <Button
-                icon={<ArrowLeftOutlined />}
-                onClick={() => onNavigate?.("schedule")}>
-                חזרה למערכת השעות
-              </Button>
-              <ClassManagementButton onNavigate={onNavigate} />
-              <PendingApprovalsButton onNavigate={onNavigate} />
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={loadUsers}
-                loading={loading}>
-                רענן
-              </Button>
-            </Space>
-          </div>
-        </div>
+    <div className="page-content">
+      <div className="page-header">
+        <Space>
+          <UserOutlined style={{ fontSize: "24px", color: "#1890ff" }} />
+          <Title level={2} style={{ margin: 0 }}>
+            ניהול משתמשים
+          </Title>
+        </Space>
+        <Button icon={<ReloadOutlined />} onClick={loadUsers} loading={loading}>
+          רענן
+        </Button>
+      </div>
 
-        <Alert
-          message="ניהול תפקידי משתמשים"
-          description="כאן תוכל לקדם משתמשים לתפקיד מנהל. משתמשים חדשים נרשמים אוטומטית כהורים."
-          type="info"
-          showIcon
-          style={{ marginBottom: 24 }}
-        />
+      <Alert
+        message="ניהול תפקידי משתמשים"
+        description="כאן תוכל לקדם משתמשים לתפקיד מנהל. משתמשים חדשים נרשמים אוטומטית כהורים."
+        type="info"
+        showIcon
+        style={{ marginBottom: 24 }}
+      />
 
-        <Table<UserWithRoles>
-          columns={columns}
-          dataSource={users}
-          rowKey="id"
-          loading={loading}
-          pagination={{ pageSize: 20 }}
-          locale={{
-            emptyText: "לא נמצאו משתמשים",
-          }}
-        />
-      </Card>
+      <Table<UserWithRoles>
+        columns={columns}
+        dataSource={users}
+        rowKey="id"
+        loading={loading}
+        pagination={{ pageSize: 20 }}
+        locale={{
+          emptyText: "לא נמצאו משתמשים",
+        }}
+      />
 
       <Modal
         title="קידום למנהל"

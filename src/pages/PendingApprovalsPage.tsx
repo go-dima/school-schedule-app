@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  Layout,
   Card,
   Typography,
   Table,
@@ -20,7 +19,6 @@ import {
   CheckOutlined,
   CloseOutlined,
   ReloadOutlined,
-  ArrowLeftOutlined,
   UserOutlined,
   ClockCircleOutlined,
   TeamOutlined,
@@ -30,22 +28,15 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import { useAuth } from "../contexts/AuthContext";
 import { usersApi } from "../services/api";
-import type { AppOnNavigate, PendingApproval, UserRole } from "../types";
+import type { PendingApproval, UserRole } from "../types";
 import "./PendingApprovalsPage.css";
-import { ClassManagementButton } from "@/buttons/ClassManagementButton";
-import { UserManagementButton } from "@/buttons/UserManagementButton";
 
-const { Content } = Layout;
 const { Title, Text } = Typography;
 
-interface PendingApprovalsPageProps {
-  onNavigate?: AppOnNavigate;
-}
+interface PendingApprovalsPageProps {}
 
-const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = ({
-  onNavigate,
-}) => {
-  const { isAdmin, signOut } = useAuth();
+const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
+  const { isAdmin } = useAuth();
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>(
     []
   );
@@ -283,206 +274,194 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = ({
 
   if (!isAdmin()) {
     return (
-      <Layout className="pending-approvals-page">
-        <Content className="pending-approvals-content">
-          <Alert
-            message="אין הרשאה"
-            description="רק מנהלים יכולים לגשת לדף זה"
-            type="error"
-            showIcon
-          />
-        </Content>
-      </Layout>
+      <div className="page-content">
+        <Alert
+          message="אין הרשאה"
+          description="רק מנהלים יכולים לגשת לדף זה"
+          type="error"
+          showIcon
+        />
+      </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="page-loading">
-        <Spin size="large" />
-        <Title level={4} style={{ marginTop: 16, color: "#1890ff" }}>
-          טוען בקשות ממתינות...
-        </Title>
+      <div className="page-content">
+        <div className="page-loading">
+          <Spin size="large" />
+          <Title level={4} style={{ marginTop: 16, color: "#1890ff" }}>
+            טוען בקשות ממתינות...
+          </Title>
+        </div>
       </div>
     );
   }
 
   return (
-    <Layout className="pending-approvals-page">
-      <Content className="pending-approvals-content">
-        <div className="pending-approvals-header">
-          <div className="header-main">
-            <Title level={2}>
-              <Space>
-                בקשות ממתינות לאישור
-                {pendingApprovals.length > 0 && (
-                  <Badge count={pendingApprovals.length} color="#ff4d4f" />
-                )}
-              </Space>
-            </Title>
+    <div className="page-content">
+      <div className="pending-approvals-header">
+        <div className="header-main">
+          <Title level={2}>
             <Space>
-              <Button
-                icon={<ArrowLeftOutlined />}
-                onClick={() => onNavigate?.("schedule")}>
-                חזרה למערכת השעות
-              </Button>
-              <ClassManagementButton onNavigate={onNavigate} />
-              <UserManagementButton onNavigate={onNavigate} />
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={loadData}
-                disabled={loading}>
-                רענן
-              </Button>
-              <Button type="primary" danger onClick={signOut}>
-                התנתק
-              </Button>
+              בקשות ממתינות לאישור
+              {pendingApprovals.length > 0 && (
+                <Badge count={pendingApprovals.length} color="#ff4d4f" />
+              )}
             </Space>
-          </div>
-
-          <Alert
-            message="ניהול בקשות אישור"
-            description={
-              <div>
-                כאן תוכל לאשר או לדחות בקשות של משתמשים חדשים להצטרף למערכת.
-                לאחר אישור, המשתמש יוכל להיכנס למערכת ולהשתמש בתפקיד המבוקש.
-                {lastRefresh && (
-                  <div style={{ marginTop: 8, fontSize: "12px", opacity: 0.8 }}>
-                    <ClockCircleOutlined /> עדכון אחרון:{" "}
-                    {lastRefresh.toLocaleTimeString("he-IL")}
-                  </div>
-                )}
-              </div>
-            }
-            type="info"
-            showIcon
-            style={{ marginBottom: 24 }}
-          />
+          </Title>
+          <Space>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={loadData}
+              disabled={loading}>
+              רענן
+            </Button>
+          </Space>
         </div>
 
-        {error && (
-          <Alert
-            message="שגיאה בטעינת הנתונים"
-            description={error}
-            type="error"
-            showIcon
-            closable
-            style={{ marginBottom: 24 }}
+        <Alert
+          message="ניהול בקשות אישור"
+          description={
+            <div>
+              כאן תוכל לאשר או לדחות בקשות של משתמשים חדשים להצטרף למערכת. לאחר
+              אישור, המשתמש יוכל להיכנס למערכת ולהשתמש בתפקיד המבוקש.
+              {lastRefresh && (
+                <div style={{ marginTop: 8, fontSize: "12px", opacity: 0.8 }}>
+                  <ClockCircleOutlined /> עדכון אחרון:{" "}
+                  {lastRefresh.toLocaleTimeString("he-IL")}
+                </div>
+              )}
+            </div>
+          }
+          type="info"
+          showIcon
+          style={{ marginBottom: 24 }}
+        />
+      </div>
+
+      {error && (
+        <Alert
+          message="שגיאה בטעינת הנתונים"
+          description={error}
+          type="error"
+          showIcon
+          closable
+          style={{ marginBottom: 24 }}
+        />
+      )}
+
+      <Card className="pending-approvals-table-card">
+        {pendingApprovals.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "40px 0" }}>
+            <UserOutlined
+              style={{ fontSize: 48, color: "#d9d9d9", marginBottom: 16 }}
+            />
+            <Title level={4} style={{ color: "#999" }}>
+              אין בקשות ממתינות לאישור
+            </Title>
+            <Text type="secondary">
+              כל הבקשות אושרו או שלא הוגשו בקשות חדשות
+            </Text>
+          </div>
+        ) : (
+          <Table<PendingApproval>
+            columns={columns}
+            dataSource={pendingApprovals}
+            rowKey="id"
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) =>
+                `${range[0]}-${range[1]} מתוך ${total} בקשות`,
+            }}
+            scroll={{ x: 800 }}
+            size="small"
           />
         )}
+      </Card>
 
-        <Card className="pending-approvals-table-card">
-          {pendingApprovals.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "40px 0" }}>
-              <UserOutlined
-                style={{ fontSize: 48, color: "#d9d9d9", marginBottom: 16 }}
-              />
-              <Title level={4} style={{ color: "#999" }}>
-                אין בקשות ממתינות לאישור
-              </Title>
-              <Text type="secondary">
-                כל הבקשות אושרו או שלא הוגשו בקשות חדשות
-              </Text>
-            </div>
-          ) : (
-            <Table<PendingApproval>
-              columns={columns}
-              dataSource={pendingApprovals}
-              rowKey="id"
-              pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} מתוך ${total} בקשות`,
-              }}
-              scroll={{ x: 800 }}
-              size="small"
+      {/* Role Assignment Modal */}
+      <Modal
+        title={
+          <Space>
+            <UserOutlined />
+            בחירת תפקיד למשתמש
+          </Space>
+        }
+        open={roleModalVisible}
+        onCancel={() => {
+          setRoleModalVisible(false);
+          setSelectedApproval(null);
+          form.resetFields();
+        }}
+        footer={null}
+        width={500}>
+        {selectedApproval && (
+          <>
+            <Alert
+              message={`אישור משתמש: ${selectedApproval.user.email}`}
+              description={
+                <div>
+                  <p>
+                    <strong>שם:</strong>{" "}
+                    {`${selectedApproval.user.firstName || ""} ${
+                      selectedApproval.user.lastName || ""
+                    }`.trim() || "לא הוזן"}
+                  </p>
+                  <p>
+                    <strong>תפקיד מבוקש במקור:</strong>{" "}
+                    {getRoleDisplayName(selectedApproval.role)}
+                  </p>
+                  <p>אנא בחר את התפקיד הסופי למשתמש זה במערכת:</p>
+                </div>
+              }
+              type="info"
+              showIcon
+              style={{ marginBottom: 24 }}
             />
-          )}
-        </Card>
 
-        {/* Role Assignment Modal */}
-        <Modal
-          title={
-            <Space>
-              <UserOutlined />
-              בחירת תפקיד למשתמש
-            </Space>
-          }
-          open={roleModalVisible}
-          onCancel={() => {
-            setRoleModalVisible(false);
-            setSelectedApproval(null);
-            form.resetFields();
-          }}
-          footer={null}
-          width={500}>
-          {selectedApproval && (
-            <>
-              <Alert
-                message={`אישור משתמש: ${selectedApproval.user.email}`}
-                description={
-                  <div>
-                    <p>
-                      <strong>שם:</strong>{" "}
-                      {`${selectedApproval.user.firstName || ""} ${
-                        selectedApproval.user.lastName || ""
-                      }`.trim() || "לא הוזן"}
-                    </p>
-                    <p>
-                      <strong>תפקיד מבוקש במקור:</strong>{" "}
-                      {getRoleDisplayName(selectedApproval.role)}
-                    </p>
-                    <p>אנא בחר את התפקיד הסופי למשתמש זה במערכת:</p>
-                  </div>
-                }
-                type="info"
-                showIcon
-                style={{ marginBottom: 24 }}
-              />
+            <Form
+              form={form}
+              onFinish={handleConfirmApproval}
+              layout="vertical">
+              <Form.Item
+                name="role"
+                label="תפקיד במערכת"
+                rules={[{ required: true, message: "נא לבחור תפקיד" }]}>
+                <Select
+                  size="large"
+                  placeholder="בחר תפקיד למשתמש"
+                  options={getRoleOptions()}
+                />
+              </Form.Item>
 
-              <Form
-                form={form}
-                onFinish={handleConfirmApproval}
-                layout="vertical">
-                <Form.Item
-                  name="role"
-                  label="תפקיד במערכת"
-                  rules={[{ required: true, message: "נא לבחור תפקיד" }]}>
-                  <Select
-                    size="large"
-                    placeholder="בחר תפקיד למשתמש"
-                    options={getRoleOptions()}
-                  />
-                </Form.Item>
-
-                <Form.Item style={{ marginBottom: 0, textAlign: "left" }}>
-                  <Space>
-                    <Button
-                      onClick={() => {
-                        setRoleModalVisible(false);
-                        setSelectedApproval(null);
-                        form.resetFields();
-                      }}
-                      disabled={actionLoading === selectedApproval?.id}>
-                      ביטול
-                    </Button>
-                    <Button
-                      type="primary"
-                      htmlType="submit"
-                      loading={actionLoading === selectedApproval?.id}
-                      icon={<CheckOutlined />}>
-                      אשר משתמש
-                    </Button>
-                  </Space>
-                </Form.Item>
-              </Form>
-            </>
-          )}
-        </Modal>
-      </Content>
-    </Layout>
+              <Form.Item style={{ marginBottom: 0, textAlign: "left" }}>
+                <Space>
+                  <Button
+                    onClick={() => {
+                      setRoleModalVisible(false);
+                      setSelectedApproval(null);
+                      form.resetFields();
+                    }}
+                    disabled={actionLoading === selectedApproval?.id}>
+                    ביטול
+                  </Button>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={actionLoading === selectedApproval?.id}
+                    icon={<CheckOutlined />}>
+                    אשר משתמש
+                  </Button>
+                </Space>
+              </Form.Item>
+            </Form>
+          </>
+        )}
+      </Modal>
+    </div>
   );
 };
 

@@ -1,0 +1,33 @@
+This file describes the layout of the user interface for the application.
+The current layout is a single page with a sidebar for navigation and a main content area.
+THe content of the pages should remain similar to the current application, only the navigation and layout will change.
+
+## High level layout
+The app will have a sidebar for navigation. The sidebar will contain links to the following pages:
+    - Schedule
+    - Class management
+    - User management
+    - Profile settings
+There will be a header at the top of the page with the app logo and user profile icon.
+
+### Schedule
+The sidebar will have a link to the scheduled page, no hierarchy.
+
+### Class management
+The sidebar will have a link to the class management page, no hierarchy.
+
+### User management
+The sidebar will have an expandable section for user management with the following links:
+    - User list
+    - Pending approvals
+
+### Profile settings
+    - The sidebar will have a link to the profile settings page, no hierarchy.
+    - The page will include personal information editing and children management (like the current ProfileEditModal).
+    - The current ProfileEditModal is not needed.
+
+### Profile icon
+    - Clicking the profile icon in the header will open a dropdown menu with the following data:
+        - Name of the user
+        - Edit profile button
+        - Logout button

@@ -9,7 +9,10 @@ import SchedulePage from "./pages/SchedulePage";
 import ClassManagementPage from "./pages/ClassManagementPage";
 import PendingApprovalsPage from "./pages/PendingApprovalsPage";
 import UserManagementPage from "./pages/UserManagementPage";
+import UserListPage from "./pages/UserListPage";
+import ProfileSettingsPage from "./pages/ProfileSettingsPage";
 import SharedChildPage from "./pages/SharedChildPage";
+import AppLayout from "./layouts/AppLayout";
 import { Spin } from "antd";
 import "./App.css";
 
@@ -17,7 +20,9 @@ type Page =
   | "schedule"
   | "class-management"
   | "pending-approvals"
-  | "user-management";
+  | "user-management"
+  | "user-list"
+  | "profile-settings";
 
 function AppContent() {
   const { user, userRoles, loading } = useAuth();
@@ -71,17 +76,29 @@ function AppContent() {
     return <PendingApprovalPage />;
   }
 
-  // Render current page
-  switch (currentPage) {
-    case "class-management":
-      return <ClassManagementPage onNavigate={setCurrentPage} />;
-    case "pending-approvals":
-      return <PendingApprovalsPage onNavigate={setCurrentPage} />;
-    case "user-management":
-      return <UserManagementPage onNavigate={setCurrentPage} />;
-    default:
-      return <SchedulePage onNavigate={setCurrentPage} />;
-  }
+  // Render current page with AppLayout wrapper
+  const renderPage = () => {
+    switch (currentPage) {
+      case "class-management":
+        return <ClassManagementPage />;
+      case "pending-approvals":
+        return <PendingApprovalsPage />;
+      case "user-management":
+        return <UserManagementPage />;
+      case "user-list":
+        return <UserListPage />;
+      case "profile-settings":
+        return <ProfileSettingsPage />;
+      default:
+        return <SchedulePage onNavigate={setCurrentPage} />;
+    }
+  };
+
+  return (
+    <AppLayout onNavigate={setCurrentPage} currentPage={currentPage}>
+      {renderPage()}
+    </AppLayout>
+  );
 }
 
 function App() {
