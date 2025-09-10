@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  Card,
   Table,
   Button,
   Tag,
@@ -10,24 +9,15 @@ import {
   Modal,
   Alert,
 } from "antd";
-import {
-  UserOutlined,
-  CrownOutlined,
-  ReloadOutlined,
-  ArrowLeftOutlined,
-} from "@ant-design/icons";
+import { UserOutlined, CrownOutlined, ReloadOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { usersApi } from "../services/api";
-import type { UserRoleData, UserRole, AppOnNavigate } from "../types";
+import type { UserRoleData, UserRole } from "../types";
 import "./UserManagementPage.css";
-import { PendingApprovalsButton } from "@/buttons/PendingApprovalsButton";
-import { ClassManagementButton } from "@/buttons/ClassManagementButton";
 
 const { Title, Text } = Typography;
 
-interface UserManagementPageProps {
-  onNavigate?: AppOnNavigate;
-}
+interface UserManagementPageProps {}
 
 interface UserWithRoles {
   id: string;
@@ -35,12 +25,11 @@ interface UserWithRoles {
   firstName?: string;
   lastName?: string;
   createdAt: string;
+  lastSignInAt?: string;
   roles: UserRoleData[];
 }
 
-const UserManagementPage: React.FC<UserManagementPageProps> = ({
-  onNavigate,
-}) => {
+const UserManagementPage: React.FC<UserManagementPageProps> = () => {
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
@@ -58,6 +47,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
         firstName: user.first_name,
         lastName: user.last_name,
         createdAt: user.created_at,
+        lastSignInAt: user.last_sign_in_at,
         roles: user.user_roles.map((role: any) => ({
           id: role.id,
           userId: user.id,
@@ -136,51 +126,112 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
 
   const columns: ColumnsType<UserWithRoles> = [
     {
-      title: "משתמש",
-      key: "user",
+      title: "שם משתמש",
+      key: "name",
+      width: 110,
       render: (_, record) => {
         const firstName = record.firstName || "";
         const lastName = record.lastName || "";
         const fullName = `${firstName} ${lastName}`.trim();
 
         return (
-          <Space direction="vertical" size="small">
-            <Space>
-              <UserOutlined />
-              <div>
-                {fullName ? (
-                  <Text strong>{fullName}</Text>
-                ) : (
-                  <Text type="secondary">לא הוזן שם</Text>
-                )}
-              </div>
-            </Space>
-            <Text type="secondary" style={{ fontSize: "12px" }}>
-              {record.email}
-            </Text>
-            <Text type="secondary" style={{ fontSize: "12px" }}>
-              נרשם: {new Date(record.createdAt).toLocaleDateString("he-IL")}
-            </Text>
+          <Space>
+            <UserOutlined />
+            {fullName ? (
+              <Text strong>{fullName}</Text>
+            ) : (
+              <Text type="secondary">לא הוזן שם</Text>
+            )}
           </Space>
+        );
+      },
+    },
+    {
+      title: "דוא״ל",
+      key: "email",
+      width: 140,
+      dataIndex: "email",
+      render: (email: string) => (
+        <Text copyable={{ tooltips: false }}>{email}</Text>
+      ),
+    },
+    {
+      title: "תאריך הרשמה",
+      key: "createdAt",
+      width: 60,
+      dataIndex: "createdAt",
+      render: (date: string) => (
+        <Text style={{ fontSize: "12px" }}>
+          {new Date(date).toLocaleDateString("he-IL")}
+        </Text>
+      ),
+    },
+    {
+      title: "כניסה אחרונה",
+      key: "lastSignInAt",
+      width: 60,
+      dataIndex: "lastSignInAt",
+      render: (date?: string) => {
+        if (!date) {
+          return (
+            <Text type="secondary" style={{ fontSize: "12px" }}>
+              לא התחבר עדיין
+            </Text>
+          );
+        }
+
+        const signInDate = new Date(date);
+        const now = new Date();
+        const diffTime = Math.abs(now.getTime() - signInDate.getTime());
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+        const diffMinutes = Math.floor(diffTime / (1000 * 60));
+
+        let displayText = "";
+        if (diffDays > 7) {
+          displayText = signInDate.toLocaleDateString("he-IL");
+        } else if (diffDays > 0) {
+          displayText = `לפני ${diffDays} ימים`;
+        } else if (diffHours > 0) {
+          displayText = `לפני ${diffHours} שעות`;
+        } else if (diffMinutes > 0) {
+          displayText = `לפני ${diffMinutes} דקות`;
+        } else {
+          displayText = "עכשיו";
+        }
+
+        return (
+          <Text
+            style={{ fontSize: "12px" }}
+            title={signInDate.toLocaleString("he-IL")}>
+            {displayText}
+          </Text>
         );
       },
     },
     {
       title: "תפקידים",
       key: "roles",
+      width: 50,
       render: (_, record) => (
         <Space wrap>
           {record.roles.map(role => (
             <Tag
               key={role.id}
               color={getRoleColor(role.role)}
-              style={{ opacity: role.approved ? 1 : 0.6 }}>
+              style={{
+                opacity: role.approved ? 1 : 0.6,
+                margin: "2px",
+                fontSize: "12px",
+              }}>
               {getRoleDisplayName(role.role)}
               {!role.approved && " (ממתין)"}
             </Tag>
           ))}
           {record.roles.length === 0 && (
-            <Text type="secondary">אין תפקידים</Text>
+            <Text type="secondary" style={{ fontSize: "12px" }}>
+              אין תפקידים
+            </Text>
           )}
         </Space>
       ),
@@ -188,6 +239,8 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
     {
       title: "פעולות",
       key: "actions",
+      width: 90,
+      align: "center",
       render: (_, record) => {
         const isAdmin = record.roles.some(
           role => role.role === "admin" && role.approved
@@ -205,7 +258,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
               </Button>
             )}
             {isAdmin && (
-              <Tag color="red" icon={<CrownOutlined />}>
+              <Tag
+                color="red"
+                icon={<CrownOutlined />}
+                style={{ fontSize: "12px" }}>
                 מנהל
               </Tag>
             )}
@@ -216,53 +272,45 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({
   ];
 
   return (
-    <div className="user-management-page">
-      <Card>
-        <div className="page-header">
-          <div className="header-content">
-            <Space>
-              <UserOutlined style={{ fontSize: "24px", color: "#1890ff" }} />
-              <Title level={2} style={{ margin: 0 }}>
-                ניהול משתמשים
-              </Title>
-            </Space>
-            <Space>
-              <Button
-                icon={<ArrowLeftOutlined />}
-                onClick={() => onNavigate?.("schedule")}>
-                חזרה למערכת השעות
-              </Button>
-              <ClassManagementButton onNavigate={onNavigate} />
-              <PendingApprovalsButton onNavigate={onNavigate} />
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={loadUsers}
-                loading={loading}>
-                רענן
-              </Button>
-            </Space>
-          </div>
-        </div>
+    <div className="page-content">
+      <div className="page-header">
+        <Space>
+          <UserOutlined style={{ fontSize: "24px", color: "#1890ff" }} />
+          <Title level={2} style={{ margin: 0 }}>
+            ניהול משתמשים
+          </Title>
+        </Space>
+        <Button icon={<ReloadOutlined />} onClick={loadUsers} loading={loading}>
+          רענן
+        </Button>
+      </div>
 
-        <Alert
-          message="ניהול תפקידי משתמשים"
-          description="כאן תוכל לקדם משתמשים לתפקיד מנהל. משתמשים חדשים נרשמים אוטומטית כהורים."
-          type="info"
-          showIcon
-          style={{ marginBottom: 24 }}
-        />
+      <Alert
+        message="ניהול תפקידי משתמשים"
+        description="כאן תוכל לקדם משתמשים לתפקיד מנהל. משתמשים חדשים נרשמים אוטומטית כהורים."
+        type="info"
+        showIcon
+        style={{ marginBottom: 24 }}
+      />
 
-        <Table<UserWithRoles>
-          columns={columns}
-          dataSource={users}
-          rowKey="id"
-          loading={loading}
-          pagination={{ pageSize: 20 }}
-          locale={{
-            emptyText: "לא נמצאו משתמשים",
-          }}
-        />
-      </Card>
+      <Table<UserWithRoles>
+        columns={columns}
+        dataSource={users}
+        rowKey="id"
+        loading={loading}
+        size="small"
+        pagination={{
+          pageSize: 50,
+          showSizeChanger: true,
+          showQuickJumper: true,
+          showTotal: (total, range) =>
+            `${range[0]}-${range[1]} מתוך ${total} משתמשים`,
+        }}
+        locale={{
+          emptyText: "לא נמצאו משתמשים",
+        }}
+        scroll={{ x: 1040 }}
+      />
 
       <Modal
         title="קידום למנהל"

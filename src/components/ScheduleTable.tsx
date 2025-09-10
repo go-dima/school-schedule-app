@@ -4,7 +4,12 @@ import type { ColumnsType } from "antd/es/table";
 import { useTranslation } from "react-i18next";
 import { DAYS_OF_WEEK } from "../types";
 import { ScheduleService } from "../services/scheduleService";
-import { getTimeSlotDisplayInfo, isLessonTimeSlot } from "../utils/timeSlots";
+import {
+  getTimeSlotDisplayInfo,
+  isLessonTimeSlot,
+  isBreakTimeSlot,
+  isMeetingTimeSlot,
+} from "../utils/timeSlots";
 import type { TimeSlot, ClassWithTimeSlot, WeeklySchedule } from "../types";
 import ClassSelectionDrawer from "./ClassSelectionDrawer";
 import "./ScheduleTable.css";
@@ -151,7 +156,11 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           <Card size="small" className="non-lesson-card">
             <div className="non-lesson-content">
               <div className="slot-name">{timeSlot.name}</div>
-              <div className="slot-description">{displayInfo.description}</div>
+              {!isBreakTimeSlot(timeSlot) && !isMeetingTimeSlot(timeSlot) && (
+                <div className="slot-description">
+                  {displayInfo.description}
+                </div>
+              )}
             </div>
           </Card>
         </div>
@@ -323,9 +332,14 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 
         if (!representativeSlot) return null;
 
+        const isBreakOrMeeting =
+          isBreakTimeSlot(representativeSlot) ||
+          isMeetingTimeSlot(representativeSlot);
+
         const row: ScheduleRow = {
           key: timePeriod,
           timeSlot: representativeSlot,
+          className: isBreakOrMeeting ? "compact-row" : undefined,
         };
 
         DAYS_OF_WEEK.forEach(day => {
@@ -351,11 +365,16 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           timeSlot.startTime,
           timeSlot.endTime
         );
+        const isBreakOrMeeting =
+          isBreakTimeSlot(timeSlot) || isMeetingTimeSlot(timeSlot);
 
         return (
-          <div className="time-cell">
+          <div
+            className={`time-cell ${isBreakOrMeeting ? "compact-time-cell" : ""}`}>
             {timeRange && <div className="time-range">{timeRange}</div>}
-            <div className="time-name">{timeSlot.name}</div>
+            {!isBreakOrMeeting && (
+              <div className="time-name">{timeSlot.name}</div>
+            )}
           </div>
         );
       },
@@ -381,6 +400,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
         className="schedule-table rtl-table"
         size="small"
         bordered
+        rowClassName={record => record.className || ""}
       />
 
       {selectedTimeSlot && selectedDayOfWeek !== null && (

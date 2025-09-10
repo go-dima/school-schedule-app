@@ -136,7 +136,9 @@ export type AppPages =
   | "schedule"
   | "class-management"
   | "pending-approvals"
-  | "user-management";
+  | "user-management"
+  | "user-list"
+  | "profile-settings";
 
 // For App navigation
 export type AppOnNavigate = (page: AppPages) => void;

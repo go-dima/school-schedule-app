@@ -292,22 +292,6 @@
       "loadDataError": "שגיאה בטעינת הנתונים"
     }
   },
-  "profile": {
-    "modal": {
-      "title": "ניהול פרופיל",
-      "personalInfoTab": "פרטים אישיים",
-      "childrenTab": "ילדים",
-      "updateError": "שגיאה בעדכון הפרופיל",
-      "firstNameLabel": "שם פרטי",
-      "firstNameRequired": "נא להזין שם פרטי",
-      "firstNameMinLength": "שם פרטי חייב להכיל לפחות 2 תווים",
-      "firstNamePlaceholder": "הזן את השם הפרטי שלך",
-      "lastNameLabel": "שם משפחה",
-      "lastNameRequired": "נא להזין שם משפחה",
-      "lastNameMinLength": "שם משפחה חייב להכיל לפחות 2 תווים",
-      "lastNamePlaceholder": "הזן את שם המשפחה שלך"
-    }
-  },
   "mandatoryClassManager": {
     "title": "ניהול שיעורי ליבה",
     "refreshTitle": "רענן רשימה",
@@ -341,6 +325,60 @@
       "addChildButton": "הוסף ילד",
       "childAddedSuccess": "הילד נוסף בהצלחה לחשבון שלך",
       "acceptError": "שגיאה בקבלת הילד המשותף"
+    }
+  },
+  "navigation": {
+    "schedule": "מערכת שעות",
+    "classManagement": "ניהול שיעורים",
+    "userManagement": "ניהול משתמשים",
+    "userList": "רשימת משתמשים",
+    "pendingApprovals": "בקשות ממתינות לאישור",
+    "profileSettings": "הגדרות פרופיל"
+  },
+  "profile": {
+    "modal": {
+      "title": "ניהול פרופיל",
+      "personalInfoTab": "פרטים אישיים",
+      "childrenTab": "ילדים",
+      "updateError": "שגיאה בעדכון הפרופיל",
+      "firstNameLabel": "שם פרטי",
+      "firstNameRequired": "נא להזין שם פרטי",
+      "firstNameMinLength": "שם פרטי חייב להכיל לפחות 2 תווים",
+      "firstNamePlaceholder": "הזן את השם הפרטי שלך",
+      "lastNameLabel": "שם משפחה",
+      "lastNameRequired": "נא להזין שם משפחה",
+      "lastNameMinLength": "שם משפחה חייב להכיל לפחות 2 תווים",
+      "lastNamePlaceholder": "הזן את שם המשפחה שלך"
+    },
+    "dropdown": {
+      "anonymous": "משתמש אלמוני",
+      "editProfile": "ערוך פרופיל",
+      "logout": "התנתק"
+    },
+    "page": {
+      "title": "הגדרות פרופיל",
+      "personalInfoTab": "פרטים אישיים",
+      "childrenTab": "ילדים",
+      "updateSuccess": "הפרופיל עודכן בהצלחה",
+      "updateError": "שגיאה בעדכון הפרופיל",
+      "firstNameLabel": "שם פרטי",
+      "lastNameLabel": "שם משפחה",
+      "firstNamePlaceholder": "הזן את השם הפרטי שלך",
+      "lastNamePlaceholder": "הזן את שם המשפחה שלך",
+      "firstNameRequired": "נא להזין שם פרטי",
+      "lastNameRequired": "נא להזין שם משפחה",
+      "firstNameMinLength": "שם פרטי חייב להכיל לפחות 2 תווים",
+      "lastNameMinLength": "שם משפחה חייב להכיל לפחות 2 תווים"
+    }
+  },
+  "app": {
+    "title": "מערכת שעות"
+  },
+  "userList": {
+    "page": {
+      "title": "רשימת משתמשים",
+      "noPermissionTitle": "אין הרשאה",
+      "adminOnlyAccess": "רק מנהלים יכולים לגשת לדף זה"
     }
   },
   "common": {

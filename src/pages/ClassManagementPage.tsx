@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  Layout,
   Card,
   Typography,
   Table,
@@ -21,7 +20,6 @@ import {
   EditOutlined,
   DeleteOutlined,
   ReloadOutlined,
-  ArrowLeftOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
@@ -40,21 +38,16 @@ import { DAYS_OF_WEEK, GRADES } from "../types";
 import ClassForm from "../components/ClassForm";
 import "./ClassManagementPage.css";
 import { GetGradeName, GetGradeNameShort } from "@/utils/grades";
-import { PendingApprovalsButton } from "@/buttons/PendingApprovalsButton";
-import { UserManagementButton } from "@/buttons/UserManagementButton";
 
-const { Content } = Layout;
 const { Title } = Typography;
 
 interface ClassManagementPageProps {
   onNavigate?: AppOnNavigate;
 }
 
-const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
-  onNavigate,
-}) => {
+const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
   const { t } = useTranslation();
-  const { isAdmin, signOut } = useAuth();
+  const { isAdmin } = useAuth();
   const [classes, setClasses] = useState<ClassWithTimeSlot[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -350,261 +343,247 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = ({
 
   if (!isAdmin()) {
     return (
-      <Layout className="class-management-page">
-        <Content className="class-management-content">
-          <Alert
-            message={t("classManagement.page.noPermissionTitle")}
-            description={t("classManagement.page.adminOnlyAccess")}
-            type="error"
-            showIcon
-          />
-        </Content>
-      </Layout>
+      <div className="page-content">
+        <Alert
+          message={t("classManagement.page.noPermissionTitle")}
+          description={t("classManagement.page.adminOnlyAccess")}
+          type="error"
+          showIcon
+        />
+      </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="page-loading">
-        <Spin size="large" />
-        <Title level={4} style={{ marginTop: 16, color: "#1890ff" }}>
-          {t("classManagement.page.loading")}
-        </Title>
+      <div className="page-content">
+        <div className="page-loading">
+          <Spin size="large" />
+          <Title level={4} style={{ marginTop: 16, color: "#1890ff" }}>
+            {t("classManagement.page.loading")}
+          </Title>
+        </div>
       </div>
     );
   }
 
   return (
-    <Layout className="class-management-page">
-      <Content className="class-management-content">
-        <div className="class-management-header">
-          <div className="header-main">
-            <Title level={2}>{t("classManagement.page.title")}</Title>
-            <Space>
-              <Button
-                icon={<ArrowLeftOutlined />}
-                onClick={() => onNavigate?.("schedule")}>
-                {t("classManagement.page.backToSchedule")}
-              </Button>
-              <PendingApprovalsButton onNavigate={onNavigate} />
-              <UserManagementButton onNavigate={onNavigate} />
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={handleAddClass}>
-                {t("classManagement.page.addNewClass")}
-              </Button>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={loadData}
-                disabled={loading}>
-                {t("common.buttons.refresh")}
-              </Button>
-              <Button type="primary" danger onClick={signOut}>
-                {t("common.buttons.logout")}
-              </Button>
-            </Space>
-          </div>
-
-          <Alert
-            message={t("classManagement.page.managementAlertTitle")}
-            description={t("classManagement.page.managementDescription")}
-            type="info"
-            showIcon
-            style={{ marginBottom: 24 }}
-          />
-
-          {/* Filters */}
-          <Card
-            title={t("classManagement.page.filtersTitle")}
-            style={{ marginBottom: 24 }}>
-            <Row gutter={[16, 16]} align="middle">
-              <Col xs={24} sm={8} md={6}>
-                <Space direction="vertical" style={{ width: "100%" }}>
-                  <Space
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      width: "100%",
-                    }}>
-                    <label>{t("classManagement.page.dayFilterLabel")}</label>
-                    {selectedDay !== null && (
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<CloseOutlined />}
-                        onClick={() => setSelectedDay(null)}
-                        style={{ padding: 0 }}
-                      />
-                    )}
-                  </Space>
-                  <Select
-                    placeholder={t("classManagement.page.dayFilterPlaceholder")}
-                    allowClear
-                    style={{ width: "100%" }}
-                    value={selectedDay}
-                    onChange={setSelectedDay}>
-                    {DAYS_OF_WEEK.map(day => (
-                      <Select.Option key={day.key} value={day.key}>
-                        {day.name}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Space>
-              </Col>
-
-              <Col xs={24} sm={8} md={6}>
-                <Space direction="vertical" style={{ width: "100%" }}>
-                  <Space
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      width: "100%",
-                    }}>
-                    <label>{t("classManagement.page.gradeFilterLabel")}</label>
-                    {selectedGrade !== null && (
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<CloseOutlined />}
-                        onClick={() => setSelectedGrade(null)}
-                        style={{ padding: 0 }}
-                      />
-                    )}
-                  </Space>
-                  <Select
-                    placeholder={t(
-                      "classManagement.page.gradeFilterPlaceholder"
-                    )}
-                    allowClear
-                    style={{ width: "100%" }}
-                    value={selectedGrade}
-                    onChange={setSelectedGrade}>
-                    {GRADES.map(grade => (
-                      <Select.Option key={grade} value={grade}>
-                        {GetGradeName(grade)}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Space>
-              </Col>
-
-              <Col xs={24} sm={8} md={6}>
-                <Space direction="vertical" style={{ width: "100%" }}>
-                  <Space
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      width: "100%",
-                    }}>
-                    <label>
-                      {t("classManagement.page.environmentFilterLabel")}
-                    </label>
-                    {selectedScope !== null && (
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<CloseOutlined />}
-                        onClick={() => setSelectedScope(null)}
-                        style={{ padding: 0 }}
-                      />
-                    )}
-                  </Space>
-                  <Select
-                    placeholder={t(
-                      "classManagement.page.environmentFilterPlaceholder"
-                    )}
-                    allowClear
-                    style={{ width: "100%" }}
-                    value={selectedScope}
-                    onChange={setSelectedScope}>
-                    <Select.Option value="test">
-                      {t("classManagement.page.testEnvironmentOption")}
-                    </Select.Option>
-                    <Select.Option value="prod">
-                      {t("classManagement.page.productionEnvironmentOption")}
-                    </Select.Option>
-                  </Select>
-                </Space>
-              </Col>
-
-              <Col xs={24} sm={24} md={6}>
-                <Button
-                  onClick={() => {
-                    setSelectedDay(null);
-                    setSelectedGrade(null);
-                    setSelectedScope(null);
-                  }}>
-                  {t("classManagement.page.clearFiltersButton")}
-                </Button>
-              </Col>
-            </Row>
-          </Card>
+    <div className="page-content">
+      <div className="class-management-header">
+        <div className="header-main">
+          <Title level={2}>{t("classManagement.page.title")}</Title>
+          <Space>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleAddClass}>
+              {t("classManagement.page.addNewClass")}
+            </Button>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={loadData}
+              disabled={loading}>
+              {t("common.buttons.refresh")}
+            </Button>
+          </Space>
         </div>
 
-        {error && (
-          <Alert
-            message={t("classManagement.page.dataLoadingError")}
-            description={error}
-            type="error"
-            showIcon
-            closable
-            style={{ marginBottom: 24 }}
-          />
-        )}
+        <Alert
+          message={t("classManagement.page.managementAlertTitle")}
+          description={t("classManagement.page.managementDescription")}
+          type="info"
+          showIcon
+          style={{ marginBottom: 24 }}
+        />
 
-        <Card className="classes-table-card">
-          <Table<ClassWithTimeSlot>
-            columns={columns}
-            dataSource={filteredClasses}
-            rowKey="id"
-            pagination={{
-              pageSize: 20,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) => {
-                const totalClasses = classes.length;
-                return total === totalClasses
-                  ? t("classManagement.table.paginationText", {
-                      start: range[0],
-                      end: range[1],
-                      total,
-                    })
-                  : t("classManagement.table.paginationFilteredText", {
-                      start: range[0],
-                      end: range[1],
-                      total,
-                      totalClasses,
-                    });
-              },
-            }}
-            scroll={{ x: 1000 }}
-            size="small"
-          />
+        {/* Filters */}
+        <Card
+          title={t("classManagement.page.filtersTitle")}
+          style={{ marginBottom: 24 }}>
+          <Row gutter={[16, 16]} align="middle">
+            <Col xs={24} sm={8} md={6}>
+              <Space direction="vertical" style={{ width: "100%" }}>
+                <Space
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    width: "100%",
+                  }}>
+                  <label>{t("classManagement.page.dayFilterLabel")}</label>
+                  {selectedDay !== null && (
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<CloseOutlined />}
+                      onClick={() => setSelectedDay(null)}
+                      style={{ padding: 0 }}
+                    />
+                  )}
+                </Space>
+                <Select
+                  placeholder={t("classManagement.page.dayFilterPlaceholder")}
+                  allowClear
+                  style={{ width: "100%" }}
+                  value={selectedDay}
+                  onChange={setSelectedDay}>
+                  {DAYS_OF_WEEK.map(day => (
+                    <Select.Option key={day.key} value={day.key}>
+                      {day.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Space>
+            </Col>
+
+            <Col xs={24} sm={8} md={6}>
+              <Space direction="vertical" style={{ width: "100%" }}>
+                <Space
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    width: "100%",
+                  }}>
+                  <label>{t("classManagement.page.gradeFilterLabel")}</label>
+                  {selectedGrade !== null && (
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<CloseOutlined />}
+                      onClick={() => setSelectedGrade(null)}
+                      style={{ padding: 0 }}
+                    />
+                  )}
+                </Space>
+                <Select
+                  placeholder={t("classManagement.page.gradeFilterPlaceholder")}
+                  allowClear
+                  style={{ width: "100%" }}
+                  value={selectedGrade}
+                  onChange={setSelectedGrade}>
+                  {GRADES.map(grade => (
+                    <Select.Option key={grade} value={grade}>
+                      {GetGradeName(grade)}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Space>
+            </Col>
+
+            <Col xs={24} sm={8} md={6}>
+              <Space direction="vertical" style={{ width: "100%" }}>
+                <Space
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    width: "100%",
+                  }}>
+                  <label>
+                    {t("classManagement.page.environmentFilterLabel")}
+                  </label>
+                  {selectedScope !== null && (
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<CloseOutlined />}
+                      onClick={() => setSelectedScope(null)}
+                      style={{ padding: 0 }}
+                    />
+                  )}
+                </Space>
+                <Select
+                  placeholder={t(
+                    "classManagement.page.environmentFilterPlaceholder"
+                  )}
+                  allowClear
+                  style={{ width: "100%" }}
+                  value={selectedScope}
+                  onChange={setSelectedScope}>
+                  <Select.Option value="test">
+                    {t("classManagement.page.testEnvironmentOption")}
+                  </Select.Option>
+                  <Select.Option value="prod">
+                    {t("classManagement.page.productionEnvironmentOption")}
+                  </Select.Option>
+                </Select>
+              </Space>
+            </Col>
+
+            <Col xs={24} sm={24} md={6}>
+              <Button
+                onClick={() => {
+                  setSelectedDay(null);
+                  setSelectedGrade(null);
+                  setSelectedScope(null);
+                }}>
+                {t("classManagement.page.clearFiltersButton")}
+              </Button>
+            </Col>
+          </Row>
         </Card>
+      </div>
 
-        <Modal
-          title={
-            editingClass
-              ? t("classManagement.table.editModalTitle")
-              : t("classManagement.table.addModalTitle")
-          }
-          open={modalVisible}
+      {error && (
+        <Alert
+          message={t("classManagement.page.dataLoadingError")}
+          description={error}
+          type="error"
+          showIcon
+          closable
+          style={{ marginBottom: 24 }}
+        />
+      )}
+
+      <Card className="classes-table-card">
+        <Table<ClassWithTimeSlot>
+          columns={columns}
+          dataSource={filteredClasses}
+          rowKey="id"
+          pagination={{
+            pageSize: 20,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => {
+              const totalClasses = classes.length;
+              return total === totalClasses
+                ? t("classManagement.table.paginationText", {
+                    start: range[0],
+                    end: range[1],
+                    total,
+                  })
+                : t("classManagement.table.paginationFilteredText", {
+                    start: range[0],
+                    end: range[1],
+                    total,
+                    totalClasses,
+                  });
+            },
+          }}
+          scroll={{ x: 1000 }}
+          size="small"
+        />
+      </Card>
+
+      <Modal
+        title={
+          editingClass
+            ? t("classManagement.table.editModalTitle")
+            : t("classManagement.table.addModalTitle")
+        }
+        open={modalVisible}
+        onCancel={handleModalCancel}
+        footer={null}
+        width={600}
+        destroyOnHidden>
+        <ClassForm
+          initialValues={editingClass}
+          timeSlots={timeSlots}
+          onSubmit={handleFormSubmit}
           onCancel={handleModalCancel}
-          footer={null}
-          width={600}
-          destroyOnHidden>
-          <ClassForm
-            initialValues={editingClass}
-            timeSlots={timeSlots}
-            onSubmit={handleFormSubmit}
-            onCancel={handleModalCancel}
-            loading={submitting}
-            isNewLesson={!editingClass}
-          />
-        </Modal>
-      </Content>
-    </Layout>
+          loading={submitting}
+          isNewLesson={!editingClass}
+        />
+      </Modal>
+    </div>
   );
 };
 
