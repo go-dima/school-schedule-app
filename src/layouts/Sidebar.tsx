@@ -1,5 +1,5 @@
 import React from "react";
-import { Layout, Menu } from "antd";
+import { Layout, Menu, Badge } from "antd";
 import {
   CalendarOutlined,
   BookOutlined,
@@ -12,6 +12,7 @@ import {
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
+import { usePendingApprovals } from "../hooks/usePendingApprovals";
 import type { AppOnNavigate } from "../types";
 import type { MenuProps } from "antd";
 
@@ -40,6 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { t } = useTranslation();
   const { isAdmin } = useAuth();
+  const { pendingApprovalsCount } = usePendingApprovals();
   const [openKeys, setOpenKeys] = React.useState<string[]>([]);
 
   // Initialize open keys based on current page
@@ -111,8 +113,23 @@ const Sidebar: React.FC<SidebarProps> = ({
             },
             {
               key: "pending-approvals",
-              icon: <CheckCircleOutlined />,
-              label: t("navigation.pendingApprovals"),
+              icon:
+                pendingApprovalsCount > 0 ? (
+                  <Badge count={pendingApprovalsCount} size="small" />
+                ) : (
+                  <CheckCircleOutlined />
+                ),
+              label: (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    width: "100%",
+                  }}>
+                  <span>{t("navigation.pendingApprovals")}</span>
+                </div>
+              ),
             },
           ],
         }
