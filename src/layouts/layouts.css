@@ -84,7 +84,7 @@
 
 .page-title {
   margin: 0 !important;
-  color: #f8fafc;
+  color: #f8fafc !important;
   font-weight: 600;
   font-size: 20px;
   white-space: nowrap;
