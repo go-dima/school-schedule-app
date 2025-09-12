@@ -38,6 +38,7 @@ import { DAYS_OF_WEEK, GRADES } from "../types";
 import ClassForm from "../components/ClassForm";
 import "./ClassManagementPage.css";
 import { GetGradeName, GetGradeNameShort } from "@/utils/grades";
+import { GetDayName } from "@/utils/days";
 
 const { Title } = Typography;
 
@@ -187,7 +188,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
     }
 
     const dayName = cls
-      ? ScheduleService.getDayName(cls.dayOfWeek)
+      ? GetDayName(cls.dayOfWeek)
       : t("classManagement.table.unknownDay");
 
     // For double lessons, show combined time range and both slot names

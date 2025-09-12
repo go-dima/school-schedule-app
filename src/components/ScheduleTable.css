@@ -157,7 +157,7 @@
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .multiple-classes {
