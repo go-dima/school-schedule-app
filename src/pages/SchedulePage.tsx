@@ -9,6 +9,7 @@ import {
   Spin,
   Modal,
   message,
+  AutoComplete,
 } from "antd";
 import { useTranslation } from "react-i18next";
 import { ReloadOutlined, UserSwitchOutlined } from "@ant-design/icons";
@@ -59,6 +60,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
   >(null);
   const [allTimeSlots, setAllTimeSlots] = useState<TimeSlot[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   const isParent = hasRole("parent");
 
@@ -218,9 +220,42 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
       <div className="filters-section">
         <div className="filters-row">
           <Space wrap>
+            <AutoComplete
+              value={searchTerm}
+              onChange={setSearchTerm}
+              options={(() => {
+                if (!searchTerm) return [];
+
+                const uniqueClassNames = Array.from(
+                  new Set(
+                    classes
+                      .filter(cls => {
+                        // Apply grade filter if set
+                        if (
+                          selectedGrade &&
+                          !cls.grades?.includes(selectedGrade)
+                        ) {
+                          return false;
+                        }
+                        // Apply class name filter
+                        return cls.title
+                          .toLowerCase()
+                          .includes(searchTerm.toLowerCase());
+                      })
+                      .map(cls => cls.title)
+                  )
+                ).sort();
+
+                return uniqueClassNames.map(title => ({ value: title }));
+              })()}
+              placeholder={t("schedule.page.placeholders.searchClass")}
+              style={{ minWidth: 200 }}
+              allowClear
+              filterOption={false}
+            />
+            <span>{t("schedule.page.labels.searchClass")}:</span>
             {isParent && userChildren.length > 0 && (
               <>
-                <span>{t("schedule.page.labels.selectChild")}:</span>
                 <ChildSelector
                   children={userChildren}
                   selectedChildId={selectedChild?.id || null}
@@ -235,11 +270,11 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                   style={{ minWidth: 200 }}
                   disabled={childrenLoading}
                 />
+                <span>{t("schedule.page.labels.selectChild")}:</span>
               </>
             )}
             {(!isParent || !userChildren.length || isAdmin()) && (
               <>
-                <span>{t("schedule.page.labels.filterByGrade")}:</span>
                 <Select
                   value={selectedGrade}
                   onChange={setSelectedGrade}
@@ -252,6 +287,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                     </Option>
                   ))}
                 </Select>
+                <span>{t("schedule.page.labels.filterByGrade")}:</span>
               </>
             )}
           </Space>
@@ -377,6 +413,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
           canViewClasses={canViewClasses}
           isAdmin={isAdmin()}
           onCreateClass={handleCreateClass}
+          searchTerm={searchTerm}
         />
       </Card>
 

@@ -27,6 +27,7 @@ interface ScheduleTableProps {
   canViewClasses?: boolean;
   isAdmin?: boolean;
   onCreateClass?: (timeSlotId: string, dayOfWeek: number) => void;
+  searchTerm?: string;
 }
 
 interface ScheduleRow {
@@ -47,6 +48,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   canViewClasses = false,
   isAdmin = false,
   onCreateClass,
+  searchTerm = "",
 }) => {
   const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -75,6 +77,24 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     setSelectedDayOfWeek(null);
   };
 
+  // Helper function to check if a time slot should be highlighted based on search term
+  const shouldHighlightTimeSlot = (
+    timeSlot: TimeSlot,
+    dayOfWeek: number
+  ): boolean => {
+    if (!searchTerm.trim()) return false;
+
+    const dayClasses = weeklySchedule[dayOfWeek]?.[timeSlot.id] || [];
+
+    let filteredClasses = userGrade
+      ? dayClasses.filter(cls => cls.grades?.includes(userGrade))
+      : dayClasses;
+
+    return filteredClasses.some(cls =>
+      cls.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
   const renderClassCell = (timeSlot: TimeSlot, dayOfWeek: number) => {
     const dayClasses = weeklySchedule[dayOfWeek]?.[timeSlot.id] || [];
 
@@ -84,6 +104,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 
     const displayInfo = getTimeSlotDisplayInfo(timeSlot);
     const isSelectableSlot = displayInfo.isSelectable && canViewClasses;
+    const isHighlighted = shouldHighlightTimeSlot(timeSlot, dayOfWeek);
+    const highlightClass = isHighlighted ? "search-highlighted" : "";
 
     // Separate primary classes from continuation classes
     const primaryClasses = filteredClasses.filter(
@@ -108,7 +130,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
         <div
           className={`schedule-cell selected-classes double-continuation selected ${
             isMandatory ? "mandatory-cell" : ""
-          } ${isSelectableSlot ? "clickable" : ""}`}
+          } ${isSelectableSlot ? "clickable" : ""} ${highlightClass}`}
           onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
           <Card
             size="small"
@@ -151,7 +173,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     if (!isLessonTimeSlot(timeSlot)) {
       return (
         <div
-          className={`schedule-cell ${displayInfo.cssClass}`}
+          className={`schedule-cell ${displayInfo.cssClass} ${highlightClass}`}
           title={displayInfo.description}>
           <Card size="small" className="non-lesson-card">
             <div className="non-lesson-content">
@@ -172,7 +194,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
         <div
           className={`schedule-cell empty ${
             isSelectableSlot ? "clickable" : ""
-          }`}
+          } ${highlightClass}`}
           onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -198,7 +220,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
         <div
           className={`schedule-cell selected-classes ${
             hasMandatoryClass ? "mandatory-cell" : ""
-          } ${isSelectableSlot ? "clickable" : ""}`}
+          } ${isSelectableSlot ? "clickable" : ""} ${highlightClass}`}
           onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
           {selectedPrimaryClasses.map(cls => {
             const isDoubleLesson = cls.isDouble;
@@ -275,7 +297,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
         <div
           className={`schedule-cell multiple ${
             isSelectableSlot ? "clickable" : ""
-          }`}
+          } ${highlightClass}`}
           onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
           <Card size="small" className="class-card">
             <div className="multiple-classes">
@@ -300,7 +322,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     // Empty slot
     return (
       <div
-        className={`schedule-cell empty ${isSelectableSlot ? "clickable" : ""}`}
+        className={`schedule-cell empty ${isSelectableSlot ? "clickable" : ""} ${highlightClass}`}
         onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
