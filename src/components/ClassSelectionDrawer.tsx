@@ -16,6 +16,7 @@ import type { TimeSlot, ClassWithTimeSlot } from "../types";
 import CreateClassButton from "./CreateClassButton";
 import "./ClassSelectionDrawer.css";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
+import { GetDayName } from "@/utils/days";
 
 const { Title, Text } = Typography;
 
@@ -51,7 +52,6 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
   timeSlots = [],
 }) => {
   const { t } = useTranslation();
-  const dayName = ScheduleService.getDayName(dayOfWeek);
   const timeRange = ScheduleService.formatTimeRange(
     timeSlot.startTime,
     timeSlot.endTime
@@ -226,7 +226,11 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
               : t("schedule.drawer.viewTitle")}
           </Title>
           <div className="time-slot-info">
-            <Tag color="blue">{dayName}</Tag>
+            <Tag color="blue">
+              {t("schedule.drawer.dayNamePrefix", {
+                dayName: GetDayName(dayOfWeek),
+              })}
+            </Tag>
             <Tag color="green">{timeRange}</Tag>
             <Tag>{timeSlot.name}</Tag>
           </div>

@@ -197,11 +197,6 @@ export class ScheduleService {
     return `${formattedEnd} - ${formattedStart}`;
   }
 
-  static getDayName(dayOfWeek: number): string {
-    const dayNames = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
-    return dayNames[dayOfWeek] || "";
-  }
-
   static validateTimeSlot(startTime: string, endTime: string): boolean {
     if (!startTime || !endTime) return false;
 
@@ -209,9 +204,5 @@ export class ScheduleService {
     const end = new Date(`1970-01-01T${endTime}:00`);
 
     return start < end;
-  }
-
-  static isWorkingDay(dayOfWeek: number): boolean {
-    return dayOfWeek >= 0 && dayOfWeek <= 4; // Sunday to Thursday
   }
 }
