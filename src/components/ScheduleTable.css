@@ -24,6 +24,7 @@
 .time-column {
   background: #fafafa !important;
   min-width: 120px;
+  text-align: center;
 }
 
 .time-cell {
@@ -284,7 +285,10 @@
 }
 
 /* RTL specific adjustments */
-.schedule-table .ant-table-thead > tr > th,
+.schedule-table .ant-table-thead > tr > th {
+  text-align: center;
+}
+
 .schedule-table .ant-table-tbody > tr > td {
   text-align: right;
 }
@@ -409,6 +413,7 @@
   from {
     box-shadow: 0 0 8px rgba(24, 144, 255, 0.3);
   }
+
   to {
     box-shadow: 0 0 12px rgba(24, 144, 255, 0.5);
   }

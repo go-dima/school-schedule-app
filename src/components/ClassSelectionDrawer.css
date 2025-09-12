@@ -72,6 +72,10 @@
   color: #999 !important;
 }
 
+.class-selection-card.grayed-out .class-teacher {
+  color: #999 !important;
+}
+
 .class-card-content {
   direction: rtl;
   text-align: right;
