@@ -72,7 +72,13 @@
       "roleSelectorPlaceholder": "בחר תפקיד",
       "labels": {
         "selectChild": "בחר ילד",
-        "filterByGrade": "סנן לפי כיתה"
+        "filterByGrade": "סנן לפי כיתה",
+        "searchClass": "חיפוש שיעור"
+      },
+      "placeholders": {
+        "allGrades": "כל הכיתות",
+        "searchClass": "הקלד שם שיעור לחיפוש...",
+        "selectRole": "בחר תפקיד"
       },
       "childSelectorLabel": "בחר ילד:",
       "gradeFilterLabel": "סנן לפי כיתה:",

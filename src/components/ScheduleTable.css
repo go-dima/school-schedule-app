@@ -395,3 +395,21 @@
   height: 100%;
   flex: 1;
 }
+
+/* Search highlighting styles */
+.schedule-cell.search-highlighted {
+  border: 3px solid #1890ff !important;
+  border-radius: 6px !important;
+  box-shadow: 0 0 8px rgba(24, 144, 255, 0.3) !important;
+  background: rgba(24, 144, 255, 0.05) !important;
+  animation: search-pulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes search-pulse {
+  from {
+    box-shadow: 0 0 8px rgba(24, 144, 255, 0.3);
+  }
+  to {
+    box-shadow: 0 0 12px rgba(24, 144, 255, 0.5);
+  }
+}
