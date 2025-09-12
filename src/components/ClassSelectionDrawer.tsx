@@ -14,8 +14,8 @@ import { useTranslation } from "react-i18next";
 import { ScheduleService } from "../services/scheduleService";
 import type { TimeSlot, ClassWithTimeSlot } from "../types";
 import CreateClassButton from "./CreateClassButton";
-import { GetGradeName } from "@/utils/grades";
 import "./ClassSelectionDrawer.css";
+import { GradesRangeTag } from "@/elements/GradesRangeTag";
 
 const { Title, Text } = Typography;
 
@@ -152,11 +152,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
               <Text className="class-teacher">({cls.teacher})</Text>
             </Title>
             <div className="class-header-tags">
-              {cls.grades?.map(grade => (
-                <Tag key={grade} color="blue">
-                  {GetGradeName(grade)}
-                </Tag>
-              ))}
+              <GradesRangeTag grades={cls.grades} color="blue" />
               {cls.isMandatory && (
                 <Tag color="red">{t("schedule.drawer.mandatoryTag")}</Tag>
               )}
