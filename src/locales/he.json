@@ -339,7 +339,8 @@
     "userManagement": "ניהול משתמשים",
     "userList": "רשימת משתמשים",
     "pendingApprovals": "בקשות ממתינות לאישור",
-    "profileSettings": "הגדרות פרופיל"
+    "profileSettings": "הגדרות פרופיל",
+    "collapseSidebar": "הסתר תפריט"
   },
   "profile": {
     "modal": {

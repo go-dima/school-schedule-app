@@ -539,3 +539,107 @@
     padding: 16px;
   }
 }
+
+/* Sidebar container with fixed trigger bar */
+.sidebar-container {
+  position: relative;
+  height: 100vh;
+}
+
+.sidebar-container .app-sidebar {
+  height: calc(100vh - 50px) !important;
+}
+
+.sidebar-container .app-sidebar .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+}
+
+.sidebar-trigger-bar {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  height: 50px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-top: 1px solid #2563eb;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1001;
+  box-shadow: 0 -4px 20px rgba(59, 130, 246, 0.2);
+}
+
+.sidebar-trigger-bar:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 -8px 30px rgba(59, 130, 246, 0.3);
+}
+
+.sidebar-trigger-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 16px;
+  font-size: 16px;
+  gap: 12px;
+  direction: rtl;
+}
+
+.sidebar-trigger-text {
+  font-weight: 500;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Adjust sidebar menu to fill available space */
+.sidebar-container .sidebar-menu {
+  flex: 1;
+  padding: 16px 8px 16px 8px;
+  margin: 0;
+  background: transparent;
+  overflow-y: auto;
+  height: 100%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sidebar-container .app-sidebar {
+    height: calc(100vh - 48px) !important;
+  }
+
+  .sidebar-trigger-bar {
+    height: 48px;
+  }
+
+  .sidebar-trigger-content {
+    font-size: 14px;
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .sidebar-trigger-text {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar-container .app-sidebar {
+    height: calc(100vh - 44px) !important;
+  }
+
+  .sidebar-trigger-bar {
+    height: 44px;
+  }
+
+  .sidebar-trigger-content {
+    font-size: 12px;
+    padding: 0 8px;
+    gap: 6px;
+  }
+
+  .sidebar-trigger-text {
+    font-size: 11px;
+  }
+}

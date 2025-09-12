@@ -142,28 +142,43 @@ const Sidebar: React.FC<SidebarProps> = ({
   ].filter(Boolean);
 
   return (
-    <Sider
-      className="app-sidebar"
-      collapsible
-      collapsed={collapsed}
-      width={250}
-      collapsedWidth={80}
-      reverseArrow
-      trigger={
-        <div className="sidebar-trigger" onClick={onToggle}>
+    <div className="sidebar-container">
+      <Sider
+        className="app-sidebar"
+        collapsible
+        collapsed={collapsed}
+        width={250}
+        collapsedWidth={80}
+        reverseArrow
+        trigger={null}>
+        <Menu
+          className="sidebar-menu"
+          mode="inline"
+          selectedKeys={getSelectedKeys()}
+          openKeys={collapsed ? [] : openKeys}
+          items={items}
+          onClick={handleMenuClick}
+          onOpenChange={handleOpenChange}
+        />
+      </Sider>
+
+      {/* Sidebar trigger bar at bottom */}
+      <div
+        className="sidebar-trigger-bar"
+        style={{
+          width: collapsed ? "80px" : "250px",
+        }}
+        onClick={onToggle}>
+        <div className="sidebar-trigger-content">
           {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          {!collapsed && (
+            <span className="sidebar-trigger-text">
+              {t("navigation.collapseSidebar")}
+            </span>
+          )}
         </div>
-      }>
-      <Menu
-        className="sidebar-menu"
-        mode="inline"
-        selectedKeys={getSelectedKeys()}
-        openKeys={collapsed ? [] : openKeys}
-        items={items}
-        onClick={handleMenuClick}
-        onOpenChange={handleOpenChange}
-      />
-    </Sider>
+      </div>
+    </div>
   );
 };
 
