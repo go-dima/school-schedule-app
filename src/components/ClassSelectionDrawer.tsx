@@ -129,17 +129,19 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
         actions={
           canSelectClasses
             ? [
-                <Button
-                  key="toggle"
-                  type={isSelected ? "default" : "primary"}
-                  icon={isSelected ? <CheckOutlined /> : undefined}
-                  onClick={() => handleClassToggle(cls.id)}
-                  disabled={isGrayedOut}
-                  block>
-                  {isSelected
-                    ? t("schedule.drawer.unselectButton")
-                    : t("schedule.drawer.selectButton")}
-                </Button>,
+                <div className="select-class-button">
+                  <Button
+                    key="toggle"
+                    type={isSelected ? "default" : "primary"}
+                    icon={isSelected ? <CheckOutlined /> : undefined}
+                    onClick={() => handleClassToggle(cls.id)}
+                    disabled={isGrayedOut}
+                    block>
+                    {isSelected
+                      ? t("schedule.drawer.unselectButton")
+                      : t("schedule.drawer.selectButton")}
+                  </Button>
+                </div>,
               ]
             : undefined
         }>
@@ -147,6 +149,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
           <div className="class-header">
             <Title level={5} className="class-title">
               {cls.title}
+              <Text className="class-teacher">({cls.teacher})</Text>
             </Title>
             <div className="class-header-tags">
               {cls.grades?.map(grade => (
@@ -164,12 +167,9 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
           </div>
 
           <div className="class-details">
-            <Text strong>{t("schedule.drawer.teacherLabel")}</Text>
-            <Text>{cls.teacher}</Text>
-          </div>
-
-          <div className="class-details">
-            <Text strong>{t("schedule.drawer.timeLabel")}</Text>
+            <Text strong style={{ marginRight: "8px" }}>
+              {t("schedule.drawer.timeLabel")}
+            </Text>
             <Text>{getDoubleTimeRange(cls, allTimeSlots)}</Text>
             {cls.isDouble && (
               <Text
