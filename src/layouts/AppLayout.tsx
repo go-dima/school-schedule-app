@@ -18,7 +18,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   onNavigate,
   currentPage,
 }) => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
