@@ -40,7 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onToggle,
 }) => {
   const { t } = useTranslation();
-  const { isAdmin } = useAuth();
+  const { isAdmin, canManageClasses } = useAuth();
   const { pendingApprovalsCount } = usePendingApprovals();
   const [openKeys, setOpenKeys] = React.useState<string[]>([]);
 
@@ -98,7 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       key: "class-management",
       icon: <BookOutlined />,
       label: t("navigation.classManagement"),
-      style: isAdmin() ? {} : { display: "none" },
+      style: canManageClasses() ? {} : { display: "none" },
     },
     isAdmin()
       ? {

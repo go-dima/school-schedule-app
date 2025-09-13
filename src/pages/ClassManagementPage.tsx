@@ -48,7 +48,7 @@ interface ClassManagementPageProps {
 
 const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
   const { t } = useTranslation();
-  const { isAdmin } = useAuth();
+  const { canManageClasses } = useAuth();
   const [classes, setClasses] = useState<ClassWithTimeSlot[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -342,7 +342,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
     },
   ];
 
-  if (!isAdmin()) {
+  if (!canManageClasses()) {
     return (
       <div className="page-content">
         <Alert

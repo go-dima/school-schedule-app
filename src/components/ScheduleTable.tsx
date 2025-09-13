@@ -14,6 +14,7 @@ import type { TimeSlot, ClassWithTimeSlot, WeeklySchedule } from "../types";
 import ClassSelectionDrawer from "./ClassSelectionDrawer";
 import "./ScheduleTable.css";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
+import { DoubleLessonTag } from "@/elements/DoubleLessonTag";
 
 interface ScheduleTableProps {
   timeSlots: TimeSlot[];
@@ -147,7 +148,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               {doubleClass.isMandatory && (
                 <Tag color="red">{t("schedule.table.mandatoryTag")}</Tag>
               )}
-              <Tag color="orange">{t("schedule.table.doubleLessonTag")}</Tag>
+              <DoubleLessonTag />
             </div>
             <div
               className="continuation-text"
@@ -244,11 +245,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                   {cls.isMandatory && (
                     <Tag color="red">{t("schedule.table.mandatoryTag")}</Tag>
                   )}
-                  {isDoubleLesson && (
-                    <Tag color="orange">
-                      {t("schedule.table.doubleLessonTag")}
-                    </Tag>
-                  )}
+                  {isDoubleLesson && <DoubleLessonTag />}
                 </div>
               </Card>
             );

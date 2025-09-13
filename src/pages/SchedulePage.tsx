@@ -317,17 +317,6 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {currentRole && (
-        <Alert
-          message={t("schedule.page.currentRoleAlert", {
-            role: getRoleDisplayName(currentRole.role),
-          })}
-          type="info"
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
-      )}
-
       {isParent && userChildren.length === 0 && (
         <Alert
           message={t("schedule.page.alerts.noChildrenFound.title")}

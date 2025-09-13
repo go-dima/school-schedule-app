@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { authApi, usersApi } from "../services/api";
-import type { UserRoleData, User } from "../types";
+import type { User, UserRoleData } from "../types";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);

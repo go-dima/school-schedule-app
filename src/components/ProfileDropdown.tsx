@@ -19,7 +19,7 @@ interface ProfileDropdownProps {
 
 const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onNavigate }) => {
   const { t } = useTranslation();
-  const { user, signOut } = useAuth();
+  const { user, signOut, currentRole } = useAuth();
 
   const handleEditProfile = () => {
     onNavigate?.("profile-settings");
@@ -39,6 +39,17 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onNavigate }) => {
   const getFullName = (firstName?: string, lastName?: string) => {
     if (!firstName && !lastName) return t("profile.dropdown.anonymous");
     return `${firstName || ""} ${lastName || ""}`.trim();
+  };
+
+  const getRoleColor = (role: string): string => {
+    const colorMap: Record<string, string> = {
+      admin: "#ff4d4f", // red
+      teacher: "#1890ff", // blue
+      staff: "#1890ff", // blue
+      parent: "#52c41a", // green
+      child: "#faad14", // yellow
+    };
+    return colorMap[role] || "#8c8c8c";
   };
 
   const items: MenuProps["items"] = [
@@ -93,7 +104,13 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onNavigate }) => {
         placement="bottomLeft"
         trigger={["click"]}
         overlayClassName="profile-dropdown-overlay">
-        <div className="profile-dropdown-trigger">
+        <div
+          className="profile-dropdown-trigger"
+          style={{
+            border: currentRole
+              ? `3px solid ${getRoleColor(currentRole.role)}`
+              : "none",
+          }}>
           <div className="profile-dropdown-user">
             <Avatar
               className="profile-dropdown-avatar"
