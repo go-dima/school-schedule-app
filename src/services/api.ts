@@ -38,7 +38,7 @@ export const authApi = {
     }
 
     // If user was created successfully, create their profile in public.users
-    if (data.user) {
+    if (data.user && data.session) {
       const { error: profileError } = await supabase.from("users").insert([
         {
           id: data.user.id,

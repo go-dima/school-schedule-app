@@ -1,0 +1,22 @@
+This file describes the staff role in the school scheduling system, including what can be done
+
+#### Staff Role abilities
+- A staff can view schedules of all children - the dropdown in the schedule will show list of children with who has a selected schedule
+- An admin will be able to view schedules of all children - the dropdown in the schedule will show list of children with who has a selected schedule (same as staff)
+- A staff will be able to edit the schedule for a child
+- A staff can not manage users (no user management page or approvals)
+- A staff can edit lessons (same as admin)
+
+#### UI changes for roles
+- The sidebar for a staff will have the following links:
+    - Schedule
+    - Class management
+    - Profile settings
+    - The user management section will be removed from the sidebar
+- currentRoleAlert should be removed from the top of the schedule page
+- The profile-dropdown-user element will have another line under name width the role of the user (Staff, Admin, Parent, Child)
+- The profile dropdown now shows the user's role through the border color:
+  - 🔴 Red border for admin
+  - 🔵 Blue border for staff
+  - 🟢 Green border for parent
+  - 🟡 Yellow border for child
