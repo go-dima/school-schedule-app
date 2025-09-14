@@ -1,0 +1,318 @@
+import React, { useState } from "react";
+import {
+  Card,
+  Button,
+  Table,
+  Modal,
+  Space,
+  Typography,
+  message,
+  Popconfirm,
+  Spin,
+  Empty,
+  Tag,
+} from "antd";
+import { useTranslation } from "react-i18next";
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  UserOutlined,
+  UserDeleteOutlined,
+} from "@ant-design/icons";
+import type { ColumnsType } from "antd/es/table";
+import { ChildForm } from "../components/ChildForm";
+import { useAuth } from "../contexts/AuthContext";
+import { useAllChildren } from "../hooks/useAllChildren";
+import { childrenApi } from "../services/api";
+import type { Child } from "../types";
+
+type ChildWithParent = Child & { assignedParent: boolean };
+import { GetGradeName } from "@/utils/grades";
+
+const { Title, Text } = Typography;
+
+const ParentIcon: React.FC<{ assignedParent: boolean }> = ({
+  assignedParent,
+}) => {
+  const color = assignedParent ? "#52c41a" : "#ff4d4f";
+  return (
+    <span>
+      {assignedParent ? (
+        <UserOutlined style={{ color, fontSize: "16px" }} />
+      ) : (
+        <UserDeleteOutlined style={{ color, fontSize: "16px" }} />
+      )}
+    </span>
+  );
+};
+
+const StudentsPage: React.FC = () => {
+  const { t } = useTranslation();
+  const { canManageClasses } = useAuth();
+  const { children, loading, error } = useAllChildren();
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [editingChild, setEditingChild] = useState<Child | undefined>();
+  const [formLoading, setFormLoading] = useState(false);
+
+  const handleCreateChild = async (data: {
+    firstName: string;
+    lastName: string;
+    grade: number;
+    groupNumber: number;
+    scope?: "test" | "prod";
+  }) => {
+    setFormLoading(true);
+    try {
+      await childrenApi.createChild(
+        data.firstName,
+        data.lastName,
+        data.grade,
+        data.groupNumber,
+        data.scope || "prod"
+      );
+      setIsFormModalOpen(false);
+      setEditingChild(undefined);
+      message.success(t("students.page.addSuccess"));
+      // Reload the page to refresh the children list
+      window.location.reload();
+    } catch (err) {
+      message.error(
+        err instanceof Error ? err.message : t("students.page.addError")
+      );
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleUpdateChild = async (data: {
+    firstName: string;
+    lastName: string;
+    grade: number;
+    groupNumber: number;
+    scope?: "test" | "prod";
+  }) => {
+    if (!editingChild) return;
+
+    setFormLoading(true);
+    try {
+      await childrenApi.updateChild(editingChild.id, data);
+      setIsFormModalOpen(false);
+      setEditingChild(undefined);
+      message.success(t("students.page.updateSuccess"));
+      // Reload the page to refresh the children list
+      window.location.reload();
+    } catch (err) {
+      message.error(
+        err instanceof Error ? err.message : t("students.page.updateError")
+      );
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleDeleteChild = async (childId: string) => {
+    try {
+      await childrenApi.deleteChild(childId);
+      message.success(t("students.page.deleteSuccess"));
+      // Reload the page to refresh the children list
+      window.location.reload();
+    } catch (err) {
+      message.error(
+        err instanceof Error ? err.message : t("students.page.deleteError")
+      );
+    }
+  };
+
+  const openEditModal = (child: Child) => {
+    setEditingChild(child);
+    setIsFormModalOpen(true);
+  };
+
+  const openCreateModal = () => {
+    setEditingChild(undefined);
+    setIsFormModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsFormModalOpen(false);
+    setEditingChild(undefined);
+  };
+
+  const columns: ColumnsType<ChildWithParent> = [
+    {
+      title: t("students.table.name"),
+      key: "name",
+      render: (_, record) => (
+        <span style={{ fontWeight: "500" }}>
+          <ParentIcon assignedParent={record.assignedParent} />{" "}
+          {record.firstName} {record.lastName}
+        </span>
+      ),
+    },
+    {
+      title: t("students.table.grade"),
+      dataIndex: "grade",
+      key: "grade",
+      width: 120,
+      render: (grade: number) => GetGradeName(grade),
+    },
+    {
+      title: t("students.table.group"),
+      dataIndex: "groupNumber",
+      key: "groupNumber",
+      width: 80,
+      align: "center",
+    },
+    {
+      title: t("students.table.scope"),
+      dataIndex: "scope",
+      key: "scope",
+      width: 100,
+      render: (scope: "prod" | "test") => (
+        <Tag color={scope === "prod" ? "green" : "orange"}>
+          {t(`scope.${scope}`)}
+        </Tag>
+      ),
+    },
+    {
+      title: t("students.table.createdDate"),
+      dataIndex: "createdAt",
+      key: "createdAt",
+      width: 120,
+      render: (createdAt: string) =>
+        new Date(createdAt).toLocaleDateString("he-IL"),
+    },
+    {
+      title: t("students.table.actions"),
+      key: "actions",
+      width: 150,
+      render: (_, record) => (
+        <Space>
+          <Button
+            type="text"
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => openEditModal(record)}>
+            {t("students.page.editButton")}
+          </Button>
+          <Popconfirm
+            title={t("students.page.deleteConfirmTitle")}
+            description={t("students.page.deleteConfirmDescription")}
+            onConfirm={() => handleDeleteChild(record.id)}
+            okText={t("students.page.confirmDelete")}
+            cancelText={t("common.buttons.cancel")}>
+            <Button type="text" size="small" danger icon={<DeleteOutlined />}>
+              {t("students.page.removeButton")}
+            </Button>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  // Check permissions
+  if (!canManageClasses()) {
+    return (
+      <div className="page-content">
+        <Card>
+          <Empty
+            description={t("students.page.noPermission")}
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          />
+        </Card>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: "center", padding: "50px" }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="page-content">
+      <div
+        style={{
+          marginBottom: 16,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}>
+        <Title level={2} style={{ margin: 0 }}>
+          {t("students.page.title")}
+        </Title>
+        <Space>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={openCreateModal}>
+            {t("students.page.addButton")}
+          </Button>
+        </Space>
+      </div>
+
+      {error && (
+        <div style={{ marginBottom: 16 }}>
+          <Text type="danger">{error}</Text>
+        </div>
+      )}
+
+      <Card>
+        <Table
+          columns={columns}
+          dataSource={children as ChildWithParent[]}
+          rowKey="id"
+          pagination={{
+            pageSize: 50,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) =>
+              t("students.table.pagination", {
+                start: range[0],
+                end: range[1],
+                total,
+              }),
+          }}
+          locale={{
+            emptyText: (
+              <Empty
+                description={t("students.page.noStudents")}
+                image={Empty.PRESENTED_IMAGE_SIMPLE}>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={openCreateModal}>
+                  {t("students.page.addFirstStudent")}
+                </Button>
+              </Empty>
+            ),
+          }}
+        />
+      </Card>
+
+      <Modal
+        title={
+          editingChild
+            ? t("students.page.editModalTitle")
+            : t("students.page.addModalTitle")
+        }
+        open={isFormModalOpen}
+        onCancel={closeModal}
+        footer={null}
+        destroyOnHidden>
+        <ChildForm
+          child={editingChild}
+          onSubmit={editingChild ? handleUpdateChild : handleCreateChild}
+          onCancel={closeModal}
+          loading={formLoading}
+        />
+      </Modal>
+    </div>
+  );
+};
+
+export default StudentsPage;

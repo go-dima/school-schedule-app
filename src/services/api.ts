@@ -918,32 +918,35 @@ export const childrenApi = {
     }));
   },
 
-  async getAllChildren(): Promise<Child[]> {
+  async getAllChildren(): Promise<(Child & { assignedParent: boolean })[]> {
     const isProduction = process.env.NODE_ENV === "production";
-    let query = supabase
+
+    let viewQuery = supabase
       .from("children")
-      .select("*")
+      .select("*, parent:parent_child_relationships!child_id ( parent_id )")
       .order("first_name", { ascending: true });
 
-    // Filter out test children in production
     if (isProduction) {
-      query = query.neq("scope", "test");
+      viewQuery = viewQuery.neq("scope", "test");
     }
 
-    const { data, error } = await query;
+    const { data, error } = await viewQuery;
 
     if (error) throw new ApiError(error.message);
 
-    return data.map(child => ({
-      id: child.id,
-      firstName: child.first_name,
-      lastName: child.last_name,
-      grade: child.grade,
-      groupNumber: child.group_number,
-      scope: child.scope,
-      createdAt: child.created_at,
-      updatedAt: child.updated_at,
-    }));
+    return data.map((child: any) => {
+      return {
+        id: child.id,
+        firstName: child.first_name,
+        lastName: child.last_name,
+        grade: child.grade,
+        groupNumber: child.group_number,
+        scope: child.scope || "prod", // Fallback for migration compatibility
+        createdAt: child.created_at,
+        updatedAt: child.updated_at,
+        assignedParent: child.parent && child.parent.length > 0,
+      };
+    });
   },
 
   async getChildById(childId: string): Promise<Child> {
