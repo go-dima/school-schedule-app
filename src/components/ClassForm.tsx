@@ -199,12 +199,10 @@ const ClassForm: React.FC<ClassFormProps> = ({
         </Col>
 
         <Col span={6}>
-          <Form.Item name="scope" label={t("scope.selector.label")}>
-            <ScopeSelector
-              value={form.getFieldValue("scope")}
-              onChange={value => form.setFieldValue("scope", value)}
-            />
-          </Form.Item>
+          <ScopeSelector
+            value={form.getFieldValue("scope")}
+            onChange={value => form.setFieldValue("scope", value)}
+          />
         </Col>
       </Row>
 

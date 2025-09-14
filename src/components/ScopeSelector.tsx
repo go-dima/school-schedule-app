@@ -1,5 +1,5 @@
 import React from "react";
-import { Select, Typography } from "antd";
+import { Form, Select, Typography } from "antd";
 import { useTranslation } from "react-i18next";
 import type { Scope } from "../types";
 
@@ -18,7 +18,6 @@ export function ScopeSelector({
   value = "prod",
   onChange,
   placeholder,
-  style,
   disabled = false,
 }: ScopeSelectorProps) {
   const { t } = useTranslation();
@@ -31,7 +30,7 @@ export function ScopeSelector({
   }
 
   return (
-    <div style={style}>
+    <Form.Item label={t("scope.selector.label")} name="scope">
       <Select
         value={value}
         onChange={onChange}
@@ -45,6 +44,6 @@ export function ScopeSelector({
           <Text>{t("scope.test")}</Text>
         </Option>
       </Select>
-    </div>
+    </Form.Item>
   );
 }

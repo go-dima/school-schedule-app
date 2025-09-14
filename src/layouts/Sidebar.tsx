@@ -9,6 +9,7 @@ import {
   CheckCircleOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  UsergroupAddOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
@@ -28,6 +29,7 @@ interface SidebarProps {
 type Page =
   | "schedule"
   | "class-management"
+  | "students"
   | "user-list"
   | "pending-approvals"
   | "profile-settings"
@@ -75,6 +77,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       keys.push("schedule");
     } else if (currentPage === "class-management") {
       keys.push("class-management");
+    } else if (currentPage === "students") {
+      keys.push("students");
     } else if (
       currentPage === "user-list" ||
       currentPage === "pending-approvals" ||
@@ -98,6 +102,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       key: "class-management",
       icon: <BookOutlined />,
       label: t("navigation.classManagement"),
+      style: canManageClasses() ? {} : { display: "none" },
+    },
+    {
+      key: "students",
+      icon: <UsergroupAddOutlined />,
+      label: t("navigation.students"),
       style: canManageClasses() ? {} : { display: "none" },
     },
     isAdmin()

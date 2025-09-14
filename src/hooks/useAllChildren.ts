@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { childrenApi } from "../services/api";
 import type { Child } from "../types";
 
+type ChildWithParent = Child & { assignedParent: boolean };
+
 export function useAllChildren() {
-  const [children, setChildren] = useState<Child[]>([]);
+  const [children, setChildren] = useState<ChildWithParent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

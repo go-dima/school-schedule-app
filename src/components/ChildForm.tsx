@@ -98,12 +98,10 @@ export function ChildForm({
         </Select>
       </Form.Item>
 
-      <Form.Item label={t("scope.selector.label")} name="scope">
-        <ScopeSelector
-          value={form.getFieldValue("scope")}
-          onChange={value => form.setFieldValue("scope", value)}
-        />
-      </Form.Item>
+      <ScopeSelector
+        value={form.getFieldValue("scope")}
+        onChange={value => form.setFieldValue("scope", value)}
+      />
 
       <Form.Item>
         <Space>
