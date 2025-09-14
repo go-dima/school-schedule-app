@@ -31,7 +31,8 @@ export function ChildSelector({
         value={selectedChildId}
         onChange={onChildSelect}
         disabled={disabled || children.length === 0}
-        suffixIcon={<UserOutlined />}>
+        suffixIcon={<UserOutlined />}
+        allowClear>
         {children.map(child => (
           <Select.Option key={child.id} value={child.id}>
             <Space style={{ direction: "rtl" }}>

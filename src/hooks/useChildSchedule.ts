@@ -1,16 +1,22 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
 import { scheduleApi } from "../services/api";
 import type { Child, ScheduleSelectionWithClass } from "../types";
-import { useAuth } from "../contexts/AuthContext";
 
-export function useChildSchedule(child: Child | null) {
+export function useChildSchedule(child: Child | undefined) {
   const [schedule, setSchedule] = useState<ScheduleSelectionWithClass[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { hasRole } = useAuth();
 
+  // Memoize the dependencies to prevent unnecessary re-renders
+  const deps = useMemo(
+    () => [child?.id, hasRole("parent"), hasRole("staff")],
+    [child?.id, hasRole]
+  );
+
   useEffect(() => {
-    if (!child || !hasRole("parent")) {
+    if (!child || (!hasRole("parent") && !hasRole("staff"))) {
       setSchedule([]);
       setLoading(false);
       return;
@@ -44,7 +50,7 @@ export function useChildSchedule(child: Child | null) {
     return () => {
       mounted = false;
     };
-  }, [child?.id, hasRole]);
+  }, deps);
 
   const selectClassForChild = async (classId: string): Promise<void> => {
     if (!child) throw new Error("No child selected");

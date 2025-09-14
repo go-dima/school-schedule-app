@@ -4,8 +4,8 @@ import { useAuth } from "./AuthContext";
 import type { Child } from "../types";
 
 interface ChildContextType {
-  selectedChild: Child | null;
-  setSelectedChild: (child: Child | null) => void;
+  selectedChild: Child | undefined;
+  setSelectedChild: (child: Child | undefined) => void;
   children: Child[];
   loading: boolean;
   error: string | null;
@@ -18,7 +18,9 @@ export function ChildProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [selectedChild, setSelectedChild] = useState<Child | null>(null);
+  const [selectedChild, setSelectedChild] = useState<Child | undefined>(
+    undefined
+  );
   const { hasRole } = useAuth();
   const { children, loading, error } = useChildren();
   const isParent = hasRole("parent");
@@ -33,7 +35,7 @@ export function ChildProvider({
   // Clear selected child if user is not a parent
   useEffect(() => {
     if (!isParent && selectedChild) {
-      setSelectedChild(null);
+      setSelectedChild(undefined);
     }
   }, [isParent, selectedChild]);
 
@@ -43,7 +45,7 @@ export function ChildProvider({
       selectedChild &&
       !children.find(child => child.id === selectedChild.id)
     ) {
-      setSelectedChild(null);
+      setSelectedChild(undefined);
     }
   }, [children, selectedChild]);
 
