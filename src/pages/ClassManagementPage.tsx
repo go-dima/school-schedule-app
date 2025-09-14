@@ -31,7 +31,7 @@ import type {
   ClassWithTimeSlot,
   TimeSlot,
   Class,
-  ClassScope,
+  Scope,
   AppOnNavigate,
 } from "../types";
 import { DAYS_OF_WEEK, GRADES } from "../types";
@@ -62,7 +62,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
   // Filter states
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
-  const [selectedScope, setSelectedScope] = useState<ClassScope | null>(null);
+  const [selectedScope, setSelectedScope] = useState<Scope | null>(null);
 
   useEffect(() => {
     loadData();
@@ -306,7 +306,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       dataIndex: "scope",
       key: "scope",
       width: 100,
-      render: (scope: ClassScope) => (
+      render: (scope: Scope) => (
         <Tag color={scope === "prod" ? "green" : "orange"}>
           {scope === "prod"
             ? t("classManagement.table.productionEnvironment")
