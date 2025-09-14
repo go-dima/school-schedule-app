@@ -136,6 +136,7 @@ export interface ScheduleSelectionWithChild
 export type AppPages =
   | "schedule"
   | "class-management"
+  | "students"
   | "pending-approvals"
   | "user-management"
   | "user-list"

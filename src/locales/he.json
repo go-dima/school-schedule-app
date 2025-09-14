@@ -332,6 +332,7 @@
   "navigation": {
     "schedule": "מערכת שעות",
     "classManagement": "ניהול שיעורים",
+    "students": "תלמידים",
     "userManagement": "ניהול משתמשים",
     "userList": "רשימת משתמשים",
     "pendingApprovals": "בקשות ממתינות לאישור",
@@ -409,6 +410,39 @@
       "pendingRequests": "בקשות ממתינות",
       "classManagement": "ניהול שיעורים",
       "userManagement": "ניהול משתמשים"
+    }
+  },
+  "students": {
+    "page": {
+      "title": "תלמידים",
+      "addButton": "הוסף תלמיד",
+      "editButton": "ערוך",
+      "removeButton": "הסר",
+      "noStudents": "אין תלמידים במערכת",
+      "addFirstStudent": "הוסף תלמיד ראשון",
+      "noPermission": "אין לך הרשאה לצפות בעמוד זה",
+      "addModalTitle": "הוספת תלמיד חדש",
+      "editModalTitle": "עריכת תלמיד",
+      "deleteConfirmTitle": "האם אתה בטוח שברצונך למחוק את התלמיד?",
+      "deleteConfirmDescription": "פעולה זו אינה ניתנת לביטול.",
+      "confirmDelete": "כן, מחק",
+      "addSuccess": "התלמיד נוסף בהצלחה",
+      "updateSuccess": "התלמיד עודכן בהצלחה",
+      "deleteSuccess": "התלמיד נמחק בהצלחה",
+      "addError": "שגיאה בהוספת התלמיד",
+      "updateError": "שגיאה בעדכון התלמיד",
+      "deleteError": "שגיאה במחיקת התלמיד",
+      "createdDate": "נוצר ב: {{date}}"
+    },
+    "table": {
+      "parentStatus": "הורה",
+      "name": "שם",
+      "grade": "כיתה",
+      "group": "קבוצה",
+      "scope": "סביבה",
+      "createdDate": "תאריך יצירה",
+      "actions": "פעולות",
+      "pagination": "{{start}}-{{end}} מתוך {{total}} תלמידים"
     }
   },
   "scope": {

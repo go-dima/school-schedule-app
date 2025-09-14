@@ -11,6 +11,7 @@ import PendingApprovalsPage from "./pages/PendingApprovalsPage";
 import UserManagementPage from "./pages/UserManagementPage";
 import UserListPage from "./pages/UserListPage";
 import ProfileSettingsPage from "./pages/ProfileSettingsPage";
+import StudentsPage from "./pages/StudentsPage";
 import SharedChildPage from "./pages/SharedChildPage";
 import AppLayout from "./layouts/AppLayout";
 import { Spin } from "antd";
@@ -19,6 +20,7 @@ import "./App.css";
 type Page =
   | "schedule"
   | "class-management"
+  | "students"
   | "pending-approvals"
   | "user-management"
   | "user-list"
@@ -81,6 +83,8 @@ function AppContent() {
     switch (currentPage) {
       case "class-management":
         return <ClassManagementPage />;
+      case "students":
+        return <StudentsPage />;
       case "pending-approvals":
         return <PendingApprovalsPage />;
       case "user-management":
