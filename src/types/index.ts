@@ -37,7 +37,7 @@ export interface TimeSlot {
   updatedAt: string;
 }
 
-export type ClassScope = "test" | "prod";
+export type Scope = "test" | "prod";
 
 export interface Class {
   id: string;
@@ -50,7 +50,7 @@ export interface Class {
   isMandatory: boolean;
   isDouble: boolean; // Whether this lesson takes two consecutive time slots
   room: string; // Room/location where the lesson takes place
-  scope: ClassScope;
+  scope: Scope;
   createdAt: string;
   updatedAt: string;
 }
@@ -93,6 +93,7 @@ export interface Child {
   lastName: string;
   grade: number;
   groupNumber: number;
+  scope: Scope;
   createdAt: string;
   updatedAt: string;
 }

@@ -6,6 +6,7 @@ import type {
   ClassWithTimeSlot,
   PendingApproval,
   ScheduleSelectionWithClass,
+  Scope,
   TimeSlot,
   User,
   UserRole,
@@ -743,7 +744,8 @@ export const scheduleApi = {
 // Children API
 export const childrenApi = {
   async getParentChildren(parentId: string): Promise<Child[]> {
-    const { data, error } = await supabase
+    const isProduction = process.env.NODE_ENV === "production";
+    let query = supabase
       .from("parent_child_relationships")
       .select(
         `
@@ -752,16 +754,28 @@ export const childrenApi = {
       )
       .eq("parent_id", parentId);
 
+    const { data, error } = await query;
+
     if (error) throw new ApiError(error.message);
 
-    return data.map((rel: any) => ({
-      id: rel.child.id,
-      firstName: rel.child.first_name,
-      lastName: rel.child.last_name,
-      grade: rel.child.grade,
-      groupNumber: rel.child.group_number,
-      createdAt: rel.child.created_at,
-      updatedAt: rel.child.updated_at,
+    // Filter out test children in production
+    let filteredData = data;
+    if (isProduction) {
+      filteredData = data.filter((rel: any) => {
+        const scope = rel?.child?.scope;
+        return scope !== "test";
+      });
+    }
+
+    return filteredData.map((rel: any) => ({
+      id: rel?.child?.id,
+      firstName: rel?.child?.first_name,
+      lastName: rel?.child?.last_name,
+      grade: rel?.child?.grade,
+      groupNumber: rel?.child?.group_number,
+      scope: rel?.child?.scope,
+      createdAt: rel?.child?.created_at,
+      updatedAt: rel?.child?.updated_at,
     }));
   },
 
@@ -769,7 +783,8 @@ export const childrenApi = {
     firstName: string,
     lastName: string,
     grade: number,
-    groupNumber: number = 1
+    groupNumber: number = 1,
+    scope: Scope = "prod"
   ): Promise<Child> {
     const { data, error } = await supabase.rpc(
       "create_child_with_relationship",
@@ -778,6 +793,7 @@ export const childrenApi = {
         p_last_name: lastName,
         p_grade: grade,
         p_group_number: groupNumber,
+        p_scope: scope,
       }
     );
 
@@ -790,6 +806,7 @@ export const childrenApi = {
       lastName: data.last_name,
       grade: data.grade,
       groupNumber: data.group_number,
+      scope: data.scope,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
@@ -802,6 +819,7 @@ export const childrenApi = {
       lastName?: string;
       grade?: number;
       groupNumber?: number;
+      scope?: Scope;
     }
   ): Promise<Child> {
     const updateData: any = {};
@@ -811,6 +829,7 @@ export const childrenApi = {
     if (updates.grade !== undefined) updateData.grade = updates.grade;
     if (updates.groupNumber !== undefined)
       updateData.group_number = updates.groupNumber;
+    if (updates.scope !== undefined) updateData.scope = updates.scope;
 
     const { data, error } = await supabase
       .from("children")
@@ -827,6 +846,7 @@ export const childrenApi = {
       lastName: data.last_name,
       grade: data.grade,
       groupNumber: data.group_number,
+      scope: data.scope,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
@@ -899,10 +919,18 @@ export const childrenApi = {
   },
 
   async getAllChildren(): Promise<Child[]> {
-    const { data, error } = await supabase
+    const isProduction = process.env.NODE_ENV === "production";
+    let query = supabase
       .from("children")
       .select("*")
       .order("first_name", { ascending: true });
+
+    // Filter out test children in production
+    if (isProduction) {
+      query = query.neq("scope", "test");
+    }
+
+    const { data, error } = await query;
 
     if (error) throw new ApiError(error.message);
 
@@ -912,6 +940,7 @@ export const childrenApi = {
       lastName: child.last_name,
       grade: child.grade,
       groupNumber: child.group_number,
+      scope: child.scope,
       createdAt: child.created_at,
       updatedAt: child.updated_at,
     }));
@@ -932,6 +961,7 @@ export const childrenApi = {
       lastName: data.last_name,
       grade: data.grade,
       groupNumber: data.group_number,
+      scope: data.scope,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
@@ -952,6 +982,7 @@ export const childrenApi = {
       lastName: data.last_name,
       grade: data.grade,
       groupNumber: data.group_number,
+      scope: data.scope,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
       parents: data.parents.map((parent: any) => ({

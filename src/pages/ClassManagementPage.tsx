@@ -31,7 +31,7 @@ import type {
   ClassWithTimeSlot,
   TimeSlot,
   Class,
-  ClassScope,
+  Scope,
   AppOnNavigate,
 } from "../types";
 import { DAYS_OF_WEEK, GRADES } from "../types";
@@ -62,7 +62,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
   // Filter states
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
-  const [selectedScope, setSelectedScope] = useState<ClassScope | null>(null);
+  const [selectedScope, setSelectedScope] = useState<Scope | null>(null);
 
   useEffect(() => {
     loadData();
@@ -306,11 +306,9 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       dataIndex: "scope",
       key: "scope",
       width: 100,
-      render: (scope: ClassScope) => (
+      render: (scope: Scope) => (
         <Tag color={scope === "prod" ? "green" : "orange"}>
-          {scope === "prod"
-            ? t("classManagement.table.productionEnvironment")
-            : t("classManagement.table.testEnvironment")}
+          {t(`scope.${scope}`)}
         </Tag>
       ),
     },
@@ -478,9 +476,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
                     justifyContent: "space-between",
                     width: "100%",
                   }}>
-                  <label>
-                    {t("classManagement.page.environmentFilterLabel")}
-                  </label>
+                  <label>{t("scope.selector.label")}</label>
                   {selectedScope !== null && (
                     <Button
                       type="text"
@@ -499,12 +495,8 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
                   style={{ width: "100%" }}
                   value={selectedScope}
                   onChange={setSelectedScope}>
-                  <Select.Option value="test">
-                    {t("classManagement.page.testEnvironmentOption")}
-                  </Select.Option>
-                  <Select.Option value="prod">
-                    {t("classManagement.page.productionEnvironmentOption")}
-                  </Select.Option>
+                  <Select.Option value="test">{t("scope.test")}</Select.Option>
+                  <Select.Option value="prod">{t("scope.prod")}</Select.Option>
                 </Select>
               </Space>
             </Col>

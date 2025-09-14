@@ -181,11 +181,6 @@
       "typeLabel": "סוג השיעור",
       "mandatoryOption": "ליבה",
       "electiveOption": "בחירה",
-      "environmentLabel": "סביבה",
-      "environmentRequired": "נא לבחור סביבה",
-      "environmentPlaceholder": "בחר סביבה",
-      "testEnvironment": "בדיקות",
-      "productionEnvironment": "מערכת",
       "doubleLessonLabel": "שיעור כפול",
       "doubleLessonChecked": "שיעור כפול",
       "doubleLessonUnchecked": "שיעור רגיל",
@@ -258,10 +253,7 @@
       "dayFilterPlaceholder": "בחר יום",
       "gradeFilterLabel": "כיתה:",
       "gradeFilterPlaceholder": "בחר כיתה",
-      "environmentFilterLabel": "סביבה:",
       "environmentFilterPlaceholder": "בחר סביבה",
-      "testEnvironmentOption": "בדיקות",
-      "productionEnvironmentOption": "מערכת",
       "clearFiltersButton": "נקה מסננים",
       "dataLoadingError": "שגיאה בטעינת הנתונים",
       "classDeletedSuccess": "השיעור נמחק בהצלחה",
@@ -417,6 +409,14 @@
       "pendingRequests": "בקשות ממתינות",
       "classManagement": "ניהול שיעורים",
       "userManagement": "ניהול משתמשים"
+    }
+  },
+  "scope": {
+    "prod": "מערכת",
+    "test": "בדיקות",
+    "selector": {
+      "placeholder": "בחר סביבה",
+      "label": "סביבה:"
     }
   }
 }

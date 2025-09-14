@@ -1,8 +1,9 @@
 import { Form, Input, Select, Button, Space, message } from "antd";
 import { useTranslation } from "react-i18next";
-import type { Child } from "../types";
+import type { Child, Scope } from "../types";
 import { GRADES } from "../types";
 import { GetGradeName } from "@/utils/grades";
+import { ScopeSelector } from "./ScopeSelector";
 
 interface ChildFormProps {
   child?: Child;
@@ -11,6 +12,7 @@ interface ChildFormProps {
     lastName: string;
     grade: number;
     groupNumber: number;
+    scope?: Scope;
   }) => Promise<void>;
   onCancel: () => void;
   loading?: boolean;
@@ -33,6 +35,7 @@ export function ChildForm({
         lastName: values.lastName,
         grade: values.grade,
         groupNumber: values.groupNumber,
+        scope: values.scope,
       });
       message.success(
         isEditing ? t("form.child.updateSuccess") : t("form.child.addSuccess")
@@ -54,6 +57,7 @@ export function ChildForm({
         lastName: child?.lastName || "",
         grade: child?.grade || 1,
         groupNumber: child?.groupNumber || 1,
+        scope: child?.scope || "prod",
       }}>
       <Form.Item
         label={t("form.child.firstNameLabel")}
@@ -92,6 +96,13 @@ export function ChildForm({
           <Select.Option value={1}>{t("form.child.group1")}</Select.Option>
           <Select.Option value={2}>{t("form.child.group2")}</Select.Option>
         </Select>
+      </Form.Item>
+
+      <Form.Item label={t("scope.selector.label")} name="scope">
+        <ScopeSelector
+          value={form.getFieldValue("scope")}
+          onChange={value => form.setFieldValue("scope", value)}
+        />
       </Form.Item>
 
       <Form.Item>

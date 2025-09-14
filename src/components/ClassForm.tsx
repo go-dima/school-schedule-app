@@ -6,6 +6,7 @@ import { getLessonTimeSlots } from "../utils/timeSlots";
 import type { ClassWithTimeSlot, TimeSlot, Class } from "../types";
 import { GRADES, DAYS_OF_WEEK } from "../types";
 import { GetGradeName } from "@/utils/grades";
+import { ScopeSelector } from "./ScopeSelector";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -67,7 +68,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
         isMandatory: values.isMandatory || false,
         isDouble: values.isDouble || false,
         room: values.room || "",
-        scope: values.scope || "test",
+        scope: values.scope || "prod",
       };
 
       await onSubmit(classData);
@@ -104,7 +105,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
               isMandatory: false,
               isDouble: false,
               room: "",
-              scope: "test",
+              scope: "prod",
             }
       }>
       <Row gutter={16}>
@@ -185,7 +186,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
           </Form.Item>
         </Col>
 
-        <Col span={8}>
+        <Col span={6}>
           <Form.Item
             name="isMandatory"
             label={t("form.class.typeLabel")}
@@ -197,19 +198,12 @@ const ClassForm: React.FC<ClassFormProps> = ({
           </Form.Item>
         </Col>
 
-        <Col span={4}>
-          <Form.Item
-            name="scope"
-            label={t("form.class.environmentLabel")}
-            rules={[
-              { required: true, message: t("form.class.environmentRequired") },
-            ]}>
-            <Select placeholder={t("form.class.environmentPlaceholder")}>
-              <Option value="test">{t("form.class.testEnvironment")}</Option>
-              <Option value="prod">
-                {t("form.class.productionEnvironment")}
-              </Option>
-            </Select>
+        <Col span={6}>
+          <Form.Item name="scope" label={t("scope.selector.label")}>
+            <ScopeSelector
+              value={form.getFieldValue("scope")}
+              onChange={value => form.setFieldValue("scope", value)}
+            />
           </Form.Item>
         </Col>
       </Row>
