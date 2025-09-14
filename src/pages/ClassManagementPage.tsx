@@ -308,9 +308,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       width: 100,
       render: (scope: Scope) => (
         <Tag color={scope === "prod" ? "green" : "orange"}>
-          {scope === "prod"
-            ? t("classManagement.table.productionEnvironment")
-            : t("classManagement.table.testEnvironment")}
+          {t(`scope.${scope}`)}
         </Tag>
       ),
     },
@@ -478,9 +476,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
                     justifyContent: "space-between",
                     width: "100%",
                   }}>
-                  <label>
-                    {t("classManagement.page.environmentFilterLabel")}
-                  </label>
+                  <label>{t("scope.selector.label")}</label>
                   {selectedScope !== null && (
                     <Button
                       type="text"
@@ -499,12 +495,8 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
                   style={{ width: "100%" }}
                   value={selectedScope}
                   onChange={setSelectedScope}>
-                  <Select.Option value="test">
-                    {t("classManagement.page.testEnvironmentOption")}
-                  </Select.Option>
-                  <Select.Option value="prod">
-                    {t("classManagement.page.productionEnvironmentOption")}
-                  </Select.Option>
+                  <Select.Option value="test">{t("scope.test")}</Select.Option>
+                  <Select.Option value="prod">{t("scope.prod")}</Select.Option>
                 </Select>
               </Space>
             </Col>

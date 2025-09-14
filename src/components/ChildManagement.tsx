@@ -24,7 +24,7 @@ import { ChildForm } from "./ChildForm";
 import { ChildShareModal } from "./ChildShareModal";
 import { AcceptSharedChildModal } from "./AcceptSharedChildModal";
 import { useChildren } from "../hooks/useChildren";
-import type { Child } from "../types";
+import type { Child, Scope } from "../types";
 import { GetGradeName } from "@/utils/grades";
 
 const { Title, Text } = Typography;
@@ -46,6 +46,7 @@ export function ChildManagement() {
     lastName: string;
     grade: number;
     groupNumber: number;
+    scope?: Scope;
   }) => {
     setFormLoading(true);
     try {
@@ -67,6 +68,7 @@ export function ChildManagement() {
     lastName: string;
     grade: number;
     groupNumber: number;
+    scope?: Scope;
   }) => {
     if (!editingChild) return;
 
