@@ -17,12 +17,13 @@ import { useAuth } from "../contexts/AuthContext";
 import { useChildContext } from "../contexts/ChildContext";
 import { useSchedule } from "../hooks/useSchedule";
 import { useChildSchedule } from "../hooks/useChildSchedule";
+import { useAllChildren } from "../hooks/useAllChildren";
 import ScheduleTable from "../components/ScheduleTable";
 import ClassForm from "../components/ClassForm";
 import { ChildSelector } from "../components/ChildSelector";
 import { classesApi, timeSlotsApi } from "../services/api";
 import { GRADES } from "../types";
-import type { AppOnNavigate, Class, TimeSlot } from "../types";
+import type { AppOnNavigate, Class, TimeSlot, Child } from "../types";
 import "./SchedulePage.css";
 import { GetGradeName } from "@/utils/grades";
 
@@ -50,6 +51,14 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     error: childrenError,
   } = useChildContext();
 
+  // For staff users - get all children and manage separate selected child state
+  const { children: allChildren, loading: allChildrenLoading } =
+    useAllChildren();
+  const [staffSelectedChild, setStaffSelectedChild] = useState<
+    Child | undefined
+  >(undefined);
+  const isStaff = hasRole("staff");
+
   const [selectedGrade, setSelectedGrade] = useState<number | undefined>(1);
   const [createClassModalOpen, setCreateClassModalOpen] = useState(false);
   const [createClassTimeSlotId, setCreateClassTimeSlotId] = useState<
@@ -63,6 +72,21 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   const isParent = hasRole("parent");
+
+  const handleStaffChildSelect = (childId: string) => {
+    if (!childId) {
+      setStaffSelectedChild(undefined);
+      return;
+    }
+    const child = allChildren.find(c => c.id === childId);
+    if (child) {
+      // Use React's batching by updating states together
+      setStaffSelectedChild(child);
+      setSelectedGrade(child.grade);
+    } else {
+      setStaffSelectedChild(undefined);
+    }
+  };
 
   // Auto-update grade filter when selected child changes (only for non-admin parents)
   React.useEffect(() => {
@@ -92,11 +116,13 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     selectClassForChild,
     unselectClassForChild,
     isClassSelected: isChildClassSelected,
-  } = useChildSchedule(selectedChild);
+  } = useChildSchedule(isStaff ? staffSelectedChild : selectedChild);
 
   const loading = isParent
     ? scheduleLoading || childScheduleLoading || childrenLoading
-    : scheduleLoading;
+    : isStaff
+      ? scheduleLoading || childScheduleLoading || allChildrenLoading
+      : scheduleLoading;
   const error = scheduleError || childScheduleError || childrenError;
 
   const handleRoleSwitch = (roleId: string) => {
@@ -131,13 +157,17 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
   };
 
   const getSelectedClasses = () => {
-    return isParent
-      ? childSchedule.map(selection => selection.classId)
-      : userSelections.map(selection => selection.classId);
+    if (isParent || (isStaff && staffSelectedChild)) {
+      return childSchedule.map(selection => selection.classId);
+    }
+    return userSelections.map(selection => selection.classId);
   };
 
   const getSelectedSchedule = () => {
-    return isParent ? childSchedule : userSelections;
+    if (isParent || (isStaff && staffSelectedChild)) {
+      return childSchedule;
+    }
+    return userSelections;
   };
 
   const handleCreateClass = async (timeSlotId: string, dayOfWeek: number) => {
@@ -196,8 +226,9 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
 
   const selectedClasses = getSelectedClasses();
   const canSelectClasses =
-    (currentRole?.role === "child" || currentRole?.role === "parent") &&
-    (!isParent || selectedChild !== null);
+    ((currentRole?.role === "child" || currentRole?.role === "parent") &&
+      (!isParent || selectedChild !== null)) ||
+    (isStaff && staffSelectedChild !== null);
 
   const canViewClasses =
     canSelectClasses ||
@@ -230,12 +261,19 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                   new Set(
                     classes
                       .filter(cls => {
-                        // Apply grade filter if set
-                        if (
-                          selectedGrade &&
-                          !cls.grades?.includes(selectedGrade)
-                        ) {
-                          return false;
+                        // For staff with selected child, filter by child's grade only
+                        if (isStaff && staffSelectedChild) {
+                          if (!cls.grades?.includes(staffSelectedChild.grade)) {
+                            return false;
+                          }
+                        } else {
+                          // Apply grade filter if set
+                          if (
+                            selectedGrade &&
+                            !cls.grades?.includes(selectedGrade)
+                          ) {
+                            return false;
+                          }
                         }
                         // Apply class name filter
                         return cls.title
@@ -261,7 +299,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                   selectedChildId={selectedChild?.id || null}
                   onChildSelect={childId => {
                     const child = userChildren.find(c => c.id === childId);
-                    setSelectedChild(child || null);
+                    setSelectedChild(child || undefined);
                     // Auto-update grade filter based on selected child (only for non-admin parents)
                     if (child && !isAdmin()) {
                       setSelectedGrade(child.grade);
@@ -280,7 +318,8 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                   onChange={setSelectedGrade}
                   placeholder={t("schedule.page.placeholders.allGrades")}
                   allowClear
-                  style={{ minWidth: 120 }}>
+                  style={{ minWidth: 120 }}
+                  disabled={isStaff && !!staffSelectedChild}>
                   {GRADES.map(grade => (
                     <Option key={grade} value={grade}>
                       {GetGradeName(grade)}
@@ -288,6 +327,21 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                   ))}
                 </Select>
                 <span>{t("schedule.page.labels.filterByGrade")}:</span>
+              </>
+            )}
+            {isStaff && (
+              <>
+                <ChildSelector
+                  children={allChildren}
+                  selectedChildId={staffSelectedChild?.id || null}
+                  onChildSelect={handleStaffChildSelect}
+                  style={{ minWidth: 200 }}
+                  disabled={allChildrenLoading}
+                  placeholder={t(
+                    "schedule.page.placeholders.selectChildForStaff"
+                  )}
+                />
+                <span>{t("schedule.page.labels.selectChildForStaff")}:</span>
               </>
             )}
           </Space>
@@ -409,10 +463,12 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
       {canSelectClasses && getSelectedSchedule().length > 0 && (
         <Card
           title={
-            isParent && selectedChild
+            (isParent && selectedChild) || (isStaff && staffSelectedChild)
               ? t("schedule.page.selectedClassesForChild", {
-                  firstName: selectedChild.firstName,
-                  lastName: selectedChild.lastName,
+                  firstName: (isParent ? selectedChild : staffSelectedChild)
+                    ?.firstName,
+                  lastName: (isParent ? selectedChild : staffSelectedChild)
+                    ?.lastName,
                 })
               : t("schedule.page.selectedClassesTitle")
           }

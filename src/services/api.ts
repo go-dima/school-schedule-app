@@ -898,6 +898,25 @@ export const childrenApi = {
     }));
   },
 
+  async getAllChildren(): Promise<Child[]> {
+    const { data, error } = await supabase
+      .from("children")
+      .select("*")
+      .order("first_name", { ascending: true });
+
+    if (error) throw new ApiError(error.message);
+
+    return data.map(child => ({
+      id: child.id,
+      firstName: child.first_name,
+      lastName: child.last_name,
+      grade: child.grade,
+      groupNumber: child.group_number,
+      createdAt: child.created_at,
+      updatedAt: child.updated_at,
+    }));
+  },
+
   async getChildById(childId: string): Promise<Child> {
     const { data, error } = await supabase
       .from("children")
