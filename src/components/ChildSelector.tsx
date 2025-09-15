@@ -26,15 +26,24 @@ export function ChildSelector({
   return (
     <div style={style}>
       <Select
-        style={{ width: "100%", minWidth: 200 }}
         placeholder={placeholder}
         value={selectedChildId}
         onChange={onChildSelect}
         disabled={disabled || children.length === 0}
         suffixIcon={<UserOutlined />}
-        allowClear>
+        style={{ width: "100%" }}
+        allowClear
+        showSearch
+        filterOption={(input, option) => {
+          return ((option?.label || "") as string)
+            .toLowerCase()
+            .includes(input.toLowerCase());
+        }}>
         {children.map(child => (
-          <Select.Option key={child.id} value={child.id}>
+          <Select.Option
+            key={child.id}
+            value={child.id}
+            label={`${child.firstName} ${child.lastName}`}>
             <Space style={{ direction: "rtl" }}>
               <span>
                 {child.firstName} {child.lastName}
