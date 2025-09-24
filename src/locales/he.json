@@ -443,6 +443,13 @@
       "createdDate": "תאריך יצירה",
       "actions": "פעולות",
       "pagination": "{{start}}-{{end}} מתוך {{total}} תלמידים"
+    },
+    "search": {
+      "placeholder": "חפש תלמיד לפי שם...",
+      "addStudent": "הוסף תלמיד: {{name}}"
+    },
+    "filter": {
+      "allGrades": "כל הכיתות"
     }
   },
   "scope": {

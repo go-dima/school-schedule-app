@@ -8,7 +8,7 @@ const { Option } = Select;
 
 interface ScopeSelectorProps {
   value?: Scope;
-  onChange: (scope: Scope) => void;
+  onChange?: (scope: Scope) => void;
   placeholder?: string;
   style?: React.CSSProperties;
   disabled?: boolean;

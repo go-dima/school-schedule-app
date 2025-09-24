@@ -21,6 +21,7 @@ import { useAllChildren } from "../hooks/useAllChildren";
 import ScheduleTable from "../components/ScheduleTable";
 import ClassForm from "../components/ClassForm";
 import { ChildSelector } from "../components/ChildSelector";
+import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { classesApi, timeSlotsApi } from "../services/api";
 import { GRADES } from "../types";
 import type { AppOnNavigate, Class, TimeSlot, Child } from "../types";
@@ -86,6 +87,13 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     } else {
       setStaffSelectedChild(undefined);
     }
+  };
+
+  // Handler for when a new child is added via StudentSearchSelector
+  const handleChildAdded = (newChild: Child) => {
+    // Auto-select the newly created student for staff
+    setStaffSelectedChild(newChild);
+    setSelectedGrade(newChild.grade);
   };
 
   // Auto-update grade filter when selected child changes (only for non-admin parents)
@@ -331,15 +339,17 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
             )}
             {isStaff && (
               <>
-                <ChildSelector
+                <StudentSearchSelector
                   children={allChildren}
                   selectedChildId={staffSelectedChild?.id || null}
                   onChildSelect={handleStaffChildSelect}
-                  style={{ minWidth: 200 }}
-                  disabled={allChildrenLoading}
+                  onChildAdded={handleChildAdded}
                   placeholder={t(
                     "schedule.page.placeholders.selectChildForStaff"
                   )}
+                  style={{ minWidth: 200 }}
+                  disabled={allChildrenLoading}
+                  defaultGrade={selectedGrade || 1}
                 />
                 <span>{t("schedule.page.labels.selectChildForStaff")}:</span>
               </>

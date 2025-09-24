@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Card,
   Button,
@@ -11,6 +11,8 @@ import {
   Spin,
   Empty,
   Tag,
+  Select,
+  AutoComplete,
 } from "antd";
 import { useTranslation } from "react-i18next";
 import {
@@ -26,6 +28,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useAllChildren } from "../hooks/useAllChildren";
 import { childrenApi } from "../services/api";
 import type { Child } from "../types";
+import { GRADES } from "../types";
 
 type ChildWithParent = Child & { assignedParent: boolean };
 import { GetGradeName } from "@/utils/grades";
@@ -54,6 +57,10 @@ const StudentsPage: React.FC = () => {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | undefined>();
   const [formLoading, setFormLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedGrade, setSelectedGrade] = useState<number | undefined>(
+    undefined
+  );
 
   const handleCreateChild = async (data: {
     firstName: string;
@@ -137,6 +144,101 @@ const StudentsPage: React.FC = () => {
   const closeModal = () => {
     setIsFormModalOpen(false);
     setEditingChild(undefined);
+  };
+
+  // Filter children based on search and grade
+  const filteredChildren = useMemo(() => {
+    let filtered = children as ChildWithParent[];
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(child => {
+        const fullName = `${child.firstName} ${child.lastName}`.toLowerCase();
+        const search = searchTerm.toLowerCase();
+        return (
+          fullName.includes(search) ||
+          child.firstName.toLowerCase().includes(search) ||
+          child.lastName.toLowerCase().includes(search)
+        );
+      });
+    }
+
+    // Apply grade filter
+    if (selectedGrade !== undefined) {
+      filtered = filtered.filter(child => child.grade === selectedGrade);
+    }
+
+    return filtered;
+  }, [children, searchTerm, selectedGrade]);
+
+  // Generate search options for AutoComplete
+  const searchOptions = useMemo(() => {
+    if (!searchTerm) return [];
+
+    // Get matching student names
+    const matchingNames = Array.from(
+      new Set(
+        filteredChildren.map(child => `${child.firstName} ${child.lastName}`)
+      )
+    )
+      .sort()
+      .map(fullName => ({
+        value: fullName,
+        label: (
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <UserOutlined style={{ marginRight: 8, color: "#1890ff" }} />
+            {fullName}
+          </div>
+        ),
+      }));
+
+    // If no matches and search term is not empty, add "Add Student" option
+    if (matchingNames.length === 0 && searchTerm.trim()) {
+      return [
+        {
+          value: `__ADD_STUDENT__${searchTerm}`,
+          label: (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                color: "#52c41a",
+                cursor: "pointer",
+                padding: "4px 0",
+              }}>
+              <PlusOutlined style={{ marginRight: 8 }} />
+              {t("students.search.addStudent", { name: searchTerm })}
+            </div>
+          ),
+        },
+      ];
+    }
+
+    return matchingNames;
+  }, [searchTerm, filteredChildren, t]);
+
+  const handleSearchSelect = (value: string) => {
+    if (value.startsWith("__ADD_STUDENT__")) {
+      const searchName = value.replace("__ADD_STUDENT__", "");
+      const [firstName, ...lastNameParts] = searchName.trim().split(/\s+/);
+      const lastName = lastNameParts.join(" ");
+
+      setEditingChild({
+        id: "",
+        firstName: firstName || "",
+        lastName: lastName || "",
+        grade: selectedGrade || 1,
+        groupNumber: 1,
+        scope: "prod",
+        createdAt: "",
+        updatedAt: "",
+      } as Child);
+      setIsFormModalOpen(true);
+      setSearchTerm(""); // Clear search after adding
+    } else {
+      // Regular selection - just update search term
+      setSearchTerm(value);
+    }
   };
 
   const columns: ColumnsType<ChildWithParent> = [
@@ -255,6 +357,34 @@ const StudentsPage: React.FC = () => {
         </Space>
       </div>
 
+      {/* Search and Filter Controls */}
+      <div style={{ marginBottom: 16 }}>
+        <Space wrap>
+          <AutoComplete
+            value={searchTerm}
+            options={searchOptions}
+            onSelect={handleSearchSelect}
+            onChange={setSearchTerm}
+            placeholder={t("students.search.placeholder")}
+            style={{ minWidth: 250 }}
+            allowClear
+            filterOption={false}
+          />
+          <Select
+            value={selectedGrade}
+            onChange={setSelectedGrade}
+            placeholder={t("students.filter.allGrades")}
+            allowClear
+            style={{ minWidth: 120 }}>
+            {GRADES.map(grade => (
+              <Select.Option key={grade} value={grade}>
+                {GetGradeName(grade)}
+              </Select.Option>
+            ))}
+          </Select>
+        </Space>
+      </div>
+
       {error && (
         <div style={{ marginBottom: 16 }}>
           <Text type="danger">{error}</Text>
@@ -264,7 +394,7 @@ const StudentsPage: React.FC = () => {
       <Card>
         <Table
           columns={columns}
-          dataSource={children as ChildWithParent[]}
+          dataSource={filteredChildren}
           rowKey="id"
           pagination={{
             pageSize: 50,

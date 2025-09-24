@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { authApi, usersApi } from "../services/api";
 import type { User, UserRoleData } from "../types";
 
@@ -55,7 +55,18 @@ export function useAuth() {
 
     const initAuth = async () => {
       try {
-        const supabaseUser = await authApi.getCurrentUser();
+        // Add timeout to prevent infinite hanging
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(
+            () => reject(new Error("Auth timeout after 10 seconds")),
+            10000
+          );
+        });
+
+        const supabaseUser = await Promise.race([
+          authApi.getCurrentUser(),
+          timeoutPromise,
+        ]);
 
         if (initController.signal.aborted || !mounted) return;
 

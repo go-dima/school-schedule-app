@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { childrenApi } from "../services/api";
-import { withTimeout } from "../utils/asyncUtils";
 import type { Child } from "../types";
+import { withTimeout } from "../utils/asyncUtils";
 
 type ChildWithParent = Child & { assignedParent: boolean };
 
