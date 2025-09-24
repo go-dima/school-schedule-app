@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { childrenApi } from "../services/api";
+import { withTimeout } from "../utils/asyncUtils";
 import type { Child, ChildShareToken } from "../types";
 
 export function useChildren() {
@@ -20,16 +21,25 @@ export function useChildren() {
 
     const loadChildren = async () => {
       try {
-        const childrenData = await childrenApi.getParentChildren(user.id);
+        const childrenData = await withTimeout(
+          childrenApi.getParentChildren(user.id),
+          10000
+        );
         if (mounted) {
           setChildren(childrenData);
           setError(null);
         }
       } catch (err) {
         if (mounted) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load children"
-          );
+          if (err instanceof Error && err.message.includes("timed out")) {
+            setError(
+              "Loading children is taking longer than expected. Please refresh the page."
+            );
+          } else {
+            setError(
+              err instanceof Error ? err.message : "Failed to load children"
+            );
+          }
         }
       } finally {
         if (mounted) {

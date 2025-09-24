@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { authApi, usersApi } from "../services/api";
 import type { User, UserRoleData } from "../types";
 
@@ -9,77 +9,135 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Ref to track active operations and prevent race conditions
+  const activeOperationRef = useRef<{
+    initAuth: AbortController | null;
+    authStateChange: AbortController | null;
+  }>({
+    initAuth: null,
+    authStateChange: null,
+  });
+
   useEffect(() => {
     let mounted = true;
+
+    // Cancel any existing operations
+    if (activeOperationRef.current.initAuth) {
+      activeOperationRef.current.initAuth.abort();
+    }
+    if (activeOperationRef.current.authStateChange) {
+      activeOperationRef.current.authStateChange.abort();
+    }
+
+    const initController = new AbortController();
+    activeOperationRef.current.initAuth = initController;
+
+    const loadUserRoles = async (
+      userId: string,
+      controller: AbortController
+    ) => {
+      try {
+        const roles = await usersApi.getUserRoles(userId);
+
+        if (controller.signal.aborted || !mounted) return;
+
+        const approvedRoles = roles.filter(role => role.approved);
+        setUserRoles(approvedRoles);
+        setCurrentRole(approvedRoles[0] || null);
+      } catch (err) {
+        if (controller.signal.aborted || !mounted) return;
+
+        // For role loading errors, just proceed with empty roles instead of blocking
+        setUserRoles([]);
+        setCurrentRole(null);
+      }
+    };
 
     const initAuth = async () => {
       try {
         const supabaseUser = await authApi.getCurrentUser();
-        if (mounted && supabaseUser) {
+
+        if (initController.signal.aborted || !mounted) return;
+
+        if (supabaseUser) {
           const userProfile = await usersApi.getUserProfile(supabaseUser.id);
+
+          if (initController.signal.aborted || !mounted) return;
+
           setUser(userProfile);
-          await loadUserRoles(supabaseUser.id);
-        } else if (mounted) {
+          await loadUserRoles(supabaseUser.id, initController);
+        } else {
           setUser(null);
+          setUserRoles([]);
+          setCurrentRole(null);
         }
       } catch (err) {
-        if (mounted) {
-          setError(err instanceof Error ? err.message : "Authentication error");
-        }
+        if (initController.signal.aborted || !mounted) return;
+
+        // Treat as no user and allow app to proceed
+        setUser(null);
+        setUserRoles([]);
+        setCurrentRole(null);
+        setError(null);
       } finally {
-        if (mounted) {
+        if (!initController.signal.aborted && mounted) {
           setLoading(false);
-        }
-      }
-    };
-
-    const loadUserRoles = async (userId: string) => {
-      try {
-        const roles = await usersApi.getUserRoles(userId);
-        const approvedRoles = roles.filter(role => role.approved);
-
-        if (mounted) {
-          setUserRoles(approvedRoles);
-          setCurrentRole(approvedRoles[0] || null);
-        }
-      } catch (err) {
-        if (mounted) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load user roles"
-          );
+          activeOperationRef.current.initAuth = null;
         }
       }
     };
 
     initAuth();
 
+    const authStateController = new AbortController();
+    activeOperationRef.current.authStateChange = authStateController;
+
     const {
       data: { subscription },
     } = authApi.onAuthStateChange(async supabaseUser => {
-      if (mounted) {
-        setError(null);
+      if (authStateController.signal.aborted || !mounted) return;
 
+      // Don't process auth state changes if initial auth is still loading
+      if (activeOperationRef.current.initAuth) return;
+
+      setError(null);
+      setLoading(true);
+
+      try {
         if (supabaseUser) {
-          try {
-            const userProfile = await usersApi.getUserProfile(supabaseUser.id);
-            setUser(userProfile);
-            await loadUserRoles(supabaseUser.id);
-          } catch (err) {
-            setUser(null);
-            setUserRoles([]);
-            setCurrentRole(null);
-          }
+          const userProfile = await usersApi.getUserProfile(supabaseUser.id);
+
+          if (authStateController.signal.aborted || !mounted) return;
+
+          setUser(userProfile);
+          await loadUserRoles(supabaseUser.id, authStateController);
         } else {
           setUser(null);
           setUserRoles([]);
           setCurrentRole(null);
+        }
+      } catch (err) {
+        if (authStateController.signal.aborted || !mounted) return;
+
+        // For auth state change errors, just proceed as signed out
+        setUser(null);
+        setUserRoles([]);
+        setCurrentRole(null);
+        setError(null);
+      } finally {
+        if (!authStateController.signal.aborted && mounted) {
+          setLoading(false);
         }
       }
     });
 
     return () => {
       mounted = false;
+      initController.abort();
+      authStateController.abort();
       subscription?.unsubscribe();
+      activeOperationRef.current.initAuth = null;
+      activeOperationRef.current.authStateChange = null;
     };
   }, []);
 

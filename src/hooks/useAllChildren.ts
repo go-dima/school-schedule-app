@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { childrenApi } from "../services/api";
+import { withTimeout } from "../utils/asyncUtils";
 import type { Child } from "../types";
 
 type ChildWithParent = Child & { assignedParent: boolean };
@@ -14,16 +15,25 @@ export function useAllChildren() {
 
     const loadAllChildren = async () => {
       try {
-        const childrenData = await childrenApi.getAllChildren();
+        const childrenData = await withTimeout(
+          childrenApi.getAllChildren(),
+          10000
+        );
         if (mounted) {
           setChildren(childrenData);
           setError(null);
         }
       } catch (err) {
         if (mounted) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load children"
-          );
+          if (err instanceof Error && err.message.includes("timed out")) {
+            setError(
+              "Loading students is taking longer than expected. Please refresh the page."
+            );
+          } else {
+            setError(
+              err instanceof Error ? err.message : "Failed to load children"
+            );
+          }
         }
       } finally {
         if (mounted) {
