@@ -350,6 +350,8 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                   style={{ minWidth: 200 }}
                   disabled={allChildrenLoading}
                   defaultGrade={selectedGrade || 1}
+                  mode="select"
+                  isCreateAllowed={isStaff}
                 />
                 <span>{t("schedule.page.labels.selectChildForStaff")}:</span>
               </>

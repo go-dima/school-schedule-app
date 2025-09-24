@@ -12,7 +12,6 @@ import {
   Empty,
   Tag,
   Select,
-  AutoComplete,
 } from "antd";
 import { useTranslation } from "react-i18next";
 import {
@@ -24,6 +23,7 @@ import {
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { ChildForm } from "../components/ChildForm";
+import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { useAuth } from "../contexts/AuthContext";
 import { useAllChildren } from "../hooks/useAllChildren";
 import { childrenApi } from "../services/api";
@@ -171,74 +171,9 @@ const StudentsPage: React.FC = () => {
     return filtered;
   }, [children, searchTerm, selectedGrade]);
 
-  // Generate search options for AutoComplete
-  const searchOptions = useMemo(() => {
-    if (!searchTerm) return [];
-
-    // Get matching student names
-    const matchingNames = Array.from(
-      new Set(
-        filteredChildren.map(child => `${child.firstName} ${child.lastName}`)
-      )
-    )
-      .sort()
-      .map(fullName => ({
-        value: fullName,
-        label: (
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <UserOutlined style={{ marginRight: 8, color: "#1890ff" }} />
-            {fullName}
-          </div>
-        ),
-      }));
-
-    // If no matches and search term is not empty, add "Add Student" option
-    if (matchingNames.length === 0 && searchTerm.trim()) {
-      return [
-        {
-          value: `__ADD_STUDENT__${searchTerm}`,
-          label: (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                color: "#52c41a",
-                cursor: "pointer",
-                padding: "4px 0",
-              }}>
-              <PlusOutlined style={{ marginRight: 8 }} />
-              {t("students.search.addStudent", { name: searchTerm })}
-            </div>
-          ),
-        },
-      ];
-    }
-
-    return matchingNames;
-  }, [searchTerm, filteredChildren, t]);
-
-  const handleSearchSelect = (value: string) => {
-    if (value.startsWith("__ADD_STUDENT__")) {
-      const searchName = value.replace("__ADD_STUDENT__", "");
-      const [firstName, ...lastNameParts] = searchName.trim().split(/\s+/);
-      const lastName = lastNameParts.join(" ");
-
-      setEditingChild({
-        id: "",
-        firstName: firstName || "",
-        lastName: lastName || "",
-        grade: selectedGrade || 1,
-        groupNumber: 1,
-        scope: "prod",
-        createdAt: "",
-        updatedAt: "",
-      } as Child);
-      setIsFormModalOpen(true);
-      setSearchTerm(""); // Clear search after adding
-    } else {
-      // Regular selection - just update search term
-      setSearchTerm(value);
-    }
+  const handleChildAdded = (_newChild: Child) => {
+    // Optionally handle the new child addition
+    // The component already reloads the page, so this might not be needed
   };
 
   const columns: ColumnsType<ChildWithParent> = [
@@ -360,15 +295,17 @@ const StudentsPage: React.FC = () => {
       {/* Search and Filter Controls */}
       <div style={{ marginBottom: 16 }}>
         <Space wrap>
-          <AutoComplete
-            value={searchTerm}
-            options={searchOptions}
-            onSelect={handleSearchSelect}
-            onChange={setSearchTerm}
+          <StudentSearchSelector
+            children={filteredChildren}
+            onChildAdded={handleChildAdded}
+            onSearchChange={setSearchTerm}
             placeholder={t("students.search.placeholder")}
             style={{ minWidth: 250 }}
             allowClear
-            filterOption={false}
+            mode="search"
+            value={searchTerm}
+            defaultGrade={selectedGrade || 1}
+            isCreateAllowed={canManageClasses()}
           />
           <Select
             value={selectedGrade}
