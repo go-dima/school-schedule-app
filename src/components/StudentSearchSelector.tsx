@@ -10,7 +10,7 @@ import type { Child } from "../types";
 interface StudentSearchSelectorProps {
   children: Child[];
   selectedChildId?: string | null;
-  onChildSelect?: (childId: string) => void;
+  onChildSelect?: (childId: string | undefined) => void;
   onChildAdded?: (child: Child) => void;
   onSearchChange?: (searchTerm: string) => void;
   placeholder?: string;

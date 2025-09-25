@@ -74,7 +74,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
 
   const isParent = hasRole("parent");
 
-  const handleStaffChildSelect = (childId: string) => {
+  const handleStaffChildSelect = (childId: string | undefined) => {
     if (!childId) {
       setStaffSelectedChild(undefined);
       return;
@@ -306,6 +306,11 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                   children={userChildren}
                   selectedChildId={selectedChild?.id || null}
                   onChildSelect={childId => {
+                    if (!childId) {
+                      // Handle clear selection
+                      setSelectedChild(undefined);
+                      return;
+                    }
                     const child = userChildren.find(c => c.id === childId);
                     setSelectedChild(child || undefined);
                     // Auto-update grade filter based on selected child (only for non-admin parents)

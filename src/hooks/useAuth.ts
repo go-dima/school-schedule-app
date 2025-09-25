@@ -67,33 +67,17 @@ export function useAuth() {
 
     const initAuth = async () => {
       try {
-        // Add timeout to prevent infinite hanging
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(
-            () => reject(new Error("Auth timeout after 10 seconds")),
-            10000
-          );
-        });
-
-        const supabaseUser = await Promise.race([
-          authApi.getCurrentUser(),
-          timeoutPromise,
-        ]);
+        // Instead of calling getCurrentUser which hangs,
+        // let the auth state change listener handle the initial auth state
+        console.log("🔐 useAuth: Skipping getCurrentUser, relying on auth state listener");
 
         if (initController.signal.aborted || !mounted) return;
 
-        if (supabaseUser) {
-          const userProfile = await usersApi.getUserProfile(supabaseUser.id);
-
-          if (initController.signal.aborted || !mounted) return;
-
-          setUser(userProfile);
-          await loadUserRoles(supabaseUser.id, initController);
-        } else {
+        // Initialize as no user - the auth state change listener will update if there's a session
           setUser(null);
           setUserRoles([]);
           setCurrentRole(null);
-        }
+        setError(null);
       } catch (err) {
         if (initController.signal.aborted || !mounted) return;
 
@@ -241,14 +225,12 @@ export function useAuth() {
   };
 
   const refreshProfile = async () => {
-    if (!user) return;
+    if (!user?.id) return;
 
     try {
-      const supabaseUser = await authApi.getCurrentUser();
-      if (supabaseUser) {
-        const userProfile = await usersApi.getUserProfile(supabaseUser.id);
+      // Use the existing user id instead of calling getCurrentUser which hangs
+      const userProfile = await usersApi.getUserProfile(user.id);
         setUser(userProfile);
-      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to refresh profile"
