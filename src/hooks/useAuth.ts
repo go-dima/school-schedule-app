@@ -8,6 +8,7 @@ export function useAuth() {
   const [currentRole, setCurrentRole] = useState<UserRoleData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
 
   // Ref to track active operations and prevent race conditions
   const activeOperationRef = useRef<{
@@ -21,10 +22,21 @@ export function useAuth() {
   useEffect(() => {
     let mounted = true;
 
-    // Cancel any existing operations
-    if (activeOperationRef.current.initAuth) {
-      activeOperationRef.current.initAuth.abort();
+    // Prevent re-initialization if already initialized
+    if (initialized) {
+      return () => {
+        mounted = false;
+      };
     }
+
+    // Prevent multiple simultaneous auth initializations
+    if (activeOperationRef.current.initAuth) {
+      return () => {
+        mounted = false;
+      };
+    }
+
+    // Cancel any existing auth state change operations
     if (activeOperationRef.current.authStateChange) {
       activeOperationRef.current.authStateChange.abort();
     }
@@ -93,6 +105,7 @@ export function useAuth() {
       } finally {
         if (!initController.signal.aborted && mounted) {
           setLoading(false);
+          setInitialized(true);
           activeOperationRef.current.initAuth = null;
         }
       }
