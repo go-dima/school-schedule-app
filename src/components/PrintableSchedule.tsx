@@ -226,9 +226,6 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
           מערכת של {child.firstName} {child.lastName} -{" "}
           {GetGradeName(child.grade)}
         </h1>
-        <div className="print-date">
-          הופק בתאריך: {new Date().toLocaleDateString("he-IL")}
-        </div>
       </div>
 
       <div className="print-schedule-container">
