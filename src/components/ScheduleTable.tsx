@@ -394,6 +394,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       title: day.name,
       dataIndex: `day_${day.key}`,
       key: `day_${day.key}`,
+      width: 160, // Fixed width for consistent day columns
       className: "day-column",
       render: (content: React.ReactNode) => content,
     })),
