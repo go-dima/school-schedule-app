@@ -921,16 +921,13 @@ export const childrenApi = {
   async getAllChildren(): Promise<(Child & { assignedParent: boolean })[]> {
     const isProduction = process.env.NODE_ENV === "production";
 
-    let viewQuery = supabase
-      .from("children")
-      .select("*, parent:parent_child_relationships!child_id ( parent_id )")
-      .order("first_name", { ascending: true });
-
-    if (isProduction) {
-      viewQuery = viewQuery.neq("scope", "test");
-    }
-
-    const { data, error } = await viewQuery;
+    // Use the database function to get children with parent status
+    const { data, error } = await supabase.rpc(
+      "get_children_with_parent_status",
+      {
+        production_only: isProduction,
+      }
+    );
 
     if (error) throw new ApiError(error.message);
 
@@ -944,7 +941,7 @@ export const childrenApi = {
         scope: child.scope || "prod", // Fallback for migration compatibility
         createdAt: child.created_at,
         updatedAt: child.updated_at,
-        assignedParent: child.parent && child.parent.length > 0,
+        assignedParent: child.has_parent,
       };
     });
   },
