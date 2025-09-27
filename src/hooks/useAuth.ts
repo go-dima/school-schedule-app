@@ -69,14 +69,16 @@ export function useAuth() {
       try {
         // Instead of calling getCurrentUser which hangs,
         // let the auth state change listener handle the initial auth state
-        console.log("🔐 useAuth: Skipping getCurrentUser, relying on auth state listener");
+        console.log(
+          "🔐 useAuth: Skipping getCurrentUser, relying on auth state listener"
+        );
 
         if (initController.signal.aborted || !mounted) return;
 
         // Initialize as no user - the auth state change listener will update if there's a session
-          setUser(null);
-          setUserRoles([]);
-          setCurrentRole(null);
+        setUser(null);
+        setUserRoles([]);
+        setCurrentRole(null);
         setError(null);
       } catch (err) {
         if (initController.signal.aborted || !mounted) return;
@@ -230,11 +232,44 @@ export function useAuth() {
     try {
       // Use the existing user id instead of calling getCurrentUser which hangs
       const userProfile = await usersApi.getUserProfile(user.id);
-        setUser(userProfile);
+      setUser(userProfile);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to refresh profile"
       );
+    }
+  };
+
+  const clearApplicationState = () => {
+    // Abort any ongoing operations
+    if (activeOperationRef.current.initAuth) {
+      activeOperationRef.current.initAuth.abort();
+      activeOperationRef.current.initAuth = null;
+    }
+    if (activeOperationRef.current.authStateChange) {
+      activeOperationRef.current.authStateChange.abort();
+      activeOperationRef.current.authStateChange = null;
+    }
+
+    // Clear all state
+    setUser(null);
+    setUserRoles([]);
+    setCurrentRole(null);
+    setLoading(false);
+    setError(null);
+    setInitialized(false);
+
+    // Clear browser storage
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // Clear Supabase session if available
+      authApi.signOut().catch(() => {
+        // Ignore errors during emergency cleanup
+      });
+    } catch (err) {
+      console.warn("🧹 useAuth: Error during storage cleanup:", err);
     }
   };
 
@@ -254,5 +289,6 @@ export function useAuth() {
     isAdmin,
     canManageClasses,
     canViewAllSchedules,
+    clearApplicationState,
   };
 }

@@ -29,7 +29,7 @@ type Page =
   | "profile-settings";
 
 function AppContent() {
-  const { user, userRoles, loading, error } = useAuth();
+  const { user, userRoles, loading, error, clearApplicationState } = useAuth();
   const { t } = useTranslation();
   const [showSignup, setShowSignup] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>("schedule");
@@ -53,7 +53,7 @@ function AppContent() {
     if (loading) {
       timeoutId = setTimeout(() => {
         setLoadingTimeout(true);
-      }, 15000); // 15 second timeout
+      }, 5000); // 5 second timeout
     } else {
       setLoadingTimeout(false);
     }
@@ -64,6 +64,22 @@ function AppContent() {
       }
     };
   }, [loading]);
+
+  // Emergency state clearing keyboard shortcut
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ctrl+Shift+Delete or Cmd+Shift+Delete to clear application state
+      if (event.ctrlKey && event.shiftKey && event.key === "Delete") {
+        event.preventDefault();
+        console.log("🚨 Emergency state clear triggered by keyboard shortcut");
+        clearApplicationState();
+        window.location.reload();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [clearApplicationState]);
 
   // Show error state with recovery options
   if (error && !loading) {
@@ -117,9 +133,12 @@ function AppContent() {
           extra={[
             <Button
               type="primary"
-              key="refresh"
-              onClick={() => window.location.reload()}>
-              {t("errors.timeout.refresh", "Refresh Page")}
+              key="clear-state"
+              onClick={() => {
+                clearApplicationState();
+                window.location.reload();
+              }}>
+              {t("errors.timeout.clearState", "Clear State & Refresh")}
             </Button>,
           ]}
         />
