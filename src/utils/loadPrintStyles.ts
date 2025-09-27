@@ -1,0 +1,350 @@
+// Print styles for the printable schedule
+export const getPrintStyles = (): string => {
+  return `
+/* Print styles for the printable schedule window */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, Hebrew, sans-serif;
+  direction: rtl;
+  background: white;
+  color: black;
+  line-height: 1.4;
+}
+
+/* Include Ant Design table styles needed for printing */
+.ant-table {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.85);
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.ant-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ant-table-thead > tr > th {
+  position: relative;
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 500;
+  text-align: start;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.3s ease;
+}
+
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.3s;
+  word-break: break-word;
+}
+
+.ant-table-bordered .ant-table-thead > tr > th,
+.ant-table-bordered .ant-table-tbody > tr > td {
+  border-right: 1px solid #f0f0f0;
+}
+
+.ant-table-small .ant-table-thead > tr > th,
+.ant-table-small .ant-table-tbody > tr > td {
+  padding: 8px;
+}
+
+@page {
+  size: landscape;
+  margin: 15mm;
+}
+
+.printable-schedule {
+  direction: rtl;
+  font-family: Arial, sans-serif;
+  width: 100%;
+  max-width: 297mm;
+  margin: 0 auto;
+  background: white;
+  color: black;
+}
+
+.print-header {
+  text-align: center;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #1890ff;
+  padding-bottom: 10px;
+}
+
+.print-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1890ff;
+  margin: 0 0 10px 0;
+  line-height: 1.2;
+}
+
+.print-date {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.print-schedule-container {
+  width: 100%;
+  direction: rtl;
+}
+
+.print-schedule-table {
+  width: 100% !important;
+  direction: rtl;
+  font-size: 12px;
+}
+
+.print-schedule-table .ant-table {
+  background: white;
+}
+
+.print-schedule-table .ant-table-thead > tr > th {
+  background: #f5f5f5 !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  border: 1px solid #d9d9d9 !important;
+  padding: 8px 4px !important;
+  font-size: 14px !important;
+  color: #1890ff !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.print-schedule-table .ant-table-tbody > tr > td {
+  padding: 2px !important;
+  border: 1px solid #d9d9d9 !important;
+  vertical-align: top !important;
+  height: 60px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.print-time-column {
+  background: #fafafa !important;
+  width: 100px !important;
+  min-width: 100px !important;
+  text-align: center !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.print-time-cell {
+  text-align: center;
+  padding: 4px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.print-time-cell.compact {
+  height: 30px;
+  padding: 2px;
+}
+
+.print-time-range {
+  font-weight: bold;
+  font-size: 13px;
+  color: #1890ff;
+  margin-bottom: 2px;
+  line-height: 1;
+}
+
+.print-time-name {
+  font-size: 10px;
+  color: #666;
+  line-height: 1;
+}
+
+.print-day-column {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+.print-schedule-cell {
+  width: 100%;
+  height: 100%;
+  min-height: 56px;
+  padding: 2px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.print-schedule-cell.empty {
+  background: #f9f9f9 !important;
+  justify-content: center;
+  align-items: center;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.print-schedule-cell.selected {
+  background: #f6ffed !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.print-schedule-cell.double-continuation {
+  background: #fff7e6 !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.print-schedule-cell.break-slot {
+  background: #f6ffed !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  height: 30px !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.print-schedule-cell.meeting-slot {
+  background: #e6f7ff !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  height: 30px !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.print-class-card {
+  width: 100%;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  text-align: center;
+}
+
+.print-class-title {
+  font-weight: bold;
+  font-size: 12px;
+  color: #1890ff;
+  margin-bottom: 2px;
+  line-height: 1.2;
+}
+
+.print-class-teacher {
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 2px;
+  line-height: 1.2;
+}
+
+.print-class-room {
+  font-size: 9px;
+  color: #999;
+  margin-bottom: 2px;
+  line-height: 1.2;
+}
+
+.print-double-indicator,
+.print-mandatory-indicator {
+  font-size: 8px;
+  font-weight: bold;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin: 1px;
+  display: inline-block;
+  line-height: 1;
+}
+
+.print-double-indicator {
+  background: #fa8c16 !important;
+  color: white !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.print-mandatory-indicator {
+  background: #ff4d4f !important;
+  color: white !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.print-continuation-text {
+  font-size: 9px;
+  font-style: italic;
+  color: #fa8c16;
+  margin-top: 2px;
+  line-height: 1.2;
+}
+
+.print-empty-text {
+  font-size: 10px;
+  color: #999;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.print-non-lesson-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+}
+
+.print-slot-name {
+  font-weight: bold;
+  font-size: 11px;
+  color: #1890ff;
+  line-height: 1.2;
+}
+
+.print-schedule-table .ant-table-tbody > tr.compact-row {
+  height: 30px !important;
+}
+
+.print-schedule-table .ant-table-tbody > tr.compact-row > td {
+  height: 30px !important;
+  padding: 0 !important;
+  vertical-align: middle !important;
+}
+
+.print-schedule-table .ant-table-tbody > tr.compact-row .print-schedule-cell {
+  min-height: 30px !important;
+  height: 30px !important;
+  justify-content: center;
+}
+
+@media print {
+  .printable-schedule {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-schedule-table .ant-table-thead > tr > th,
+  .print-schedule-table .ant-table-tbody > tr > td {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .ant-table-container {
+    overflow: visible !important;
+  }
+
+  .printable-schedule {
+    page-break-inside: avoid;
+  }
+
+  .print-schedule-container {
+    page-break-inside: avoid;
+  }
+}
+  `;
+};

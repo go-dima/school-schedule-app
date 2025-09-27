@@ -9,7 +9,7 @@ const { Text } = Typography;
 interface ChildSelectorProps {
   children: Child[];
   selectedChildId: string | null;
-  onChildSelect: (childId: string) => void;
+  onChildSelect: (childId: string | undefined) => void;
   placeholder?: string;
   style?: React.CSSProperties;
   disabled?: boolean;

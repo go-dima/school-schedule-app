@@ -111,7 +111,20 @@
       "switchToAppropriateRole": "החלף לתפקיד מתאים",
       "selectedClassesForChild": "השיעורים שנבחרו עבור {{firstName}} {{lastName}}",
       "selectedClassesTitle": "השיעורים שנבחרו",
-      "createNewClassModal": "צור שיעור חדש"
+      "createNewClassModal": "צור שיעור חדש",
+      "exportButton": "הדפס",
+      "error": {
+        "noChildSelected": "נא לבחור ילד תחילה",
+        "exportFailed": "שגיאה בהדפסת מערכת השעות",
+        "updateClassSelection": "שגיאה בעדכון בחירת השיעור",
+        "loadData": "שגיאה בטעינת הנתונים",
+        "loadTimeSlots": "שגיאה בטעינת זמני השיעורים",
+        "timeSlotNotFound": "זמן השיעור לא נמצא",
+        "createClass": "שגיאה ביצירת השיעור"
+      },
+      "success": {
+        "classCreated": "השיעור נוצר בהצלחה"
+      }
     },
     "table": {
       "timeColumn": "זמן",
@@ -443,6 +456,13 @@
       "createdDate": "תאריך יצירה",
       "actions": "פעולות",
       "pagination": "{{start}}-{{end}} מתוך {{total}} תלמידים"
+    },
+    "search": {
+      "placeholder": "חפש תלמיד לפי שם...",
+      "addStudent": "הוסף תלמיד: {{name}}"
+    },
+    "filter": {
+      "allGrades": "כל הכיתות"
     }
   },
   "scope": {
@@ -451,6 +471,18 @@
     "selector": {
       "placeholder": "בחר סביבה",
       "label": "סביבה:"
+    }
+  },
+  "errors": {
+    "timeout": {
+      "title": "הטעינה נמשכת זמן רב מהצפוי",
+      "subtitle": "האפליקציה עלולה לחוות בעיות קישוריות.",
+      "refresh": "רענן דף",
+      "clearState": "נקה נתונים ורענן"
+    },
+    "auth": {
+      "title": "שגיאת אימות",
+      "retry": "נסה שוב"
     }
   }
 }

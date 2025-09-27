@@ -18,6 +18,7 @@ export interface AuthContextType {
   isAdmin: () => boolean;
   canManageClasses: () => boolean;
   canViewAllSchedules: () => boolean;
+  clearApplicationState: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Card,
   Button,
@@ -11,6 +11,7 @@ import {
   Spin,
   Empty,
   Tag,
+  Select,
 } from "antd";
 import { useTranslation } from "react-i18next";
 import {
@@ -22,10 +23,12 @@ import {
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { ChildForm } from "../components/ChildForm";
+import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { useAuth } from "../contexts/AuthContext";
 import { useAllChildren } from "../hooks/useAllChildren";
 import { childrenApi } from "../services/api";
 import type { Child } from "../types";
+import { GRADES } from "../types";
 
 type ChildWithParent = Child & { assignedParent: boolean };
 import { GetGradeName } from "@/utils/grades";
@@ -54,6 +57,10 @@ const StudentsPage: React.FC = () => {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | undefined>();
   const [formLoading, setFormLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedGrade, setSelectedGrade] = useState<number | undefined>(
+    undefined
+  );
 
   const handleCreateChild = async (data: {
     firstName: string;
@@ -137,6 +144,36 @@ const StudentsPage: React.FC = () => {
   const closeModal = () => {
     setIsFormModalOpen(false);
     setEditingChild(undefined);
+  };
+
+  // Filter children based on search and grade
+  const filteredChildren = useMemo(() => {
+    let filtered = children as ChildWithParent[];
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(child => {
+        const fullName = `${child.firstName} ${child.lastName}`.toLowerCase();
+        const search = searchTerm.toLowerCase();
+        return (
+          fullName.includes(search) ||
+          child.firstName.toLowerCase().includes(search) ||
+          child.lastName.toLowerCase().includes(search)
+        );
+      });
+    }
+
+    // Apply grade filter
+    if (selectedGrade !== undefined) {
+      filtered = filtered.filter(child => child.grade === selectedGrade);
+    }
+
+    return filtered;
+  }, [children, searchTerm, selectedGrade]);
+
+  const handleChildAdded = (_newChild: Child) => {
+    // Optionally handle the new child addition
+    // The component already reloads the page, so this might not be needed
   };
 
   const columns: ColumnsType<ChildWithParent> = [
@@ -255,6 +292,36 @@ const StudentsPage: React.FC = () => {
         </Space>
       </div>
 
+      {/* Search and Filter Controls */}
+      <div style={{ marginBottom: 16 }}>
+        <Space wrap>
+          <StudentSearchSelector
+            children={filteredChildren}
+            onChildAdded={handleChildAdded}
+            onSearchChange={setSearchTerm}
+            placeholder={t("students.search.placeholder")}
+            style={{ minWidth: 250 }}
+            allowClear
+            mode="search"
+            value={searchTerm}
+            defaultGrade={selectedGrade || 1}
+            isCreateAllowed={canManageClasses()}
+          />
+          <Select
+            value={selectedGrade}
+            onChange={setSelectedGrade}
+            placeholder={t("students.filter.allGrades")}
+            allowClear
+            style={{ minWidth: 120 }}>
+            {GRADES.map(grade => (
+              <Select.Option key={grade} value={grade}>
+                {GetGradeName(grade)}
+              </Select.Option>
+            ))}
+          </Select>
+        </Space>
+      </div>
+
       {error && (
         <div style={{ marginBottom: 16 }}>
           <Text type="danger">{error}</Text>
@@ -264,7 +331,7 @@ const StudentsPage: React.FC = () => {
       <Card>
         <Table
           columns={columns}
-          dataSource={children as ChildWithParent[]}
+          dataSource={filteredChildren}
           rowKey="id"
           pagination={{
             pageSize: 50,

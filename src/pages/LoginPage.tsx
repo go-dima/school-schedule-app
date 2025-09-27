@@ -11,7 +11,7 @@ import {
 } from "antd";
 import { UserOutlined, LockOutlined, GoogleOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../contexts/AuthContext";
 import "./AuthPages.css";
 
 const { Title, Text, Link } = Typography;
@@ -28,36 +28,28 @@ interface LoginPageProps {
 const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
   const { t } = useTranslation();
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
-  const [oauthLoading, setOAuthLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { signIn, signInWithGoogle } = useAuth();
+  const [localError, setLocalError] = useState<string | null>(null);
+  const { signIn, signInWithGoogle, loading } = useAuth();
 
   const onFinish = async (values: LoginFormValues) => {
-    setLoading(true);
-    setError(null);
+    setLocalError(null);
 
     try {
       await signIn(values.email, values.password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("auth.login.error"));
-    } finally {
-      setLoading(false);
+      setLocalError(err instanceof Error ? err.message : t("auth.login.error"));
     }
   };
 
   const handleGoogleSignIn = async () => {
-    setOAuthLoading(true);
-    setError(null);
+    setLocalError(null);
 
     try {
       await signInWithGoogle();
     } catch (err) {
-      setError(
+      setLocalError(
         err instanceof Error ? err.message : t("auth.login.googleError")
       );
-    } finally {
-      setOAuthLoading(false);
     }
   };
 
@@ -70,14 +62,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
             <Text type="secondary">{t("auth.login.subtitle")}</Text>
           </div>
 
-          {error && (
+          {localError && (
             <Alert
               message={t("auth.login.error")}
-              description={error}
+              description={localError}
               type="error"
               showIcon
               closable
-              onClose={() => setError(null)}
+              onClose={() => setLocalError(null)}
               className="auth-alert"
             />
           )}
@@ -122,7 +114,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
                 htmlType="submit"
                 size="large"
                 loading={loading}
-                disabled={oauthLoading}
+                disabled={loading}
                 block
                 className="auth-submit-btn">
                 {t("auth.login.loginButton")}
@@ -137,7 +129,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
               icon={<GoogleOutlined />}
               size="large"
               block
-              loading={oauthLoading}
+              loading={loading}
               disabled={loading}
               onClick={handleGoogleSignIn}
               className="oauth-btn google-btn">

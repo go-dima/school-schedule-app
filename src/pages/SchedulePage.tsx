@@ -12,7 +12,11 @@ import {
   AutoComplete,
 } from "antd";
 import { useTranslation } from "react-i18next";
-import { ReloadOutlined, UserSwitchOutlined } from "@ant-design/icons";
+import {
+  ReloadOutlined,
+  UserSwitchOutlined,
+  PrinterOutlined,
+} from "@ant-design/icons";
 import { useAuth } from "../contexts/AuthContext";
 import { useChildContext } from "../contexts/ChildContext";
 import { useSchedule } from "../hooks/useSchedule";
@@ -21,11 +25,13 @@ import { useAllChildren } from "../hooks/useAllChildren";
 import ScheduleTable from "../components/ScheduleTable";
 import ClassForm from "../components/ClassForm";
 import { ChildSelector } from "../components/ChildSelector";
+import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { classesApi, timeSlotsApi } from "../services/api";
 import { GRADES } from "../types";
 import type { AppOnNavigate, Class, TimeSlot, Child } from "../types";
 import "./SchedulePage.css";
 import { GetGradeName } from "@/utils/grades";
+import { printSchedule } from "../utils/printSchedule";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -73,7 +79,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
 
   const isParent = hasRole("parent");
 
-  const handleStaffChildSelect = (childId: string) => {
+  const handleStaffChildSelect = (childId: string | undefined) => {
     if (!childId) {
       setStaffSelectedChild(undefined);
       return;
@@ -86,6 +92,13 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     } else {
       setStaffSelectedChild(undefined);
     }
+  };
+
+  // Handler for when a new child is added via StudentSearchSelector
+  const handleChildAdded = (newChild: Child) => {
+    // Auto-select the newly created student for staff
+    setStaffSelectedChild(newChild);
+    setSelectedGrade(newChild.grade);
   };
 
   // Auto-update grade filter when selected child changes (only for non-admin parents)
@@ -168,6 +181,30 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
       return childSchedule;
     }
     return userSelections;
+  };
+
+  const handleExportSchedule = async () => {
+    const currentChild = isParent ? selectedChild : staffSelectedChild;
+
+    if (!currentChild) {
+      message.error(t("schedule.page.error.noChildSelected"));
+      return;
+    }
+
+    try {
+      await printSchedule({
+        child: currentChild,
+        timeSlots,
+        weeklySchedule,
+        selectedClasses: getSelectedClasses(),
+      });
+    } catch (error) {
+      message.error(
+        error instanceof Error
+          ? error.message
+          : t("schedule.page.error.exportFailed")
+      );
+    }
   };
 
   const handleCreateClass = async (timeSlotId: string, dayOfWeek: number) => {
@@ -298,6 +335,11 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                   children={userChildren}
                   selectedChildId={selectedChild?.id || null}
                   onChildSelect={childId => {
+                    if (!childId) {
+                      // Handle clear selection
+                      setSelectedChild(undefined);
+                      return;
+                    }
                     const child = userChildren.find(c => c.id === childId);
                     setSelectedChild(child || undefined);
                     // Auto-update grade filter based on selected child (only for non-admin parents)
@@ -331,15 +373,19 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
             )}
             {isStaff && (
               <>
-                <ChildSelector
+                <StudentSearchSelector
                   children={allChildren}
                   selectedChildId={staffSelectedChild?.id || null}
                   onChildSelect={handleStaffChildSelect}
-                  style={{ minWidth: 200 }}
-                  disabled={allChildrenLoading}
+                  onChildAdded={handleChildAdded}
                   placeholder={t(
                     "schedule.page.placeholders.selectChildForStaff"
                   )}
+                  style={{ minWidth: 200 }}
+                  disabled={allChildrenLoading}
+                  defaultGrade={selectedGrade || 1}
+                  mode="select"
+                  isCreateAllowed={isStaff}
                 />
                 <span>{t("schedule.page.labels.selectChildForStaff")}:</span>
               </>
@@ -360,6 +406,15 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                   </Option>
                 ))}
               </Select>
+            )}
+            {((isParent && selectedChild) ||
+              (isStaff && staffSelectedChild)) && (
+              <Button
+                icon={<PrinterOutlined />}
+                onClick={handleExportSchedule}
+                disabled={loading}>
+                {t("schedule.page.exportButton")}
+              </Button>
             )}
             <Button
               icon={<ReloadOutlined />}
