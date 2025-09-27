@@ -60,10 +60,10 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
 
   // Generate search options with add student functionality
   const searchOptions = useMemo(() => {
-    if (!searchTerm) return [];
-
-    // Filter children by search term
+    // Filter children by search term (show all if no search term)
     const filteredChildren = children.filter(child => {
+      if (!searchTerm) return true; // Show all children when no search term
+
       const fullName = `${child.firstName} ${child.lastName}`.toLowerCase();
       const search = searchTerm.toLowerCase();
       return (
@@ -164,6 +164,10 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
       onSearchChange?.(value);
     } else {
       setInternalSearchTerm(value);
+      // Handle clear selection when value is empty (user clicked X button)
+      if (!value && selectedChildId && onChildSelect) {
+        onChildSelect(undefined);
+      }
     }
   };
 
@@ -215,11 +219,18 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
         options={searchOptions}
         onSelect={handleSearchSelect}
         onChange={handleSearchChange}
+        onFocus={() => {
+          // Ensure dropdown shows all options when focused (clicked)
+          if (mode === "select" && !searchTerm) {
+            setInternalSearchTerm("");
+          }
+        }}
         placeholder={placeholder}
         style={style}
         allowClear={allowClear}
         filterOption={false}
         disabled={disabled}
+        defaultActiveFirstOption={false}
       />
 
       <Modal
