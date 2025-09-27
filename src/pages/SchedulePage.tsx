@@ -12,7 +12,11 @@ import {
   AutoComplete,
 } from "antd";
 import { useTranslation } from "react-i18next";
-import { ReloadOutlined, UserSwitchOutlined } from "@ant-design/icons";
+import {
+  ReloadOutlined,
+  UserSwitchOutlined,
+  PrinterOutlined,
+} from "@ant-design/icons";
 import { useAuth } from "../contexts/AuthContext";
 import { useChildContext } from "../contexts/ChildContext";
 import { useSchedule } from "../hooks/useSchedule";
@@ -27,6 +31,7 @@ import { GRADES } from "../types";
 import type { AppOnNavigate, Class, TimeSlot, Child } from "../types";
 import "./SchedulePage.css";
 import { GetGradeName } from "@/utils/grades";
+import { printSchedule } from "../utils/printSchedule";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -176,6 +181,30 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
       return childSchedule;
     }
     return userSelections;
+  };
+
+  const handleExportSchedule = async () => {
+    const currentChild = isParent ? selectedChild : staffSelectedChild;
+
+    if (!currentChild) {
+      message.error(t("schedule.page.error.noChildSelected"));
+      return;
+    }
+
+    try {
+      await printSchedule({
+        child: currentChild,
+        timeSlots,
+        weeklySchedule,
+        selectedClasses: getSelectedClasses(),
+      });
+    } catch (error) {
+      message.error(
+        error instanceof Error
+          ? error.message
+          : t("schedule.page.error.exportFailed")
+      );
+    }
   };
 
   const handleCreateClass = async (timeSlotId: string, dayOfWeek: number) => {
@@ -377,6 +406,15 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                   </Option>
                 ))}
               </Select>
+            )}
+            {((isParent && selectedChild) ||
+              (isStaff && staffSelectedChild)) && (
+              <Button
+                icon={<PrinterOutlined />}
+                onClick={handleExportSchedule}
+                disabled={loading}>
+                {t("schedule.page.exportButton")}
+              </Button>
             )}
             <Button
               icon={<ReloadOutlined />}
