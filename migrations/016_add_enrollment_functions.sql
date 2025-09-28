@@ -2,7 +2,7 @@
 -- Description: Add database functions to get class enrollment counts
 
 -- Create function to get enrollment counts for all classes
-CREATE OR REPLACE FUNCTION public.get_class_enrollment_counts(target_scope TEXT DEFAULT NULL)
+CREATE OR REPLACE FUNCTION public.get_class_enrollment_counts(target_scope class_scope DEFAULT NULL)
 RETURNS TABLE (class_id UUID, enrollment_count BIGINT) AS $$
 BEGIN
     RETURN QUERY
@@ -26,7 +26,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Create function to get enrollment count for a specific class
-CREATE OR REPLACE FUNCTION public.get_class_enrollment_count(p_class_id UUID, target_scope TEXT DEFAULT NULL)
+CREATE OR REPLACE FUNCTION public.get_class_enrollment_count(p_class_id UUID, target_scope class_scope DEFAULT NULL)
 RETURNS BIGINT AS $$
 DECLARE
     count_result BIGINT;
@@ -61,8 +61,8 @@ LEFT JOIN (
 ) enrollment_data ON c.id = enrollment_data.class_id;
 
 -- Grant permissions for the functions
-GRANT EXECUTE ON FUNCTION public.get_class_enrollment_counts(TEXT) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_class_enrollment_count(UUID, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_class_enrollment_counts(class_scope) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_class_enrollment_count(UUID, class_scope) TO authenticated;
 GRANT SELECT ON public.classes_with_enrollment TO authenticated;
 
 -- Add comments

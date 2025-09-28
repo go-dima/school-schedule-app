@@ -1000,8 +1000,8 @@ export const childrenApi = {
 export const enrollmentApi = {
   async getClassEnrollmentCounts(): Promise<Map<string, number>> {
     const isProduction = process.env.NODE_ENV === "production";
-    // In production, only show prod classes. In development, show all classes (pass null)
-    const targetScope = isProduction ? "prod" : null;
+    // In production, only show prod classes. In development, show all classes (pass null for all)
+    const targetScope: "prod" | null = isProduction ? "prod" : null;
 
     const { data, error } = await supabase.rpc("get_class_enrollment_counts", {
       target_scope: targetScope,
@@ -1019,8 +1019,8 @@ export const enrollmentApi = {
 
   async getClassEnrollmentCount(classId: string): Promise<number> {
     const isProduction = process.env.NODE_ENV === "production";
-    // In production, only show prod classes. In development, show all classes (pass null)
-    const targetScope = isProduction ? "prod" : null;
+    // In production, only show prod classes. In development, show all classes (pass null for all)
+    const targetScope: "prod" | null = isProduction ? "prod" : null;
 
     const { data, error } = await supabase.rpc("get_class_enrollment_count", {
       p_class_id: classId,
