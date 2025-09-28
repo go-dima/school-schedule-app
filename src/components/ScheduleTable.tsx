@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Table, Card, Tag, Button, Empty } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useTranslation } from "react-i18next";
@@ -15,6 +15,8 @@ import ClassSelectionDrawer from "./ClassSelectionDrawer";
 import "./ScheduleTable.css";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
 import { DoubleLessonTag } from "@/elements/DoubleLessonTag";
+import { EnrollmentCount } from "@/elements/EnrollmentCount";
+import { EnrollmentService } from "../services/enrollmentService";
 
 interface ScheduleTableProps {
   timeSlots: TimeSlot[];
@@ -59,6 +61,25 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   const [selectedDayOfWeek, setSelectedDayOfWeek] = useState<number | null>(
     null
   );
+  const [enrollmentCounts, setEnrollmentCounts] = useState<Map<string, number>>(
+    new Map()
+  );
+
+  // Fetch enrollment counts when component mounts or classes change
+  useEffect(() => {
+    const fetchEnrollmentCounts = async () => {
+      try {
+        const counts = await EnrollmentService.getClassEnrollmentCounts();
+        setEnrollmentCounts(counts);
+      } catch (error) {
+        console.error("Failed to fetch enrollment counts:", error);
+      }
+    };
+
+    if (classes.length > 0) {
+      fetchEnrollmentCounts();
+    }
+  }, [classes]);
 
   const handleCellClick = (timeSlot: TimeSlot, dayOfWeek: number) => {
     if (!canViewClasses) return;
@@ -143,23 +164,32 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                 {t("schedule.table.room", { room: doubleClass.room })}
               </div>
             )}
-            <div className="class-tags">
-              <GradesRangeTag grades={doubleClass.grades} color="green" />
-              {doubleClass.isMandatory && (
-                <Tag color="red">{t("schedule.table.mandatoryTag")}</Tag>
-              )}
-              <DoubleLessonTag />
-            </div>
             <div
               className="continuation-text"
               style={{
-                marginTop: 4,
+                marginBottom: 4,
                 fontSize: "10px",
                 fontStyle: "italic",
                 color: "#fa8c16",
                 textAlign: "center",
               }}>
               {t("schedule.table.continuationText")}
+            </div>
+            <div className="class-labels-row">
+              <div className="class-enrollment-labels">
+                <div className="class-tags">
+                  <GradesRangeTag grades={doubleClass.grades} color="green" />
+                  {doubleClass.isMandatory && (
+                    <Tag color="red">{t("schedule.table.mandatoryTag")}</Tag>
+                  )}
+                  <DoubleLessonTag />
+                </div>
+              </div>
+              <div className="class-enrollment-icon">
+                <EnrollmentCount
+                  count={enrollmentCounts.get(doubleClass.id) || 0}
+                />
+              </div>
             </div>
           </Card>
         </div>
@@ -240,12 +270,23 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                     {t("schedule.table.room", { room: cls.room })}
                   </div>
                 )}
-                <div className="class-tags">
-                  <GradesRangeTag grades={cls.grades} color={tagColor} />
-                  {cls.isMandatory && (
-                    <Tag color="red">{t("schedule.table.mandatoryTag")}</Tag>
-                  )}
-                  {isDoubleLesson && <DoubleLessonTag />}
+                <div className="class-labels-row">
+                  <div className="class-enrollment-labels">
+                    <div className="class-tags">
+                      <GradesRangeTag grades={cls.grades} color={tagColor} />
+                      {cls.isMandatory && (
+                        <Tag color="red">
+                          {t("schedule.table.mandatoryTag")}
+                        </Tag>
+                      )}
+                      {isDoubleLesson && <DoubleLessonTag />}
+                    </div>
+                  </div>
+                  <div className="class-enrollment-icon">
+                    <EnrollmentCount
+                      count={enrollmentCounts.get(cls.id) || 0}
+                    />
+                  </div>
                 </div>
               </Card>
             );

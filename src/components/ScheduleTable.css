@@ -419,3 +419,26 @@
     box-shadow: 0 0 12px rgba(24, 144, 255, 0.5);
   }
 }
+
+/* Labels and enrollment layout */
+.class-labels-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.class-enrollment-icon {
+  width: 10%;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-self: flex-end;
+}
+
+.class-enrollment-labels {
+  width: 90%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

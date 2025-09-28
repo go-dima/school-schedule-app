@@ -9,11 +9,12 @@ import {
   Spin,
   Modal,
   message,
-  Popconfirm,
   Tag,
   Select,
   Row,
   Col,
+  Dropdown,
+  MenuProps,
 } from "antd";
 import {
   PlusOutlined,
@@ -21,6 +22,7 @@ import {
   DeleteOutlined,
   ReloadOutlined,
   CloseOutlined,
+  MoreOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useTranslation } from "react-i18next";
@@ -39,6 +41,8 @@ import ClassForm from "../components/ClassForm";
 import "./ClassManagementPage.css";
 import { GetGradeName, GetGradeNameShort } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
+import { EnrollmentCount } from "@/elements/EnrollmentCount";
+import { EnrollmentService } from "../services/enrollmentService";
 
 const { Title } = Typography;
 
@@ -58,6 +62,9 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
     null
   );
   const [submitting, setSubmitting] = useState(false);
+  const [enrollmentCounts, setEnrollmentCounts] = useState<Map<string, number>>(
+    new Map()
+  );
 
   // Filter states
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
@@ -108,13 +115,15 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
     setError(null);
 
     try {
-      const [classesData, timeSlotsData] = await Promise.all([
+      const [classesData, timeSlotsData, enrollmentData] = await Promise.all([
         classesApi.getClasses(),
         timeSlotsApi.getTimeSlots(),
+        EnrollmentService.getClassEnrollmentCounts(true), // Force refresh
       ]);
 
       setClasses(classesData);
       setTimeSlots(timeSlotsData);
+      setEnrollmentCounts(enrollmentData);
     } catch (err) {
       setError(
         err instanceof Error
@@ -283,6 +292,15 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
         getTimeSlotDisplay(timeSlot, record),
     },
     {
+      title: t("classManagement.table.enrollmentColumn"),
+      key: "enrollment",
+      width: 100,
+      align: "center" as const,
+      render: (_, record) => (
+        <EnrollmentCount count={enrollmentCounts.get(record.id) || 0} />
+      ),
+    },
+    {
       title: t("classManagement.table.typeColumn"),
       key: "classType",
       width: 120,
@@ -315,28 +333,49 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
     {
       title: t("classManagement.table.actionsColumn"),
       key: "actions",
-      width: 120,
-      render: (_, record) => (
-        <Space direction="vertical">
-          <Button
-            type="link"
-            icon={<EditOutlined />}
-            onClick={() => handleEditClass(record)}
-            size="small">
-            {t("classManagement.table.editButton")}
-          </Button>
-          <Popconfirm
-            title={t("classManagement.table.deleteConfirmTitle")}
-            description={t("classManagement.table.deleteConfirmDescription")}
-            onConfirm={() => handleDeleteClass(record.id)}
-            okText={t("classManagement.table.confirmYes")}
-            cancelText={t("classManagement.table.confirmNo")}>
-            <Button type="link" icon={<DeleteOutlined />} danger size="small">
-              {t("classManagement.table.deleteButton")}
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
+      width: 60,
+      render: (_, record) => {
+        const menuItems: MenuProps["items"] = [
+          {
+            key: "edit",
+            label: t("classManagement.table.editButton"),
+            icon: <EditOutlined />,
+            onClick: () => handleEditClass(record),
+          },
+          {
+            type: "divider",
+          },
+          {
+            key: "delete",
+            label: t("classManagement.table.deleteButton"),
+            icon: <DeleteOutlined />,
+            danger: true,
+            onClick: () => {
+              Modal.confirm({
+                title: t("classManagement.table.deleteConfirmTitle"),
+                content: t("classManagement.table.deleteConfirmDescription"),
+                okText: t("classManagement.table.confirmYes"),
+                cancelText: t("classManagement.table.confirmNo"),
+                onOk: () => handleDeleteClass(record.id),
+              });
+            },
+          },
+        ];
+
+        return (
+          <Dropdown
+            menu={{ items: menuItems }}
+            trigger={["click"]}
+            placement="bottomLeft">
+            <Button
+              type="text"
+              icon={<MoreOutlined />}
+              size="small"
+              title={t("classManagement.table.actions.more")}
+            />
+          </Dropdown>
+        );
+      },
     },
   ];
 

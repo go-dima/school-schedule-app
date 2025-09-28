@@ -7,11 +7,12 @@ import {
   Space,
   Typography,
   message,
-  Popconfirm,
   Spin,
   Empty,
   Tag,
   Select,
+  Dropdown,
+  MenuProps,
 } from "antd";
 import { useTranslation } from "react-i18next";
 import {
@@ -20,6 +21,7 @@ import {
   DeleteOutlined,
   UserOutlined,
   UserDeleteOutlined,
+  MoreOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { ChildForm } from "../components/ChildForm";
@@ -223,28 +225,49 @@ const StudentsPage: React.FC = () => {
     {
       title: t("students.table.actions"),
       key: "actions",
-      width: 150,
-      render: (_, record) => (
-        <Space>
-          <Button
-            type="text"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => openEditModal(record)}>
-            {t("students.page.editButton")}
-          </Button>
-          <Popconfirm
-            title={t("students.page.deleteConfirmTitle")}
-            description={t("students.page.deleteConfirmDescription")}
-            onConfirm={() => handleDeleteChild(record.id)}
-            okText={t("students.page.confirmDelete")}
-            cancelText={t("common.buttons.cancel")}>
-            <Button type="text" size="small" danger icon={<DeleteOutlined />}>
-              {t("students.page.removeButton")}
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
+      width: 60,
+      render: (_, record) => {
+        const menuItems: MenuProps["items"] = [
+          {
+            key: "edit",
+            label: t("students.page.editButton"),
+            icon: <EditOutlined />,
+            onClick: () => openEditModal(record),
+          },
+          {
+            type: "divider",
+          },
+          {
+            key: "delete",
+            label: t("students.page.removeButton"),
+            icon: <DeleteOutlined />,
+            danger: true,
+            onClick: () => {
+              Modal.confirm({
+                title: t("students.page.deleteConfirmTitle"),
+                content: t("students.page.deleteConfirmDescription"),
+                okText: t("students.page.confirmDelete"),
+                cancelText: t("common.buttons.cancel"),
+                onOk: () => handleDeleteChild(record.id),
+              });
+            },
+          },
+        ];
+
+        return (
+          <Dropdown
+            menu={{ items: menuItems }}
+            trigger={["click"]}
+            placement="bottomLeft">
+            <Button
+              type="text"
+              icon={<MoreOutlined />}
+              size="small"
+              title={t("students.table.actions")}
+            />
+          </Dropdown>
+        );
+      },
     },
   ];
 
