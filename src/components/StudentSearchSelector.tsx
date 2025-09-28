@@ -42,18 +42,21 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
   const [internalSearchTerm, setInternalSearchTerm] = useState<string>("");
 
   // Use controlled value if provided (search mode), otherwise internal state (select mode)
-  // In select mode, if a child is selected, show their name
+  // In select mode, show selected child name only if user hasn't started typing
   const searchTerm =
     mode === "search"
       ? value || ""
-      : selectedChildId && mode === "select"
-        ? (() => {
-            const selectedChild = children.find(c => c.id === selectedChildId);
-            return selectedChild
-              ? `${selectedChild.firstName} ${selectedChild.lastName}`
-              : internalSearchTerm;
-          })()
-        : internalSearchTerm;
+      : internalSearchTerm ||
+        (selectedChildId && mode === "select"
+          ? (() => {
+              const selectedChild = children.find(
+                c => c.id === selectedChildId
+              );
+              return selectedChild
+                ? `${selectedChild.firstName} ${selectedChild.lastName}`
+                : "";
+            })()
+          : "");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Child | undefined>();
   const [addLoading, setAddLoading] = useState(false);
@@ -164,9 +167,20 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
       onSearchChange?.(value);
     } else {
       setInternalSearchTerm(value);
-      // Handle clear selection when value is empty (user clicked X button)
+      // Handle clear selection when value is empty (user clicked X button or cleared manually)
       if (!value && selectedChildId && onChildSelect) {
         onChildSelect(undefined);
+      }
+      // If user starts typing and there's a selected child, clear the selection
+      else if (value && selectedChildId && onChildSelect) {
+        const selectedChild = children.find(c => c.id === selectedChildId);
+        const selectedChildName = selectedChild
+          ? `${selectedChild.firstName} ${selectedChild.lastName}`
+          : "";
+        // Only clear if the typed value is different from the selected child's name
+        if (value !== selectedChildName) {
+          onChildSelect(undefined);
+        }
       }
     }
   };
@@ -220,9 +234,13 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
         onSelect={handleSearchSelect}
         onChange={handleSearchChange}
         onFocus={() => {
-          // Ensure dropdown shows all options when focused (clicked)
-          if (mode === "select" && !searchTerm) {
-            setInternalSearchTerm("");
+          // When user focuses on the input, prepare for searching
+          if (mode === "select") {
+            // If a child is selected and user focuses, allow them to start typing immediately
+            if (selectedChildId && !internalSearchTerm) {
+              // Don't clear the selection yet, but prepare for typing
+              setInternalSearchTerm("");
+            }
           }
         }}
         placeholder={placeholder}
