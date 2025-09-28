@@ -1,0 +1,17 @@
+This document describes the features related to enrollment displays in our system.
+
+- Schedule page:
+    - Each course block will show the number of enrolled students with a user icon.
+    - The number will be placed next to the course labels.
+
+- Class management page:
+    - After the time column, display the number of enrolled students with a user icon.
+
+
+- Supporting changes
+    - The table actions (edit, delete) will be moved from the column to a drop down menu on the left (since we are using RTL) of the row.
+      Make the changes for both the students page and class management page.
+
+- Guidelines
+    - Use translation keys for all new text.
+    - Re-use components and move common code to shared components. Use elements dir for simple components, components dir for complex components.
