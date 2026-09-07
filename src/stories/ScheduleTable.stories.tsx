@@ -48,8 +48,7 @@ const mockClasses: ClassWithTimeSlot[] = [
     title: "מתמטיקה",
     description: "שיעור מתמטיקה לכיתה ג",
     teacher: "מורה שרה",
-    dayOfWeek: 0,
-    timeSlotId: "1",
+    slots: [{ dayOfWeek: 0, timeSlotId: "1", timeSlot: mockTimeSlots[0] }],
     grades: [3],
     isMandatory: true,
     isDouble: false,
@@ -57,15 +56,16 @@ const mockClasses: ClassWithTimeSlot[] = [
     scope: "test",
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z",
-    timeSlot: mockTimeSlots[0],
   },
   {
     id: "class-2",
     title: "עברית",
     description: "שיעור עברית לכיתה ג - שיעור כפול",
     teacher: "מורה רחל",
-    dayOfWeek: 0,
-    timeSlotId: "2",
+    slots: [
+      { dayOfWeek: 0, timeSlotId: "2", timeSlot: mockTimeSlots[1] },
+      { dayOfWeek: 0, timeSlotId: "3", timeSlot: mockTimeSlots[2] },
+    ],
     grades: [3],
     isMandatory: true,
     isDouble: true,
@@ -73,15 +73,13 @@ const mockClasses: ClassWithTimeSlot[] = [
     scope: "test",
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z",
-    timeSlot: mockTimeSlots[1],
   },
   {
     id: "class-3",
     title: "אנגלית",
     description: "שיעור אנגלית לכיתה ד",
     teacher: "מורה דוד",
-    dayOfWeek: 0,
-    timeSlotId: "1",
+    slots: [{ dayOfWeek: 0, timeSlotId: "1", timeSlot: mockTimeSlots[0] }],
     grades: [4],
     isMandatory: false,
     isDouble: false,
@@ -89,15 +87,13 @@ const mockClasses: ClassWithTimeSlot[] = [
     scope: "test",
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z",
-    timeSlot: mockTimeSlots[0],
   },
   {
     id: "class-4",
     title: "מדעים",
     description: "שיעור מדעים לכיתה ה",
     teacher: "מורה מיכל",
-    dayOfWeek: 0,
-    timeSlotId: "3",
+    slots: [{ dayOfWeek: 0, timeSlotId: "3", timeSlot: mockTimeSlots[2] }],
     grades: [5],
     isMandatory: false,
     isDouble: false,
@@ -105,15 +101,12 @@ const mockClasses: ClassWithTimeSlot[] = [
     scope: "test",
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z",
-    timeSlot: mockTimeSlots[2],
   },
 ];
 
 // Build the weekly schedule properly to handle double lessons
-const mockWeeklySchedule: WeeklySchedule = ScheduleService.buildWeeklySchedule(
-  mockClasses,
-  mockTimeSlots
-);
+const mockWeeklySchedule: WeeklySchedule =
+  ScheduleService.buildWeeklySchedule(mockClasses);
 
 export const Default: Story = {
   args: {

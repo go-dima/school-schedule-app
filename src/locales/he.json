@@ -208,6 +208,10 @@
       "timeRequired": "נא לבחור שעת השיעור",
       "timePlaceholder": "בחר שעה",
       "selectDayFirst": "בחר יום תחילה",
+      "slotsLabel": "זמני השיעור",
+      "slotsRequired": "נא לבחור לפחות חלון זמן אחד",
+      "slotsDuplicate": "לא ניתן לבחור אותו חלון פעמיים",
+      "addSlotButton": "הוסף חלון זמן",
       "createButton": "צור שיעור",
       "updateButton": "עדכן שיעור"
     },

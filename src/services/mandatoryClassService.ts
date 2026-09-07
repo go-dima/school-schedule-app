@@ -4,6 +4,7 @@
  */
 
 import { scheduleApi, classesApi } from "./api";
+import { ScheduleService } from "./scheduleService";
 import type { ClassWithTimeSlot, UserRoleData } from "../types";
 import log from "../utils/logger";
 
@@ -119,9 +120,8 @@ export class MandatoryClassService {
 
       return mandatoryClasses.filter(
         mandatoryClass =>
-          mandatoryClass.dayOfWeek === newClass.dayOfWeek &&
-          mandatoryClass.timeSlotId === newClass.timeSlotId &&
-          mandatoryClass.id !== newClass.id
+          mandatoryClass.id !== newClass.id &&
+          ScheduleService.slotsOverlap(mandatoryClass.slots, newClass.slots)
       );
     } catch (error) {
       console.error("Failed to check mandatory class conflicts:", error);

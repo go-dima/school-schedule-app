@@ -10,7 +10,12 @@ import {
   isBreakTimeSlot,
   isMeetingTimeSlot,
 } from "../utils/timeSlots";
-import type { TimeSlot, ClassWithTimeSlot, WeeklySchedule } from "../types";
+import type {
+  TimeSlot,
+  ClassWithTimeSlot,
+  ScheduleSelectionWithClass,
+  WeeklySchedule,
+} from "../types";
 import ClassSelectionDrawer from "./ClassSelectionDrawer";
 import "./ScheduleTable.css";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
@@ -24,6 +29,7 @@ interface ScheduleTableProps {
   weeklySchedule: WeeklySchedule;
   userGrade?: number;
   selectedClasses?: string[];
+  userSelections?: ScheduleSelectionWithClass[];
   onClassSelect?: (classId: string) => void;
   onClassUnselect?: (classId: string) => void;
   canSelectClasses?: boolean;
@@ -45,6 +51,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   weeklySchedule,
   userGrade,
   selectedClasses = [],
+  userSelections = [],
   onClassSelect,
   onClassUnselect,
   canSelectClasses = false,
@@ -129,12 +136,20 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     const isHighlighted = shouldHighlightTimeSlot(timeSlot, dayOfWeek);
     const highlightClass = isHighlighted ? "search-highlighted" : "";
 
-    // Separate primary classes from continuation classes
-    const primaryClasses = filteredClasses.filter(
-      cls => cls.timeSlotId === timeSlot.id
+    // A "continuation" cell is specifically a Double Lesson's second slot —
+    // any other non-primary slot of a multi-slot class (e.g. a class meeting
+    // on two separate days) still gets a full card, since it isn't a
+    // continuation of anything.
+    const continuationClasses = filteredClasses.filter(cls =>
+      ScheduleService.isDoubleLessonSecondSlot(
+        cls,
+        dayOfWeek,
+        timeSlot.id,
+        timeSlots
+      )
     );
-    const continuationClasses = filteredClasses.filter(
-      cls => cls.isDouble && cls.timeSlotId !== timeSlot.id
+    const primaryClasses = filteredClasses.filter(
+      cls => !continuationClasses.includes(cls)
     );
 
     // Handle double lesson continuations - but only for SELECTED classes
@@ -463,44 +478,23 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           timeSlot={selectedTimeSlot}
           dayOfWeek={selectedDayOfWeek}
           timeSlots={timeSlots}
-          classes={(() => {
-            // Filter classes from the original classes array to get proper ClassWithTimeSlot objects
-            return classes.filter(cls => {
-              // Filter by grade first
-              if (userGrade && !cls.grades?.includes(userGrade)) {
-                return false;
-              }
-
-              // Filter by day
-              if (cls.dayOfWeek !== selectedDayOfWeek) {
-                return false;
-              }
-
-              const dayTimeSlots = timeSlots
-                .filter(slot => isLessonTimeSlot(slot))
-                .sort((a, b) => a.startTime.localeCompare(b.startTime));
-
-              const currentTimeSlotIndex = dayTimeSlots.findIndex(
-                slot => slot.id === selectedTimeSlot.id
-              );
-
-              // 1. Show classes that directly start in this time slot
-              if (cls.timeSlotId === selectedTimeSlot.id) {
-                return true;
-              }
-
-              // 2. Show double lessons from the previous slot that extend into this slot
-              if (currentTimeSlotIndex > 0) {
-                const previousSlot = dayTimeSlots[currentTimeSlotIndex - 1];
-                if (cls.timeSlotId === previousSlot.id && cls.isDouble) {
-                  return true;
-                }
-              }
-
+          classes={classes.filter(cls => {
+            if (userGrade && !cls.grades?.includes(userGrade)) {
               return false;
-            });
-          })()}
+            }
+
+            return cls.slots.some(
+              slot =>
+                slot.dayOfWeek === selectedDayOfWeek &&
+                slot.timeSlotId === selectedTimeSlot.id
+            );
+          })}
           selectedClasses={selectedClasses}
+          conflictingClasses={classes.filter(
+            cls =>
+              !selectedClasses.includes(cls.id) &&
+              ScheduleService.hasTimeConflict(userSelections, cls)
+          )}
           onClassSelect={onClassSelect}
           onClassUnselect={onClassUnselect}
           canSelectClasses={canSelectClasses}

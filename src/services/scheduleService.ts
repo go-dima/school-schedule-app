@@ -1,120 +1,120 @@
 import type {
+  ClassSlot,
+  ClassSlotWithTimeSlot,
   ClassWithTimeSlot,
   ScheduleSelectionWithClass,
   TimeSlot,
   WeeklySchedule,
 } from "../types";
-import log from "../utils/logger";
 import { isLessonTimeSlot } from "../utils/timeSlots";
 
 export class ScheduleService {
-  static buildWeeklySchedule(
-    classes: ClassWithTimeSlot[],
-    allTimeSlots: TimeSlot[] = []
-  ): WeeklySchedule {
+  static slotKey(slot: ClassSlot): string {
+    return `${slot.dayOfWeek}:${slot.timeSlotId}`;
+  }
+
+  static buildWeeklySchedule(classes: ClassWithTimeSlot[]): WeeklySchedule {
     const schedule: WeeklySchedule = {};
 
     classes.forEach(cls => {
-      const dayOfWeek = cls.dayOfWeek;
-      const timeSlotId = cls.timeSlotId;
+      cls.slots.forEach(slot => {
+        const { dayOfWeek, timeSlotId } = slot;
 
-      if (!schedule[dayOfWeek]) {
-        schedule[dayOfWeek] = {};
-      }
-
-      if (!schedule[dayOfWeek][timeSlotId]) {
-        schedule[dayOfWeek][timeSlotId] = [];
-      }
-
-      schedule[dayOfWeek][timeSlotId].push(cls);
-
-      // For double lessons, also add to the next consecutive time slot
-      if (cls.isDouble && allTimeSlots.length) {
-        const nextTimeSlot = this.getNextConsecutiveTimeSlot(
-          cls.timeSlot,
-          allTimeSlots
-        );
-        if (nextTimeSlot) {
-          if (!schedule[dayOfWeek][nextTimeSlot.id]) {
-            schedule[dayOfWeek][nextTimeSlot.id] = [];
-          }
-          // Add the class to the second slot as well, but mark it as continuation
-          schedule[dayOfWeek][nextTimeSlot.id].push({
-            ...cls,
-            // We could add a flag here but the rendering logic handles it
-          });
-        } else {
-          log.warn(`No next time slot found for double lesson "${cls.title}"`);
+        if (!schedule[dayOfWeek]) {
+          schedule[dayOfWeek] = {};
         }
-      }
+
+        if (!schedule[dayOfWeek][timeSlotId]) {
+          schedule[dayOfWeek][timeSlotId] = [];
+        }
+
+        schedule[dayOfWeek][timeSlotId].push(cls);
+      });
     });
 
     return schedule;
   }
 
-  static getConflictingClasses(
-    userSelections: ScheduleSelectionWithClass[],
-    newClass: ClassWithTimeSlot,
-    allTimeSlots: TimeSlot[] = []
-  ): ClassWithTimeSlot[] {
-    const conflicts: ClassWithTimeSlot[] = [];
+  static getPrimarySlot(cls: ClassWithTimeSlot): ClassSlotWithTimeSlot {
+    return [...cls.slots].sort(
+      (a, b) =>
+        a.dayOfWeek - b.dayOfWeek ||
+        a.timeSlot.startTime.localeCompare(b.timeSlot.startTime)
+    )[0];
+  }
 
-    // Check conflicts in the primary time slot
-    const primaryConflicts = userSelections
-      .filter(
-        selection =>
-          selection.class.dayOfWeek === newClass.dayOfWeek &&
-          selection.class.timeSlotId === newClass.timeSlotId &&
-          selection.class.id !== newClass.id
-      )
-      .map(selection => selection.class);
+  static isPrimarySlot(
+    cls: ClassWithTimeSlot,
+    dayOfWeek: number,
+    timeSlotId: string
+  ): boolean {
+    const primary = this.getPrimarySlot(cls);
+    return primary.dayOfWeek === dayOfWeek && primary.timeSlotId === timeSlotId;
+  }
 
-    conflicts.push(...primaryConflicts);
+  static slotsOverlap(a: ClassSlot[], b: ClassSlot[]): boolean {
+    const aKeys = new Set(a.map(this.slotKey));
+    return b.some(slot => aKeys.has(this.slotKey(slot)));
+  }
 
-    // If the new class is a double lesson, check conflicts in the next consecutive slot
-    if (newClass.isDouble && allTimeSlots.length > 0) {
-      const nextTimeSlot = this.getNextConsecutiveTimeSlot(
-        newClass.timeSlot,
-        allTimeSlots
+  /** Strips a hydrated slot (or form row) down to the raw {dayOfWeek, timeSlotId} pair stored on a class. */
+  static toRawSlots(slots: ClassSlot[]): ClassSlot[] {
+    return slots.map(({ dayOfWeek, timeSlotId }) => ({
+      dayOfWeek,
+      timeSlotId,
+    }));
+  }
+
+  /**
+   * The specific pair of slots a Double Lesson occupies: some slot in
+   * `cls.slots` plus its immediately-following lesson slot (same day), where
+   * both are actually present. Found by adjacency, not array position —
+   * `cls.slots` may also carry other, unrelated slots that sort earlier.
+   */
+  static getDoubleLessonPair(
+    cls: ClassWithTimeSlot,
+    allTimeSlots: TimeSlot[]
+  ): [ClassSlotWithTimeSlot, ClassSlotWithTimeSlot] | null {
+    if (!cls.isDouble) return null;
+
+    for (const slot of cls.slots) {
+      const next = this.getNextConsecutiveTimeSlot(slot.timeSlot, allTimeSlots);
+      if (!next) continue;
+
+      const secondSlot = cls.slots.find(
+        s => s.dayOfWeek === slot.dayOfWeek && s.timeSlotId === next.id
       );
-      if (nextTimeSlot) {
-        const nextSlotConflicts = userSelections
-          .filter(
-            selection =>
-              selection.class.dayOfWeek === newClass.dayOfWeek &&
-              selection.class.timeSlotId === nextTimeSlot.id &&
-              selection.class.id !== newClass.id
-          )
-          .map(selection => selection.class);
-
-        conflicts.push(...nextSlotConflicts);
+      if (secondSlot) {
+        return [slot, secondSlot];
       }
     }
 
-    // Also check if any existing double lessons would conflict with this class
-    const existingDoubleConflicts = userSelections
-      .filter(selection => {
-        const existingClass = selection.class;
-        if (!existingClass.isDouble) return false;
+    return null;
+  }
 
-        // Check if the new class would be in the second slot of an existing double lesson
-        if (allTimeSlots.length > 0) {
-          const existingNextSlot = this.getNextConsecutiveTimeSlot(
-            existingClass.timeSlot,
-            allTimeSlots
-          );
-          return (
-            existingNextSlot &&
-            existingNextSlot.id === newClass.timeSlotId &&
-            existingClass.dayOfWeek === newClass.dayOfWeek &&
-            existingClass.id !== newClass.id
-          );
-        }
-        return false;
-      })
+  static isDoubleLessonSecondSlot(
+    cls: ClassWithTimeSlot,
+    dayOfWeek: number,
+    timeSlotId: string,
+    allTimeSlots: TimeSlot[]
+  ): boolean {
+    const pair = this.getDoubleLessonPair(cls, allTimeSlots);
+    if (!pair) return false;
+    const [, second] = pair;
+    return second.dayOfWeek === dayOfWeek && second.timeSlotId === timeSlotId;
+  }
+
+  static getConflictingClasses(
+    userSelections: ScheduleSelectionWithClass[],
+    newClass: ClassWithTimeSlot
+  ): ClassWithTimeSlot[] {
+    const conflicts = userSelections
+      .filter(
+        selection =>
+          selection.class.id !== newClass.id &&
+          this.slotsOverlap(newClass.slots, selection.class.slots)
+      )
       .map(selection => selection.class);
-
-    conflicts.push(...existingDoubleConflicts);
 
     // Remove duplicates
     return conflicts.filter(
@@ -125,13 +125,9 @@ export class ScheduleService {
 
   static hasTimeConflict(
     userSelections: ScheduleSelectionWithClass[],
-    newClass: ClassWithTimeSlot,
-    allTimeSlots: TimeSlot[] = []
+    newClass: ClassWithTimeSlot
   ): boolean {
-    return (
-      this.getConflictingClasses(userSelections, newClass, allTimeSlots)
-        .length > 0
-    );
+    return this.getConflictingClasses(userSelections, newClass).length > 0;
   }
 
   static getNextConsecutiveTimeSlot(
@@ -154,18 +150,6 @@ export class ScheduleService {
     }
 
     return null;
-  }
-
-  static getClassesByTimeSlot(
-    classes: ClassWithTimeSlot[],
-    timeSlotId: string,
-    grade?: number
-  ): ClassWithTimeSlot[] {
-    return classes.filter(
-      cls =>
-        cls.timeSlotId === timeSlotId &&
-        (grade === undefined || cls.grades?.includes(grade))
-    );
   }
 
   static formatTimeRange(startTime: string, endTime: string): string {

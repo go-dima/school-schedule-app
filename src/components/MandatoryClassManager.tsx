@@ -93,7 +93,6 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
           title: cls.title,
           description: cls.description,
           teacher: cls.teacher,
-          timeSlotId: cls.timeSlotId,
           grades: cls.grades,
           isMandatory: cls.isMandatory,
         });
@@ -184,19 +183,22 @@ const MandatoryClassManager: React.FC<MandatoryClassManagerProps> = ({
       title: t("mandatoryClassManager.table.timeColumn"),
       key: "timeSlot",
       width: 120,
-      render: (_, record: ClassMandatoryStatus) => (
-        <Space direction="vertical" size="small">
-          <Text style={{ fontSize: "12px" }}>
-            {ScheduleService.formatTimeRange(
-              record.timeSlot.startTime,
-              record.timeSlot.endTime
-            )}
-          </Text>
-          <Text type="secondary" style={{ fontSize: "11px" }}>
-            {record.timeSlot.name}
-          </Text>
-        </Space>
-      ),
+      render: (_, record: ClassMandatoryStatus) => {
+        const primaryTimeSlot = ScheduleService.getPrimarySlot(record).timeSlot;
+        return (
+          <Space direction="vertical" size="small">
+            <Text style={{ fontSize: "12px" }}>
+              {ScheduleService.formatTimeRange(
+                primaryTimeSlot.startTime,
+                primaryTimeSlot.endTime
+              )}
+            </Text>
+            <Text type="secondary" style={{ fontSize: "11px" }}>
+              {primaryTimeSlot.name}
+            </Text>
+          </Space>
+        );
+      },
     },
     {
       title: t("mandatoryClassManager.table.mandatoryColumn"),

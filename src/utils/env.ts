@@ -15,11 +15,21 @@ const requiredEnvVars = [
   "VITE_SUPABASE_ANON_KEY",
 ] as const;
 
+// import.meta.env is populated by Vite (browser/dev-server/build). Scripts run
+// directly under Node (e.g. via tsx) don't go through Vite, so fall back to
+// process.env there.
+/* eslint-disable no-undef -- ImportMetaEnv is declared via `declare global`
+   below; core no-undef doesn't see ambient TS types in type positions, tsc does. */
+const runtimeEnv: Partial<Record<keyof ImportMetaEnv, string>> =
+  import.meta.env ??
+  (process.env as Partial<Record<keyof ImportMetaEnv, string>>);
+/* eslint-enable no-undef */
+
 function validateEnvVars(): void {
   const missing: string[] = [];
 
   for (const envVar of requiredEnvVars) {
-    if (!import.meta.env[envVar]) {
+    if (!runtimeEnv[envVar]) {
       missing.push(envVar);
     }
   }
@@ -37,13 +47,11 @@ export function getEnvironmentConfig(): EnvironmentConfig {
   validateEnvVars();
 
   return {
-    supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
-    supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-    appTitle:
-      import.meta.env.VITE_APP_TITLE || "School Schedule Management System",
+    supabaseUrl: runtimeEnv.VITE_SUPABASE_URL!,
+    supabaseAnonKey: runtimeEnv.VITE_SUPABASE_ANON_KEY!,
+    appTitle: runtimeEnv.VITE_APP_TITLE || "School Schedule Management System",
     isDev:
-      import.meta.env.VITE_DEV_MODE === "true" ||
-      import.meta.env.MODE === "development",
+      runtimeEnv.VITE_DEV_MODE === "true" || runtimeEnv.MODE === "development",
   };
 }
 
