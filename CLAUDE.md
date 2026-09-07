@@ -30,6 +30,7 @@ This is a school schedule management application for elementary school (grades 1
 - **Multi-role Users**: Same user can act as parent, teacher, or admin with role switching
 
 ### Role Permissions
+
 - **Admin**: Edit time slots, manage classes, approve signups, modify user roles
 - **Parent**: View/modify child's schedule
 - **Child**: View own schedule
@@ -56,3 +57,17 @@ This is a school schedule management application for elementary school (grades 1
 - Pre-defined time slots customizable by admin
 - Drawer opens from left side for class details
 - Extensive documentation required for usage and local development
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues (`go-dima/school-schedule-app`). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout: `CONTEXT.md` at repo root + `docs/adr/`. See `docs/agents/domain.md`.
