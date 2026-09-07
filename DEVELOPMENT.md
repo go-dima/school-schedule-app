@@ -3,6 +3,7 @@
 ## Development Environment Setup
 
 ### System Requirements
+
 - Node.js 18.0.0 or higher
 - npm 8.0.0 or higher
 - Git
@@ -11,20 +12,24 @@
 ### Initial Setup
 
 1. **Clone the Project**
+
    ```bash
    git clone <repository-url>
    cd school-schedule
    ```
 
 2. **Install Dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Create Environment File**
+
    ```bash
    cp .env.example .env.local
    ```
+
    Edit the file with your actual Supabase details.
 
 4. **Setup Supabase**
@@ -65,34 +70,36 @@ migrations/
 ├── 001_initial_schema.sql         # Core database schema
 ├── 002_rls_policies.sql           # Row Level Security policies
 ├── 003_triggers_functions.sql     # Database triggers and functions
-└── 004_sample_data.sql            # Sample data and initial time slots
+├── 004_sample_data.sql            # Sample data and initial time slots
+└── ...                             # See migrations/ for the current full list
 ```
 
 ### Running Migrations
 
 1. **Check Migration Status**
+
    ```bash
    npm run migrate:status
    ```
+
    This shows which migrations have been applied and which are pending.
 
 2. **Get Migration Instructions**
+
    ```bash
    npm run migrate
    ```
+
    This displays detailed instructions for running pending migrations manually.
 
 3. **Manual Migration Process**
    - Open your Supabase project's SQL Editor
-   - Run each pending migration file in order:
-     1. `001_initial_schema.sql` - Creates tables and basic structure
-     2. `002_rls_policies.sql` - Sets up security policies
-     3. `003_triggers_functions.sql` - Adds database functions
-     4. `004_sample_data.sql` - Populates initial data
+   - Run each pending migration file from `migrations/` in numeric order (see `migrations/migrations.json` for the full, current list and descriptions)
 
 ### Migration Dependencies
 
 The migrations have built-in dependency tracking:
+
 - Each migration declares its dependencies in `migrations.json`
 - The system ensures migrations run in the correct order
 - Circular dependencies are detected and prevented
@@ -102,12 +109,14 @@ The migrations have built-in dependency tracking:
 When adding new features that require database changes:
 
 1. **Create Migration File**
+
    ```bash
    # Example: 005_add_new_feature.sql
    touch migrations/005_add_new_feature.sql
    ```
 
 2. **Update migrations.json**
+
    ```json
    {
      "migrations": [
@@ -124,19 +133,20 @@ When adding new features that require database changes:
    ```
 
 3. **Write SQL**
+
    ```sql
    -- 005_add_new_feature.sql
    -- Add new feature tables and columns
-   
+
    CREATE TABLE IF NOT EXISTS public.new_feature (
      id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
      name TEXT NOT NULL,
      created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
    );
-   
+
    -- Enable RLS
    ALTER TABLE public.new_feature ENABLE ROW LEVEL SECURITY;
-   
+
    -- Add policies
    CREATE POLICY "Users can view new_feature" ON public.new_feature
    FOR SELECT USING (true);
@@ -154,6 +164,7 @@ When adding new features that require database changes:
 ### Sample Data
 
 The `004_sample_data.sql` migration includes:
+
 - Initial time slots from the school's schedule
 - Sample users with different roles
 - Example classes for demonstration
@@ -163,6 +174,7 @@ This data is helpful for development but should be removed or replaced for produ
 ### Troubleshooting Migrations
 
 **Migration tracking table missing:**
+
 ```sql
 -- Run this in Supabase SQL Editor to create the tracking table
 CREATE TABLE IF NOT EXISTS public.migrations (
@@ -174,16 +186,19 @@ CREATE TABLE IF NOT EXISTS public.migrations (
 ```
 
 **Permission errors:**
+
 - Ensure your Supabase user has sufficient permissions
 - Check that RLS policies allow the current user to run migrations
 
 **Dependency errors:**
+
 - Verify that prerequisite migrations have been applied
 - Check the `migrations.json` file for correct dependency declarations
 
 ## Architecture and Conventions
 
 ### File Structure
+
 - **PascalCase** for components and pages (`ScheduleTable.tsx`)
 - **camelCase** for functions, hooks, and variables (`useAuth`, `handleClick`)
 - **kebab-case** for CSS files (`schedule-table.css`)
@@ -191,6 +206,7 @@ CREATE TABLE IF NOT EXISTS public.migrations (
 ### Writing Components
 
 #### Typical Functional Component
+
 ```typescript
 import React from 'react'
 import { Button } from 'antd'
@@ -202,16 +218,16 @@ interface MyComponentProps {
   disabled?: boolean
 }
 
-const MyComponent: React.FC<MyComponentProps> = ({ 
-  title, 
-  onClick, 
-  disabled = false 
+const MyComponent: React.FC<MyComponentProps> = ({
+  title,
+  onClick,
+  disabled = false
 }) => {
   return (
     <div className="my-component">
-      <Button 
-        type="primary" 
-        onClick={onClick} 
+      <Button
+        type="primary"
+        onClick={onClick}
         disabled={disabled}
       >
         {title}
@@ -224,74 +240,76 @@ export default MyComponent
 ```
 
 ### Custom Hooks
+
 ```typescript
 // hooks/useMyHook.ts
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react";
 
 export function useMyHook(initialValue: string) {
-  const [value, setValue] = useState(initialValue)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [value, setValue] = useState(initialValue);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Logic here...
 
-  return { value, setValue, loading, error }
+  return { value, setValue, loading, error };
 }
 ```
 
 ### Services
+
 - All API calls in service layer
 - Consistent error handling
 - Well-defined TypeScript types
 
 ```typescript
 // services/myService.ts
-import { supabase } from './supabase'
-import type { MyDataType } from '../types'
+import { supabase } from "./supabase";
+import type { MyDataType } from "../types";
 
 export const myService = {
   async getData(): Promise<MyDataType[]> {
-    const { data, error } = await supabase
-      .from('my_table')
-      .select('*')
+    const { data, error } = await supabase.from("my_table").select("*");
 
-    if (error) throw new ApiError(error.message)
-    return data
-  }
-}
+    if (error) throw new ApiError(error.message);
+    return data;
+  },
+};
 ```
 
 ## Working with Storybook
 
 ### Creating New Stories
+
 ```typescript
 // stories/MyComponent.stories.tsx
-import type { Meta, StoryObj } from '@storybook/react'
-import MyComponent from '../components/MyComponent'
+import type { Meta, StoryObj } from "@storybook/react";
+import MyComponent from "../components/MyComponent";
 
 const meta: Meta<typeof MyComponent> = {
-  title: 'Components/MyComponent',
+  title: "Components/MyComponent",
   component: MyComponent,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
-  tags: ['autodocs'],
-}
+  tags: ["autodocs"],
+};
 
-export default meta
-type Story = StoryObj<typeof meta>
+export default meta;
+type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    title: 'Click here',
-    onClick: () => console.log('clicked!'),
+    title: "Click here",
+    onClick: () => console.log("clicked!"),
   },
-}
+};
 ```
 
 ## Testing
 
 ### Unit Tests
+
 ```typescript
 // __tests__/MyComponent.test.tsx
 import { render, screen } from '@testing-library/react'
@@ -301,36 +319,38 @@ import MyComponent from '../components/MyComponent'
 describe('MyComponent', () => {
   test('renders correctly', () => {
     const mockOnClick = vi.fn()
-    
+
     render(
-      <MyComponent 
-        title="Test Title" 
-        onClick={mockOnClick} 
+      <MyComponent
+        title="Test Title"
+        onClick={mockOnClick}
       />
     )
-    
+
     expect(screen.getByText('Test Title')).toBeInTheDocument()
   })
 })
 ```
 
 ### Service Tests
+
 ```typescript
 // __tests__/services/api.test.ts
-import { describe, test, expect, beforeEach } from 'vitest'
-import { myService } from '../services/myService'
+import { describe, test, expect, beforeEach } from "vitest";
+import { myService } from "../services/myService";
 
-describe('MyService', () => {
-  test('fetches data correctly', async () => {
-    const result = await myService.getData()
-    expect(Array.isArray(result)).toBe(true)
-  })
-})
+describe("MyService", () => {
+  test("fetches data correctly", async () => {
+    const result = await myService.getData();
+    expect(Array.isArray(result)).toBe(true);
+  });
+});
 ```
 
 ## Styling and RTL
 
 ### CSS and RTL
+
 - Use CSS logical properties when possible
 - `margin-inline-start` instead of `margin-right`
 - `text-align: start` instead of `text-align: right`
@@ -352,6 +372,7 @@ describe('MyService', () => {
 ```
 
 ### Ant Design and RTL
+
 - All components configured with `direction="rtl"` in ConfigProvider
 - Use Hebrew locale (`heIL`)
 - Always check components look good in RTL
@@ -359,13 +380,17 @@ describe('MyService', () => {
 ## State Management
 
 ### Local State
+
 Use `useState` for local component state:
+
 ```typescript
-const [loading, setLoading] = useState(false)
+const [loading, setLoading] = useState(false);
 ```
 
 ### Global State
+
 Use Context API for global state:
+
 ```typescript
 // contexts/MyContext.tsx
 const MyContext = createContext<MyContextType | undefined>(undefined)
@@ -381,137 +406,147 @@ export function MyProvider({ children }: { children: ReactNode }) {
 ```
 
 ### Server State
+
 Use custom hooks with Supabase:
+
 ```typescript
-const { data, loading, error } = useSchedule(userId)
+const { data, loading, error } = useSchedule(userId);
 ```
 
 ## Working with TypeScript
 
 ### Defining Types
+
 ```typescript
 // types/index.ts
 export interface User {
-  id: string
-  email: string
-  createdAt: string
+  id: string;
+  email: string;
+  createdAt: string;
 }
 
-export type UserRole = 'admin' | 'parent' | 'child' | 'staff'
+export type UserRole = "admin" | "parent" | "child" | "staff";
 
 // Union types for defined states
-export type LoadingState = 'idle' | 'loading' | 'success' | 'error'
+export type LoadingState = "idle" | "loading" | "success" | "error";
 ```
 
 ### Generic Types
+
 ```typescript
 interface ApiResponse<T> {
-  data: T
-  message: string
-  success: boolean
+  data: T;
+  message: string;
+  success: boolean;
 }
 
 // Usage
-const response: ApiResponse<User[]> = await api.getUsers()
+const response: ApiResponse<User[]> = await api.getUsers();
 ```
 
 ## Working with Supabase
 
 ### Row Level Security
+
 Every query must consider RLS policies:
+
 ```typescript
 // ❌ Not good - not secure
-const { data } = await supabase
-  .from('users')
-  .select('*')
+const { data } = await supabase.from("users").select("*");
 
 // ✅ Good - relies on RLS
-const { data } = await supabase
-  .from('users')
-  .select('*')
-  .eq('id', userId) // RLS ensures user only sees themselves
+const { data } = await supabase.from("users").select("*").eq("id", userId); // RLS ensures user only sees themselves
 ```
 
 ### Real-time Subscriptions
+
 ```typescript
 useEffect(() => {
   const subscription = supabase
-    .channel('schedule_changes')
-    .on('postgres_changes', 
-      { event: '*', schema: 'public', table: 'classes' },
-      (payload) => {
+    .channel("schedule_changes")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "classes" },
+      payload => {
         // Handle real-time updates
       }
     )
-    .subscribe()
+    .subscribe();
 
   return () => {
-    subscription.unsubscribe()
-  }
-}, [])
+    subscription.unsubscribe();
+  };
+}, []);
 ```
 
 ## Optimization and Performance
 
 ### Code Splitting
+
 ```typescript
 // Lazy loading pages
-const SchedulePage = lazy(() => import('./pages/SchedulePage'))
+const SchedulePage = lazy(() => import("./pages/SchedulePage"));
 ```
 
 ### Memoization
+
 ```typescript
 // Components
-const MemoizedComponent = memo(MyComponent)
+const MemoizedComponent = memo(MyComponent);
 
 // Computed values
 const expensiveValue = useMemo(() => {
-  return heavyCalculation(data)
-}, [data])
+  return heavyCalculation(data);
+}, [data]);
 
 // Functions
 const handleClick = useCallback(() => {
   // Handle click
-}, [dependency])
+}, [dependency]);
 ```
 
 ## Debugging
 
 ### React DevTools
+
 Install React Developer Tools for inspecting state and props.
 
 ### Supabase Debugging
+
 ```typescript
 // Add logging to queries
-const { data, error } = await supabase
-  .from('table')
-  .select('*')
+const { data, error } = await supabase.from("table").select("*");
 
-console.log('Supabase query:', { data, error })
+console.log("Supabase query:", { data, error });
 ```
 
 ### Network Debugging
+
 Use Network tab in browser to inspect API calls.
 
 ## Best Practices
 
 ### Performance
+
 - Use React.memo for heavy components
 - Lazy load pages not needed immediately
 - Optimize images and static files
 
 ### Accessibility
+
 - Use semantic HTML
 - Add alt texts to images
 - Ensure keyboard navigation
 - Check contrast ratios
 
 ### Security
+
 - Don't expose API keys in client code
 - Use RLS to protect data
 - Validate all user input
 
 ### Code Quality
+
 - Write tests for all new functionality
 - Use strict TypeScript types
 - Follow ESLint rules
@@ -520,6 +555,7 @@ Use Network tab in browser to inspect API calls.
 ## Common Issues and Solutions
 
 ### Supabase Connection Issues
+
 ```bash
 # Check that keys are correct
 echo $VITE_SUPABASE_URL
@@ -527,6 +563,7 @@ echo $VITE_SUPABASE_ANON_KEY
 ```
 
 ### Build Errors
+
 ```bash
 # Clear cache and node_modules
 rm -rf node_modules package-lock.json
@@ -534,6 +571,7 @@ npm install
 ```
 
 ### TypeScript Errors
+
 - Ensure all imports are correct
 - Check that types are defined
 - Use `npm run typecheck` for full check

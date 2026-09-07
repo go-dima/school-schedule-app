@@ -5,18 +5,21 @@ A modern schedule management system for elementary schools (grades 1-6) with ful
 ## Key Features
 
 ### 🏫 Schedule Management
+
 - **Full Week View**: Sunday through Thursday (learning days)
 - **Interactive Class Selection**: Click on cells to open selection drawer
 - **Conflict Detection**: System identifies and warns about time overlaps
 - **Grade Filtering**: Option to display only relevant classes
 
 ### 👥 User and Role Management
+
 - **Multiple Roles**: Admin, Parent, Student, Staff
 - **Role Switching**: Users can switch between different roles
 - **Approval System**: New registrations require admin approval
 - **Multi-Channel Authentication**: Email/password + OAuth (Google)
 
 ### 🔒 Security and Access Control
+
 - **Row Level Security**: Database-level protection
 - **Role-Based Permissions**: Each role sees and can perform appropriate actions
 - **Secure Authentication**: Through Supabase Auth
@@ -24,12 +27,14 @@ A modern schedule management system for elementary schools (grades 1-6) with ful
 ## Tech Stack
 
 ### Frontend
+
 - **React 18** + **TypeScript** - Modern and type-safe framework
 - **Vite** - Fast build tool and dev server
 - **Ant Design** - UI library with full RTL support
 - **Hebrew RTL** - Interface optimized for Hebrew-speaking users
 
 ### Backend
+
 - **Supabase** - Complete Backend-as-a-Service
   - PostgreSQL database
   - Built-in user authentication
@@ -37,6 +42,7 @@ A modern schedule management system for elementary schools (grades 1-6) with ful
   - Row Level Security (RLS)
 
 ### Development & Testing
+
 - **Storybook** - Component development in isolation
 - **Vitest** - Fast unit testing
 - **ESLint** + **TypeScript** - Code quality assurance
@@ -44,19 +50,22 @@ A modern schedule management system for elementary schools (grades 1-6) with ful
 ## Installation and Setup
 
 ### Prerequisites
-- Node.js 18+ 
+
+- Node.js 18+
 - npm or yarn
 - Supabase account
 
 ### Project Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd school-schedule
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
@@ -65,6 +74,7 @@ A modern schedule management system for elementary schools (grades 1-6) with ful
    - Create a new project at [Supabase](https://supabase.com)
    - Copy the URL and anon key from the dashboard
    - Create `.env.local` file:
+
    ```env
    VITE_SUPABASE_URL=your_supabase_project_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -72,11 +82,7 @@ A modern schedule management system for elementary schools (grades 1-6) with ful
 
 4. **Setup database**
    - Open SQL Editor in Supabase
-   - Run each migration file from `src/migrations/` in order:
-     1. `001_initial_schema.sql`
-     2. `002_rls_policies.sql`
-     3. `003_triggers_functions.sql`
-     4. `004_sample_data.sql`
+   - Run each migration file from `migrations/` in order (see `migrations/` for the full, current list of files)
    - Or use `npm run migrate` for guidance
    - Verify all tables and policies were created successfully
 
@@ -143,6 +149,7 @@ src/
 - **`schedule_selections`** - User class selections
 
 ### Database Security
+
 - Row Level Security (RLS) enabled on all tables
 - Role-based access policies for each table
 - Protection against unauthorized data access
@@ -150,16 +157,19 @@ src/
 ## Usage Guide
 
 ### For New Users
+
 1. **Registration**: Fill out registration form and select relevant roles
 2. **Await Approval**: Wait for admin approval
 3. **Login**: After approval, login with provided credentials
 
 ### For Students and Parents
+
 1. **View Schedule**: See the weekly schedule table
 2. **Select Classes**: Click on table cells to select classes
 3. **Manage Conflicts**: System will alert about overlaps and suggest solutions
 
 ### For Staff and Admins
+
 1. **Manage Classes**: Add, edit, and delete classes
 2. **Manage Time Slots**: Adjust class times as needed
 3. **Approve Users**: Approve new registration requests
@@ -167,12 +177,14 @@ src/
 ## Development
 
 ### Adding New Features
+
 1. Create new branch from main
 2. Develop component in Storybook first
 3. Write tests for new functionality
 4. Ensure code passes lint and typecheck
 
 ### Running Tests
+
 ```bash
 # Unit tests
 npm run test
@@ -185,7 +197,9 @@ npm run lint
 ```
 
 ### Storybook
+
 Open Storybook for isolated component development:
+
 ```bash
 npm run storybook
 ```
@@ -193,11 +207,13 @@ npm run storybook
 ## Deployment
 
 ### Vercel (Recommended)
+
 1. Connect repository to Vercel
 2. Configure environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)
 3. Deploy automatically with each push
 
 ### Manual Deployment
+
 ```bash
 npm run build
 # Upload dist folder to web server
@@ -218,6 +234,7 @@ This project is licensed under the MIT License. See `LICENSE` file for details.
 ## Support
 
 For questions, issues, or suggestions:
+
 - Open an Issue on GitHub
 - Contact the development team
 - Check the documentation in Storybook
