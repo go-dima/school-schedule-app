@@ -127,8 +127,16 @@
       "file": "016_add_enrollment_functions.sql",
       "created_at": "2025-09-14T00:01:00Z",
       "dependencies": ["015_add_scope_to_children"]
+    },
+    {
+      "id": "017_add_class_slots",
+      "name": "Add Class Slots",
+      "description": "Add slots JSONB column to classes for multiple day/time-slot pairs per class; backfill from existing day_of_week/time_slot_id (including double-lesson second slot); drop superseded columns",
+      "file": "017_add_class_slots.sql",
+      "created_at": "2026-09-07T00:00:00Z",
+      "dependencies": ["016_add_enrollment_functions"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 16
+  "schema_version": 17
 }

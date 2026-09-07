@@ -14,8 +14,8 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "vitest",
-    "migrate": "tsx scripts/migrate.ts",
-    "migrate:status": "tsx scripts/migrate.ts --status",
+    "migrate": "tsx -r dotenv/config scripts/migrate.ts dotenv_config_path=.env.local",
+    "migrate:status": "tsx -r dotenv/config scripts/migrate.ts --status dotenv_config_path=.env.local",
     "prepare": "husky"
   },
   "dependencies": {

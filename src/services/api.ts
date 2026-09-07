@@ -3,6 +3,7 @@ import type {
   ChildShareToken,
   ChildWithParents,
   Class,
+  ClassSlot,
   ClassWithTimeSlot,
   PendingApproval,
   ScheduleSelectionWithClass,
@@ -14,6 +15,7 @@ import type {
 } from "../types";
 import log from "../utils/logger";
 import { NotificationService } from "./notificationService";
+import { ScheduleService } from "./scheduleService";
 import { supabase } from "./supabase";
 
 export class ApiError extends Error {
@@ -458,50 +460,74 @@ export const timeSlotsApi = {
   },
 };
 
+// Shared helpers for hydrating a class row's `slots` (raw {dayOfWeek, timeSlotId}[])
+// into full ClassSlotWithTimeSlot[], since slots is a JSONB column with no
+// automatic PostgREST join into time_slots.
+async function fetchTimeSlotsById(): Promise<Map<string, TimeSlot>> {
+  const timeSlots = await timeSlotsApi.getTimeSlots();
+  return new Map(timeSlots.map(slot => [slot.id, slot]));
+}
+
+function mapClassRow(
+  row: any,
+  timeSlotsById: Map<string, TimeSlot>
+): ClassWithTimeSlot {
+  const slots: ClassSlot[] = row.slots || [];
+  // A slot's timeSlotId can go stale if its time slot was deleted after this
+  // class was saved (slots has no DB-level FK, unlike the old timeSlotId
+  // column). Drop orphaned slots rather than crash every consumer that reads
+  // `.timeSlot`.
+  const hydratedSlots = slots.flatMap(s => {
+    const timeSlot = timeSlotsById.get(s.timeSlotId);
+    if (!timeSlot) {
+      log.warn(`Class "${row.title}" (${row.id}) has an orphaned slot`, {
+        timeSlotId: s.timeSlotId,
+      });
+      return [];
+    }
+    return [{ dayOfWeek: s.dayOfWeek, timeSlotId: s.timeSlotId, timeSlot }];
+  });
+
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    teacher: row.teacher,
+    slots: hydratedSlots.sort(
+      (a, b) =>
+        a.dayOfWeek - b.dayOfWeek ||
+        a.timeSlot.startTime.localeCompare(b.timeSlot.startTime)
+    ),
+    grades: (row.grades || []).map((grade: string | number) =>
+      typeof grade === "string" ? parseInt(grade, 10) : grade
+    ),
+    isMandatory: row.is_mandatory,
+    isDouble: row.is_double,
+    room: row.room,
+    scope: row.scope,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 // Classes API
 export const classesApi = {
   async getClasses(): Promise<ClassWithTimeSlot[]> {
     const isProduction = process.env.NODE_ENV === "production";
-    let query = supabase.from("classes").select(
-      `
-        *,
-        time_slot:time_slots(*)
-      `
-    );
+    let query = supabase.from("classes").select("*");
 
     // Filter out test classes in production
     if (isProduction) {
       query = query.neq("scope", "test");
     }
 
-    const { data, error } = await query.order("title", { ascending: true });
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      query.order("title", { ascending: true }),
+      fetchTimeSlotsById(),
+    ]);
 
     if (error) throw new ApiError(error.message);
-    return data.map(cls => ({
-      id: cls.id,
-      title: cls.title,
-      description: cls.description,
-      teacher: cls.teacher,
-      dayOfWeek: cls.day_of_week,
-      timeSlotId: cls.time_slot_id,
-      grades: (cls.grades || []).map((grade: string | number) =>
-        typeof grade === "string" ? parseInt(grade, 10) : grade
-      ),
-      isMandatory: cls.is_mandatory,
-      isDouble: cls.is_double,
-      room: cls.room,
-      scope: cls.scope,
-      createdAt: cls.created_at,
-      updatedAt: cls.updated_at,
-      timeSlot: {
-        id: cls.time_slot.id,
-        name: cls.time_slot.name,
-        startTime: cls.time_slot.start_time,
-        endTime: cls.time_slot.end_time,
-        createdAt: cls.time_slot.created_at,
-        updatedAt: cls.time_slot.updated_at,
-      },
-    }));
+    return data.map(cls => mapClassRow(cls, timeSlotsById));
   },
 
   async createClass(classData: Omit<Class, "id" | "createdAt" | "updatedAt">) {
@@ -512,8 +538,7 @@ export const classesApi = {
           title: classData.title,
           description: classData.description,
           teacher: classData.teacher,
-          day_of_week: classData.dayOfWeek,
-          time_slot_id: classData.timeSlotId,
+          slots: ScheduleService.toRawSlots(classData.slots),
           grades: classData.grades,
           is_mandatory: classData.isMandatory,
           is_double: classData.isDouble,
@@ -536,10 +561,8 @@ export const classesApi = {
     if (updates.description !== undefined)
       updateData.description = updates.description;
     if (updates.teacher !== undefined) updateData.teacher = updates.teacher;
-    if (updates.dayOfWeek !== undefined)
-      updateData.day_of_week = updates.dayOfWeek;
-    if (updates.timeSlotId !== undefined)
-      updateData.time_slot_id = updates.timeSlotId;
+    if (updates.slots !== undefined)
+      updateData.slots = ScheduleService.toRawSlots(updates.slots);
     if (updates.grades !== undefined) updateData.grades = updates.grades;
     if (updates.isMandatory !== undefined)
       updateData.is_mandatory = updates.isMandatory;
@@ -568,20 +591,18 @@ export const classesApi = {
 export const scheduleApi = {
   async getUserSchedule(userId: string): Promise<ScheduleSelectionWithClass[]> {
     const isProduction = process.env.NODE_ENV === "production";
-    let query = supabase
-      .from("schedule_selections")
-      .select(
-        `
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      supabase
+        .from("schedule_selections")
+        .select(
+          `
         *,
-        class:classes(
-          *,
-          time_slot:time_slots(*)
-        )
+        class:classes(*)
       `
-      )
-      .eq("user_id", userId);
-
-    const { data, error } = await query;
+        )
+        .eq("user_id", userId),
+      fetchTimeSlotsById(),
+    ]);
 
     if (error) throw new ApiError(error.message);
 
@@ -596,31 +617,7 @@ export const scheduleApi = {
       classId: selection.class_id,
       createdAt: selection.created_at,
       updatedAt: selection.updated_at,
-      class: {
-        id: selection.class.id,
-        title: selection.class.title,
-        description: selection.class.description,
-        teacher: selection.class.teacher,
-        dayOfWeek: selection.class.day_of_week,
-        timeSlotId: selection.class.time_slot_id,
-        grades: (selection.class.grades || []).map((grade: string | number) =>
-          typeof grade === "string" ? parseInt(grade, 10) : grade
-        ),
-        isMandatory: selection.class.is_mandatory,
-        isDouble: selection.class.is_double,
-        room: selection.class.room,
-        scope: selection.class.scope,
-        createdAt: selection.class.created_at,
-        updatedAt: selection.class.updated_at,
-        timeSlot: {
-          id: selection.class.time_slot.id,
-          name: selection.class.time_slot.name,
-          startTime: selection.class.time_slot.start_time,
-          endTime: selection.class.time_slot.end_time,
-          createdAt: selection.class.time_slot.created_at,
-          updatedAt: selection.class.time_slot.updated_at,
-        },
-      },
+      class: mapClassRow(selection.class, timeSlotsById),
     }));
   },
 
@@ -653,20 +650,18 @@ export const scheduleApi = {
     childId: string
   ): Promise<ScheduleSelectionWithClass[]> {
     const isProduction = process.env.NODE_ENV === "production";
-    let query = supabase
-      .from("schedule_selections")
-      .select(
-        `
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      supabase
+        .from("schedule_selections")
+        .select(
+          `
         *,
-        class:classes(
-          *,
-          time_slot:time_slots(*)
-        )
+        class:classes(*)
       `
-      )
-      .eq("child_id", childId);
-
-    const { data, error } = await query;
+        )
+        .eq("child_id", childId),
+      fetchTimeSlotsById(),
+    ]);
 
     if (error) throw new ApiError(error.message);
 
@@ -680,31 +675,7 @@ export const scheduleApi = {
       classId: selection.class_id,
       createdAt: selection.created_at,
       updatedAt: selection.updated_at,
-      class: {
-        id: selection.class.id,
-        title: selection.class.title,
-        description: selection.class.description,
-        teacher: selection.class.teacher,
-        dayOfWeek: selection.class.day_of_week,
-        timeSlotId: selection.class.time_slot_id,
-        grades: (selection.class.grades || []).map((grade: string | number) =>
-          typeof grade === "string" ? parseInt(grade, 10) : grade
-        ),
-        isMandatory: selection.class.is_mandatory,
-        isDouble: selection.class.is_double,
-        room: selection.class.room,
-        scope: selection.class.scope,
-        createdAt: selection.class.created_at,
-        updatedAt: selection.class.updated_at,
-        timeSlot: {
-          id: selection.class.time_slot.id,
-          name: selection.class.time_slot.name,
-          startTime: selection.class.time_slot.start_time,
-          endTime: selection.class.time_slot.end_time,
-          createdAt: selection.class.time_slot.created_at,
-          updatedAt: selection.class.time_slot.updated_at,
-        },
-      },
+      class: mapClassRow(selection.class, timeSlotsById),
     }));
   },
 

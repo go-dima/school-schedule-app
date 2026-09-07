@@ -44,12 +44,18 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
 
     const displayInfo = getTimeSlotDisplayInfo(timeSlot);
 
-    // Separate primary classes from continuation classes
-    const primaryClasses = filteredClasses.filter(
-      cls => cls.timeSlotId === timeSlot.id
+    // A "continuation" cell is specifically a Double Lesson's second slot —
+    // any other non-primary slot of a multi-slot class still gets a full card.
+    const continuationClasses = filteredClasses.filter(cls =>
+      ScheduleService.isDoubleLessonSecondSlot(
+        cls,
+        dayOfWeek,
+        timeSlot.id,
+        timeSlots
+      )
     );
-    const continuationClasses = filteredClasses.filter(
-      cls => cls.isDouble && cls.timeSlotId !== timeSlot.id
+    const primaryClasses = filteredClasses.filter(
+      cls => !continuationClasses.includes(cls)
     );
 
     // Handle double lesson continuations - but only for SELECTED classes

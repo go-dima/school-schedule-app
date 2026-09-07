@@ -94,8 +94,11 @@ class Logger {
 
 // Create transports based on environment
 function createTransports(): Transport[] {
-  const isDev = import.meta.env.MODE === "development";
-  const customLevel = import.meta.env.VITE_LOG_LEVEL?.toLowerCase() as LogLevel;
+  // import.meta.env is Vite-only; fall back to process.env for scripts run under Node (tsx).
+  const runtimeEnv =
+    import.meta.env ?? (process.env as Record<string, string | undefined>);
+  const isDev = runtimeEnv.MODE === "development";
+  const customLevel = runtimeEnv.VITE_LOG_LEVEL?.toLowerCase() as LogLevel;
 
   if (!isDev) {
     // Production: only error logs

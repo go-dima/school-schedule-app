@@ -39,24 +39,32 @@ export interface TimeSlot {
 
 export type Scope = "test" | "prod";
 
+export interface ClassSlot {
+  dayOfWeek: number; // 0=Sunday, 1=Monday, etc.
+  timeSlotId: string;
+}
+
+export interface ClassSlotWithTimeSlot extends ClassSlot {
+  timeSlot: TimeSlot;
+}
+
 export interface Class {
   id: string;
   title: string;
   description: string;
   teacher: string;
-  dayOfWeek: number; // 0=Sunday, 1=Monday, etc.
-  timeSlotId: string;
+  slots: ClassSlot[]; // One or more Class Slots this class occupies
   grades: number[]; // Changed from single grade to multiple grades
   isMandatory: boolean;
-  isDouble: boolean; // Whether this lesson takes two consecutive time slots
+  isDouble: boolean; // Whether this lesson takes two sequential Class Slots on the same day
   room: string; // Room/location where the lesson takes place
   scope: Scope;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface ClassWithTimeSlot extends Class {
-  timeSlot: TimeSlot;
+export interface ClassWithTimeSlot extends Omit<Class, "slots"> {
+  slots: ClassSlotWithTimeSlot[];
 }
 
 export interface ScheduleSelection {
@@ -73,7 +81,7 @@ export interface ScheduleSelectionWithClass extends ScheduleSelection {
 
 export interface WeeklySchedule {
   [dayOfWeek: number]: {
-    [timeSlotId: string]: Class[];
+    [timeSlotId: string]: ClassWithTimeSlot[];
   };
 }
 

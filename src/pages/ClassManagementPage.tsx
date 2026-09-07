@@ -80,7 +80,9 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
     let filtered = classes;
 
     if (selectedDay !== null) {
-      filtered = filtered.filter(cls => cls.dayOfWeek === selectedDay);
+      filtered = filtered.filter(cls =>
+        cls.slots.some(slot => slot.dayOfWeek === selectedDay)
+      );
     }
 
     if (selectedGrade !== null) {
@@ -91,16 +93,19 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       filtered = filtered.filter(cls => cls.scope === selectedScope);
     }
 
-    // Sort by day, then by time slot, then by grade (lowest first)
+    // Sort by primary slot's day, then start time, then by grade (lowest first)
     return filtered.sort((a, b) => {
-      // First sort by day of week
-      if (a.dayOfWeek !== b.dayOfWeek) {
-        return a.dayOfWeek - b.dayOfWeek;
+      const aPrimary = ScheduleService.getPrimarySlot(a);
+      const bPrimary = ScheduleService.getPrimarySlot(b);
+
+      if (aPrimary.dayOfWeek !== bPrimary.dayOfWeek) {
+        return aPrimary.dayOfWeek - bPrimary.dayOfWeek;
       }
 
-      // Then sort by time slot (start time)
-      if (a.timeSlot.startTime !== b.timeSlot.startTime) {
-        return a.timeSlot.startTime.localeCompare(b.timeSlot.startTime);
+      if (aPrimary.timeSlot.startTime !== bPrimary.timeSlot.startTime) {
+        return aPrimary.timeSlot.startTime.localeCompare(
+          bPrimary.timeSlot.startTime
+        );
       }
 
       // Finally sort by lowest grade in the grades array
@@ -191,49 +196,72 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
     setEditingClass(null);
   };
 
-  const getTimeSlotDisplay = (timeSlot: TimeSlot, cls?: ClassWithTimeSlot) => {
-    if (!timeSlot) {
+  const getTimeSlotDisplay = (cls: ClassWithTimeSlot) => {
+    if (!cls.slots || cls.slots.length === 0) {
       return t("classManagement.table.noTimeSlot");
     }
 
-    const dayName = cls
-      ? GetDayName(cls.dayOfWeek)
-      : t("classManagement.table.unknownDay");
+    // Find the actual (day, time) pair a Double Lesson occupies by adjacency
+    // — not by array position, since a class can also carry other, unrelated
+    // slots that happen to sort earlier.
+    const doublePair = ScheduleService.getDoubleLessonPair(cls, timeSlots);
 
-    // For double lessons, show combined time range and both slot names
-    if (cls?.isDouble) {
-      const nextTimeSlot = ScheduleService.getNextConsecutiveTimeSlot(
-        timeSlot,
-        timeSlots
+    if (doublePair) {
+      const [first, second] = doublePair;
+      const combinedTimeRange = ScheduleService.formatTimeRange(
+        first.timeSlot.startTime,
+        second.timeSlot.endTime
       );
-      if (nextTimeSlot) {
-        const combinedTimeRange = ScheduleService.formatTimeRange(
-          timeSlot.startTime,
-          nextTimeSlot.endTime
-        );
-        return (
-          <span>
-            <div>{t("classManagement.table.dayPrefix", { dayName })}</div>
-            {combinedTimeRange && <div>{combinedTimeRange}</div>}
-            <div style={{ fontSize: "12px", color: "#666" }}>
-              {timeSlot.name} + {nextTimeSlot.name}
+      const otherSlots = cls.slots.filter(
+        slot => slot !== first && slot !== second
+      );
+      return (
+        <span>
+          <div>
+            {t("classManagement.table.dayPrefix", {
+              dayName: GetDayName(first.dayOfWeek),
+            })}
+          </div>
+          {combinedTimeRange && <div>{combinedTimeRange}</div>}
+          <div style={{ fontSize: "12px", color: "#666" }}>
+            {first.timeSlot.name} + {second.timeSlot.name}
+          </div>
+          {otherSlots.map(slot => (
+            <div
+              key={`${slot.dayOfWeek}-${slot.timeSlotId}`}
+              style={{ fontSize: "12px", color: "#666" }}>
+              {GetDayName(slot.dayOfWeek)}{" "}
+              {ScheduleService.formatTimeRange(
+                slot.timeSlot.startTime,
+                slot.timeSlot.endTime
+              )}
             </div>
-          </span>
-        );
-      }
+          ))}
+        </span>
+      );
     }
-
-    // For regular lessons, show standard time range
-    const timeRange = ScheduleService.formatTimeRange(
-      timeSlot.startTime,
-      timeSlot.endTime
-    );
 
     return (
       <span>
-        <div>{t("classManagement.table.dayPrefix", { dayName })}</div>
-        {timeRange && <div>{timeRange}</div>}
-        <div style={{ fontSize: "12px", color: "#666" }}>{timeSlot.name}</div>
+        {cls.slots.map(slot => {
+          const timeRange = ScheduleService.formatTimeRange(
+            slot.timeSlot.startTime,
+            slot.timeSlot.endTime
+          );
+          return (
+            <div key={`${slot.dayOfWeek}-${slot.timeSlotId}`}>
+              <div>
+                {t("classManagement.table.dayPrefix", {
+                  dayName: GetDayName(slot.dayOfWeek),
+                })}
+              </div>
+              {timeRange && <div>{timeRange}</div>}
+              <div style={{ fontSize: "12px", color: "#666" }}>
+                {slot.timeSlot.name}
+              </div>
+            </div>
+          );
+        })}
       </span>
     );
   };
@@ -285,11 +313,9 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
     },
     {
       title: t("classManagement.table.timeColumn"),
-      dataIndex: "timeSlot",
       key: "timeSlot",
       width: 150,
-      render: (timeSlot: TimeSlot, record: ClassWithTimeSlot) =>
-        getTimeSlotDisplay(timeSlot, record),
+      render: (_, record: ClassWithTimeSlot) => getTimeSlotDisplay(record),
     },
     {
       title: t("classManagement.table.enrollmentColumn"),

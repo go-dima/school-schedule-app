@@ -505,6 +505,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
           weeklySchedule={weeklySchedule}
           userGrade={selectedGrade}
           selectedClasses={selectedClasses}
+          userSelections={getSelectedSchedule()}
           onClassSelect={handleClassSelect}
           onClassUnselect={handleClassSelect}
           canSelectClasses={canSelectClasses}
@@ -561,8 +562,13 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
             }
 
             const initialValues = {
-              timeSlotId: createClassTimeSlotId,
-              dayOfWeek: createClassDayOfWeek,
+              slots: [
+                {
+                  dayOfWeek: createClassDayOfWeek,
+                  timeSlotId: createClassTimeSlotId,
+                  timeSlot: selectedTimeSlot,
+                },
+              ],
               title: "",
               description: "",
               teacher: "",
@@ -574,7 +580,6 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
               id: createClassTimeSlotId,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
-              timeSlot: selectedTimeSlot,
             };
 
             return (

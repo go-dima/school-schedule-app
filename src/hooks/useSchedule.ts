@@ -38,29 +38,24 @@ export function useSchedule(userId?: string) {
       setTimeSlots(timeSlotsData);
       setUserSelections(userSchedule);
 
-      // Debug logging for double lessons and data validation
-      const doubleLessons = classesData.filter(cls => cls.isDouble);
-      if (doubleLessons.length) {
-        // Check for orphaned classes (classes referencing non-existent time slots)
-        const orphanedClasses = classesData.filter(
-          cls => !timeSlotsData.find(slot => slot.id === cls.timeSlotId)
+      // Debug logging for data validation: classes referencing non-existent time slots
+      const orphanedClasses = classesData.filter(cls =>
+        cls.slots.some(
+          slot => !timeSlotsData.find(ts => ts.id === slot.timeSlotId)
+        )
+      );
+      if (orphanedClasses.length > 0) {
+        log.warn(
+          "Found classes with missing time slots",
+          orphanedClasses.map(cls => ({
+            id: cls.id,
+            title: cls.title,
+            slots: cls.slots,
+          }))
         );
-        if (orphanedClasses.length > 0) {
-          log.warn(
-            "Found classes with missing time slots",
-            orphanedClasses.map(cls => ({
-              id: cls.id,
-              title: cls.title,
-              timeSlotId: cls.timeSlotId,
-            }))
-          );
-        }
       }
 
-      const weeklySchedule = ScheduleService.buildWeeklySchedule(
-        classesData,
-        timeSlotsData
-      );
+      const weeklySchedule = ScheduleService.buildWeeklySchedule(classesData);
       setWeeklySchedule(weeklySchedule);
     } catch (err) {
       setError(
@@ -108,13 +103,6 @@ export function useSchedule(userId?: string) {
     }
   };
 
-  const getClassesByTimeSlot = (
-    timeSlotId: string,
-    grade?: number
-  ): ClassWithTimeSlot[] => {
-    return ScheduleService.getClassesByTimeSlot(classes, timeSlotId, grade);
-  };
-
   const hasTimeConflict = (newClass: ClassWithTimeSlot): boolean => {
     return ScheduleService.hasTimeConflict(userSelections, newClass);
   };
@@ -129,15 +117,6 @@ export function useSchedule(userId?: string) {
     return userSelections.some(selection => selection.classId === classId);
   };
 
-  const getSelectedClassForTimeSlot = (
-    timeSlotId: string
-  ): ClassWithTimeSlot | null => {
-    const selection = userSelections.find(
-      selection => selection.class.timeSlotId === timeSlotId
-    );
-    return selection ? selection.class : null;
-  };
-
   return {
     classes,
     timeSlots,
@@ -148,10 +127,8 @@ export function useSchedule(userId?: string) {
     loadScheduleData,
     selectClass,
     unselectClass,
-    getClassesByTimeSlot,
     hasTimeConflict,
     getConflictingClasses,
     isClassSelected,
-    getSelectedClassForTimeSlot,
   };
 }

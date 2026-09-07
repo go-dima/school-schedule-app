@@ -62,28 +62,30 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
     cls: ClassWithTimeSlot,
     allTimeSlots: TimeSlot[]
   ): string => {
+    const primaryTimeSlot = ScheduleService.getPrimarySlot(cls).timeSlot;
+
     if (!cls.isDouble)
       return ScheduleService.formatTimeRange(
-        cls.timeSlot.startTime,
-        cls.timeSlot.endTime
+        primaryTimeSlot.startTime,
+        primaryTimeSlot.endTime
       );
 
     // Find the next consecutive time slot
     const nextTimeSlot = ScheduleService.getNextConsecutiveTimeSlot(
-      cls.timeSlot,
+      primaryTimeSlot,
       allTimeSlots
     );
     if (nextTimeSlot) {
       return ScheduleService.formatTimeRange(
-        cls.timeSlot.startTime,
+        primaryTimeSlot.startTime,
         nextTimeSlot.endTime
       );
     }
 
     // Fallback to original time if next slot not found
     return ScheduleService.formatTimeRange(
-      cls.timeSlot.startTime,
-      cls.timeSlot.endTime
+      primaryTimeSlot.startTime,
+      primaryTimeSlot.endTime
     );
   };
 
@@ -92,7 +94,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
     timeSlots.length > 0
       ? timeSlots.sort((a, b) => a.startTime.localeCompare(b.startTime))
       : classes
-          .map(cls => cls.timeSlot)
+          .flatMap(cls => cls.slots.map(slot => slot.timeSlot))
           .filter(
             (slot, index, self) =>
               self.findIndex(s => s.id === slot.id) === index
@@ -171,9 +173,10 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
               <Text
                 type="secondary"
                 style={{ fontSize: "12px", marginRight: "8px" }}>
-                ({t("schedule.drawer.doubleLessonTag")} - {cls.timeSlot.name} +{" "}
+                ({t("schedule.drawer.doubleLessonTag")} -{" "}
+                {ScheduleService.getPrimarySlot(cls).timeSlot.name} +{" "}
                 {ScheduleService.getNextConsecutiveTimeSlot(
-                  cls.timeSlot,
+                  ScheduleService.getPrimarySlot(cls).timeSlot,
                   allTimeSlots
                 )?.name || t("common.next")}
                 )
