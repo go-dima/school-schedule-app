@@ -503,6 +503,7 @@ function mapClassRow(
     ),
     isMandatory: row.is_mandatory,
     isDouble: row.is_double,
+    groupNumber: row.group_number,
     room: row.room,
     scope: row.scope,
     createdAt: row.created_at,
@@ -542,6 +543,7 @@ export const classesApi = {
           grades: classData.grades,
           is_mandatory: classData.isMandatory,
           is_double: classData.isDouble,
+          group_number: classData.groupNumber,
           room: classData.room,
           scope: classData.scope,
         },
@@ -567,6 +569,8 @@ export const classesApi = {
     if (updates.isMandatory !== undefined)
       updateData.is_mandatory = updates.isMandatory;
     if (updates.isDouble !== undefined) updateData.is_double = updates.isDouble;
+    if (updates.groupNumber !== undefined)
+      updateData.group_number = updates.groupNumber;
     if (updates.room !== undefined) updateData.room = updates.room;
     if (updates.scope !== undefined) updateData.scope = updates.scope;
 

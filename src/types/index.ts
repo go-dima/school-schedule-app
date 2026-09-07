@@ -57,6 +57,7 @@ export interface Class {
   grades: number[]; // Changed from single grade to multiple grades
   isMandatory: boolean;
   isDouble: boolean; // Whether this lesson takes two sequential Class Slots on the same day
+  groupNumber: number | null; // מסלול: 1, 2, or null for no group
   room: string; // Room/location where the lesson takes place
   scope: Scope;
   createdAt: string;

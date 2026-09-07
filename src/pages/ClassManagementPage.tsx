@@ -342,6 +342,13 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
               {t("classManagement.table.doubleLessonLabel")}
             </Tag>
           )}
+          {record.groupNumber && (
+            <Tag color="purple">
+              {t("classManagement.table.groupTag", {
+                group: record.groupNumber,
+              })}
+            </Tag>
+          )}
         </Space>
       ),
     },

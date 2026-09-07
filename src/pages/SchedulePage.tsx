@@ -575,6 +575,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
               grades: [],
               isMandatory: false,
               isDouble: false,
+              groupNumber: null,
               room: "",
               scope: "test" as const,
               id: createClassTimeSlotId,

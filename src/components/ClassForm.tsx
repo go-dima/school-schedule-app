@@ -105,6 +105,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
         grades: values.grades || [],
         isMandatory: values.isMandatory || false,
         isDouble: values.isDouble || false,
+        groupNumber: values.groupNumber ?? null,
         room: values.room || "",
         scope: values.scope || "prod",
       };
@@ -158,6 +159,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
               grades: initialValues.grades || [],
               isMandatory: initialValues.isMandatory,
               isDouble: initialValues.isDouble,
+              groupNumber: initialValues.groupNumber,
               room: initialValues.room,
               scope: initialValues.scope,
             }
@@ -166,6 +168,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
               slots: [{}],
               isMandatory: false,
               isDouble: false,
+              groupNumber: null,
               room: "",
               scope: "prod",
             }
@@ -279,6 +282,15 @@ const ClassForm: React.FC<ClassFormProps> = ({
               unCheckedChildren={t("form.class.doubleLessonUnchecked")}
               style={{ width: 120 }}
             />
+          </Form.Item>
+        </Col>
+
+        <Col span={12}>
+          <Form.Item name="groupNumber" label={t("form.class.groupLabel")}>
+            <Select placeholder={t("form.class.groupPlaceholder")} allowClear>
+              <Option value={1}>{t("form.class.group1")}</Option>
+              <Option value={2}>{t("form.class.group2")}</Option>
+            </Select>
           </Form.Item>
         </Col>
       </Row>
