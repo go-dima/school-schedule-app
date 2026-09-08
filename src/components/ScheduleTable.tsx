@@ -37,6 +37,7 @@ interface ScheduleTableProps {
   isAdmin?: boolean;
   onCreateClass?: (timeSlotId: string, dayOfWeek: number) => void;
   searchTerm?: string;
+  lockedClasses?: string[];
 }
 
 interface ScheduleRow {
@@ -59,6 +60,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   isAdmin = false,
   onCreateClass,
   searchTerm = "",
+  lockedClasses = [],
 }) => {
   const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -500,6 +502,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           canSelectClasses={canSelectClasses}
           isAdmin={isAdmin}
           onCreateClass={onCreateClass}
+          lockedClasses={lockedClasses}
         />
       )}
     </div>
