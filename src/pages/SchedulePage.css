@@ -55,6 +55,25 @@
   padding: 12px 0;
 }
 
+/* .filters-row (defined in layouts.css) is space-between internally, but as a
+   flex item here it shrinks to its content width by default -- giving it no
+   room to actually spread its two Space groups apart. Stretch it to fill
+   .filters-section so space-between has somewhere to put the space.
+   layouts.css also gives the first Space `flex: 1` and the last `flex-shrink:
+   0`, tuned for this row's original content split -- flex:1 on the first
+   group consumes all the free space itself, leaving nothing for
+   space-between to distribute. Reset both back to content-sized boxes here
+   so space-between alone controls the gap between the two groups. */
+.filters-section .filters-row {
+  width: 100%;
+}
+
+.filters-section .filters-row > .ant-space:first-child,
+.filters-section .filters-row > .ant-space:last-child {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
 .filters-section span {
   font-weight: 500;
   color: #262626;

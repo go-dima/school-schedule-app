@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useChildren } from "../hooks/useChildren";
 import { useAuth } from "./AuthContext";
-import type { Child } from "../types";
+import type { Child, Scope } from "../types";
 
 interface ChildContextType {
   selectedChild: Child | undefined;
@@ -9,6 +9,17 @@ interface ChildContextType {
   children: Child[];
   loading: boolean;
   error: string | null;
+  updateChild: (
+    childId: string,
+    updates: {
+      firstName?: string;
+      lastName?: string;
+      grade?: number;
+      groupNumber?: number | null;
+      trackNumber?: number | null;
+      scope?: Scope;
+    }
+  ) => Promise<Child>;
 }
 
 const ChildContext = createContext<ChildContextType | undefined>(undefined);
@@ -22,7 +33,7 @@ export function ChildProvider({
     undefined
   );
   const { hasRole } = useAuth();
-  const { children, loading, error } = useChildren();
+  const { children, loading, error, updateChild } = useChildren();
   const isParent = hasRole("parent");
 
   // Auto-select first child if user is a parent and no child is selected
@@ -57,6 +68,7 @@ export function ChildProvider({
         children,
         loading,
         error,
+        updateChild,
       }}>
       {reactChildren}
     </ChildContext.Provider>

@@ -38,6 +38,7 @@ import type {
 } from "../types";
 import { DAYS_OF_WEEK, GRADES } from "../types";
 import ClassForm from "../components/ClassForm";
+import { GroupTrackTags } from "../components/GroupTrackTags";
 import "./ClassManagementPage.css";
 import { GetGradeName, GetGradeNameShort } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
@@ -342,6 +343,10 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
               {t("classManagement.table.doubleLessonLabel")}
             </Tag>
           )}
+          <GroupTrackTags
+            groupNumber={record.groupNumber}
+            trackNumber={record.trackNumber}
+          />
         </Space>
       ),
     },

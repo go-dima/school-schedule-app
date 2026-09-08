@@ -26,6 +26,7 @@ import ScheduleTable from "../components/ScheduleTable";
 import ClassForm from "../components/ClassForm";
 import { ChildSelector } from "../components/ChildSelector";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
+import { ChildTrackSelector } from "../components/ChildTrackSelector";
 import { classesApi, timeSlotsApi } from "../services/api";
 import { GRADES } from "../types";
 import type { AppOnNavigate, Class, TimeSlot, Child } from "../types";
@@ -55,11 +56,15 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     children: userChildren,
     loading: childrenLoading,
     error: childrenError,
+    updateChild: updateChildForParent,
   } = useChildContext();
 
   // For staff users - get all children and manage separate selected child state
-  const { children: allChildren, loading: allChildrenLoading } =
-    useAllChildren();
+  const {
+    children: allChildren,
+    loading: allChildrenLoading,
+    updateChild: updateChildForStaff,
+  } = useAllChildren();
   const [staffSelectedChild, setStaffSelectedChild] = useState<
     Child | undefined
   >(undefined);
@@ -93,6 +98,37 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
       setStaffSelectedChild(undefined);
     }
   };
+
+  const makeTrackChangeHandler =
+    (
+      child: Child | undefined,
+      updateFn: typeof updateChildForParent,
+      setChild: (child: Child) => void
+    ) =>
+    async (trackNumber: number | null) => {
+      if (!child) return;
+      try {
+        setChild(await updateFn(child.id, { trackNumber }));
+      } catch (err) {
+        message.error(
+          err instanceof Error
+            ? err.message
+            : t("schedule.page.error.updateTrack")
+        );
+      }
+    };
+
+  const handleParentTrackChange = makeTrackChangeHandler(
+    selectedChild,
+    updateChildForParent,
+    setSelectedChild
+  );
+
+  const handleStaffTrackChange = makeTrackChangeHandler(
+    staffSelectedChild,
+    updateChildForStaff,
+    setStaffSelectedChild
+  );
 
   // Handler for when a new child is added via StudentSearchSelector
   const handleChildAdded = (newChild: Child) => {
@@ -288,69 +324,61 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
       <div className="filters-section">
         <div className="filters-row">
           <Space wrap>
-            <AutoComplete
-              value={searchTerm}
-              onChange={setSearchTerm}
-              options={(() => {
-                if (!searchTerm) return [];
-
-                const uniqueClassNames = Array.from(
-                  new Set(
-                    classes
-                      .filter(cls => {
-                        // For staff with selected child, filter by child's grade only
-                        if (isStaff && staffSelectedChild) {
-                          if (!cls.grades?.includes(staffSelectedChild.grade)) {
-                            return false;
-                          }
-                        } else {
-                          // Apply grade filter if set
-                          if (
-                            selectedGrade &&
-                            !cls.grades?.includes(selectedGrade)
-                          ) {
-                            return false;
-                          }
-                        }
-                        // Apply class name filter
-                        return cls.title
-                          .toLowerCase()
-                          .includes(searchTerm.toLowerCase());
-                      })
-                      .map(cls => cls.title)
-                  )
-                ).sort();
-
-                return uniqueClassNames.map(title => ({ value: title }));
-              })()}
-              placeholder={t("schedule.page.placeholders.searchClass")}
-              style={{ minWidth: 200 }}
-              allowClear
-              filterOption={false}
-            />
-            <span>{t("schedule.page.labels.searchClass")}:</span>
             {isParent && userChildren.length > 0 && (
               <>
-                <ChildSelector
-                  children={userChildren}
-                  selectedChildId={selectedChild?.id || null}
-                  onChildSelect={childId => {
-                    if (!childId) {
-                      // Handle clear selection
-                      setSelectedChild(undefined);
-                      return;
-                    }
-                    const child = userChildren.find(c => c.id === childId);
-                    setSelectedChild(child || undefined);
-                    // Auto-update grade filter based on selected child (only for non-admin parents)
-                    if (child && !isAdmin()) {
-                      setSelectedGrade(child.grade);
-                    }
-                  }}
-                  style={{ minWidth: 200 }}
+                <ChildTrackSelector
+                  child={selectedChild}
+                  onChange={handleParentTrackChange}
                   disabled={childrenLoading}
                 />
-                <span>{t("schedule.page.labels.selectChild")}:</span>
+                <Space size="small">
+                  <ChildSelector
+                    children={userChildren}
+                    selectedChildId={selectedChild?.id || null}
+                    onChildSelect={childId => {
+                      if (!childId) {
+                        // Handle clear selection
+                        setSelectedChild(undefined);
+                        return;
+                      }
+                      const child = userChildren.find(c => c.id === childId);
+                      setSelectedChild(child || undefined);
+                      // Auto-update grade filter based on selected child (only for non-admin parents)
+                      if (child && !isAdmin()) {
+                        setSelectedGrade(child.grade);
+                      }
+                    }}
+                    style={{ minWidth: 200 }}
+                    disabled={childrenLoading}
+                  />
+                  <span>{t("schedule.page.labels.selectChild")}:</span>
+                </Space>
+              </>
+            )}
+            {isStaff && (
+              <>
+                <ChildTrackSelector
+                  child={staffSelectedChild}
+                  onChange={handleStaffTrackChange}
+                  disabled={allChildrenLoading}
+                />
+                <Space size="small">
+                  <StudentSearchSelector
+                    children={allChildren}
+                    selectedChildId={staffSelectedChild?.id || null}
+                    onChildSelect={handleStaffChildSelect}
+                    onChildAdded={handleChildAdded}
+                    placeholder={t(
+                      "schedule.page.placeholders.selectChildForStaff"
+                    )}
+                    style={{ minWidth: 200 }}
+                    disabled={allChildrenLoading}
+                    defaultGrade={selectedGrade || 1}
+                    mode="select"
+                    isCreateAllowed={isStaff}
+                  />
+                  <span>{t("schedule.page.labels.selectChildForStaff")}:</span>
+                </Space>
               </>
             )}
             {(!isParent || !userChildren.length || isAdmin()) && (
@@ -369,25 +397,6 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                   ))}
                 </Select>
                 <span>{t("schedule.page.labels.filterByGrade")}:</span>
-              </>
-            )}
-            {isStaff && (
-              <>
-                <StudentSearchSelector
-                  children={allChildren}
-                  selectedChildId={staffSelectedChild?.id || null}
-                  onChildSelect={handleStaffChildSelect}
-                  onChildAdded={handleChildAdded}
-                  placeholder={t(
-                    "schedule.page.placeholders.selectChildForStaff"
-                  )}
-                  style={{ minWidth: 200 }}
-                  disabled={allChildrenLoading}
-                  defaultGrade={selectedGrade || 1}
-                  mode="select"
-                  isCreateAllowed={isStaff}
-                />
-                <span>{t("schedule.page.labels.selectChildForStaff")}:</span>
               </>
             )}
           </Space>
@@ -422,6 +431,51 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
               disabled={loading}>
               {t("common.buttons.refresh")}
             </Button>
+            <Space size="small">
+              <AutoComplete
+                value={searchTerm}
+                onChange={setSearchTerm}
+                options={(() => {
+                  if (!searchTerm) return [];
+
+                  const uniqueClassNames = Array.from(
+                    new Set(
+                      classes
+                        .filter(cls => {
+                          // For staff with selected child, filter by child's grade only
+                          if (isStaff && staffSelectedChild) {
+                            if (
+                              !cls.grades?.includes(staffSelectedChild.grade)
+                            ) {
+                              return false;
+                            }
+                          } else {
+                            // Apply grade filter if set
+                            if (
+                              selectedGrade &&
+                              !cls.grades?.includes(selectedGrade)
+                            ) {
+                              return false;
+                            }
+                          }
+                          // Apply class name filter
+                          return cls.title
+                            .toLowerCase()
+                            .includes(searchTerm.toLowerCase());
+                        })
+                        .map(cls => cls.title)
+                    )
+                  ).sort();
+
+                  return uniqueClassNames.map(title => ({ value: title }));
+                })()}
+                placeholder={t("schedule.page.placeholders.searchClass")}
+                style={{ minWidth: 200 }}
+                allowClear
+                filterOption={false}
+              />
+              <span>{t("schedule.page.labels.searchClass")}:</span>
+            </Space>
           </Space>
         </div>
       </div>
@@ -575,6 +629,8 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
               grades: [],
               isMandatory: false,
               isDouble: false,
+              groupNumber: null,
+              trackNumber: null,
               room: "",
               scope: "test" as const,
               id: createClassTimeSlotId,

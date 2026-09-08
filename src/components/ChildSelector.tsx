@@ -50,7 +50,7 @@ export function ChildSelector({
               </span>
               <Text type="secondary" style={{ fontSize: 12 }}>
                 ({GetGradeName(child.grade)}
-                {child.groupNumber})
+                {child.groupNumber ? child.groupNumber : ""})
               </Text>
             </Space>
           </Select.Option>

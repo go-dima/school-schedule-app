@@ -8,6 +8,7 @@ import type { Class, ClassSlot, ClassWithTimeSlot, TimeSlot } from "../types";
 import { GRADES, DAYS_OF_WEEK } from "../types";
 import { GetGradeName } from "@/utils/grades";
 import { ScopeSelector } from "./ScopeSelector";
+import { GroupTrackSelect } from "./GroupTrackSelect";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -105,6 +106,8 @@ const ClassForm: React.FC<ClassFormProps> = ({
         grades: values.grades || [],
         isMandatory: values.isMandatory || false,
         isDouble: values.isDouble || false,
+        groupNumber: values.groupNumber ?? null,
+        trackNumber: values.trackNumber ?? null,
         room: values.room || "",
         scope: values.scope || "prod",
       };
@@ -158,6 +161,8 @@ const ClassForm: React.FC<ClassFormProps> = ({
               grades: initialValues.grades || [],
               isMandatory: initialValues.isMandatory,
               isDouble: initialValues.isDouble,
+              groupNumber: initialValues.groupNumber,
+              trackNumber: initialValues.trackNumber,
               room: initialValues.room,
               scope: initialValues.scope,
             }
@@ -166,6 +171,8 @@ const ClassForm: React.FC<ClassFormProps> = ({
               slots: [{}],
               isMandatory: false,
               isDouble: false,
+              groupNumber: null,
+              trackNumber: null,
               room: "",
               scope: "prod",
             }
@@ -278,6 +285,26 @@ const ClassForm: React.FC<ClassFormProps> = ({
               checkedChildren={t("form.class.doubleLessonChecked")}
               unCheckedChildren={t("form.class.doubleLessonUnchecked")}
               style={{ width: 120 }}
+            />
+          </Form.Item>
+        </Col>
+      </Row>
+
+      <Row gutter={16}>
+        <Col span={12}>
+          <Form.Item name="groupNumber" label={t("form.class.groupLabel")}>
+            <GroupTrackSelect
+              optionLabel={group => t("form.class.groupOption", { group })}
+              placeholder={t("form.class.groupPlaceholder")}
+            />
+          </Form.Item>
+        </Col>
+
+        <Col span={12}>
+          <Form.Item name="trackNumber" label={t("form.class.trackLabel")}>
+            <GroupTrackSelect
+              optionLabel={track => t("form.class.trackOption", { track })}
+              placeholder={t("form.class.trackPlaceholder")}
             />
           </Form.Item>
         </Col>

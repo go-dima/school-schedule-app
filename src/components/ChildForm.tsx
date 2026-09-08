@@ -4,6 +4,7 @@ import type { Child, Scope } from "../types";
 import { GRADES } from "../types";
 import { GetGradeName } from "@/utils/grades";
 import { ScopeSelector } from "./ScopeSelector";
+import { GroupTrackSelect } from "./GroupTrackSelect";
 
 interface ChildFormProps {
   child?: Child;
@@ -11,7 +12,8 @@ interface ChildFormProps {
     firstName: string;
     lastName: string;
     grade: number;
-    groupNumber: number;
+    groupNumber: number | null;
+    trackNumber?: number | null;
     scope?: Scope;
   }) => Promise<void>;
   onCancel: () => void;
@@ -34,7 +36,8 @@ export function ChildForm({
         firstName: values.firstName,
         lastName: values.lastName,
         grade: values.grade,
-        groupNumber: values.groupNumber,
+        groupNumber: values.groupNumber ?? null,
+        trackNumber: values.trackNumber ?? null,
         scope: values.scope,
       });
       message.success(
@@ -56,7 +59,8 @@ export function ChildForm({
         firstName: child?.firstName || "",
         lastName: child?.lastName || "",
         grade: child?.grade || 1,
-        groupNumber: child?.groupNumber || 1,
+        groupNumber: child?.groupNumber ?? null,
+        trackNumber: child?.trackNumber ?? null,
         scope: child?.scope || "prod",
       }}>
       <Form.Item
@@ -88,14 +92,18 @@ export function ChildForm({
         </Select>
       </Form.Item>
 
-      <Form.Item
-        label={t("form.child.groupLabel")}
-        name="groupNumber"
-        rules={[{ required: true, message: t("form.child.groupRequired") }]}>
-        <Select placeholder={t("form.child.groupPlaceholder")}>
-          <Select.Option value={1}>{t("form.child.group1")}</Select.Option>
-          <Select.Option value={2}>{t("form.child.group2")}</Select.Option>
-        </Select>
+      <Form.Item label={t("form.child.groupLabel")} name="groupNumber">
+        <GroupTrackSelect
+          optionLabel={group => t("form.child.groupOption", { group })}
+          placeholder={t("form.child.groupPlaceholder")}
+        />
+      </Form.Item>
+
+      <Form.Item label={t("form.child.trackLabel")} name="trackNumber">
+        <GroupTrackSelect
+          optionLabel={track => t("form.child.trackOption", { track })}
+          placeholder={t("form.child.trackPlaceholder")}
+        />
       </Form.Item>
 
       <ScopeSelector />

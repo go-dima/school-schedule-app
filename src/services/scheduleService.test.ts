@@ -34,6 +34,8 @@ const makeClass = (
   grades: [1],
   isMandatory: false,
   isDouble: false,
+  groupNumber: null,
+  trackNumber: null,
   room: "",
   scope: "prod",
   createdAt: "",
