@@ -537,8 +537,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
               }))}
             />
 
-            <Space direction="vertical" size={4} style={{ width: 200 }}>
-              <label>{t("classManagement.page.searchLabel")}</label>
+            <Space size={4} align="center">
               <AutoComplete
                 value={searchTerm}
                 onChange={setSearchTerm}
@@ -559,10 +558,11 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
                   return uniqueClassNames.map(title => ({ value: title }));
                 })()}
                 placeholder={t("classManagement.page.searchPlaceholder")}
-                style={{ width: "100%" }}
+                style={{ width: 200 }}
                 allowClear
                 filterOption={false}
               />
+              <label>{t("classManagement.page.searchLabel")}</label>
             </Space>
           </Space>
         </Card>
