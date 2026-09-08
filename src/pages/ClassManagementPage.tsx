@@ -76,7 +76,6 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
   // 1 | 2 select an actual track; NO_TRACK_FILTER selects classes with no
   // track set; null means the filter is not applied at all.
   const [selectedTrack, setSelectedTrack] = useState<number | null>(null);
-  const [selectedScope, setSelectedScope] = useState<Scope | null>(null);
 
   useEffect(() => {
     loadData();
@@ -111,10 +110,6 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       );
     }
 
-    if (selectedScope !== null) {
-      filtered = filtered.filter(cls => cls.scope === selectedScope);
-    }
-
     // Sort by primary slot's day, then start time, then by grade (lowest first)
     return filtered.sort((a, b) => {
       const aPrimary = ScheduleService.getPrimarySlot(a);
@@ -135,14 +130,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       const bMinGrade = Math.min(...(b.grades || []));
       return aMinGrade - bMinGrade;
     });
-  }, [
-    classes,
-    searchTerm,
-    selectedDay,
-    selectedGrade,
-    selectedTrack,
-    selectedScope,
-  ]);
+  }, [classes, searchTerm, selectedDay, selectedGrade, selectedTrack]);
 
   const loadData = async () => {
     setLoading(true);
@@ -498,6 +486,57 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
           title={t("classManagement.page.filtersTitle")}
           style={{ marginBottom: 24 }}>
           <Space size={16} align="end" wrap>
+            <Button
+              onClick={() => {
+                setSearchTerm("");
+                setSelectedDay(null);
+                setSelectedGrade(null);
+                setSelectedTrack(null);
+              }}>
+              {t("classManagement.page.clearFiltersButton")}
+            </Button>
+
+            <FilterSelect
+              label={t("classManagement.page.trackFilterLabel")}
+              placeholder={t("classManagement.page.trackFilterPlaceholder")}
+              value={selectedTrack}
+              onChange={setSelectedTrack}
+              options={[
+                ...[1, 2].map(track => ({
+                  value: track,
+                  label: t("classManagement.page.trackFilterOption", {
+                    track,
+                  }),
+                })),
+                {
+                  value: NO_TRACK_FILTER,
+                  label: t("classManagement.page.trackFilterOptionNone"),
+                },
+              ]}
+            />
+
+            <FilterSelect
+              label={t("classManagement.page.gradeFilterLabel")}
+              placeholder={t("classManagement.page.gradeFilterPlaceholder")}
+              value={selectedGrade}
+              onChange={setSelectedGrade}
+              options={GRADES.map(grade => ({
+                value: grade,
+                label: GetGradeName(grade),
+              }))}
+            />
+
+            <FilterSelect
+              label={t("classManagement.page.dayFilterLabel")}
+              placeholder={t("classManagement.page.dayFilterPlaceholder")}
+              value={selectedDay}
+              onChange={setSelectedDay}
+              options={DAYS_OF_WEEK.map(day => ({
+                value: day.key,
+                label: day.name,
+              }))}
+            />
+
             <Space direction="vertical" size={4} style={{ width: 200 }}>
               <label>{t("classManagement.page.searchLabel")}</label>
               <AutoComplete
@@ -525,71 +564,6 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
                 filterOption={false}
               />
             </Space>
-
-            <FilterSelect
-              label={t("classManagement.page.dayFilterLabel")}
-              placeholder={t("classManagement.page.dayFilterPlaceholder")}
-              value={selectedDay}
-              onChange={setSelectedDay}
-              options={DAYS_OF_WEEK.map(day => ({
-                value: day.key,
-                label: day.name,
-              }))}
-            />
-
-            <FilterSelect
-              label={t("classManagement.page.gradeFilterLabel")}
-              placeholder={t("classManagement.page.gradeFilterPlaceholder")}
-              value={selectedGrade}
-              onChange={setSelectedGrade}
-              options={GRADES.map(grade => ({
-                value: grade,
-                label: GetGradeName(grade),
-              }))}
-            />
-
-            <FilterSelect
-              label={t("classManagement.page.trackFilterLabel")}
-              placeholder={t("classManagement.page.trackFilterPlaceholder")}
-              value={selectedTrack}
-              onChange={setSelectedTrack}
-              options={[
-                ...[1, 2].map(track => ({
-                  value: track,
-                  label: t("classManagement.page.trackFilterOption", {
-                    track,
-                  }),
-                })),
-                {
-                  value: NO_TRACK_FILTER,
-                  label: t("classManagement.page.trackFilterOptionNone"),
-                },
-              ]}
-            />
-
-            <FilterSelect
-              label={t("scope.selector.label")}
-              placeholder={t(
-                "classManagement.page.environmentFilterPlaceholder"
-              )}
-              value={selectedScope}
-              onChange={setSelectedScope}
-              options={[
-                { value: "test", label: t("scope.test") },
-                { value: "prod", label: t("scope.prod") },
-              ]}
-            />
-
-            <Button
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedDay(null);
-                setSelectedGrade(null);
-                setSelectedTrack(null);
-                setSelectedScope(null);
-              }}>
-              {t("classManagement.page.clearFiltersButton")}
-            </Button>
           </Space>
         </Card>
       </div>

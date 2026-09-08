@@ -296,7 +296,6 @@
       "trackFilterPlaceholder": "בחר מסלול",
       "trackFilterOption": "מסלול {{track}}",
       "trackFilterOptionNone": "ללא מסלול",
-      "environmentFilterPlaceholder": "בחר סביבה",
       "clearFiltersButton": "נקה מסננים",
       "dataLoadingError": "שגיאה בטעינת הנתונים",
       "classDeletedSuccess": "השיעור נמחק בהצלחה",
