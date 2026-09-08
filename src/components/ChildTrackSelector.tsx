@@ -1,9 +1,7 @@
 import React, { useState } from "react";
-import { Select } from "antd";
 import { useTranslation } from "react-i18next";
 import type { Child } from "../types";
-
-const { Option } = Select;
+import { GroupTrackSelect } from "./GroupTrackSelect";
 
 interface ChildTrackSelectorProps {
   child: Child | undefined;
@@ -40,16 +38,14 @@ export function ChildTrackSelector({
   };
 
   return (
-    <Select
-      value={child.trackNumber ?? undefined}
+    <GroupTrackSelect
+      value={child.trackNumber}
       onChange={handleChange}
+      optionLabel={track => t("schedule.page.labels.trackOption", { track })}
       placeholder={t("schedule.page.labels.trackPlaceholder")}
       disabled={disabled || saving}
       loading={saving}
-      allowClear
-      style={{ minWidth: 140, ...style }}>
-      <Option value={1}>{t("schedule.page.labels.track1")}</Option>
-      <Option value={2}>{t("schedule.page.labels.track2")}</Option>
-    </Select>
+      style={style}
+    />
   );
 }

@@ -4,6 +4,7 @@ import type { Child, Scope } from "../types";
 import { GRADES } from "../types";
 import { GetGradeName } from "@/utils/grades";
 import { ScopeSelector } from "./ScopeSelector";
+import { GroupTrackSelect } from "./GroupTrackSelect";
 
 interface ChildFormProps {
   child?: Child;
@@ -92,17 +93,17 @@ export function ChildForm({
       </Form.Item>
 
       <Form.Item label={t("form.child.groupLabel")} name="groupNumber">
-        <Select placeholder={t("form.child.groupPlaceholder")} allowClear>
-          <Select.Option value={1}>{t("form.child.group1")}</Select.Option>
-          <Select.Option value={2}>{t("form.child.group2")}</Select.Option>
-        </Select>
+        <GroupTrackSelect
+          optionLabel={group => t("form.child.groupOption", { group })}
+          placeholder={t("form.child.groupPlaceholder")}
+        />
       </Form.Item>
 
       <Form.Item label={t("form.child.trackLabel")} name="trackNumber">
-        <Select placeholder={t("form.child.trackPlaceholder")} allowClear>
-          <Select.Option value={1}>{t("form.child.track1")}</Select.Option>
-          <Select.Option value={2}>{t("form.child.track2")}</Select.Option>
-        </Select>
+        <GroupTrackSelect
+          optionLabel={track => t("form.child.trackOption", { track })}
+          placeholder={t("form.child.trackPlaceholder")}
+        />
       </Form.Item>
 
       <ScopeSelector />

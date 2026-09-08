@@ -21,6 +21,7 @@ import {
   UserAddOutlined,
 } from "@ant-design/icons";
 import { ChildForm } from "./ChildForm";
+import { GroupTrackTags } from "./GroupTrackTags";
 import { ChildShareModal } from "./ChildShareModal";
 import { AcceptSharedChildModal } from "./AcceptSharedChildModal";
 import { useChildren } from "../hooks/useChildren";
@@ -222,12 +223,10 @@ export function ChildManagement() {
                       </span>
                       <Space>
                         <Tag color="blue">{GetGradeName(child.grade)}</Tag>
-                        {child.groupNumber && (
-                          <Tag color="green">{child.groupNumber}</Tag>
-                        )}
-                        {child.trackNumber && (
-                          <Tag color="cyan">{child.trackNumber}</Tag>
-                        )}
+                        <GroupTrackTags
+                          groupNumber={child.groupNumber}
+                          trackNumber={child.trackNumber}
+                        />
                       </Space>
                     </div>
                   }

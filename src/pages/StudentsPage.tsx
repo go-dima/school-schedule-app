@@ -26,6 +26,7 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import { ChildForm } from "../components/ChildForm";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
+import { GroupTrackTags } from "../components/GroupTrackTags";
 import { useAuth } from "../contexts/AuthContext";
 import { useAllChildren } from "../hooks/useAllChildren";
 import { childrenApi } from "../services/api";
@@ -200,20 +201,16 @@ const StudentsPage: React.FC = () => {
       render: (grade: number) => GetGradeName(grade),
     },
     {
-      title: t("students.table.group"),
-      dataIndex: "groupNumber",
-      key: "groupNumber",
-      width: 80,
+      title: t("students.table.groupTrack"),
+      key: "groupTrack",
+      width: 140,
       align: "center",
-      render: (groupNumber: number | null) => groupNumber ?? "—",
-    },
-    {
-      title: t("students.table.track"),
-      dataIndex: "trackNumber",
-      key: "trackNumber",
-      width: 80,
-      align: "center",
-      render: (trackNumber: number | null) => trackNumber ?? "—",
+      render: (_, record) => (
+        <GroupTrackTags
+          groupNumber={record.groupNumber}
+          trackNumber={record.trackNumber}
+        />
+      ),
     },
     {
       title: t("students.table.scope"),

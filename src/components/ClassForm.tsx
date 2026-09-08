@@ -8,6 +8,7 @@ import type { Class, ClassSlot, ClassWithTimeSlot, TimeSlot } from "../types";
 import { GRADES, DAYS_OF_WEEK } from "../types";
 import { GetGradeName } from "@/utils/grades";
 import { ScopeSelector } from "./ScopeSelector";
+import { GroupTrackSelect } from "./GroupTrackSelect";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -292,19 +293,19 @@ const ClassForm: React.FC<ClassFormProps> = ({
       <Row gutter={16}>
         <Col span={12}>
           <Form.Item name="groupNumber" label={t("form.class.groupLabel")}>
-            <Select placeholder={t("form.class.groupPlaceholder")} allowClear>
-              <Option value={1}>{t("form.class.group1")}</Option>
-              <Option value={2}>{t("form.class.group2")}</Option>
-            </Select>
+            <GroupTrackSelect
+              optionLabel={group => t("form.class.groupOption", { group })}
+              placeholder={t("form.class.groupPlaceholder")}
+            />
           </Form.Item>
         </Col>
 
         <Col span={12}>
           <Form.Item name="trackNumber" label={t("form.class.trackLabel")}>
-            <Select placeholder={t("form.class.trackPlaceholder")} allowClear>
-              <Option value={1}>{t("form.class.track1")}</Option>
-              <Option value={2}>{t("form.class.track2")}</Option>
-            </Select>
+            <GroupTrackSelect
+              optionLabel={track => t("form.class.trackOption", { track })}
+              placeholder={t("form.class.trackPlaceholder")}
+            />
           </Form.Item>
         </Col>
       </Row>
