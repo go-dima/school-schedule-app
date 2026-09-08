@@ -10,12 +10,14 @@ import {
   Modal,
   message,
   AutoComplete,
+  Tooltip,
 } from "antd";
 import { useTranslation } from "react-i18next";
 import {
   ReloadOutlined,
   UserSwitchOutlined,
   PrinterOutlined,
+  LockOutlined,
 } from "@ant-design/icons";
 import { useAuth } from "../contexts/AuthContext";
 import { useChildContext } from "../contexts/ChildContext";
@@ -28,6 +30,7 @@ import { ChildSelector } from "../components/ChildSelector";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { ChildTrackSelector } from "../components/ChildTrackSelector";
 import { classesApi, timeSlotsApi } from "../services/api";
+import { TrackSelectionService } from "../services/trackSelectionService";
 import { GRADES } from "../types";
 import type { AppOnNavigate, Class, TimeSlot, Child } from "../types";
 import "./SchedulePage.css";
@@ -99,6 +102,30 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     }
   };
 
+  // For parents, use child schedule; for others, use user schedule
+  const {
+    classes,
+    timeSlots,
+    userSelections,
+    weeklySchedule,
+    loading: scheduleLoading,
+    error: scheduleError,
+    loadScheduleData,
+    selectClass,
+    unselectClass,
+    isClassSelected: isUserClassSelected,
+  } = useSchedule(isParent ? null : user?.id);
+
+  const {
+    schedule: childSchedule,
+    loading: childScheduleLoading,
+    error: childScheduleError,
+    selectClassForChild,
+    unselectClassForChild,
+    isClassSelected: isChildClassSelected,
+    refetch: refetchChildSchedule,
+  } = useChildSchedule(isStaff ? staffSelectedChild : selectedChild);
+
   const makeTrackChangeHandler =
     (
       child: Child | undefined,
@@ -108,7 +135,19 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     async (trackNumber: number | null) => {
       if (!child) return;
       try {
-        setChild(await updateFn(child.id, { trackNumber }));
+        const updatedChild = await updateFn(child.id, { trackNumber });
+        setChild(updatedChild);
+        const changes = TrackSelectionService.computeTrackClassChanges(
+          classes,
+          childSchedule,
+          updatedChild.grade,
+          trackNumber
+        );
+        await TrackSelectionService.applyTrackClassChanges(
+          updatedChild.id,
+          changes
+        );
+        await refetchChildSchedule();
       } catch (err) {
         message.error(
           err instanceof Error
@@ -144,29 +183,6 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     }
   }, [selectedChild, isParent, isAdmin]);
 
-  // For parents, use child schedule; for others, use user schedule
-  const {
-    classes,
-    timeSlots,
-    userSelections,
-    weeklySchedule,
-    loading: scheduleLoading,
-    error: scheduleError,
-    loadScheduleData,
-    selectClass,
-    unselectClass,
-    isClassSelected: isUserClassSelected,
-  } = useSchedule(isParent ? null : user?.id);
-
-  const {
-    schedule: childSchedule,
-    loading: childScheduleLoading,
-    error: childScheduleError,
-    selectClassForChild,
-    unselectClassForChild,
-    isClassSelected: isChildClassSelected,
-  } = useChildSchedule(isStaff ? staffSelectedChild : selectedChild);
-
   const loading = isParent
     ? scheduleLoading || childScheduleLoading || childrenLoading
     : isStaff
@@ -181,10 +197,25 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     }
   };
 
+  // Classes auto-selected by the active child's track can't be picked apart
+  // one at a time -- only changing the track (which re-syncs them) can.
+  const currentTrackChild = isStaff ? staffSelectedChild : selectedChild;
+  const lockedClassIds = new Set(
+    currentTrackChild?.trackNumber
+      ? classes
+          .filter(cls => cls.trackNumber === currentTrackChild.trackNumber)
+          .map(cls => cls.id)
+      : []
+  );
+
   const handleClassSelect = async (classId: string) => {
     try {
       if (isParent && selectedChild) {
         if (isChildClassSelected(classId)) {
+          if (lockedClassIds.has(classId)) {
+            message.warning(t("schedule.page.error.trackClassLocked"));
+            return;
+          }
           await unselectClassForChild(classId);
         } else {
           await selectClassForChild(classId);
@@ -584,15 +615,29 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
           }
           className="selected-classes-summary">
           <Space wrap>
-            {getSelectedSchedule().map(selection => (
-              <Button
-                key={selection.id}
-                type="primary"
-                size="small"
-                onClick={() => handleClassSelect(selection.classId)}>
-                {selection.class.title} - {selection.class.teacher}
-              </Button>
-            ))}
+            {getSelectedSchedule().map(selection => {
+              const isLocked = lockedClassIds.has(selection.classId);
+              const button = (
+                <Button
+                  key={selection.id}
+                  type="primary"
+                  size="small"
+                  disabled={isLocked}
+                  icon={isLocked ? <LockOutlined /> : undefined}
+                  onClick={() => handleClassSelect(selection.classId)}>
+                  {selection.class.title} - {selection.class.teacher}
+                </Button>
+              );
+              return isLocked ? (
+                <Tooltip
+                  key={selection.id}
+                  title={t("schedule.drawer.trackLockedTooltip")}>
+                  <span style={{ display: "inline-block" }}>{button}</span>
+                </Tooltip>
+              ) : (
+                button
+              );
+            })}
           </Space>
         </Card>
       )}

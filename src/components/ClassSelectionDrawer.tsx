@@ -8,6 +8,7 @@ import {
   Alert,
   Space,
   Typography,
+  Tooltip,
 } from "antd";
 import { CheckOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
@@ -16,6 +17,7 @@ import type { TimeSlot, ClassWithTimeSlot } from "../types";
 import CreateClassButton from "./CreateClassButton";
 import "./ClassSelectionDrawer.css";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
+import { TrackTag } from "@/elements/TrackTag";
 import { GetDayName } from "@/utils/days";
 
 const { Title, Text } = Typography;
@@ -116,8 +118,23 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
     isGrayedOut: boolean = false
   ) => {
     const isSelected = selectedClasses.includes(cls.id);
+    const isLocked = cls.trackNumber !== null;
     const hasConflict = conflictingClasses.some(
       conflict => conflict.id === cls.id
+    );
+
+    const toggleButton = (
+      <Button
+        key="toggle"
+        type={isSelected ? "default" : "primary"}
+        icon={isSelected ? <CheckOutlined /> : undefined}
+        onClick={() => handleClassToggle(cls.id)}
+        disabled={isGrayedOut || isLocked}
+        block>
+        {isSelected
+          ? t("schedule.drawer.unselectButton")
+          : t("schedule.drawer.selectButton")}
+      </Button>
     );
 
     return (
@@ -132,17 +149,18 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
           canSelectClasses
             ? [
                 <div className="select-class-button">
-                  <Button
-                    key="toggle"
-                    type={isSelected ? "default" : "primary"}
-                    icon={isSelected ? <CheckOutlined /> : undefined}
-                    onClick={() => handleClassToggle(cls.id)}
-                    disabled={isGrayedOut}
-                    block>
-                    {isSelected
-                      ? t("schedule.drawer.unselectButton")
-                      : t("schedule.drawer.selectButton")}
-                  </Button>
+                  {isLocked ? (
+                    <Tooltip
+                      title={t(
+                        isSelected
+                          ? "schedule.drawer.trackLockedTooltip"
+                          : "schedule.drawer.trackUnselectableTooltip"
+                      )}>
+                      <span style={{ display: "block" }}>{toggleButton}</span>
+                    </Tooltip>
+                  ) : (
+                    toggleButton
+                  )}
                 </div>,
               ]
             : undefined
@@ -161,6 +179,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
               {cls.isDouble && (
                 <Tag color="orange">{t("schedule.drawer.doubleLessonTag")}</Tag>
               )}
+              {cls.trackNumber !== null && <TrackTag track={cls.trackNumber} />}
             </div>
           </div>
 

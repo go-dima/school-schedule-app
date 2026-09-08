@@ -25,6 +25,7 @@ import { GroupTrackTags } from "./GroupTrackTags";
 import { ChildShareModal } from "./ChildShareModal";
 import { AcceptSharedChildModal } from "./AcceptSharedChildModal";
 import { useChildren } from "../hooks/useChildren";
+import { TrackSelectionService } from "../services/trackSelectionService";
 import type { Child, Scope } from "../types";
 import { GetGradeName } from "@/utils/grades";
 
@@ -52,13 +53,19 @@ export function ChildManagement() {
   }) => {
     setFormLoading(true);
     try {
-      await createChild(
+      const newChild = await createChild(
         data.firstName,
         data.lastName,
         data.grade,
         data.groupNumber,
         data.trackNumber ?? null
       );
+      if (data.trackNumber) {
+        await TrackSelectionService.syncTrackClasses(
+          newChild,
+          data.trackNumber
+        );
+      }
       setIsFormModalOpen(false);
       setEditingChild(undefined);
     } finally {
@@ -78,7 +85,14 @@ export function ChildManagement() {
 
     setFormLoading(true);
     try {
-      await updateChild(editingChild.id, data);
+      const updatedChild = await updateChild(editingChild.id, data);
+      const newTrackNumber = data.trackNumber ?? null;
+      if (editingChild.trackNumber !== newTrackNumber) {
+        await TrackSelectionService.syncTrackClasses(
+          updatedChild,
+          newTrackNumber
+        );
+      }
       setIsFormModalOpen(false);
       setEditingChild(undefined);
     } finally {

@@ -52,6 +52,12 @@ export function useChildSchedule(child: Child | undefined) {
     };
   }, deps);
 
+  const refetch = async (): Promise<void> => {
+    if (!child) return;
+    const childSchedule = await scheduleApi.getChildSchedule(child.id);
+    setSchedule(childSchedule);
+  };
+
   const selectClassForChild = async (classId: string): Promise<void> => {
     if (!child) throw new Error("No child selected");
 
@@ -95,5 +101,6 @@ export function useChildSchedule(child: Child | undefined) {
     selectClassForChild,
     unselectClassForChild,
     isClassSelected,
+    refetch,
   };
 }
