@@ -349,6 +349,13 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
               })}
             </Tag>
           )}
+          {record.trackNumber && (
+            <Tag color="cyan">
+              {t("classManagement.table.trackTag", {
+                track: record.trackNumber,
+              })}
+            </Tag>
+          )}
         </Space>
       ),
     },

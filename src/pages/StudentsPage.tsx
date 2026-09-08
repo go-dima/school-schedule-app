@@ -68,7 +68,8 @@ const StudentsPage: React.FC = () => {
     firstName: string;
     lastName: string;
     grade: number;
-    groupNumber: number;
+    groupNumber: number | null;
+    trackNumber?: number | null;
     scope?: "test" | "prod";
   }) => {
     setFormLoading(true);
@@ -78,7 +79,8 @@ const StudentsPage: React.FC = () => {
         data.lastName,
         data.grade,
         data.groupNumber,
-        data.scope || "prod"
+        data.scope || "prod",
+        data.trackNumber ?? null
       );
       setIsFormModalOpen(false);
       setEditingChild(undefined);
@@ -98,7 +100,8 @@ const StudentsPage: React.FC = () => {
     firstName: string;
     lastName: string;
     grade: number;
-    groupNumber: number;
+    groupNumber: number | null;
+    trackNumber?: number | null;
     scope?: "test" | "prod";
   }) => {
     if (!editingChild) return;
@@ -202,6 +205,15 @@ const StudentsPage: React.FC = () => {
       key: "groupNumber",
       width: 80,
       align: "center",
+      render: (groupNumber: number | null) => groupNumber ?? "—",
+    },
+    {
+      title: t("students.table.track"),
+      dataIndex: "trackNumber",
+      key: "trackNumber",
+      width: 80,
+      align: "center",
+      render: (trackNumber: number | null) => trackNumber ?? "—",
     },
     {
       title: t("students.table.scope"),

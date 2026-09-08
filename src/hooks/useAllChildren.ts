@@ -49,9 +49,30 @@ export function useAllChildren() {
     };
   }, []);
 
+  const updateChild = async (
+    childId: string,
+    updates: {
+      firstName?: string;
+      lastName?: string;
+      grade?: number;
+      groupNumber?: number | null;
+      trackNumber?: number | null;
+      scope?: Child["scope"];
+    }
+  ): Promise<Child> => {
+    const updatedChild = await childrenApi.updateChild(childId, updates);
+    setChildren(prev =>
+      prev.map(child =>
+        child.id === childId ? { ...child, ...updatedChild } : child
+      )
+    );
+    return updatedChild;
+  };
+
   return {
     children,
     loading,
     error,
+    updateChild,
   };
 }

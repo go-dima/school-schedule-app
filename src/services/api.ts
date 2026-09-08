@@ -504,6 +504,7 @@ function mapClassRow(
     isMandatory: row.is_mandatory,
     isDouble: row.is_double,
     groupNumber: row.group_number,
+    trackNumber: row.track_number,
     room: row.room,
     scope: row.scope,
     createdAt: row.created_at,
@@ -544,6 +545,7 @@ export const classesApi = {
           is_mandatory: classData.isMandatory,
           is_double: classData.isDouble,
           group_number: classData.groupNumber,
+          track_number: classData.trackNumber,
           room: classData.room,
           scope: classData.scope,
         },
@@ -571,6 +573,8 @@ export const classesApi = {
     if (updates.isDouble !== undefined) updateData.is_double = updates.isDouble;
     if (updates.groupNumber !== undefined)
       updateData.group_number = updates.groupNumber;
+    if (updates.trackNumber !== undefined)
+      updateData.track_number = updates.trackNumber;
     if (updates.room !== undefined) updateData.room = updates.room;
     if (updates.scope !== undefined) updateData.scope = updates.scope;
 
@@ -748,6 +752,7 @@ export const childrenApi = {
       lastName: rel?.child?.last_name,
       grade: rel?.child?.grade,
       groupNumber: rel?.child?.group_number,
+      trackNumber: rel?.child?.track_number,
       scope: rel?.child?.scope,
       createdAt: rel?.child?.created_at,
       updatedAt: rel?.child?.updated_at,
@@ -758,8 +763,9 @@ export const childrenApi = {
     firstName: string,
     lastName: string,
     grade: number,
-    groupNumber: number = 1,
-    scope: Scope = "prod"
+    groupNumber: number | null = 1,
+    scope: Scope = "prod",
+    trackNumber: number | null = null
   ): Promise<Child> {
     const { data, error } = await supabase.rpc(
       "create_child_with_relationship",
@@ -769,6 +775,7 @@ export const childrenApi = {
         p_grade: grade,
         p_group_number: groupNumber,
         p_scope: scope,
+        p_track_number: trackNumber,
       }
     );
 
@@ -781,6 +788,7 @@ export const childrenApi = {
       lastName: data.last_name,
       grade: data.grade,
       groupNumber: data.group_number,
+      trackNumber: data.track_number,
       scope: data.scope,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
@@ -793,7 +801,8 @@ export const childrenApi = {
       firstName?: string;
       lastName?: string;
       grade?: number;
-      groupNumber?: number;
+      groupNumber?: number | null;
+      trackNumber?: number | null;
       scope?: Scope;
     }
   ): Promise<Child> {
@@ -804,6 +813,8 @@ export const childrenApi = {
     if (updates.grade !== undefined) updateData.grade = updates.grade;
     if (updates.groupNumber !== undefined)
       updateData.group_number = updates.groupNumber;
+    if (updates.trackNumber !== undefined)
+      updateData.track_number = updates.trackNumber;
     if (updates.scope !== undefined) updateData.scope = updates.scope;
 
     const { data, error } = await supabase
@@ -821,6 +832,7 @@ export const childrenApi = {
       lastName: data.last_name,
       grade: data.grade,
       groupNumber: data.group_number,
+      trackNumber: data.track_number,
       scope: data.scope,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
@@ -896,7 +908,7 @@ export const childrenApi = {
   async getAllChildren(): Promise<(Child & { assignedParent: boolean })[]> {
     const isProduction = process.env.NODE_ENV === "production";
 
-    // Use the database function to get children with parent status
+    // Use the database function to get children with parent status.
     const { data, error } = await supabase.rpc(
       "get_children_with_parent_status",
       {
@@ -913,6 +925,7 @@ export const childrenApi = {
         lastName: child.last_name,
         grade: child.grade,
         groupNumber: child.group_number,
+        trackNumber: child.track_number,
         scope: child.scope || "prod", // Fallback for migration compatibility
         createdAt: child.created_at,
         updatedAt: child.updated_at,
@@ -936,6 +949,7 @@ export const childrenApi = {
       lastName: data.last_name,
       grade: data.grade,
       groupNumber: data.group_number,
+      trackNumber: data.track_number,
       scope: data.scope,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
@@ -957,6 +971,7 @@ export const childrenApi = {
       lastName: data.last_name,
       grade: data.grade,
       groupNumber: data.group_number,
+      trackNumber: data.track_number,
       scope: data.scope,
       createdAt: data.created_at,
       updatedAt: data.updated_at,

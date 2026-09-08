@@ -137,10 +137,10 @@
       "dependencies": ["016_add_enrollment_functions"]
     },
     {
-      "id": "018_add_class_group_number",
-      "name": "Add Class Group Number",
-      "description": "Add nullable group_number (מסלול) column to classes, and relax children.group_number to allow NULL",
-      "file": "018_add_class_group_number.sql",
+      "id": "018_add_group_and_track_fields",
+      "name": "Add Group and Track Fields",
+      "description": "Add nullable group_number (קבוצה) and track_number (מסלול) columns to classes, add track_number to children, relax children.group_number to allow NULL, update create_child_with_relationship/children_with_parents accordingly, and bring get_children_with_parent_status under tracking with track_number added",
+      "file": "018_add_group_and_track_fields.sql",
       "created_at": "2026-09-07T00:01:00Z",
       "dependencies": ["017_add_class_slots"]
     }

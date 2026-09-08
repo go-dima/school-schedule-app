@@ -59,14 +59,17 @@ export function useChildren() {
     firstName: string,
     lastName: string,
     grade: number,
-    groupNumber: number = 1
+    groupNumber: number | null = 1,
+    trackNumber: number | null = null
   ): Promise<Child> => {
     try {
       const newChild = await childrenApi.createChild(
         firstName,
         lastName,
         grade,
-        groupNumber
+        groupNumber,
+        undefined,
+        trackNumber
       );
       setChildren(prev => [...prev, newChild]);
       return newChild;
@@ -84,7 +87,8 @@ export function useChildren() {
       firstName?: string;
       lastName?: string;
       grade?: number;
-      groupNumber?: number;
+      groupNumber?: number | null;
+      trackNumber?: number | null;
     }
   ): Promise<Child> => {
     try {

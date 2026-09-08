@@ -106,6 +106,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
         isMandatory: values.isMandatory || false,
         isDouble: values.isDouble || false,
         groupNumber: values.groupNumber ?? null,
+        trackNumber: values.trackNumber ?? null,
         room: values.room || "",
         scope: values.scope || "prod",
       };
@@ -160,6 +161,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
               isMandatory: initialValues.isMandatory,
               isDouble: initialValues.isDouble,
               groupNumber: initialValues.groupNumber,
+              trackNumber: initialValues.trackNumber,
               room: initialValues.room,
               scope: initialValues.scope,
             }
@@ -169,6 +171,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
               isMandatory: false,
               isDouble: false,
               groupNumber: null,
+              trackNumber: null,
               room: "",
               scope: "prod",
             }
@@ -284,12 +287,23 @@ const ClassForm: React.FC<ClassFormProps> = ({
             />
           </Form.Item>
         </Col>
+      </Row>
 
+      <Row gutter={16}>
         <Col span={12}>
           <Form.Item name="groupNumber" label={t("form.class.groupLabel")}>
             <Select placeholder={t("form.class.groupPlaceholder")} allowClear>
               <Option value={1}>{t("form.class.group1")}</Option>
               <Option value={2}>{t("form.class.group2")}</Option>
+            </Select>
+          </Form.Item>
+        </Col>
+
+        <Col span={12}>
+          <Form.Item name="trackNumber" label={t("form.class.trackLabel")}>
+            <Select placeholder={t("form.class.trackPlaceholder")} allowClear>
+              <Option value={1}>{t("form.class.track1")}</Option>
+              <Option value={2}>{t("form.class.track2")}</Option>
             </Select>
           </Form.Item>
         </Col>

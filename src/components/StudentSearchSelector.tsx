@@ -130,6 +130,7 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
         lastName: lastName || "",
         grade: defaultGrade,
         groupNumber: 1,
+        trackNumber: null,
         scope: "prod",
         createdAt: "",
         updatedAt: "",
@@ -189,7 +190,8 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
     firstName: string;
     lastName: string;
     grade: number;
-    groupNumber: number;
+    groupNumber: number | null;
+    trackNumber?: number | null;
     scope?: "test" | "prod";
   }) => {
     setAddLoading(true);
@@ -199,7 +201,8 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
         data.lastName,
         data.grade,
         data.groupNumber,
-        data.scope || "prod"
+        data.scope || "prod",
+        data.trackNumber ?? null
       );
       setIsAddModalOpen(false);
       setEditingStudent(undefined);

@@ -57,7 +57,8 @@ export interface Class {
   grades: number[]; // Changed from single grade to multiple grades
   isMandatory: boolean;
   isDouble: boolean; // Whether this lesson takes two sequential Class Slots on the same day
-  groupNumber: number | null; // מסלול: 1, 2, or null for no group
+  groupNumber: number | null; // קבוצה: 1, 2, or null. Convention: grades 1-2
+  trackNumber: number | null; // מסלול: 1, 2, or null. Convention: grades 3-6
   room: string; // Room/location where the lesson takes place
   scope: Scope;
   createdAt: string;
@@ -101,7 +102,8 @@ export interface Child {
   firstName: string;
   lastName: string;
   grade: number;
-  groupNumber: number;
+  groupNumber: number | null; // קבוצה: 1, 2, or null. Convention: grades 1-2
+  trackNumber: number | null; // מסלול: 1, 2, or null. Convention: grades 3-6
   scope: Scope;
   createdAt: string;
   updatedAt: string;

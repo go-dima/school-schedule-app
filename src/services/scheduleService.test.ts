@@ -35,6 +35,7 @@ const makeClass = (
   isMandatory: false,
   isDouble: false,
   groupNumber: null,
+  trackNumber: null,
   room: "",
   scope: "prod",
   createdAt: "",

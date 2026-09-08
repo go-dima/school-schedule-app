@@ -45,7 +45,8 @@ export function ChildManagement() {
     firstName: string;
     lastName: string;
     grade: number;
-    groupNumber: number;
+    groupNumber: number | null;
+    trackNumber?: number | null;
     scope?: Scope;
   }) => {
     setFormLoading(true);
@@ -54,7 +55,8 @@ export function ChildManagement() {
         data.firstName,
         data.lastName,
         data.grade,
-        data.groupNumber
+        data.groupNumber,
+        data.trackNumber ?? null
       );
       setIsFormModalOpen(false);
       setEditingChild(undefined);
@@ -67,7 +69,8 @@ export function ChildManagement() {
     firstName: string;
     lastName: string;
     grade: number;
-    groupNumber: number;
+    groupNumber: number | null;
+    trackNumber?: number | null;
     scope?: Scope;
   }) => {
     if (!editingChild) return;
@@ -218,9 +221,13 @@ export function ChildManagement() {
                         {child.firstName} {child.lastName}
                       </span>
                       <Space>
-                        <Tag color="green">
-                          {GetGradeName(child.grade)} {child.groupNumber}
-                        </Tag>
+                        <Tag color="blue">{GetGradeName(child.grade)}</Tag>
+                        {child.groupNumber && (
+                          <Tag color="green">{child.groupNumber}</Tag>
+                        )}
+                        {child.trackNumber && (
+                          <Tag color="cyan">{child.trackNumber}</Tag>
+                        )}
                       </Space>
                     </div>
                   }
