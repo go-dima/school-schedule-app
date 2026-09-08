@@ -47,6 +47,24 @@ export const TrackSelectionService = {
     return { toSelect, toUnselectIds };
   },
 
+  async applyTrackClassChanges(
+    childId: string,
+    { toSelect, toUnselectIds }: TrackClassChanges
+  ): Promise<void> {
+    await Promise.all([
+      ...toUnselectIds.map(classId =>
+        scheduleApi.unselectClassForChild(childId, classId)
+      ),
+      ...toSelect.map(cls => scheduleApi.selectClassForChild(childId, cls.id)),
+    ]);
+  },
+
+  /**
+   * Convenience wrapper for callers with no classes/schedule already loaded
+   * (e.g. the edit-child form). Callers that already hold this data in state
+   * (the schedule page) should call computeTrackClassChanges +
+   * applyTrackClassChanges directly instead, to avoid re-fetching it.
+   */
   async syncTrackClasses(
     child: Pick<Child, "id" | "grade">,
     newTrackNumber: number | null
@@ -56,18 +74,13 @@ export const TrackSelectionService = {
       scheduleApi.getChildSchedule(child.id),
     ]);
 
-    const { toSelect, toUnselectIds } = this.computeTrackClassChanges(
+    const changes = this.computeTrackClassChanges(
       allClasses,
       currentSchedule,
       child.grade,
       newTrackNumber
     );
 
-    await Promise.all([
-      ...toUnselectIds.map(classId =>
-        scheduleApi.unselectClassForChild(child.id, classId)
-      ),
-      ...toSelect.map(cls => scheduleApi.selectClassForChild(child.id, cls.id)),
-    ]);
+    await this.applyTrackClassChanges(child.id, changes);
   },
 };

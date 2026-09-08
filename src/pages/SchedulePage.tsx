@@ -137,7 +137,16 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
       try {
         const updatedChild = await updateFn(child.id, { trackNumber });
         setChild(updatedChild);
-        await TrackSelectionService.syncTrackClasses(updatedChild, trackNumber);
+        const changes = TrackSelectionService.computeTrackClassChanges(
+          classes,
+          childSchedule,
+          updatedChild.grade,
+          trackNumber
+        );
+        await TrackSelectionService.applyTrackClassChanges(
+          updatedChild.id,
+          changes
+        );
         await refetchChildSchedule();
       } catch (err) {
         message.error(
