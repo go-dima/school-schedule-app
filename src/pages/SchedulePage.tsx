@@ -589,7 +589,6 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
           isAdmin={isAdmin()}
           onCreateClass={handleCreateClass}
           searchTerm={searchTerm}
-          lockedClasses={Array.from(lockedClassIds)}
         />
       </Card>
 

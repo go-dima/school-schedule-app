@@ -17,6 +17,7 @@ import type { TimeSlot, ClassWithTimeSlot } from "../types";
 import CreateClassButton from "./CreateClassButton";
 import "./ClassSelectionDrawer.css";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
+import { TrackTag } from "@/elements/TrackTag";
 import { GetDayName } from "@/utils/days";
 
 const { Title, Text } = Typography;
@@ -35,7 +36,6 @@ interface ClassSelectionDrawerProps {
   isAdmin?: boolean;
   onCreateClass?: (timeSlotId: string, dayOfWeek: number) => void;
   timeSlots?: TimeSlot[]; // Add timeSlots for calculating double lesson ranges
-  lockedClasses?: string[];
 }
 
 const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
@@ -52,7 +52,6 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
   isAdmin = false,
   onCreateClass,
   timeSlots = [],
-  lockedClasses = [],
 }) => {
   const { t } = useTranslation();
   const timeRange = ScheduleService.formatTimeRange(
@@ -119,7 +118,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
     isGrayedOut: boolean = false
   ) => {
     const isSelected = selectedClasses.includes(cls.id);
-    const isLocked = isSelected && lockedClasses.includes(cls.id);
+    const isLocked = cls.trackNumber !== null;
     const hasConflict = conflictingClasses.some(
       conflict => conflict.id === cls.id
     );
@@ -151,7 +150,12 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
             ? [
                 <div className="select-class-button">
                   {isLocked ? (
-                    <Tooltip title={t("schedule.drawer.trackLockedTooltip")}>
+                    <Tooltip
+                      title={t(
+                        isSelected
+                          ? "schedule.drawer.trackLockedTooltip"
+                          : "schedule.drawer.trackUnselectableTooltip"
+                      )}>
                       <span style={{ display: "block" }}>{toggleButton}</span>
                     </Tooltip>
                   ) : (
@@ -175,6 +179,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
               {cls.isDouble && (
                 <Tag color="orange">{t("schedule.drawer.doubleLessonTag")}</Tag>
               )}
+              {cls.trackNumber !== null && <TrackTag track={cls.trackNumber} />}
             </div>
           </div>
 
