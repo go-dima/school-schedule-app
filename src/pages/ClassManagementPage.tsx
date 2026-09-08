@@ -10,9 +10,7 @@ import {
   Modal,
   message,
   Tag,
-  Select,
-  Row,
-  Col,
+  AutoComplete,
   Dropdown,
   MenuProps,
 } from "antd";
@@ -21,7 +19,6 @@ import {
   EditOutlined,
   DeleteOutlined,
   ReloadOutlined,
-  CloseOutlined,
   MoreOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
@@ -39,6 +36,7 @@ import type {
 import { DAYS_OF_WEEK, GRADES } from "../types";
 import ClassForm from "../components/ClassForm";
 import { GroupTrackTags } from "../components/GroupTrackTags";
+import { FilterSelect } from "../components/FilterSelect";
 import "./ClassManagementPage.css";
 import { GetGradeName, GetGradeNameShort } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
@@ -46,6 +44,10 @@ import { EnrollmentCount } from "@/elements/EnrollmentCount";
 import { EnrollmentService } from "../services/enrollmentService";
 
 const { Title } = Typography;
+
+// Sentinel track filter value meaning "classes with no track", distinct from
+// `null` which means the track filter is not applied.
+const NO_TRACK_FILTER = 0;
 
 interface ClassManagementPageProps {
   onNavigate?: AppOnNavigate;
@@ -68,8 +70,12 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
   );
 
   // Filter states
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
+  // 1 | 2 select an actual track; NO_TRACK_FILTER selects classes with no
+  // track set; null means the filter is not applied at all.
+  const [selectedTrack, setSelectedTrack] = useState<number | null>(null);
   const [selectedScope, setSelectedScope] = useState<Scope | null>(null);
 
   useEffect(() => {
@@ -80,6 +86,13 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
   const filteredClasses = useMemo(() => {
     let filtered = classes;
 
+    if (searchTerm) {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      filtered = filtered.filter(cls =>
+        cls.title.toLowerCase().includes(lowerSearchTerm)
+      );
+    }
+
     if (selectedDay !== null) {
       filtered = filtered.filter(cls =>
         cls.slots.some(slot => slot.dayOfWeek === selectedDay)
@@ -88,6 +101,14 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
 
     if (selectedGrade !== null) {
       filtered = filtered.filter(cls => cls.grades?.includes(selectedGrade));
+    }
+
+    if (selectedTrack !== null) {
+      filtered = filtered.filter(cls =>
+        selectedTrack === NO_TRACK_FILTER
+          ? cls.trackNumber === null
+          : cls.trackNumber === selectedTrack
+      );
     }
 
     if (selectedScope !== null) {
@@ -114,7 +135,14 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       const bMinGrade = Math.min(...(b.grades || []));
       return aMinGrade - bMinGrade;
     });
-  }, [classes, selectedDay, selectedGrade, selectedScope]);
+  }, [
+    classes,
+    searchTerm,
+    selectedDay,
+    selectedGrade,
+    selectedTrack,
+    selectedScope,
+  ]);
 
   const loadData = async () => {
     setLoading(true);
@@ -469,119 +497,102 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
         <Card
           title={t("classManagement.page.filtersTitle")}
           style={{ marginBottom: 24 }}>
-          <Row gutter={[16, 16]} align="middle">
-            <Col xs={24} sm={8} md={6}>
-              <Space direction="vertical" style={{ width: "100%" }}>
-                <Space
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    width: "100%",
-                  }}>
-                  <label>{t("classManagement.page.dayFilterLabel")}</label>
-                  {selectedDay !== null && (
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={<CloseOutlined />}
-                      onClick={() => setSelectedDay(null)}
-                      style={{ padding: 0 }}
-                    />
-                  )}
-                </Space>
-                <Select
-                  placeholder={t("classManagement.page.dayFilterPlaceholder")}
-                  allowClear
-                  style={{ width: "100%" }}
-                  value={selectedDay}
-                  onChange={setSelectedDay}>
-                  {DAYS_OF_WEEK.map(day => (
-                    <Select.Option key={day.key} value={day.key}>
-                      {day.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Space>
-            </Col>
+          <Space size={16} align="end" wrap>
+            <Space direction="vertical" size={4} style={{ width: 200 }}>
+              <label>{t("classManagement.page.searchLabel")}</label>
+              <AutoComplete
+                value={searchTerm}
+                onChange={setSearchTerm}
+                options={(() => {
+                  if (!searchTerm) return [];
 
-            <Col xs={24} sm={8} md={6}>
-              <Space direction="vertical" style={{ width: "100%" }}>
-                <Space
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    width: "100%",
-                  }}>
-                  <label>{t("classManagement.page.gradeFilterLabel")}</label>
-                  {selectedGrade !== null && (
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={<CloseOutlined />}
-                      onClick={() => setSelectedGrade(null)}
-                      style={{ padding: 0 }}
-                    />
-                  )}
-                </Space>
-                <Select
-                  placeholder={t("classManagement.page.gradeFilterPlaceholder")}
-                  allowClear
-                  style={{ width: "100%" }}
-                  value={selectedGrade}
-                  onChange={setSelectedGrade}>
-                  {GRADES.map(grade => (
-                    <Select.Option key={grade} value={grade}>
-                      {GetGradeName(grade)}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Space>
-            </Col>
+                  const lowerSearchTerm = searchTerm.toLowerCase();
+                  const uniqueClassNames = Array.from(
+                    new Set(
+                      classes
+                        .filter(cls =>
+                          cls.title.toLowerCase().includes(lowerSearchTerm)
+                        )
+                        .map(cls => cls.title)
+                    )
+                  ).sort();
 
-            <Col xs={24} sm={8} md={6}>
-              <Space direction="vertical" style={{ width: "100%" }}>
-                <Space
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    width: "100%",
-                  }}>
-                  <label>{t("scope.selector.label")}</label>
-                  {selectedScope !== null && (
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={<CloseOutlined />}
-                      onClick={() => setSelectedScope(null)}
-                      style={{ padding: 0 }}
-                    />
-                  )}
-                </Space>
-                <Select
-                  placeholder={t(
-                    "classManagement.page.environmentFilterPlaceholder"
-                  )}
-                  allowClear
-                  style={{ width: "100%" }}
-                  value={selectedScope}
-                  onChange={setSelectedScope}>
-                  <Select.Option value="test">{t("scope.test")}</Select.Option>
-                  <Select.Option value="prod">{t("scope.prod")}</Select.Option>
-                </Select>
-              </Space>
-            </Col>
+                  return uniqueClassNames.map(title => ({ value: title }));
+                })()}
+                placeholder={t("classManagement.page.searchPlaceholder")}
+                style={{ width: "100%" }}
+                allowClear
+                filterOption={false}
+              />
+            </Space>
 
-            <Col xs={24} sm={24} md={6}>
-              <Button
-                onClick={() => {
-                  setSelectedDay(null);
-                  setSelectedGrade(null);
-                  setSelectedScope(null);
-                }}>
-                {t("classManagement.page.clearFiltersButton")}
-              </Button>
-            </Col>
-          </Row>
+            <FilterSelect
+              label={t("classManagement.page.dayFilterLabel")}
+              placeholder={t("classManagement.page.dayFilterPlaceholder")}
+              value={selectedDay}
+              onChange={setSelectedDay}
+              options={DAYS_OF_WEEK.map(day => ({
+                value: day.key,
+                label: day.name,
+              }))}
+            />
+
+            <FilterSelect
+              label={t("classManagement.page.gradeFilterLabel")}
+              placeholder={t("classManagement.page.gradeFilterPlaceholder")}
+              value={selectedGrade}
+              onChange={setSelectedGrade}
+              options={GRADES.map(grade => ({
+                value: grade,
+                label: GetGradeName(grade),
+              }))}
+            />
+
+            <FilterSelect
+              label={t("classManagement.page.trackFilterLabel")}
+              placeholder={t("classManagement.page.trackFilterPlaceholder")}
+              value={selectedTrack}
+              onChange={setSelectedTrack}
+              options={[
+                {
+                  value: 1,
+                  label: t("classManagement.page.trackFilterOption1"),
+                },
+                {
+                  value: 2,
+                  label: t("classManagement.page.trackFilterOption2"),
+                },
+                {
+                  value: NO_TRACK_FILTER,
+                  label: t("classManagement.page.trackFilterOptionNone"),
+                },
+              ]}
+            />
+
+            <FilterSelect
+              label={t("scope.selector.label")}
+              placeholder={t(
+                "classManagement.page.environmentFilterPlaceholder"
+              )}
+              value={selectedScope}
+              onChange={setSelectedScope}
+              options={[
+                { value: "test", label: t("scope.test") },
+                { value: "prod", label: t("scope.prod") },
+              ]}
+            />
+
+            <Button
+              onClick={() => {
+                setSearchTerm("");
+                setSelectedDay(null);
+                setSelectedGrade(null);
+                setSelectedTrack(null);
+                setSelectedScope(null);
+              }}>
+              {t("classManagement.page.clearFiltersButton")}
+            </Button>
+          </Space>
         </Card>
       </div>
 
