@@ -554,14 +554,12 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
               value={selectedTrack}
               onChange={setSelectedTrack}
               options={[
-                {
-                  value: 1,
-                  label: t("classManagement.page.trackFilterOption1"),
-                },
-                {
-                  value: 2,
-                  label: t("classManagement.page.trackFilterOption2"),
-                },
+                ...[1, 2].map(track => ({
+                  value: track,
+                  label: t("classManagement.page.trackFilterOption", {
+                    track,
+                  }),
+                })),
                 {
                   value: NO_TRACK_FILTER,
                   label: t("classManagement.page.trackFilterOptionNone"),
