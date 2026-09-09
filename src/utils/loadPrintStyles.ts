@@ -250,8 +250,7 @@ body {
   line-height: 1.2;
 }
 
-.print-double-indicator,
-.print-mandatory-indicator {
+.print-double-indicator {
   font-size: 8px;
   font-weight: bold;
   padding: 1px 4px;
@@ -259,17 +258,7 @@ body {
   margin: 1px;
   display: inline-block;
   line-height: 1;
-}
-
-.print-double-indicator {
   background: #fa8c16 !important;
-  color: white !important;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-
-.print-mandatory-indicator {
-  background: #ff4d4f !important;
   color: white !important;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;

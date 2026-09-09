@@ -129,11 +129,6 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
                   {t("schedule.table.doubleLessonTag")}
                 </div>
               )}
-              {cls.isMandatory && (
-                <div className="print-mandatory-indicator">
-                  {t("schedule.table.mandatoryTag")}
-                </div>
-              )}
             </div>
           ))}
         </div>
