@@ -134,7 +134,6 @@
     "table": {
       "timeColumn": "זמן",
       "room": "כיתה: {{room}}",
-      "mandatoryTag": "ליבה",
       "doubleLessonTag": "שיעור כפול",
       "trackTag": "מסלול {{track}}",
       "continuationText": "(המשך)",
@@ -155,7 +154,6 @@
       "selectButton": "בחר שיעור",
       "trackLockedTooltip": "שיעור זה נבחר אוטומטית לפי המסלול. יש לשנות את המסלול כדי להסירו",
       "trackUnselectableTooltip": "לא ניתן לבחור שיעור במסלול, יש לבחר את המסלול כולו",
-      "mandatoryTag": "ליבה",
       "doubleLessonTag": "שיעור כפול",
       "teacherLabel": "מורה: ",
       "timeLabel": "זמן: ",

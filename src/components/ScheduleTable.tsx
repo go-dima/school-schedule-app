@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Card, Tag, Button, Empty } from "antd";
+import { Table, Card, Button, Empty } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useTranslation } from "react-i18next";
 import { DAYS_OF_WEEK } from "../types";
@@ -194,9 +194,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               <div className="class-enrollment-labels">
                 <div className="class-tags">
                   <GradesRangeTag grades={doubleClass.grades} color="green" />
-                  {doubleClass.isMandatory && (
-                    <Tag color="red">{t("schedule.table.mandatoryTag")}</Tag>
-                  )}
                   <DoubleLessonTag />
                 </div>
               </div>
@@ -289,11 +286,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                   <div className="class-enrollment-labels">
                     <div className="class-tags">
                       <GradesRangeTag grades={cls.grades} color={tagColor} />
-                      {cls.isMandatory && (
-                        <Tag color="red">
-                          {t("schedule.table.mandatoryTag")}
-                        </Tag>
-                      )}
                       {isDoubleLesson && <DoubleLessonTag />}
                     </div>
                   </div>

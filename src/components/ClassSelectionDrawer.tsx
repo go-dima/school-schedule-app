@@ -173,9 +173,6 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
             </Title>
             <div className="class-header-tags">
               <GradesRangeTag grades={cls.grades} color="blue" />
-              {cls.isMandatory && (
-                <Tag color="red">{t("schedule.drawer.mandatoryTag")}</Tag>
-              )}
               {cls.isDouble && (
                 <Tag color="orange">{t("schedule.drawer.doubleLessonTag")}</Tag>
               )}
