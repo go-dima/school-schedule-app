@@ -47,6 +47,7 @@ const makeSelection = (cls: ClassWithTimeSlot): ScheduleSelectionWithClass => ({
   id: `sel-${cls.id}`,
   userId: "user-1",
   classId: cls.id,
+  status: "draft",
   createdAt: "",
   updatedAt: "",
   class: cls,

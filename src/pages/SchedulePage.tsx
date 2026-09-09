@@ -31,6 +31,8 @@ import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { ChildTrackSelector } from "../components/ChildTrackSelector";
 import { classesApi, timeSlotsApi } from "../services/api";
 import { TrackSelectionService } from "../services/trackSelectionService";
+import { ScheduleService } from "../services/scheduleService";
+import { DraftBanner } from "../elements/DraftBanner";
 import { GRADES } from "../types";
 import type { AppOnNavigate, Class, TimeSlot, Child } from "../types";
 import "./SchedulePage.css";
@@ -86,6 +88,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   const isParent = hasRole("parent");
+  const viewStatus = ScheduleService.resolveSelectionStatus(currentRole?.role);
 
   const handleStaffChildSelect = (childId: string | undefined) => {
     if (!childId) {
@@ -124,7 +127,10 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     unselectClassForChild,
     isClassSelected: isChildClassSelected,
     refetch: refetchChildSchedule,
-  } = useChildSchedule(isStaff ? staffSelectedChild : selectedChild);
+  } = useChildSchedule(
+    isStaff ? staffSelectedChild : selectedChild,
+    viewStatus
+  );
 
   const makeTrackChangeHandler =
     (
@@ -145,7 +151,8 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
         );
         await TrackSelectionService.applyTrackClassChanges(
           updatedChild.id,
-          changes
+          changes,
+          viewStatus
         );
         await refetchChildSchedule();
       } catch (err) {
@@ -582,6 +589,8 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
           style={{ marginBottom: 24 }}
         />
       )}
+
+      {viewStatus === "draft" && <DraftBanner />}
 
       <Card className="schedule-card">
         <ScheduleTable
