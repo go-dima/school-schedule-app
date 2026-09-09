@@ -151,8 +151,16 @@
       "file": "019_drop_child_sharing.sql",
       "created_at": "2026-09-09T00:00:00Z",
       "dependencies": ["018_add_group_and_track_fields"]
+    },
+    {
+      "id": "020_fix_children_roster_permissions",
+      "name": "Fix Children Roster Permissions",
+      "description": "Close a public data leak: switch children_with_parents to security_invoker and add an admin-or-staff check inside get_children_with_parent_status, revoking public/anon access to both",
+      "file": "020_fix_children_roster_permissions.sql",
+      "created_at": "2026-09-09T00:01:00Z",
+      "dependencies": ["019_drop_child_sharing"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 19
+  "schema_version": 20
 }
