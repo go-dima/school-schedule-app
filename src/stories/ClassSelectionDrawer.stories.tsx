@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
-import { Button } from "antd";
 import ClassSelectionDrawer from "../components/ClassSelectionDrawer";
 import type { TimeSlot, ClassWithTimeSlot } from "../types";
 
@@ -94,9 +93,10 @@ const mockClasses: ClassWithTimeSlot[] = [
 
 const conflictingClasses: ClassWithTimeSlot[] = [mockClasses[1]];
 
-// Wrapper component for interactive stories
+// Wrapper component for interactive stories - the drawer is shown open, with
+// no trigger button, since that's the only thing these stories demonstrate.
 function DrawerWrapper(args: any) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [selectedClasses, setSelectedClasses] = useState<string[]>(
     args.selectedClasses || []
   );
@@ -110,21 +110,15 @@ function DrawerWrapper(args: any) {
   };
 
   return (
-    <div style={{ padding: "20px", direction: "rtl" }}>
-      <Button type="primary" onClick={() => setOpen(true)}>
-        פתח מגירת בחירת שיעורים
-      </Button>
-
-      <ClassSelectionDrawer
-        {...args}
-        open={open}
-        onClose={() => setOpen(false)}
-        selectedClasses={selectedClasses}
-        onClassSelect={handleClassSelect}
-        onClassUnselect={handleClassUnselect}
-        timeSlots={mockTimeSlots}
-      />
-    </div>
+    <ClassSelectionDrawer
+      {...args}
+      open={open}
+      onClose={() => setOpen(false)}
+      selectedClasses={selectedClasses}
+      onClassSelect={handleClassSelect}
+      onClassUnselect={handleClassUnselect}
+      timeSlots={mockTimeSlots}
+    />
   );
 }
 
