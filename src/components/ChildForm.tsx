@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Form, Input, Select, Button, Space, message } from "antd";
 import { useTranslation } from "react-i18next";
 import type { Child, Scope } from "../types";
@@ -8,6 +9,17 @@ import { GroupTrackSelect } from "./GroupTrackSelect";
 
 interface ChildFormProps {
   child?: Child;
+  /**
+   * When editing an existing child in a parent-facing context, Track is
+   * shown read-only, sourced from the committed value rather than the
+   * child's (draft) trackNumber -- a parent's own draft experimentation
+   * happens on the Schedule page's track selector, not here. Ignored when
+   * creating a new child (trackNumber there is still an editable initial
+   * draft pick) or in a staff/admin context (Track stays editable there,
+   * already committed-sourced by the caller's child prop).
+   */
+  committedTrackNumber?: number | null;
+  trackNumberReadOnly?: boolean;
   onSubmit: (data: {
     firstName: string;
     lastName: string;
@@ -22,6 +34,8 @@ interface ChildFormProps {
 
 export function ChildForm({
   child,
+  committedTrackNumber,
+  trackNumberReadOnly = false,
   onSubmit,
   onCancel,
   loading = false,
@@ -29,6 +43,17 @@ export function ChildForm({
   const { t } = useTranslation();
   const [form] = Form.useForm();
   const isEditing = !!child;
+  const showReadOnlyTrack = trackNumberReadOnly && isEditing;
+
+  // Form.initialValues only applies once at mount; committedTrackNumber
+  // arrives asynchronously after the form is already mounted (fetched once
+  // the edit modal opens), so it needs to be pushed in explicitly once it's
+  // available rather than relying on initialValues to pick it up.
+  useEffect(() => {
+    if (showReadOnlyTrack) {
+      form.setFieldValue("trackNumber", committedTrackNumber ?? null);
+    }
+  }, [showReadOnlyTrack, committedTrackNumber, form]);
 
   const handleSubmit = async (values: any) => {
     try {
@@ -37,7 +62,12 @@ export function ChildForm({
         lastName: values.lastName,
         grade: values.grade,
         groupNumber: values.groupNumber ?? null,
-        trackNumber: values.trackNumber ?? null,
+        // Read-only track is a display of the committed value, never part
+        // of what this form edits -- omit it so the parent-owned draft
+        // track is never touched by submitting this form.
+        trackNumber: showReadOnlyTrack
+          ? undefined
+          : (values.trackNumber ?? null),
         scope: values.scope,
       });
       message.success(
@@ -60,7 +90,9 @@ export function ChildForm({
         lastName: child?.lastName || "",
         grade: child?.grade || 1,
         groupNumber: child?.groupNumber ?? null,
-        trackNumber: child?.trackNumber ?? null,
+        trackNumber: showReadOnlyTrack
+          ? (committedTrackNumber ?? null)
+          : (child?.trackNumber ?? null),
         scope: child?.scope || "prod",
       }}>
       <Form.Item
@@ -99,10 +131,16 @@ export function ChildForm({
         />
       </Form.Item>
 
-      <Form.Item label={t("form.child.trackLabel")} name="trackNumber">
+      <Form.Item
+        label={t("form.child.trackLabel")}
+        name="trackNumber"
+        extra={
+          showReadOnlyTrack ? t("form.child.trackReadOnlyHint") : undefined
+        }>
         <GroupTrackSelect
           optionLabel={track => t("form.child.trackOption", { track })}
           placeholder={t("form.child.trackPlaceholder")}
+          disabled={showReadOnlyTrack}
         />
       </Form.Item>
 

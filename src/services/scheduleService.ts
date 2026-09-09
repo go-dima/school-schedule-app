@@ -3,7 +3,9 @@ import type {
   ClassSlotWithTimeSlot,
   ClassWithTimeSlot,
   ScheduleSelectionWithClass,
+  SelectionStatus,
   TimeSlot,
+  UserRole,
   WeeklySchedule,
 } from "../types";
 import { isLessonTimeSlot } from "../utils/timeSlots";
@@ -188,5 +190,14 @@ export class ScheduleService {
     const end = new Date(`1970-01-01T${endTime}:00`);
 
     return start < end;
+  }
+
+  /**
+   * The single decision point for which selection state a viewer edits/sees:
+   * staff and admin always work in committed, everyone else (parent, child,
+   * or no role yet) works in draft.
+   */
+  static resolveSelectionStatus(role: UserRole | undefined): SelectionStatus {
+    return role === "staff" || role === "admin" ? "committed" : "draft";
   }
 }

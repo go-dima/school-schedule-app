@@ -59,6 +59,7 @@
     }
   },
   "schedule": {
+    "draftBanner": "הבחירה היא טויטה בלבד",
     "page": {
       "title": "מערכת שעות",
       "loading": "טוען את מערכת השעות...",
@@ -244,6 +245,7 @@
       "trackLabel": "מסלול",
       "trackPlaceholder": "ללא מסלול",
       "trackOption": "מסלול {{track}}",
+      "trackReadOnlyHint": "המסלול הרשמי כפי שנקבע על ידי הצוות. לבחירת מסלול לטיוטה, יש לעשות זאת במערכת השעות.",
       "updateButton": "עדכן",
       "addButton": "הוסף",
       "updateSuccess": "הילד עודכן בהצלחה",

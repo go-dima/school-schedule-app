@@ -7,6 +7,7 @@ import type {
   PendingApproval,
   ScheduleSelectionWithClass,
   Scope,
+  SelectionStatus,
   TimeSlot,
   User,
   UserRole,
@@ -635,6 +636,7 @@ export const scheduleApi = {
       id: selection.id,
       userId: selection.user_id,
       classId: selection.class_id,
+      status: selection.status,
       createdAt: selection.created_at,
       updatedAt: selection.updated_at,
       class: mapClassRow(selection.class, timeSlotsById),
@@ -667,7 +669,8 @@ export const scheduleApi = {
   },
 
   async getChildSchedule(
-    childId: string
+    childId: string,
+    status: SelectionStatus
   ): Promise<ScheduleSelectionWithClass[]> {
     const isProduction = process.env.NODE_ENV === "production";
     const [{ data, error }, timeSlotsById] = await Promise.all([
@@ -679,7 +682,8 @@ export const scheduleApi = {
         class:classes(*)
       `
         )
-        .eq("child_id", childId),
+        .eq("child_id", childId)
+        .eq("status", status),
       fetchTimeSlotsById(),
     ]);
 
@@ -693,13 +697,18 @@ export const scheduleApi = {
       id: selection.id,
       userId: selection.user_id,
       classId: selection.class_id,
+      status: selection.status,
       createdAt: selection.created_at,
       updatedAt: selection.updated_at,
       class: mapClassRow(selection.class, timeSlotsById),
     }));
   },
 
-  async selectClassForChild(childId: string, classId: string) {
+  async selectClassForChild(
+    childId: string,
+    classId: string,
+    status: SelectionStatus
+  ) {
     // Get current user ID (parent making the selection)
     const {
       data: { user },
@@ -713,6 +722,7 @@ export const scheduleApi = {
           user_id: user.id,
           child_id: childId,
           class_id: classId,
+          status,
         },
       ])
       .select();
@@ -721,12 +731,17 @@ export const scheduleApi = {
     return data[0];
   },
 
-  async unselectClassForChild(childId: string, classId: string) {
+  async unselectClassForChild(
+    childId: string,
+    classId: string,
+    status: SelectionStatus
+  ) {
     const { error } = await supabase
       .from("schedule_selections")
       .delete()
       .eq("child_id", childId)
-      .eq("class_id", classId);
+      .eq("class_id", classId)
+      .eq("status", status);
 
     if (error) throw new ApiError(error.message);
   },
@@ -764,7 +779,7 @@ export const childrenApi = {
       lastName: rel?.child?.last_name,
       grade: rel?.child?.grade,
       groupNumber: rel?.child?.group_number,
-      trackNumber: rel?.child?.track_number,
+      trackNumber: rel?.child?.track_number_draft,
       scope: rel?.child?.scope,
       createdAt: rel?.child?.created_at,
       updatedAt: rel?.child?.updated_at,
@@ -777,7 +792,8 @@ export const childrenApi = {
     grade: number,
     groupNumber: number | null = 1,
     scope: Scope = "prod",
-    trackNumber: number | null = null
+    trackNumber: number | null = null,
+    status: SelectionStatus = "draft"
   ): Promise<Child> {
     const { data, error } = await supabase.rpc(
       "create_child_with_relationship",
@@ -788,6 +804,7 @@ export const childrenApi = {
         p_group_number: groupNumber,
         p_scope: scope,
         p_track_number: trackNumber,
+        p_status: status,
       }
     );
 
@@ -800,7 +817,10 @@ export const childrenApi = {
       lastName: data.last_name,
       grade: data.grade,
       groupNumber: data.group_number,
-      trackNumber: data.track_number,
+      trackNumber:
+        status === "committed"
+          ? data.track_number_committed
+          : data.track_number_draft,
       scope: data.scope,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
@@ -814,7 +834,6 @@ export const childrenApi = {
       lastName?: string;
       grade?: number;
       groupNumber?: number | null;
-      trackNumber?: number | null;
       scope?: Scope;
     }
   ): Promise<Child> {
@@ -825,8 +844,6 @@ export const childrenApi = {
     if (updates.grade !== undefined) updateData.grade = updates.grade;
     if (updates.groupNumber !== undefined)
       updateData.group_number = updates.groupNumber;
-    if (updates.trackNumber !== undefined)
-      updateData.track_number = updates.trackNumber;
     if (updates.scope !== undefined) updateData.scope = updates.scope;
 
     const { data, error } = await supabase
@@ -844,11 +861,34 @@ export const childrenApi = {
       lastName: data.last_name,
       grade: data.grade,
       groupNumber: data.group_number,
-      trackNumber: data.track_number,
+      trackNumber: data.track_number_draft,
       scope: data.scope,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
+  },
+
+  /**
+   * Track is split into track_number_draft (parent-owned) and
+   * track_number_committed (staff/admin-owned) -- a separate write path
+   * from updateChild since the two are never touched by the same caller's
+   * intent. No DB-level enforcement of which status a caller may write
+   * (see migration 023's header) -- callers must pass the correct status.
+   */
+  async updateChildTrack(
+    childId: string,
+    status: SelectionStatus,
+    trackNumber: number | null
+  ): Promise<void> {
+    const column =
+      status === "committed" ? "track_number_committed" : "track_number_draft";
+
+    const { error } = await supabase
+      .from("children")
+      .update({ [column]: trackNumber })
+      .eq("id", childId);
+
+    if (error) throw new ApiError(error.message);
   },
 
   async removeChildFromParent(
@@ -902,7 +942,10 @@ export const childrenApi = {
     });
   },
 
-  async getChildById(childId: string): Promise<Child> {
+  async getChildById(
+    childId: string,
+    status: SelectionStatus = "draft"
+  ): Promise<Child> {
     const { data, error } = await supabase
       .from("children")
       .select("*")
@@ -917,14 +960,20 @@ export const childrenApi = {
       lastName: data.last_name,
       grade: data.grade,
       groupNumber: data.group_number,
-      trackNumber: data.track_number,
+      trackNumber:
+        status === "committed"
+          ? data.track_number_committed
+          : data.track_number_draft,
       scope: data.scope,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
   },
 
-  async getChildWithParents(childId: string): Promise<ChildWithParents> {
+  async getChildWithParents(
+    childId: string,
+    status: SelectionStatus = "draft"
+  ): Promise<ChildWithParents> {
     const { data, error } = await supabase
       .from("children_with_parents")
       .select("*")
@@ -939,7 +988,10 @@ export const childrenApi = {
       lastName: data.last_name,
       grade: data.grade,
       groupNumber: data.group_number,
-      trackNumber: data.track_number,
+      trackNumber:
+        status === "committed"
+          ? data.track_number_committed
+          : data.track_number_draft,
       scope: data.scope,
       createdAt: data.created_at,
       updatedAt: data.updated_at,

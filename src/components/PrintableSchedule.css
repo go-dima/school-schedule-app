@@ -29,6 +29,13 @@
   line-height: 1.2;
 }
 
+.print-draft-marker {
+  font-size: 14px;
+  font-weight: bold;
+  color: #d46b08;
+  margin: 4px 0 0 0;
+}
+
 .print-date {
   font-size: 14px;
   color: var(--schedule-text-secondary);

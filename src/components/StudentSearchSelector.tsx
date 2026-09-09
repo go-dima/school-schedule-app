@@ -202,7 +202,8 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
         data.grade,
         data.groupNumber,
         data.scope || "prod",
-        data.trackNumber ?? null
+        data.trackNumber ?? null,
+        "committed"
       );
       setIsAddModalOpen(false);
       setEditingStudent(undefined);
