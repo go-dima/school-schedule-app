@@ -312,3 +312,25 @@ describe("ScheduleService.getDoubleLessonPair / isDoubleLessonSecondSlot", () =>
     ).toBe(false);
   });
 });
+
+describe("ScheduleService.resolveSelectionStatus", () => {
+  it("resolves staff to committed", () => {
+    expect(ScheduleService.resolveSelectionStatus("staff")).toBe("committed");
+  });
+
+  it("resolves admin to committed", () => {
+    expect(ScheduleService.resolveSelectionStatus("admin")).toBe("committed");
+  });
+
+  it("resolves parent to draft", () => {
+    expect(ScheduleService.resolveSelectionStatus("parent")).toBe("draft");
+  });
+
+  it("resolves child to draft", () => {
+    expect(ScheduleService.resolveSelectionStatus("child")).toBe("draft");
+  });
+
+  it("resolves no role (undefined) to draft", () => {
+    expect(ScheduleService.resolveSelectionStatus(undefined)).toBe("draft");
+  });
+});
