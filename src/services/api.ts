@@ -717,18 +717,13 @@ export const scheduleApi = {
   },
 
   async getClassEnrolledChildren(classId: string): Promise<Child[]> {
-    const { data, error } = await supabase
-      .from("schedule_selections")
-      .select(`child:children(*)`)
-      .eq("class_id", classId)
-      .eq("status", "committed")
-      .not("child_id", "is", null);
+    const { data, error } = await supabase.rpc("get_class_enrolled_children", {
+      p_class_id: classId,
+    });
 
     if (error) throw new ApiError(error.message);
 
-    return data
-      .map((row: any) => row.child)
-      .filter((child: any) => !!child)
+    return (data ?? [])
       .map((child: any) => ({
         id: child.id,
         firstName: child.first_name,

@@ -183,8 +183,16 @@
       "file": "023_split_track_draft_committed.sql",
       "created_at": "2026-09-09T00:03:00Z",
       "dependencies": ["022_add_selection_status"]
+    },
+    {
+      "id": "024_add_get_class_enrolled_children",
+      "name": "Add Get Class Enrolled Children",
+      "description": "Introduce committed_enrollments as the single source of truth for \"what counts as enrolled\" (child_id IS NOT NULL AND status = 'committed'), used by get_class_enrollment_counts/get_class_enrollment_count/classes_with_enrollment (rewritten to read from it instead of duplicating the predicate) and by a new get_class_enrolled_children(p_class_id) SECURITY DEFINER function returning the roster of children committed-enrolled in a class, bypassing the children table's parent-scoped RLS SELECT policy for staff/admin (same problem get_children_with_parent_status solves for the Students page), with its own internal admin/staff+approved check so the roster can't be enumerated by arbitrary authenticated users",
+      "file": "024_add_get_class_enrolled_children.sql",
+      "created_at": "2026-09-09T00:04:00Z",
+      "dependencies": ["023_split_track_draft_committed"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 23
+  "schema_version": 24
 }

@@ -10,6 +10,12 @@ const authCallbacks: AuthChangeHandler[] = [];
 // that never await the chain (e.g. the getUser-hang test) are unaffected.
 let mockFromResult: { data: any; error: any } = { data: [], error: null };
 
+// Fixture data resolved by the `rpc(...)` mock below when it is awaited.
+// Tests that care about the resolved rows set this before invoking the code
+// under test; it defaults to an empty, error-free result so tests that never
+// call an rpc-backed function are unaffected.
+let mockRpcResult: { data: any; error: any } = { data: [], error: null };
+
 vi.mock("./supabase", () => {
   return {
     supabase: {
@@ -22,6 +28,7 @@ vi.mock("./supabase", () => {
         // supabase-js's internal auth lock deadlocks.
         getUser: vi.fn(() => new Promise(() => {})),
       },
+      rpc: vi.fn(() => Promise.resolve(mockRpcResult)),
       // Simulates the users-lookup query hanging forever, which is what
       // happens when supabase-js's internal auth lock deadlocks.
       from: vi.fn(() => {
@@ -94,51 +101,44 @@ describe("scheduleApi.selectSchedule (childId target)", () => {
 
 describe("scheduleApi.getClassEnrolledChildren", () => {
   afterEach(() => {
-    mockFromResult = { data: [], error: null };
+    mockRpcResult = { data: [], error: null };
   });
 
-  it("maps snake_case rows to camelCase children, filters null children, and sorts by grade then Hebrew name", async () => {
-    mockFromResult = {
+  it("maps snake_case rows to camelCase children and sorts by grade then Hebrew name", async () => {
+    mockRpcResult = {
       data: [
         {
-          child: {
-            id: "child-b",
-            first_name: "דוד",
-            last_name: "לוי",
-            grade: 1,
-            group_number: 2,
-            track_number: null,
-            scope: "prod",
-            created_at: "2024-01-01T00:00:00.000Z",
-            updated_at: "2024-01-02T00:00:00.000Z",
-          },
-        },
-        { child: null },
-        {
-          child: {
-            id: "child-a",
-            first_name: "אביגיל",
-            last_name: "כהן",
-            grade: 2,
-            group_number: null,
-            track_number: 1,
-            scope: "prod",
-            created_at: "2024-01-03T00:00:00.000Z",
-            updated_at: "2024-01-04T00:00:00.000Z",
-          },
+          id: "child-b",
+          first_name: "דוד",
+          last_name: "לוי",
+          grade: 1,
+          group_number: 2,
+          track_number: null,
+          scope: "prod",
+          created_at: "2024-01-01T00:00:00.000Z",
+          updated_at: "2024-01-02T00:00:00.000Z",
         },
         {
-          child: {
-            id: "child-c",
-            first_name: "אבי",
-            last_name: "אברהם",
-            grade: 1,
-            group_number: 1,
-            track_number: null,
-            scope: "prod",
-            created_at: "2024-01-05T00:00:00.000Z",
-            updated_at: "2024-01-06T00:00:00.000Z",
-          },
+          id: "child-a",
+          first_name: "אביגיל",
+          last_name: "כהן",
+          grade: 2,
+          group_number: null,
+          track_number: 1,
+          scope: "prod",
+          created_at: "2024-01-03T00:00:00.000Z",
+          updated_at: "2024-01-04T00:00:00.000Z",
+        },
+        {
+          id: "child-c",
+          first_name: "אבי",
+          last_name: "אברהם",
+          grade: 1,
+          group_number: 1,
+          track_number: null,
+          scope: "prod",
+          created_at: "2024-01-05T00:00:00.000Z",
+          updated_at: "2024-01-06T00:00:00.000Z",
         },
       ],
       error: null,
@@ -183,8 +183,16 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
     ]);
   });
 
+  it("returns an empty array without throwing when the RPC resolves with null data", async () => {
+    mockRpcResult = { data: null, error: null };
+
+    const result = await scheduleApi.getClassEnrolledChildren("class-1");
+
+    expect(result).toEqual([]);
+  });
+
   it("throws an ApiError when the query fails", async () => {
-    mockFromResult = { data: null, error: { message: "boom" } };
+    mockRpcResult = { data: null, error: { message: "boom" } };
 
     await expect(
       scheduleApi.getClassEnrolledChildren("class-1")
