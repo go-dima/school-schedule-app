@@ -92,7 +92,7 @@
   padding: 0px;
 }
 
-.class-header {
+.class-card-body {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -100,15 +100,18 @@
   gap: 8px;
 }
 
-.class-header-main {
+.class-main {
   flex-grow: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .class-header-tags {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 4px;
   flex-shrink: 0;
 }

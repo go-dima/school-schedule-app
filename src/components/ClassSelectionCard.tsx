@@ -108,12 +108,43 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
           : undefined
       }>
       <div className="class-card-content">
-        <div className="class-header">
-          <div className="class-header-main">
+        <div className="class-card-body">
+          <div className="class-main">
             <Title level={5} className="class-title">
               {cls.title} <Text className="class-teacher">({cls.teacher})</Text>
             </Title>
+
+            <div className="class-details class-details-inline">
+              <span>
+                <Text strong>{t("schedule.drawer.timeLabel")}</Text>{" "}
+                <Text>{getDoubleTimeRange(cls, allTimeSlots)}</Text>
+              </span>
+              {cls.room && (
+                <>
+                  <span className="class-details-sep">•</span>
+                  <span>
+                    <Text strong>{t("schedule.drawer.roomLabel")}</Text>{" "}
+                    <Text>{cls.room}</Text>
+                  </span>
+                </>
+              )}
+            </div>
+
+            {cls.isDouble && (
+              <div className="class-details class-details-secondary">
+                <Text type="secondary" style={{ fontSize: "12px" }}>
+                  ({t("schedule.drawer.doubleLessonTag")} -{" "}
+                  {ScheduleService.getPrimarySlot(cls).timeSlot.name} +{" "}
+                  {ScheduleService.getNextConsecutiveTimeSlot(
+                    ScheduleService.getPrimarySlot(cls).timeSlot,
+                    allTimeSlots
+                  )?.name || t("common.next")}
+                  )
+                </Text>
+              </div>
+            )}
           </div>
+
           <div className="class-header-tags">
             <GradesRangeTag grades={cls.grades} color="blue" />
             {cls.trackNumber !== null && <TrackTag track={cls.trackNumber} />}
@@ -122,36 +153,6 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
             )}
           </div>
         </div>
-
-        <div className="class-details class-details-inline">
-          <span>
-            <Text strong>{t("schedule.drawer.timeLabel")}</Text>{" "}
-            <Text>{getDoubleTimeRange(cls, allTimeSlots)}</Text>
-          </span>
-          {cls.room && (
-            <>
-              <span className="class-details-sep">•</span>
-              <span>
-                <Text strong>{t("schedule.drawer.roomLabel")}</Text>{" "}
-                <Text>{cls.room}</Text>
-              </span>
-            </>
-          )}
-        </div>
-
-        {cls.isDouble && (
-          <div className="class-details class-details-secondary">
-            <Text type="secondary" style={{ fontSize: "12px" }}>
-              ({t("schedule.drawer.doubleLessonTag")} -{" "}
-              {ScheduleService.getPrimarySlot(cls).timeSlot.name} +{" "}
-              {ScheduleService.getNextConsecutiveTimeSlot(
-                ScheduleService.getPrimarySlot(cls).timeSlot,
-                allTimeSlots
-              )?.name || t("common.next")}
-              )
-            </Text>
-          </div>
-        )}
 
         {cls.description && (
           <div className="class-description">
