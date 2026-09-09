@@ -227,6 +227,16 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
         } else {
           await selectClassForChild(classId);
         }
+      } else if (isStaff && staffSelectedChild) {
+        if (isChildClassSelected(classId)) {
+          if (lockedClassIds.has(classId)) {
+            message.warning(t("schedule.page.error.trackClassLocked"));
+            return;
+          }
+          await unselectClassForChild(classId);
+        } else {
+          await selectClassForChild(classId);
+        }
       } else if (!isParent && user?.id) {
         if (isUserClassSelected(classId)) {
           await unselectClass(classId);

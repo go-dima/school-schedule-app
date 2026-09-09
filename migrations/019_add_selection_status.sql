@@ -10,8 +10,56 @@
 --   the enrollment-count functions/view to count committed selections only.
 -- Author: System
 -- Date: 2026-09-09
+--
+-- OPERATOR NOTE -- read before applying: every existing schedule_selections
+-- row (including the child-linked rows every current student's schedule is
+-- built from) defaults to status = 'draft' on this migration -- there is no
+-- backfill to 'committed', per an explicit spec decision that nothing in
+-- existing data is worth preserving as authoritative. The moment this lands:
+--   - get_class_enrollment_counts / get_class_enrollment_count /
+--     classes_with_enrollment (which now only count status = 'committed')
+--     will show 0 enrollment for every class, everywhere they're displayed
+--     (including to parents browsing classes), until staff re-commits picks.
+--   - Staff/admin will see an empty schedule for every child until they
+--     independently commit selections for them.
+-- This is expected per the spec, not a bug -- but it is a visible,
+-- immediate change in what staff/parents see, so time applying this
+-- accordingly (e.g. alongside a staff-facing heads-up), not as a silent
+-- background migration.
 
 BEGIN;
+
+-- Step 0: Pre-flight check. The constraint being dropped in Step 2 is keyed
+-- on user_id, so under the old RLS policies (013_add_children_management)
+-- two different co-parents of the same child could each have inserted a row
+-- for the same (child_id, class_id) -- both permitted by the old "manage
+-- their own schedule selections" policy. If any such duplicate exists, the
+-- new partial unique index below will fail to create, aborting the entire
+-- migration with a much less obvious error. Fail fast here instead, with a
+-- message that tells the operator exactly what to dedupe.
+DO $$
+DECLARE
+    dup_count INTEGER;
+BEGIN
+    SELECT COUNT(*) INTO dup_count
+    FROM (
+        SELECT child_id, class_id
+        FROM public.schedule_selections
+        WHERE child_id IS NOT NULL
+        GROUP BY child_id, class_id
+        HAVING COUNT(*) > 1
+    ) dupes;
+
+    IF dup_count > 0 THEN
+        RAISE EXCEPTION
+            'Found % (child_id, class_id) pair(s) with more than one schedule_selections row. '
+            'The new unique index requires at most one row per (child_id, class_id, status). '
+            'Run: SELECT child_id, class_id, count(*) FROM public.schedule_selections '
+            'WHERE child_id IS NOT NULL GROUP BY child_id, class_id HAVING count(*) > 1; '
+            'and dedupe before re-running this migration.',
+            dup_count;
+    END IF;
+END $$;
 
 -- Step 1: Add the status column. No backfill needed -- there is nothing in
 -- existing schedule_selections rows worth preserving as "committed" versus
@@ -34,7 +82,7 @@ COMMENT ON COLUMN public.schedule_selections.status IS
 -- the original per-user behavior untouched for the legacy self-service
 -- ("child" role, child_id IS NULL) rows.
 ALTER TABLE public.schedule_selections
-    DROP CONSTRAINT schedule_selections_user_id_class_id_key;
+    DROP CONSTRAINT IF EXISTS schedule_selections_user_id_class_id_key;
 
 CREATE UNIQUE INDEX schedule_selections_child_class_status_key
     ON public.schedule_selections (child_id, class_id, status)
@@ -58,13 +106,14 @@ DROP POLICY IF EXISTS "Users can manage their own schedule selections" ON public
 -- the rows that path actually owns (child_id IS NULL). These rows always
 -- default to status = 'draft' and nothing here ever changes that.
 CREATE POLICY "Child role can manage own selections" ON public.schedule_selections
-    FOR ALL USING (auth.uid() = user_id AND child_id IS NULL);
+    FOR ALL USING (auth.uid() = user_id AND child_id IS NULL AND status = 'draft');
 
 -- 3b. Parents: can only ever read or write their own children's draft rows.
 -- They can never read or write a committed row -- enforced here, not just
 -- hidden in the UI.
 CREATE POLICY "Parents can manage own children draft selections" ON public.schedule_selections
     FOR ALL USING (
+        user_id = auth.uid() AND
         status = 'draft' AND
         child_id IN (
             SELECT child_id
@@ -147,7 +196,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE VIEW public.classes_with_enrollment AS
+-- classes_with_enrollment selects `c.*`, which Postgres expands and freezes
+-- at CREATE VIEW time. 018_add_group_and_track_fields added
+-- group_number/track_number to public.classes without recreating this view,
+-- so a plain CREATE OR REPLACE VIEW here would re-expand c.* with those
+-- columns inserted before enrollment_count -- which Postgres rejects as an
+-- illegal column rename (CREATE OR REPLACE VIEW only allows new columns to
+-- be appended at the very end). 017_add_class_slots.sql hit this exact trap
+-- and fixed it the same way: drop and recreate instead.
+DROP VIEW IF EXISTS public.classes_with_enrollment;
+
+CREATE VIEW public.classes_with_enrollment AS
 SELECT
     c.*,
     COALESCE(enrollment_data.enrollment_count, 0) as enrollment_count
@@ -163,5 +222,8 @@ LEFT JOIN (
         AND ss.status = 'committed'
     GROUP BY ss.class_id
 ) enrollment_data ON c.id = enrollment_data.class_id;
+
+GRANT SELECT ON public.classes_with_enrollment TO authenticated;
+COMMENT ON VIEW public.classes_with_enrollment IS 'View of classes with their current enrollment counts';
 
 COMMIT;
