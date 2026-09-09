@@ -111,6 +111,17 @@ CREATE POLICY "Child role can manage own selections" ON public.schedule_selectio
 -- 3b. Parents: can only ever read or write their own children's draft rows.
 -- They can never read or write a committed row -- enforced here, not just
 -- hidden in the UI.
+--
+-- Known, accepted limitation: the user_id = auth.uid() clause below means a
+-- second parent linked to the same child (parent_child_relationships
+-- supports more than one) cannot edit/delete a draft row the first parent
+-- created for that child -- unlike the prior policy (013_add_children_
+-- management), which used user_id = auth.uid() OR child_id IN (...) and so
+-- let any linked parent manage any of that child's rows. Tightened here to
+-- close a user_id-spoofing gap on insert; multi-parent co-editing of the
+-- same draft is not a current requirement, so this was left as-is rather
+-- than split into a narrower WITH CHECK. Revisit if co-parent editing of a
+-- shared child's draft becomes a real requirement.
 CREATE POLICY "Parents can manage own children draft selections" ON public.schedule_selections
     FOR ALL USING (
         user_id = auth.uid() AND
