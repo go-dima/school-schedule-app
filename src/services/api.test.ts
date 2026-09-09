@@ -64,7 +64,7 @@ describe("scheduleApi.selectClassForChild", () => {
   });
 
   it("rejects instead of hanging forever when supabase.auth.getUser never resolves", async () => {
-    const call = scheduleApi.selectClassForChild("child-1", "class-1");
+    const call = scheduleApi.selectClassForChild("child-1", "class-1", "draft");
     // Prevent an unhandled-rejection warning if the timeout wins the race
     // before this assertion attaches its own handler.
     call.catch(() => {});

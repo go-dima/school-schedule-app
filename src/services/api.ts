@@ -8,6 +8,7 @@ import type {
   PendingApproval,
   ScheduleSelectionWithClass,
   Scope,
+  SelectionStatus,
   TimeSlot,
   User,
   UserRole,
@@ -636,6 +637,7 @@ export const scheduleApi = {
       id: selection.id,
       userId: selection.user_id,
       classId: selection.class_id,
+      status: selection.status,
       createdAt: selection.created_at,
       updatedAt: selection.updated_at,
       class: mapClassRow(selection.class, timeSlotsById),
@@ -668,7 +670,8 @@ export const scheduleApi = {
   },
 
   async getChildSchedule(
-    childId: string
+    childId: string,
+    status: SelectionStatus
   ): Promise<ScheduleSelectionWithClass[]> {
     const isProduction = process.env.NODE_ENV === "production";
     const [{ data, error }, timeSlotsById] = await Promise.all([
@@ -680,7 +683,8 @@ export const scheduleApi = {
         class:classes(*)
       `
         )
-        .eq("child_id", childId),
+        .eq("child_id", childId)
+        .eq("status", status),
       fetchTimeSlotsById(),
     ]);
 
@@ -694,13 +698,18 @@ export const scheduleApi = {
       id: selection.id,
       userId: selection.user_id,
       classId: selection.class_id,
+      status: selection.status,
       createdAt: selection.created_at,
       updatedAt: selection.updated_at,
       class: mapClassRow(selection.class, timeSlotsById),
     }));
   },
 
-  async selectClassForChild(childId: string, classId: string) {
+  async selectClassForChild(
+    childId: string,
+    classId: string,
+    status: SelectionStatus
+  ) {
     // Get current user ID (parent making the selection)
     const {
       data: { user },
@@ -714,6 +723,7 @@ export const scheduleApi = {
           user_id: user.id,
           child_id: childId,
           class_id: classId,
+          status,
         },
       ])
       .select();
@@ -722,12 +732,17 @@ export const scheduleApi = {
     return data[0];
   },
 
-  async unselectClassForChild(childId: string, classId: string) {
+  async unselectClassForChild(
+    childId: string,
+    classId: string,
+    status: SelectionStatus
+  ) {
     const { error } = await supabase
       .from("schedule_selections")
       .delete()
       .eq("child_id", childId)
-      .eq("class_id", classId);
+      .eq("class_id", classId)
+      .eq("status", status);
 
     if (error) throw new ApiError(error.message);
   },
