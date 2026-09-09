@@ -146,12 +146,25 @@
   text-align: center;
 }
 
-.class-teacher {
-  font-size: 14px;
-  color: var(--schedule-text-secondary);
+.continuation-suffix {
+  font-style: italic;
+  color: var(--schedule-accent-orange);
+  font-size: 11px;
+  margin-inline-start: 4px;
+}
+
+.class-teacher-room {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 4px;
   margin-bottom: 6px;
+}
+
+.class-teacher {
+  font-size: 13px;
+  color: var(--schedule-text-secondary);
   line-height: 1.2;
-  text-align: center;
 }
 
 .class-tags {
@@ -368,15 +381,9 @@
   margin-bottom: 2px;
 }
 
-.continuation-text {
-  font-size: 10px;
-  font-style: italic;
-}
-
 .class-room {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--schedule-text-secondary);
-  margin-bottom: 4px;
   line-height: 1.2;
 }
 

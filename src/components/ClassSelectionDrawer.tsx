@@ -1,26 +1,14 @@
 import React from "react";
-import {
-  Drawer,
-  Card,
-  Button,
-  Tag,
-  Empty,
-  Alert,
-  Space,
-  Typography,
-  Tooltip,
-} from "antd";
-import { CheckOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { Drawer, Tag, Empty, Alert, Space, Typography } from "antd";
 import { useTranslation } from "react-i18next";
 import { ScheduleService } from "../services/scheduleService";
 import type { TimeSlot, ClassWithTimeSlot } from "../types";
 import CreateClassButton from "./CreateClassButton";
+import ClassSelectionCard from "./ClassSelectionCard";
 import "./ClassSelectionDrawer.css";
-import { GradesRangeTag } from "@/elements/GradesRangeTag";
-import { TrackTag } from "@/elements/TrackTag";
 import { GetDayName } from "@/utils/days";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 interface ClassSelectionDrawerProps {
   open: boolean;
@@ -59,38 +47,6 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
     timeSlot.endTime
   );
 
-  // Helper function to get combined time range for double lessons
-  const getDoubleTimeRange = (
-    cls: ClassWithTimeSlot,
-    allTimeSlots: TimeSlot[]
-  ): string => {
-    const primaryTimeSlot = ScheduleService.getPrimarySlot(cls).timeSlot;
-
-    if (!cls.isDouble)
-      return ScheduleService.formatTimeRange(
-        primaryTimeSlot.startTime,
-        primaryTimeSlot.endTime
-      );
-
-    // Find the next consecutive time slot
-    const nextTimeSlot = ScheduleService.getNextConsecutiveTimeSlot(
-      primaryTimeSlot,
-      allTimeSlots
-    );
-    if (nextTimeSlot) {
-      return ScheduleService.formatTimeRange(
-        primaryTimeSlot.startTime,
-        nextTimeSlot.endTime
-      );
-    }
-
-    // Fallback to original time if next slot not found
-    return ScheduleService.formatTimeRange(
-      primaryTimeSlot.startTime,
-      primaryTimeSlot.endTime
-    );
-  };
-
   // Use passed timeSlots or extract from classes as fallback
   const allTimeSlots =
     timeSlots.length > 0
@@ -116,117 +72,19 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
   const renderClassCard = (
     cls: ClassWithTimeSlot,
     isGrayedOut: boolean = false
-  ) => {
-    const isSelected = selectedClasses.includes(cls.id);
-    const isLocked = cls.trackNumber !== null;
-    const hasConflict = conflictingClasses.some(
-      conflict => conflict.id === cls.id
-    );
-
-    const toggleButton = (
-      <Button
-        key="toggle"
-        type={isSelected ? "default" : "primary"}
-        icon={isSelected ? <CheckOutlined /> : undefined}
-        onClick={() => handleClassToggle(cls.id)}
-        disabled={isGrayedOut || isLocked}
-        block>
-        {isSelected
-          ? t("schedule.drawer.unselectButton")
-          : t("schedule.drawer.selectButton")}
-      </Button>
-    );
-
-    return (
-      <Card
-        key={cls.id}
-        className={`class-selection-card ${isSelected ? "selected" : ""} ${
-          hasConflict ? "conflict" : ""
-        } ${isGrayedOut ? "grayed-out" : ""}`}
-        size="small"
-        hoverable={!isGrayedOut}
-        actions={
-          canSelectClasses
-            ? [
-                <div className="select-class-button">
-                  {isLocked ? (
-                    <Tooltip
-                      title={t(
-                        isSelected
-                          ? "schedule.drawer.trackLockedTooltip"
-                          : "schedule.drawer.trackUnselectableTooltip"
-                      )}>
-                      <span style={{ display: "block" }}>{toggleButton}</span>
-                    </Tooltip>
-                  ) : (
-                    toggleButton
-                  )}
-                </div>,
-              ]
-            : undefined
-        }>
-        <div className="class-card-content">
-          <div className="class-header">
-            <Title level={5} className="class-title">
-              {cls.title}
-              <Text className="class-teacher">({cls.teacher})</Text>
-            </Title>
-            <div className="class-header-tags">
-              <GradesRangeTag grades={cls.grades} color="blue" />
-              {cls.isDouble && (
-                <Tag color="orange">{t("schedule.drawer.doubleLessonTag")}</Tag>
-              )}
-              {cls.trackNumber !== null && <TrackTag track={cls.trackNumber} />}
-            </div>
-          </div>
-
-          <div className="class-details">
-            <Text strong style={{ marginRight: "8px" }}>
-              {t("schedule.drawer.timeLabel")}
-            </Text>
-            <Text>{getDoubleTimeRange(cls, allTimeSlots)}</Text>
-            {cls.isDouble && (
-              <Text
-                type="secondary"
-                style={{ fontSize: "12px", marginRight: "8px" }}>
-                ({t("schedule.drawer.doubleLessonTag")} -{" "}
-                {ScheduleService.getPrimarySlot(cls).timeSlot.name} +{" "}
-                {ScheduleService.getNextConsecutiveTimeSlot(
-                  ScheduleService.getPrimarySlot(cls).timeSlot,
-                  allTimeSlots
-                )?.name || t("common.next")}
-                )
-              </Text>
-            )}
-          </div>
-
-          {cls.room && (
-            <div className="class-details">
-              <Text strong>{t("schedule.drawer.roomLabel")}</Text>
-              <Text>{cls.room}</Text>
-            </div>
-          )}
-
-          {cls.description && (
-            <div className="class-description">
-              <Text>{cls.description}</Text>
-            </div>
-          )}
-
-          {hasConflict && (
-            <Alert
-              message={t("schedule.drawer.timeConflictTitle")}
-              description={t("schedule.drawer.timeConflictDescription")}
-              type="warning"
-              showIcon
-              icon={<ExclamationCircleOutlined />}
-              className="conflict-alert"
-            />
-          )}
-        </div>
-      </Card>
-    );
-  };
+  ) => (
+    <ClassSelectionCard
+      key={cls.id}
+      cls={cls}
+      isGrayedOut={isGrayedOut}
+      isSelected={selectedClasses.includes(cls.id)}
+      isLocked={cls.trackNumber !== null}
+      hasConflict={conflictingClasses.some(conflict => conflict.id === cls.id)}
+      canSelectClasses={canSelectClasses}
+      onToggle={() => handleClassToggle(cls.id)}
+      allTimeSlots={allTimeSlots}
+    />
+  );
 
   const selectedClassesInTimeSlot = classes.filter(cls =>
     selectedClasses.includes(cls.id)
