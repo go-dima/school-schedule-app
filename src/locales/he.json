@@ -255,11 +255,9 @@
     "management": {
       "title": "ילדים",
       "addButton": "הוסף ילד",
-      "acceptSharedButton": "קבל ילד משותף",
       "noChildren": "אין ילדים רשומים",
       "addFirstChild": "הוסף את הילד הראשון",
       "editButton": "ערוך",
-      "shareButton": "שתף",
       "removeButton": "הסר",
       "deleteConfirmTitle": "האם אתה בטוח שברצונך להסיר את הילד?",
       "deleteConfirmDescription": "פעולה זו תסיר את הילד מהחשבון שלך ותמחק את כל בחירות השעורים שלו.",
@@ -360,19 +358,6 @@
       "gradeColumn": "כיתה",
       "timeColumn": "זמן",
       "mandatoryColumn": "ליבה"
-    }
-  },
-  "acceptSharedChild": {
-    "modal": {
-      "title": "קבלת ילד משותף",
-      "description": "הזן את קישור השיתוף שקיבלת מהורה אחר כדי להוסיף את הילד לחשבון שלך.",
-      "shareLinkLabel": "קישור שיתוף",
-      "shareLinkRequired": "נא להזין קישור שיתוף",
-      "invalidLink": "קישור לא תקין",
-      "placeholder": "הדבק כאן את קישור השיתוף או את האסימון...",
-      "addChildButton": "הוסף ילד",
-      "childAddedSuccess": "הילד נוסף בהצלחה לחשבון שלך",
-      "acceptError": "שגיאה בקבלת הילד המשותף"
     }
   },
   "navigation": {

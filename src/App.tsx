@@ -13,7 +13,6 @@ import UserManagementPage from "./pages/UserManagementPage";
 import UserListPage from "./pages/UserListPage";
 import ProfileSettingsPage from "./pages/ProfileSettingsPage";
 import StudentsPage from "./pages/StudentsPage";
-import SharedChildPage from "./pages/SharedChildPage";
 import AppLayout from "./layouts/AppLayout";
 import { Spin, Button, Result } from "antd";
 import { useTranslation } from "react-i18next";
@@ -33,18 +32,7 @@ function AppContent() {
   const { t } = useTranslation();
   const [showSignup, setShowSignup] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>("schedule");
-  const [sharedChildToken, setSharedChildToken] = useState<string | null>(null);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
-
-  // Simple routing based on URL path
-  useEffect(() => {
-    const path = window.location.pathname;
-    const sharedChildMatch = path.match(/^\/shared-child\/(.+)$/);
-
-    if (sharedChildMatch) {
-      setSharedChildToken(sharedChildMatch[1]);
-    }
-  }, []);
 
   // Timeout protection for loading state
   useEffect(() => {
@@ -158,11 +146,6 @@ function AppContent() {
         <Spin size="large" />
       </div>
     );
-  }
-
-  // Handle shared child page
-  if (sharedChildToken) {
-    return <SharedChildPage token={sharedChildToken} />;
   }
 
   if (!user) {

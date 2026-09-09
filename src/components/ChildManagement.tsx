@@ -13,17 +13,9 @@ import {
   Tag,
 } from "antd";
 import { useTranslation } from "react-i18next";
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  ShareAltOutlined,
-  UserAddOutlined,
-} from "@ant-design/icons";
+import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { ChildForm } from "./ChildForm";
 import { GroupTrackTags } from "./GroupTrackTags";
-import { ChildShareModal } from "./ChildShareModal";
-import { AcceptSharedChildModal } from "./AcceptSharedChildModal";
 import { useChildren } from "../hooks/useChildren";
 import { TrackSelectionService } from "../services/trackSelectionService";
 import type { Child, Scope } from "../types";
@@ -37,10 +29,7 @@ export function ChildManagement() {
     useChildren();
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | undefined>();
-  const [sharingChild, setSharingChild] = useState<Child | undefined>();
   const [formLoading, setFormLoading] = useState(false);
 
   const handleCreateChild = async (data: {
@@ -123,17 +112,9 @@ export function ChildManagement() {
     setIsFormModalOpen(true);
   };
 
-  const openShareModal = (child: Child) => {
-    setSharingChild(child);
-    setIsShareModalOpen(true);
-  };
-
   const closeModals = () => {
     setIsFormModalOpen(false);
-    setIsShareModalOpen(false);
-    setIsAcceptModalOpen(false);
     setEditingChild(undefined);
-    setSharingChild(undefined);
   };
 
   if (loading) {
@@ -156,19 +137,12 @@ export function ChildManagement() {
         <Title level={4} style={{ margin: 0 }}>
           {t("child.management.title")}
         </Title>
-        <Space>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={openCreateModal}>
-            {t("child.management.addButton")}
-          </Button>
-          <Button
-            icon={<UserAddOutlined />}
-            onClick={() => setIsAcceptModalOpen(true)}>
-            {t("child.management.acceptSharedButton")}
-          </Button>
-        </Space>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={openCreateModal}>
+          {t("child.management.addButton")}
+        </Button>
       </div>
 
       {error && (
@@ -204,13 +178,6 @@ export function ChildManagement() {
                     icon={<EditOutlined />}
                     onClick={() => openEditModal(child)}>
                     {t("child.management.editButton")}
-                  </Button>,
-                  <Button
-                    key="share"
-                    type="text"
-                    icon={<ShareAltOutlined />}
-                    onClick={() => openShareModal(child)}>
-                    {t("child.management.shareButton")}
                   </Button>,
                   <Popconfirm
                     key="delete"
@@ -279,16 +246,6 @@ export function ChildManagement() {
           loading={formLoading}
         />
       </Modal>
-
-      {sharingChild && (
-        <ChildShareModal
-          child={sharingChild}
-          open={isShareModalOpen}
-          onClose={closeModals}
-        />
-      )}
-
-      <AcceptSharedChildModal open={isAcceptModalOpen} onClose={closeModals} />
     </div>
   );
 }
