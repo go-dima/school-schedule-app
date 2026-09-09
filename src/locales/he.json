@@ -306,7 +306,7 @@
       "nameColumn": "שם השיעור",
       "descriptionColumn": "תיאור",
       "teacherColumn": "מורה",
-      "roomColumn": "כיתה",
+      "roomColumn": "חדר",
       "roomNotSpecified": "לא צוין",
       "gradesColumn": "כיתות",
       "timeColumn": "זמן השיעור",

@@ -113,23 +113,6 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
           </div>
         )
       }
-      extra={
-        classInfo && (
-          <Space>
-            <Button
-              icon={<EditOutlined />}
-              title={t("classManagement.table.editButton")}
-              onClick={() => onEdit(classInfo)}
-            />
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              title={t("classManagement.table.deleteButton")}
-              onClick={() => onDelete(classInfo.id)}
-            />
-          </Space>
-        )
-      }
       placement="left"
       width={400}
       onClose={onClose}
@@ -142,6 +125,21 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
             size="small"
             column={1}
             bordered
+            extra={
+              <Space>
+                <Button
+                  danger
+                  icon={<DeleteOutlined />}
+                  title={t("classManagement.table.deleteButton")}
+                  onClick={() => onDelete(classInfo.id)}
+                />
+                <Button
+                  icon={<EditOutlined />}
+                  title={t("classManagement.table.editButton")}
+                  onClick={() => onEdit(classInfo)}
+                />
+              </Space>
+            }
             items={[
               {
                 key: "teacher",
