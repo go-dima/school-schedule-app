@@ -1,4 +1,4 @@
--- Migration: 021_add_selection_status
+-- Migration: 022_add_selection_status
 -- Description: Add a draft/committed status to schedule_selections so parents
 --   and staff each get their own independently-editable set of picks for a
 --   Child, instead of writing into the same rows. Replaces the
