@@ -1,6 +1,5 @@
 import type {
   Child,
-  ChildShareToken,
   ChildWithParents,
   Class,
   ClassSlot,
@@ -887,50 +886,6 @@ export const childrenApi = {
       .eq("id", childId);
 
     if (error) throw new ApiError(error.message);
-  },
-
-  async generateShareToken(
-    childId: string,
-    expiresInHours: number = 48
-  ): Promise<string> {
-    const { data, error } = await supabase.rpc("generate_child_share_token", {
-      p_child_id: childId,
-      p_expires_in_hours: expiresInHours,
-    });
-
-    if (error) throw new ApiError(error.message);
-    return data;
-  },
-
-  async acceptSharedChild(token: string): Promise<string> {
-    const { data, error } = await supabase.rpc("accept_shared_child", {
-      p_token: token,
-    });
-
-    if (error) throw new ApiError(error.message);
-    return data;
-  },
-
-  async getChildShareTokens(childId: string): Promise<ChildShareToken[]> {
-    const { data, error } = await supabase
-      .from("child_share_tokens")
-      .select("*")
-      .eq("child_id", childId)
-      .eq("used_at", null)
-      .gt("expires_at", new Date().toISOString())
-      .order("created_at", { ascending: false });
-
-    if (error) throw new ApiError(error.message);
-    return data.map(token => ({
-      id: token.id,
-      childId: token.child_id,
-      token: token.token,
-      sharedByUserId: token.shared_by_user_id,
-      expiresAt: token.expires_at,
-      usedAt: token.used_at,
-      usedByUserId: token.used_by_user_id,
-      createdAt: token.created_at,
-    }));
   },
 
   async getAllChildren(): Promise<(Child & { assignedParent: boolean })[]> {

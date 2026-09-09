@@ -58,17 +58,13 @@ export function getEnvironmentConfig(): EnvironmentConfig {
 // Export individual values for convenience
 export const env = getEnvironmentConfig();
 
-// Type declarations for import.meta.env
+// Type declarations for import.meta.env (merges onto vite/client's
+// ImportMetaEnv/ImportMeta, declared via the vite-env.d.ts reference)
 declare global {
   interface ImportMetaEnv {
     readonly VITE_SUPABASE_URL: string;
     readonly VITE_SUPABASE_ANON_KEY: string;
     readonly VITE_APP_TITLE?: string;
     readonly VITE_DEV_MODE?: string;
-    readonly MODE?: string;
-  }
-
-  interface ImportMeta {
-    readonly env: ImportMetaEnv;
   }
 }

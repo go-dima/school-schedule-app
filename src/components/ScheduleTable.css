@@ -8,21 +8,21 @@
 }
 
 .schedule-table .ant-table-thead > tr > th {
-  background: #f5f5f5;
+  background: var(--schedule-header-bg);
   font-weight: 600;
   text-align: center;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--schedule-border);
   padding: 12px 8px;
 }
 
 .schedule-table .ant-table-tbody > tr > td {
   padding: 4px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--schedule-border);
   vertical-align: top;
 }
 
 .time-column {
-  background: #fafafa !important;
+  background: var(--schedule-time-col-bg) !important;
   min-width: 120px;
   text-align: center;
 }
@@ -35,13 +35,13 @@
 .time-range {
   font-weight: 600;
   font-size: 14px;
-  color: #1890ff;
+  color: var(--schedule-primary);
   margin-bottom: 2px;
 }
 
 .time-name {
   font-size: 12px;
-  color: #666;
+  color: var(--schedule-text-secondary);
 }
 
 .compact-time-cell {
@@ -78,14 +78,14 @@
 }
 
 .schedule-cell.clickable:hover {
-  background: #e6f7ff;
+  background: var(--schedule-meeting-bg);
   border-radius: 4px;
   transform: scale(1.02);
 }
 
 .schedule-cell.selected {
-  background: #f6ffed;
-  border: 1px solid #f6ffed;
+  background: var(--schedule-selected-bg);
+  border: 1px solid var(--schedule-selected-bg);
   border-radius: 4px;
 }
 
@@ -93,7 +93,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
+  color: var(--schedule-text-tertiary);
   font-size: 12px;
 }
 
@@ -102,17 +102,17 @@
 }
 
 .schedule-cell.empty .ant-empty-description {
-  color: #999;
+  color: var(--schedule-text-tertiary);
   font-size: 11px;
 }
 
 .schedule-cell.empty.clickable:hover {
-  background: #f0f8ff;
-  border: 2px dashed #40a9ff;
+  background: var(--schedule-empty-hover-bg);
+  border: 2px dashed var(--schedule-primary-hover);
 }
 
 .schedule-cell.empty.clickable:hover .ant-empty-description {
-  color: #1890ff;
+  color: var(--schedule-primary);
   font-weight: 500;
 }
 
@@ -130,7 +130,7 @@
 .schedule-cell.clickable .class-card:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
-  border: 1px solid #40a9ff;
+  border: 1px solid var(--schedule-primary-hover);
 }
 
 .class-card .ant-card-body {
@@ -140,7 +140,7 @@
 .class-title {
   font-weight: 600;
   font-size: 14px;
-  color: #1890ff;
+  color: var(--schedule-primary);
   margin-bottom: 4px;
   line-height: 1.2;
   text-align: center;
@@ -148,7 +148,7 @@
 
 .class-teacher {
   font-size: 14px;
-  color: #666;
+  color: var(--schedule-text-secondary);
   margin-bottom: 6px;
   line-height: 1.2;
   text-align: center;
@@ -168,7 +168,7 @@
 .class-count {
   font-weight: 600;
   font-size: 12px;
-  color: #1890ff;
+  color: var(--schedule-primary);
   margin-bottom: 4px;
 }
 
@@ -201,8 +201,8 @@
 
 /* Non-lesson time slot styles */
 .schedule-cell.break-slot {
-  background: #f6ffed;
-  border: 1px solid #b7eb8f;
+  background: var(--schedule-selected-bg);
+  border: 1px solid var(--schedule-break-border);
   min-height: 30px;
   max-height: 30px;
   height: 30px;
@@ -213,8 +213,8 @@
 }
 
 .schedule-cell.meeting-slot {
-  background: #e6f7ff;
-  border: 1px solid #91d5ff;
+  background: var(--schedule-meeting-bg);
+  border: 1px solid var(--schedule-meeting-border);
   min-height: 30px;
   max-height: 30px;
   height: 30px;
@@ -242,8 +242,8 @@
 }
 
 .schedule-cell.unknown-slot {
-  background: #fff2e8;
-  border: 1px solid #ffbb96;
+  background: var(--schedule-unknown-bg);
+  border: 1px solid var(--schedule-unknown-border);
 }
 
 .non-lesson-card {
@@ -274,14 +274,14 @@
 .non-lesson-content .slot-name {
   font-weight: 600;
   font-size: 13px;
-  color: #1890ff;
+  color: var(--schedule-primary);
   margin: 0;
   line-height: 1.1;
 }
 
 .non-lesson-content .slot-description {
   font-size: 10px;
-  color: #666;
+  color: var(--schedule-text-secondary);
   line-height: 1.2;
 }
 
@@ -306,22 +306,22 @@
 
 /* Double lesson styles */
 .schedule-cell.double-main {
-  border-bottom: 2px solid #fa8c16 !important;
+  border-bottom: 2px solid var(--schedule-accent-orange) !important;
 }
 
 .schedule-cell.double-continuation {
   border-top: none !important;
-  /* border-top: 2px solid #fa8c16 !important; */
+  /* border-top: 2px solid var(--schedule-accent-orange) !important; */
   background: transparent;
 }
 
 .schedule-cell.double-continuation.unselected {
-  background: #fafafa;
+  background: var(--schedule-time-col-bg);
   cursor: pointer !important;
 }
 
 .schedule-cell.double-continuation.unselected:hover {
-  background: #f0f8ff !important;
+  background: var(--schedule-empty-hover-bg) !important;
   transform: scale(1.01) !important;
   border-radius: 4px !important;
 }
@@ -331,7 +331,7 @@
 }
 
 .schedule-cell.double-continuation.selected:hover {
-  background: #e6f7ff !important;
+  background: var(--schedule-meeting-bg) !important;
   transform: scale(1.02) !important;
   border-radius: 4px !important;
 }
@@ -342,24 +342,24 @@
 
 /* Mandatory classes styles */
 .class-card.mandatory-card {
-  background: #fff7e6;
+  background: var(--schedule-double-bg);
 }
 
 .schedule-cell.mandatory-cell {
-  background: #fff7e6;
+  background: var(--schedule-double-bg);
 }
 
 .schedule-cell.mandatory-cell.double-continuation {
-  background: #fff7e6;
+  background: var(--schedule-double-bg);
 }
 
 .schedule-cell.mandatory-cell.double-continuation:hover {
-  background: #fff7e6 !important;
+  background: var(--schedule-double-bg) !important;
 }
 
 .double-continuation-indicator {
   text-align: center;
-  color: #fa8c16;
+  color: var(--schedule-accent-orange);
 }
 
 .class-title-small {
@@ -375,7 +375,7 @@
 
 .class-room {
   font-size: 10px;
-  color: #666;
+  color: var(--schedule-text-secondary);
   margin-bottom: 4px;
   line-height: 1.2;
 }
@@ -403,7 +403,7 @@
 
 /* Search highlighting styles */
 .schedule-cell.search-highlighted {
-  border: 3px solid #1890ff !important;
+  border: 3px solid var(--schedule-primary) !important;
   border-radius: 6px !important;
   box-shadow: 0 0 8px rgba(24, 144, 255, 0.3) !important;
   background: rgba(24, 144, 255, 0.05) !important;
