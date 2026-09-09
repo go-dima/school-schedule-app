@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 type AuthChangeHandler = (event: string, session: any) => any;
 
@@ -12,6 +12,9 @@ vi.mock("./supabase", () => {
           authCallbacks.push(cb);
           return { data: { subscription: { unsubscribe: vi.fn() } } };
         }),
+        // Simulates a stuck lock-guarded call, which is what happens when
+        // supabase-js's internal auth lock deadlocks.
+        getUser: vi.fn(() => new Promise(() => {})),
       },
       // Simulates the users-lookup query hanging forever, which is what
       // happens when supabase-js's internal auth lock deadlocks.
@@ -26,7 +29,7 @@ vi.mock("./supabase", () => {
 });
 
 // Import after the mock so `api.ts` picks up the mocked `./supabase` module.
-const { authApi } = await import("./api");
+const { authApi, scheduleApi } = await import("./api");
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -48,5 +51,26 @@ describe("authApi.onAuthStateChange", () => {
     await withTimeout(Promise.resolve(handler("SIGNED_IN", { user })), 50);
 
     expect(received).toEqual([user]);
+  });
+});
+
+describe("scheduleApi.selectClassForChild", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("rejects instead of hanging forever when supabase.auth.getUser never resolves", async () => {
+    const call = scheduleApi.selectClassForChild("child-1", "class-1");
+    // Prevent an unhandled-rejection warning if the timeout wins the race
+    // before this assertion attaches its own handler.
+    call.catch(() => {});
+
+    await vi.advanceTimersByTimeAsync(10000);
+
+    await expect(call).rejects.toThrow();
   });
 });

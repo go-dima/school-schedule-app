@@ -13,10 +13,16 @@ import type {
   UserRole,
   UserRoleData,
 } from "../types";
+import { withTimeout } from "../utils/asyncUtils";
 import log from "../utils/logger";
 import { NotificationService } from "./notificationService";
 import { ScheduleService } from "./scheduleService";
 import { supabase } from "./supabase";
+
+// supabase.auth.* calls are guarded by supabase-js's internal navigator lock,
+// which can be left held by an unrelated stuck call elsewhere (see #44) —
+// bound the wait instead of hanging forever.
+const AUTH_LOCKED_CALL_TIMEOUT_MS = 4000;
 
 export class ApiError extends Error {
   constructor(
@@ -698,7 +704,7 @@ export const scheduleApi = {
     // Get current user ID (parent making the selection)
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await withTimeout(supabase.auth.getUser(), AUTH_LOCKED_CALL_TIMEOUT_MS);
     if (!user) throw new ApiError("User not authenticated");
 
     const { data, error } = await supabase
