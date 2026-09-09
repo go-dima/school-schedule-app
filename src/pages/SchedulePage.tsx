@@ -208,24 +208,56 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
       : []
   );
 
-  const handleClassSelect = async (classId: string) => {
-    try {
-      if (isParent && selectedChild) {
-        if (isChildClassSelected(classId)) {
-          if (lockedClassIds.has(classId)) {
-            message.warning(t("schedule.page.error.trackClassLocked"));
-            return;
+  type SelectionContext =
+    | {
+        kind: "child";
+        isSelected: (classId: string) => boolean;
+        select: (classId: string) => Promise<void>;
+        unselect: (classId: string) => Promise<void>;
+      }
+    | {
+        kind: "legacy";
+        isSelected: (classId: string) => boolean;
+        select: (classId: string) => Promise<void>;
+        unselect: (classId: string) => Promise<void>;
+      }
+    | { kind: "none" };
+
+  const selectionContext: SelectionContext =
+    isParent && selectedChild
+      ? {
+          kind: "child",
+          isSelected: isChildClassSelected,
+          select: selectClassForChild,
+          unselect: unselectClassForChild,
+        }
+      : isStaff && staffSelectedChild
+        ? {
+            kind: "child",
+            isSelected: isChildClassSelected,
+            select: selectClassForChild,
+            unselect: unselectClassForChild,
           }
-          await unselectClassForChild(classId);
-        } else {
-          await selectClassForChild(classId);
+        : !isParent && !isStaff && user?.id
+          ? {
+              kind: "legacy",
+              isSelected: isUserClassSelected,
+              select: selectClass,
+              unselect: unselectClass,
+            }
+          : { kind: "none" };
+
+  const handleClassSelect = async (classId: string) => {
+    if (selectionContext.kind === "none") return;
+    try {
+      if (selectionContext.isSelected(classId)) {
+        if (selectionContext.kind === "child" && lockedClassIds.has(classId)) {
+          message.warning(t("schedule.page.error.trackClassLocked"));
+          return;
         }
-      } else if (!isParent && user?.id) {
-        if (isUserClassSelected(classId)) {
-          await unselectClass(classId);
-        } else {
-          await selectClass(classId);
-        }
+        await selectionContext.unselect(classId);
+      } else {
+        await selectionContext.select(classId);
       }
     } catch (err) {
       message.error(
