@@ -73,7 +73,7 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
       width={400}
       onClose={onClose}
       open={open}
-      className="class-enrollment-drawer rtl-drawer"
+      className="class-enrollment-drawer"
       styles={{ body: { padding: "16px" } }}>
       {loading ? (
         <div style={{ textAlign: "center", padding: "20px" }}>

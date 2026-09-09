@@ -156,6 +156,13 @@
   font-size: 11px;
 }
 
+/* GradesRangeTag's .class-tags sets display:flex for ScheduleTable's flex
+   parent (see ScheduleTable.css), which stretches it to fill the table cell
+   here instead of hugging its content. */
+.ant-table-tbody .class-tags {
+  display: inline-block;
+}
+
 /* Modal form styling */
 .ant-modal-body .ant-form-item {
   margin-bottom: 16px;

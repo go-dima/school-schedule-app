@@ -224,8 +224,12 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
   };
 
   const handleCloseEnrollmentDrawer = () => {
+    // Deliberately not clearing enrollmentDrawerClass here -- doing so blanks
+    // the drawer's title/header during the ~300ms AntD close-slide animation.
+    // It gets overwritten the next time a row is clicked, and a stale value
+    // sitting in state while the drawer is closed (and thus invisible) is
+    // harmless.
     setEnrollmentDrawerOpen(false);
-    setEnrollmentDrawerClass(null);
   };
 
   const getTimeSlotDisplay = (cls: ClassWithTimeSlot) => {

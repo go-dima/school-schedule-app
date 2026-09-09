@@ -22,6 +22,16 @@ export const EnrollmentCount: React.FC<EnrollmentCountProps> = ({
       onClick={onClick}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? e => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
       style={{
         display: "inline-flex",
         alignItems: "center",
