@@ -715,6 +715,40 @@ export const scheduleApi = {
 
     if (error) throw new ApiError(error.message);
   },
+
+  async getClassEnrolledChildren(classId: string): Promise<Child[]> {
+    const { data, error } = await supabase
+      .from("schedule_selections")
+      .select(`child:children(*)`)
+      .eq("class_id", classId)
+      .eq("status", "committed")
+      .not("child_id", "is", null);
+
+    if (error) throw new ApiError(error.message);
+
+    return data
+      .map((row: any) => row.child)
+      .filter((child: any) => !!child)
+      .map((child: any) => ({
+        id: child.id,
+        firstName: child.first_name,
+        lastName: child.last_name,
+        grade: child.grade,
+        groupNumber: child.group_number,
+        trackNumber: child.track_number,
+        scope: child.scope,
+        createdAt: child.created_at,
+        updatedAt: child.updated_at,
+      }))
+      .sort((a: Child, b: Child) =>
+        a.grade !== b.grade
+          ? a.grade - b.grade
+          : `${a.lastName}${a.firstName}`.localeCompare(
+              `${b.lastName}${b.firstName}`,
+              "he"
+            )
+      );
+  },
 };
 
 // Children API
