@@ -50,6 +50,7 @@ vi.mock("./supabase", () => {
 
 // Import after the mock so `api.ts` picks up the mocked `./supabase` module.
 const { authApi, scheduleApi } = await import("./api");
+const { supabase } = await import("./supabase");
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -145,6 +146,10 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
     };
 
     const result = await scheduleApi.getClassEnrolledChildren("class-1");
+
+    expect(supabase.rpc).toHaveBeenCalledWith("get_class_enrolled_children", {
+      p_class_id: "class-1",
+    });
 
     expect(result).toEqual([
       {
