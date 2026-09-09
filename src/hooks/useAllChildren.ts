@@ -60,7 +60,25 @@ export function useAllChildren() {
       scope?: Child["scope"];
     }
   ): Promise<Child> => {
-    const updatedChild = await childrenApi.updateChild(childId, updates);
+    const { trackNumber, ...profileUpdates } = updates;
+    const hasProfileUpdates = Object.values(profileUpdates).some(
+      value => value !== undefined
+    );
+
+    let updatedChild: Child;
+    if (hasProfileUpdates) {
+      updatedChild = await childrenApi.updateChild(childId, profileUpdates);
+    } else {
+      const existing = children.find(child => child.id === childId);
+      if (!existing) throw new Error("Child not found");
+      updatedChild = existing;
+    }
+
+    if (trackNumber !== undefined) {
+      await childrenApi.updateChildTrack(childId, "committed", trackNumber);
+      updatedChild = { ...updatedChild, trackNumber };
+    }
+
     setChildren(prev =>
       prev.map(child =>
         child.id === childId ? { ...child, ...updatedChild } : child

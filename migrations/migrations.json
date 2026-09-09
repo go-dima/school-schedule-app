@@ -175,8 +175,16 @@
       "file": "022_add_selection_status.sql",
       "created_at": "2026-09-09T00:00:00Z",
       "dependencies": ["021_allow_staff_update_children"]
+    },
+    {
+      "id": "023_split_track_draft_committed",
+      "name": "Split Track Draft Committed",
+      "description": "Split children.track_number into track_number_draft (parent-owned) and track_number_committed (staff/admin-owned), mirroring the schedule_selections draft/committed split. No new RLS policy -- enforced at the API layer. Updates create_child_with_relationship (gains p_status), get_children_with_parent_status (always resolves committed), and children_with_parents (new column shape) accordingly.",
+      "file": "023_split_track_draft_committed.sql",
+      "created_at": "2026-09-09T00:03:00Z",
+      "dependencies": ["022_add_selection_status"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 22
+  "schema_version": 23
 }

@@ -81,7 +81,8 @@ const StudentsPage: React.FC = () => {
         data.grade,
         data.groupNumber,
         data.scope || "prod",
-        data.trackNumber ?? null
+        data.trackNumber ?? null,
+        "committed"
       );
       setIsFormModalOpen(false);
       setEditingChild(undefined);
@@ -109,7 +110,15 @@ const StudentsPage: React.FC = () => {
 
     setFormLoading(true);
     try {
-      await childrenApi.updateChild(editingChild.id, data);
+      const { trackNumber, ...profileUpdates } = data;
+      await childrenApi.updateChild(editingChild.id, profileUpdates);
+      if (trackNumber !== undefined) {
+        await childrenApi.updateChildTrack(
+          editingChild.id,
+          "committed",
+          trackNumber ?? null
+        );
+      }
       setIsFormModalOpen(false);
       setEditingChild(undefined);
       message.success(t("students.page.updateSuccess"));
