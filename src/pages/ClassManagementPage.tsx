@@ -38,10 +38,12 @@ import ClassForm from "../components/ClassForm";
 import { GroupTrackTags } from "../components/GroupTrackTags";
 import { FilterSelect } from "../components/FilterSelect";
 import "./ClassManagementPage.css";
-import { GetGradeName, GetGradeNameShort } from "@/utils/grades";
+import { GetGradeName } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
 import { EnrollmentCount } from "@/elements/EnrollmentCount";
+import { GradesRangeTag } from "@/elements/GradesRangeTag";
 import { EnrollmentService } from "../services/enrollmentService";
+import ClassEnrollmentDrawer from "../components/ClassEnrollmentDrawer";
 
 const { Title } = Typography;
 
@@ -68,6 +70,9 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
   const [enrollmentCounts, setEnrollmentCounts] = useState<Map<string, number>>(
     new Map()
   );
+  const [enrollmentDrawerOpen, setEnrollmentDrawerOpen] = useState(false);
+  const [enrollmentDrawerClass, setEnrollmentDrawerClass] =
+    useState<ClassWithTimeSlot | null>(null);
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -213,6 +218,16 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
     setEditingClass(null);
   };
 
+  const handleShowEnrollment = (cls: ClassWithTimeSlot) => {
+    setEnrollmentDrawerClass(cls);
+    setEnrollmentDrawerOpen(true);
+  };
+
+  const handleCloseEnrollmentDrawer = () => {
+    setEnrollmentDrawerOpen(false);
+    setEnrollmentDrawerClass(null);
+  };
+
   const getTimeSlotDisplay = (cls: ClassWithTimeSlot) => {
     if (!cls.slots || cls.slots.length === 0) {
       return t("classManagement.table.noTimeSlot");
@@ -288,20 +303,22 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       title: t("classManagement.table.nameColumn"),
       dataIndex: "title",
       key: "title",
-      width: 200,
+      width: 150,
+      ellipsis: true,
     },
     {
       title: t("classManagement.table.descriptionColumn"),
       dataIndex: "description",
       key: "description",
-      width: 250,
+      width: 180,
       ellipsis: true,
     },
     {
       title: t("classManagement.table.teacherColumn"),
       dataIndex: "teacher",
       key: "teacher",
-      width: 150,
+      width: 110,
+      ellipsis: true,
     },
     {
       title: t("classManagement.table.roomColumn"),
@@ -315,17 +332,9 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       title: t("classManagement.table.gradesColumn"),
       dataIndex: "grades",
       key: "grades",
-      width: 150,
+      width: 110,
       render: (grades: number[]) => (
-        <Space size="small">
-          {grades
-            ?.sort((a, b) => b - a)
-            .map(grade => (
-              <Tag key={grade} color="geekblue">
-                {GetGradeNameShort(grade)}
-              </Tag>
-            ))}
-        </Space>
+        <GradesRangeTag grades={grades} color="geekblue" />
       ),
     },
     {
@@ -340,13 +349,16 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       width: 100,
       align: "center" as const,
       render: (_, record) => (
-        <EnrollmentCount count={enrollmentCounts.get(record.id) || 0} />
+        <EnrollmentCount
+          count={enrollmentCounts.get(record.id) || 0}
+          onClick={() => handleShowEnrollment(record)}
+        />
       ),
     },
     {
       title: t("classManagement.table.typeColumn"),
       key: "classType",
-      width: 120,
+      width: 100,
       render: (_, record) => (
         <Space direction="vertical" size="small">
           <Tag color={record.isMandatory ? "red" : "blue"}>
@@ -629,6 +641,12 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
           isNewLesson={!editingClass}
         />
       </Modal>
+
+      <ClassEnrollmentDrawer
+        open={enrollmentDrawerOpen}
+        onClose={handleCloseEnrollmentDrawer}
+        classInfo={enrollmentDrawerClass}
+      />
     </div>
   );
 };
