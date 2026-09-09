@@ -69,10 +69,13 @@ export interface ClassWithTimeSlot extends Omit<Class, "slots"> {
   slots: ClassSlotWithTimeSlot[];
 }
 
+export type SelectionStatus = "draft" | "committed";
+
 export interface ScheduleSelection {
   id: string;
   userId: string;
   classId: string;
+  status: SelectionStatus;
   createdAt: string;
   updatedAt: string;
 }
