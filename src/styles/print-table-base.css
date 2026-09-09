@@ -1,0 +1,57 @@
+/*
+ * Minimal Ant Design table reset for the print popup window.
+ * The popup is a bare document with none of the app's bundled CSS, so the
+ * handful of ant-table base rules that PrintableSchedule.css assumes are
+ * already present need to be supplied here explicitly.
+ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, Hebrew, sans-serif;
+  direction: rtl;
+  background: white;
+  color: black;
+  line-height: 1.4;
+}
+
+.ant-table {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.85);
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.ant-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ant-table-thead > tr > th {
+  position: relative;
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 500;
+  text-align: start;
+  background: var(--schedule-time-col-bg);
+  border-bottom: 1px solid var(--schedule-border-light);
+  transition: background 0.3s ease;
+}
+
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--schedule-border-light);
+  transition: background 0.3s;
+  word-break: break-word;
+}
+
+.ant-table-bordered .ant-table-thead > tr > th,
+.ant-table-bordered .ant-table-tbody > tr > td {
+  border-right: 1px solid var(--schedule-border-light);
+}
+
+.ant-table-small .ant-table-thead > tr > th,
+.ant-table-small .ant-table-tbody > tr > td {
+  padding: 8px;
+}

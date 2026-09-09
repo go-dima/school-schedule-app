@@ -17,21 +17,21 @@
 .print-header {
   text-align: center;
   margin-bottom: 20px;
-  border-bottom: 2px solid #1890ff;
+  border-bottom: 2px solid var(--schedule-primary);
   padding-bottom: 10px;
 }
 
 .print-title {
   font-size: 24px;
   font-weight: bold;
-  color: #1890ff;
+  color: var(--schedule-primary);
   margin: 0 0 10px 0;
   line-height: 1.2;
 }
 
 .print-date {
   font-size: 14px;
-  color: #666;
+  color: var(--schedule-text-secondary);
   margin: 0;
 }
 
@@ -51,20 +51,20 @@
 }
 
 .print-schedule-table .ant-table-thead > tr > th {
-  background: #f5f5f5 !important;
+  background: var(--schedule-header-bg) !important;
   font-weight: bold !important;
   text-align: center !important;
-  border: 1px solid #d9d9d9 !important;
+  border: 1px solid var(--schedule-border) !important;
   padding: 8px 4px !important;
   font-size: 14px !important;
-  color: #1890ff !important;
+  color: var(--schedule-primary) !important;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
 
 .print-schedule-table .ant-table-tbody > tr > td {
   padding: 2px !important;
-  border: 1px solid #d9d9d9 !important;
+  border: 1px solid var(--schedule-border) !important;
   vertical-align: top !important;
   height: 60px;
   -webkit-print-color-adjust: exact;
@@ -72,7 +72,7 @@
 }
 
 .print-time-column {
-  background: #fafafa !important;
+  background: var(--schedule-time-col-bg) !important;
   width: 100px !important;
   min-width: 100px !important;
   text-align: center !important;
@@ -98,14 +98,14 @@
 .print-time-range {
   font-weight: bold;
   font-size: 13px;
-  color: #1890ff;
+  color: var(--schedule-primary);
   margin-bottom: 2px;
   line-height: 1;
 }
 
 .print-time-name {
   font-size: 10px;
-  color: #666;
+  color: var(--schedule-text-secondary);
   line-height: 1;
 }
 
@@ -127,7 +127,7 @@
 }
 
 .print-schedule-cell.empty {
-  background: #f9f9f9 !important;
+  background: var(--schedule-print-empty-bg) !important;
   justify-content: center;
   align-items: center;
   -webkit-print-color-adjust: exact;
@@ -135,19 +135,19 @@
 }
 
 .print-schedule-cell.selected {
-  background: #f6ffed !important;
+  background: var(--schedule-selected-bg) !important;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
 
 .print-schedule-cell.double-continuation {
-  background: #fff7e6 !important;
+  background: var(--schedule-double-bg) !important;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
 
 .print-schedule-cell.break-slot {
-  background: #f6ffed !important;
+  background: var(--schedule-selected-bg) !important;
   min-height: 30px !important;
   max-height: 30px !important;
   height: 30px !important;
@@ -156,7 +156,7 @@
 }
 
 .print-schedule-cell.meeting-slot {
-  background: #e6f7ff !important;
+  background: var(--schedule-meeting-bg) !important;
   min-height: 30px !important;
   max-height: 30px !important;
   height: 30px !important;
@@ -175,21 +175,21 @@
 .print-class-title {
   font-weight: bold;
   font-size: 12px;
-  color: #1890ff;
+  color: var(--schedule-primary);
   margin-bottom: 2px;
   line-height: 1.2;
 }
 
 .print-class-teacher {
   font-size: 11px;
-  color: #666;
+  color: var(--schedule-text-secondary);
   margin-bottom: 2px;
   line-height: 1.2;
 }
 
 .print-class-room {
   font-size: 9px;
-  color: #999;
+  color: var(--schedule-text-tertiary);
   margin-bottom: 2px;
   line-height: 1.2;
 }
@@ -202,7 +202,7 @@
   margin: 1px;
   display: inline-block;
   line-height: 1;
-  background: #fa8c16 !important;
+  background: var(--schedule-accent-orange) !important;
   color: white !important;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
@@ -211,14 +211,14 @@
 .print-continuation-text {
   font-size: 9px;
   font-style: italic;
-  color: #fa8c16;
+  color: var(--schedule-accent-orange);
   margin-top: 2px;
   line-height: 1.2;
 }
 
 .print-empty-text {
   font-size: 10px;
-  color: #999;
+  color: var(--schedule-text-tertiary);
   text-align: center;
   line-height: 1.2;
 }
@@ -235,7 +235,7 @@
 .print-slot-name {
   font-weight: bold;
   font-size: 11px;
-  color: #1890ff;
+  color: var(--schedule-primary);
   line-height: 1.2;
 }
 
