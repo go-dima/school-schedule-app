@@ -124,6 +124,35 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     );
   };
 
+  const renderClassCardHeader = (
+    cls: ClassWithTimeSlot,
+    isContinuation: boolean
+  ) => (
+    <>
+      <div className="class-title">
+        {cls.title}
+        {isContinuation && (
+          <span className="continuation-suffix">
+            {t("schedule.table.continuationText")}
+          </span>
+        )}
+      </div>
+      {(cls.teacher || cls.room) && (
+        <div className="class-teacher-room">
+          {cls.teacher && <span className="class-teacher">{cls.teacher}</span>}
+          {cls.teacher && cls.room && (
+            <span className="class-teacher-room-sep"> • </span>
+          )}
+          {cls.room && (
+            <span className="class-room">
+              {t("schedule.table.room", { room: cls.room })}
+            </span>
+          )}
+        </div>
+      )}
+    </>
+  );
+
   const renderClassCell = (timeSlot: TimeSlot, dayOfWeek: number) => {
     const dayClasses = weeklySchedule[dayOfWeek]?.[timeSlot.id] || [];
 
@@ -172,24 +201,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           <Card
             size="small"
             className={`class-card selected-card double-card ${isMandatory ? "mandatory-card" : ""}`}>
-            <div className="class-title">{doubleClass.title}</div>
-            <div className="class-teacher">{doubleClass.teacher}</div>
-            {doubleClass.room && (
-              <div className="class-room">
-                {t("schedule.table.room", { room: doubleClass.room })}
-              </div>
-            )}
-            <div
-              className="continuation-text"
-              style={{
-                marginBottom: 4,
-                fontSize: "10px",
-                fontStyle: "italic",
-                color: "#fa8c16",
-                textAlign: "center",
-              }}>
-              {t("schedule.table.continuationText")}
-            </div>
+            {renderClassCardHeader(doubleClass, true)}
             <div className="class-labels-row">
               <div className="class-enrollment-labels">
                 <div className="class-tags">
@@ -275,13 +287,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                 style={{
                   marginBottom: selectedPrimaryClasses.length > 1 ? 4 : 0,
                 }}>
-                <div className="class-title">{cls.title}</div>
-                <div className="class-teacher">{cls.teacher}</div>
-                {cls.room && (
-                  <div className="class-room">
-                    {t("schedule.table.room", { room: cls.room })}
-                  </div>
-                )}
+                {renderClassCardHeader(cls, false)}
                 <div className="class-labels-row">
                   <div className="class-enrollment-labels">
                     <div className="class-tags">
@@ -463,14 +469,10 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
         rowClassName={record => record.className || ""}
       />
 
-      {selectedTimeSlot && selectedDayOfWeek !== null && (
-        <ClassSelectionDrawer
-          open={drawerOpen}
-          onClose={handleCloseDrawer}
-          timeSlot={selectedTimeSlot}
-          dayOfWeek={selectedDayOfWeek}
-          timeSlots={timeSlots}
-          classes={classes.filter(cls => {
+      {selectedTimeSlot &&
+        selectedDayOfWeek !== null &&
+        (() => {
+          const classesForSlot = classes.filter(cls => {
             if (userGrade && !cls.grades?.includes(userGrade)) {
               return false;
             }
@@ -480,20 +482,49 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                 slot.dayOfWeek === selectedDayOfWeek &&
                 slot.timeSlotId === selectedTimeSlot.id
             );
-          })}
-          selectedClasses={selectedClasses}
-          conflictingClasses={classes.filter(
-            cls =>
-              !selectedClasses.includes(cls.id) &&
-              ScheduleService.hasTimeConflict(userSelections, cls)
-          )}
-          onClassSelect={onClassSelect}
-          onClassUnselect={onClassUnselect}
-          canSelectClasses={canSelectClasses}
-          isAdmin={isAdmin}
-          onCreateClass={onCreateClass}
-        />
-      )}
+          });
+
+          // Selections for the slot being viewed shouldn't count as a
+          // conflict against ordinary alternatives in that same slot —
+          // those are already mutually exclusive via the drawer's
+          // grayed-out single-choice UI. Track-locked candidates are the
+          // exception: a track can land a class on a slot the user
+          // already picked manually, which is a real conflict that can't
+          // be resolved by choosing differently in this drawer.
+          const otherUserSelections = userSelections.filter(
+            selection =>
+              !selection.class.slots.some(
+                slot =>
+                  slot.dayOfWeek === selectedDayOfWeek &&
+                  slot.timeSlotId === selectedTimeSlot.id
+              )
+          );
+
+          return (
+            <ClassSelectionDrawer
+              open={drawerOpen}
+              onClose={handleCloseDrawer}
+              timeSlot={selectedTimeSlot}
+              dayOfWeek={selectedDayOfWeek}
+              timeSlots={timeSlots}
+              classes={classesForSlot}
+              selectedClasses={selectedClasses}
+              conflictingClasses={classesForSlot.filter(cls => {
+                if (selectedClasses.includes(cls.id)) return false;
+                const relevantSelections =
+                  cls.trackNumber !== null
+                    ? userSelections
+                    : otherUserSelections;
+                return ScheduleService.hasTimeConflict(relevantSelections, cls);
+              })}
+              onClassSelect={onClassSelect}
+              onClassUnselect={onClassUnselect}
+              canSelectClasses={canSelectClasses}
+              isAdmin={isAdmin}
+              onCreateClass={onCreateClass}
+            />
+          );
+        })()}
     </div>
   );
 };

@@ -20,7 +20,7 @@ export const mockTimeSlots: TimeSlot[] = getDefaultTimeSlots().map(
 const lessonSlots = mockTimeSlots.filter(isLessonTimeSlot);
 
 const subjects = [
-  { title: "מתמטיקה", teacher: "מורה שרה" },
+  { title: "מתמטיקה", teacher: "מורה ג'ון נאש" },
   { title: "עברית", teacher: "מורה רחל" },
   { title: "אנגלית", teacher: "מורה דוד" },
   { title: "מדעים", teacher: "מורה מיכל" },

@@ -158,7 +158,7 @@
       "teacherLabel": "מורה: ",
       "timeLabel": "זמן: ",
       "roomLabel": "כיתה: ",
-      "timeConflictTitle": "קיים חפיפה בזמן",
+      "timeConflictTitle": "קיימת חפיפה בזמן",
       "timeConflictDescription": "שיעור זה חופף עם שיעור אחר שנבחר",
       "noClassesAvailable": "אין שיעורים זמינים בזמן זה",
       "selectedClassesSection": "שיעורים שנבחרו:",
