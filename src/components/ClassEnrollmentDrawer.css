@@ -1,0 +1,28 @@
+.class-enrollment-drawer {
+  direction: rtl;
+}
+
+.class-enrollment-drawer .ant-drawer-header {
+  direction: rtl;
+  text-align: right;
+}
+
+.class-enrollment-drawer .ant-drawer-close {
+  left: 16px;
+  right: auto;
+}
+
+.enrollment-drawer-title {
+  width: 100%;
+}
+
+.enrollment-drawer-title .ant-typography {
+  margin-bottom: 8px;
+}
+
+.enrollment-time-slot-info {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}

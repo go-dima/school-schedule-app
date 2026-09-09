@@ -5,6 +5,7 @@ import { scheduleApi } from "../services/api";
 import type { ClassWithTimeSlot, Child } from "../types";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
 import { GetGradeName } from "@/utils/grades";
+import "./ClassEnrollmentDrawer.css";
 
 const { Title, Text } = Typography;
 
@@ -51,17 +52,17 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
         if (requestedClassId.current !== classId) return;
         setLoading(false);
       });
-  }, [open, classInfo?.id, t]);
+  }, [open, classInfo?.id]);
 
   return (
     <Drawer
       title={
         classInfo && (
-          <div className="drawer-title">
+          <div className="enrollment-drawer-title">
             <Title level={4} style={{ margin: 0 }}>
               {classInfo.title}
             </Title>
-            <div className="time-slot-info">
+            <div className="enrollment-time-slot-info">
               <Tag color="blue">{classInfo.teacher}</Tag>
               <GradesRangeTag grades={classInfo.grades} color="green" />
             </div>
