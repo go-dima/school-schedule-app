@@ -256,6 +256,17 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
     confirmDeleteClass(classId, handleCloseEnrollmentDrawer);
   };
 
+  // The drawer's inline-editable fields (name/teacher/room/grades) already
+  // persisted via classesApi before calling this -- just sync local state
+  // so the table row and the open drawer both reflect the new value without
+  // a full reload.
+  const handleClassUpdatedFromDrawer = (updated: ClassWithTimeSlot) => {
+    setClasses(prev =>
+      prev.map(cls => (cls.id === updated.id ? updated : cls))
+    );
+    setEnrollmentDrawerClass(updated);
+  };
+
   const getTimeSlotDisplay = (cls: ClassWithTimeSlot) => {
     if (!cls.slots || cls.slots.length === 0) {
       return t("classManagement.table.noTimeSlot");
@@ -676,6 +687,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
         classInfo={enrollmentDrawerClass}
         onEdit={handleEditFromDrawer}
         onDelete={handleDeleteFromDrawer}
+        onUpdated={handleClassUpdatedFromDrawer}
       />
     </div>
   );

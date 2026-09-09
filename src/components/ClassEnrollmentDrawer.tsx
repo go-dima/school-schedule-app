@@ -11,12 +11,15 @@ import {
   Space,
   Button,
   Divider,
+  Select,
+  message,
 } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
-import { scheduleApi } from "../services/api";
+import { scheduleApi, classesApi } from "../services/api";
 import { ScheduleService } from "../services/scheduleService";
 import type { ClassWithTimeSlot, Child } from "../types";
+import { GRADES } from "../types";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
 import { GetGradeName } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
@@ -31,6 +34,7 @@ interface ClassEnrollmentDrawerProps {
   classInfo: ClassWithTimeSlot | null;
   onEdit: (classInfo: ClassWithTimeSlot) => void;
   onDelete: (classId: string) => void;
+  onUpdated: (updatedClass: ClassWithTimeSlot) => void;
 }
 
 const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
@@ -39,12 +43,27 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
   classInfo,
   onEdit,
   onDelete,
+  onUpdated,
 }) => {
   const { t } = useTranslation();
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestedClassId = useRef<string | null>(null);
+
+  // Mirrors `classInfo`, but updated optimistically by the inline-edit
+  // fields below so the drawer reflects a save immediately instead of
+  // waiting on the round trip through the parent's onUpdated callback.
+  // Resynced whenever the parent hands us a different class (or a fresh
+  // copy of the same one, e.g. after loadData()).
+  const [localClassInfo, setLocalClassInfo] =
+    useState<ClassWithTimeSlot | null>(classInfo);
+  const [editingGrades, setEditingGrades] = useState(false);
+  const [draftGrades, setDraftGrades] = useState<number[]>([]);
+
+  useEffect(() => {
+    setLocalClassInfo(classInfo);
+  }, [classInfo]);
 
   useEffect(() => {
     if (!open || !classInfo) return;
@@ -74,6 +93,77 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
       });
   }, [open, classInfo?.id]);
 
+  // Shared save path for every inline-editable field: optimistic update,
+  // persist, and either propagate the merged record up (on success) or
+  // roll the optimistic change back and surface the error (on failure).
+  const saveField = async (
+    updates: Partial<
+      Pick<ClassWithTimeSlot, "title" | "teacher" | "room" | "grades">
+    >
+  ) => {
+    if (!localClassInfo) return;
+    const previous = localClassInfo;
+    const optimistic = { ...previous, ...updates };
+    setLocalClassInfo(optimistic);
+    try {
+      await classesApi.updateClass(previous.id, updates);
+      onUpdated(optimistic);
+    } catch (err) {
+      setLocalClassInfo(previous);
+      message.error(
+        err instanceof Error
+          ? err.message
+          : t("classManagement.page.classSaveError")
+      );
+    }
+  };
+
+  const handleTitleChange = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      message.error(t("form.class.nameRequired"));
+      return;
+    }
+    saveField({ title: trimmed });
+  };
+
+  const handleTeacherChange = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      message.error(t("form.class.teacherRequired"));
+      return;
+    }
+    saveField({ teacher: trimmed });
+  };
+
+  const handleRoomChange = (value: string) => {
+    saveField({ room: value.trim() });
+  };
+
+  const startEditingGrades = () => {
+    if (!localClassInfo) return;
+    setDraftGrades(localClassInfo.grades);
+    setEditingGrades(true);
+  };
+
+  const handleGradesSave = () => {
+    setEditingGrades(false);
+    if (!localClassInfo) return;
+
+    const sorted = [...draftGrades].sort((a, b) => a - b);
+    if (sorted.length === 0) {
+      message.error(t("form.class.gradesRequired"));
+      return;
+    }
+    if (
+      sorted.length === localClassInfo.grades.length &&
+      sorted.every((grade, i) => grade === localClassInfo.grades[i])
+    ) {
+      return;
+    }
+    saveField({ grades: sorted });
+  };
+
   const renderTimeSlots = (cls: ClassWithTimeSlot) => {
     if (!cls.slots || cls.slots.length === 0) {
       return t("classManagement.table.noTimeSlot");
@@ -102,15 +192,30 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
   return (
     <Drawer
       title={
-        classInfo && (
-          <div className="enrollment-drawer-title">
-            <Title level={4} style={{ margin: 0 }}>
-              {classInfo.title}
-            </Title>
-            <div className="enrollment-time-slot-info">
-              <GradesRangeTag grades={classInfo.grades} color="green" />
-            </div>
-          </div>
+        localClassInfo && (
+          <Title
+            level={4}
+            style={{ margin: 0 }}
+            editable={{ onChange: handleTitleChange }}>
+            {localClassInfo.title}
+          </Title>
+        )
+      }
+      extra={
+        localClassInfo && (
+          <Space>
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              title={t("classManagement.table.deleteButton")}
+              onClick={() => onDelete(localClassInfo.id)}
+            />
+            <Button
+              icon={<EditOutlined />}
+              title={t("classManagement.table.editButton")}
+              onClick={() => onEdit(localClassInfo)}
+            />
+          </Space>
         )
       }
       placement="left"
@@ -119,71 +224,99 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
       open={open}
       className="class-enrollment-drawer"
       styles={{ body: { padding: "16px" } }}>
-      {classInfo && (
+      {localClassInfo && (
         <>
           <Descriptions
             size="small"
             column={1}
             bordered
-            extra={
-              <Space>
-                <Button
-                  danger
-                  icon={<DeleteOutlined />}
-                  title={t("classManagement.table.deleteButton")}
-                  onClick={() => onDelete(classInfo.id)}
-                />
-                <Button
-                  icon={<EditOutlined />}
-                  title={t("classManagement.table.editButton")}
-                  onClick={() => onEdit(classInfo)}
-                />
-              </Space>
-            }
             items={[
               {
                 key: "teacher",
                 label: t("classManagement.table.teacherColumn"),
-                children: classInfo.teacher,
+                children: (
+                  <Text editable={{ onChange: handleTeacherChange }}>
+                    {localClassInfo.teacher}
+                  </Text>
+                ),
               },
-              ...(classInfo.description
+              {
+                key: "grades",
+                label: t("classManagement.table.gradesColumn"),
+                children: editingGrades ? (
+                  <Select
+                    mode="multiple"
+                    autoFocus
+                    style={{ minWidth: 160 }}
+                    value={draftGrades}
+                    onChange={setDraftGrades}
+                    onBlur={handleGradesSave}
+                    options={GRADES.map(grade => ({
+                      value: grade,
+                      label: GetGradeName(grade),
+                    }))}
+                  />
+                ) : (
+                  <Space size="small">
+                    <GradesRangeTag
+                      grades={localClassInfo.grades}
+                      color="green"
+                    />
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<EditOutlined />}
+                      onClick={startEditingGrades}
+                    />
+                  </Space>
+                ),
+              },
+              ...(localClassInfo.description
                 ? [
                     {
                       key: "description",
                       label: t("classManagement.table.descriptionColumn"),
-                      children: classInfo.description,
+                      children: localClassInfo.description,
                     },
                   ]
                 : []),
               {
                 key: "room",
                 label: t("classManagement.table.roomColumn"),
-                children:
-                  classInfo.room || t("classManagement.table.roomNotSpecified"),
+                children: (
+                  <Text
+                    editable={{
+                      text: localClassInfo.room,
+                      onChange: handleRoomChange,
+                    }}>
+                    {localClassInfo.room ||
+                      t("classManagement.table.roomNotSpecified")}
+                  </Text>
+                ),
               },
               {
                 key: "time",
                 label: t("classManagement.table.timeColumn"),
-                children: renderTimeSlots(classInfo),
+                children: renderTimeSlots(localClassInfo),
               },
               {
                 key: "type",
                 label: t("classManagement.table.typeColumn"),
                 children: (
                   <Space size="small" wrap>
-                    <Tag color={classInfo.isMandatory ? "red" : "blue"}>
-                      {classInfo.isMandatory
+                    <Tag color={localClassInfo.isMandatory ? "red" : "blue"}>
+                      {localClassInfo.isMandatory
                         ? t("classManagement.table.mandatoryType")
                         : t("classManagement.table.electiveType")}
                     </Tag>
-                    {classInfo.isDouble && (
+                    {localClassInfo.isDouble && (
                       <Tag color="orange">
                         {t("classManagement.table.doubleLessonLabel")}
                       </Tag>
                     )}
                     <GroupTrackTags
-                      groupNumber={classInfo.groupNumber}
-                      trackNumber={classInfo.trackNumber}
+                      groupNumber={localClassInfo.groupNumber}
+                      trackNumber={localClassInfo.trackNumber}
                     />
                   </Space>
                 ),
@@ -192,8 +325,11 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
                 key: "scope",
                 label: t("classManagement.table.environmentColumn"),
                 children: (
-                  <Tag color={classInfo.scope === "prod" ? "green" : "orange"}>
-                    {t(`scope.${classInfo.scope}`)}
+                  <Tag
+                    color={
+                      localClassInfo.scope === "prod" ? "green" : "orange"
+                    }>
+                    {t(`scope.${localClassInfo.scope}`)}
                   </Tag>
                 ),
               },

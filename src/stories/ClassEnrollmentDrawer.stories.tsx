@@ -68,6 +68,7 @@ export const Default: Story = {
     classInfo: mockClassInfo,
     onEdit: () => {},
     onDelete: () => {},
+    onUpdated: () => {},
   },
 };
 
@@ -77,5 +78,6 @@ export const NoClassSelected: Story = {
     classInfo: null,
     onEdit: () => {},
     onDelete: () => {},
+    onUpdated: () => {},
   },
 };
