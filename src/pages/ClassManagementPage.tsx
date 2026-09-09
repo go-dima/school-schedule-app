@@ -76,6 +76,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [teacherSearchTerm, setTeacherSearchTerm] = useState<string>("");
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   // 1 | 2 select an actual track; NO_TRACK_FILTER selects classes with no
@@ -94,6 +95,13 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       const lowerSearchTerm = searchTerm.toLowerCase();
       filtered = filtered.filter(cls =>
         cls.title.toLowerCase().includes(lowerSearchTerm)
+      );
+    }
+
+    if (teacherSearchTerm) {
+      const lowerTeacherSearchTerm = teacherSearchTerm.toLowerCase();
+      filtered = filtered.filter(cls =>
+        cls.teacher.toLowerCase().includes(lowerTeacherSearchTerm)
       );
     }
 
@@ -135,7 +143,14 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       const bMinGrade = Math.min(...(b.grades || []));
       return aMinGrade - bMinGrade;
     });
-  }, [classes, searchTerm, selectedDay, selectedGrade, selectedTrack]);
+  }, [
+    classes,
+    searchTerm,
+    teacherSearchTerm,
+    selectedDay,
+    selectedGrade,
+    selectedTrack,
+  ]);
 
   const loadData = async () => {
     setLoading(true);
@@ -292,8 +307,8 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
             {t("classManagement.table.dayPrefix", {
               dayName: GetDayName(first.dayOfWeek),
             })}
+            {combinedTimeRange && ` ${combinedTimeRange}`}
           </div>
-          {combinedTimeRange && <div>{combinedTimeRange}</div>}
           <div style={{ fontSize: "12px", color: "#666" }}>
             {first.timeSlot.name} + {second.timeSlot.name}
           </div>
@@ -325,8 +340,8 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
                 {t("classManagement.table.dayPrefix", {
                   dayName: GetDayName(slot.dayOfWeek),
                 })}
+                {timeRange && ` ${timeRange}`}
               </div>
-              {timeRange && <div>{timeRange}</div>}
               <div style={{ fontSize: "12px", color: "#666" }}>
                 {slot.timeSlot.name}
               </div>
@@ -342,8 +357,10 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       title: t("classManagement.table.nameColumn"),
       dataIndex: "title",
       key: "title",
-      width: 150,
+      width: 120,
       ellipsis: true,
+      sorter: (a, b) => a.title.localeCompare(b.title, "he"),
+      defaultSortOrder: "ascend",
     },
     {
       title: t("classManagement.table.descriptionColumn"),
@@ -363,7 +380,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       title: t("classManagement.table.roomColumn"),
       dataIndex: "room",
       key: "room",
-      width: 120,
+      width: 90,
       render: (room: string) =>
         room || t("classManagement.table.roomNotSpecified"),
     },
@@ -371,7 +388,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       title: t("classManagement.table.gradesColumn"),
       dataIndex: "grades",
       key: "grades",
-      width: 110,
+      width: 90,
       render: (grades: number[]) => (
         <GradesRangeTag grades={grades} color="geekblue" />
       ),
@@ -610,6 +627,39 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
                 filterOption={false}
               />
               <label>{t("classManagement.page.searchLabel")}</label>
+            </Space>
+
+            <Space size={4} align="center">
+              <AutoComplete
+                value={teacherSearchTerm}
+                onChange={setTeacherSearchTerm}
+                options={(() => {
+                  if (!teacherSearchTerm) return [];
+
+                  const lowerTeacherSearchTerm =
+                    teacherSearchTerm.toLowerCase();
+                  const uniqueTeacherNames = Array.from(
+                    new Set(
+                      classes
+                        .filter(cls =>
+                          cls.teacher
+                            .toLowerCase()
+                            .includes(lowerTeacherSearchTerm)
+                        )
+                        .map(cls => cls.teacher)
+                    )
+                  ).sort();
+
+                  return uniqueTeacherNames.map(teacher => ({
+                    value: teacher,
+                  }));
+                })()}
+                placeholder={t("classManagement.page.searchTeacherPlaceholder")}
+                style={{ width: 200 }}
+                allowClear
+                filterOption={false}
+              />
+              <label>{t("classManagement.page.searchTeacherLabel")}</label>
             </Space>
           </Space>
         </Card>

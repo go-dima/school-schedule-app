@@ -286,6 +286,8 @@
       "filtersTitle": "מסננים",
       "searchLabel": "חיפוש:",
       "searchPlaceholder": "חפש שיעור לפי שם",
+      "searchTeacherLabel": "חיפוש מורה:",
+      "searchTeacherPlaceholder": "חפש שיעור לפי מורה",
       "dayFilterLabel": "יום בשבוע:",
       "dayFilterPlaceholder": "בחר יום",
       "gradeFilterLabel": "כיתה:",
