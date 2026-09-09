@@ -186,6 +186,21 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
     }
   };
 
+  // Shared by the row actions dropdown and the enrollment drawer's delete
+  // button, so the confirmation copy only lives in one place.
+  const confirmDeleteClass = (classId: string, onDeleted?: () => void) => {
+    Modal.confirm({
+      title: t("classManagement.table.deleteConfirmTitle"),
+      content: t("classManagement.table.deleteConfirmDescription"),
+      okText: t("classManagement.table.confirmYes"),
+      cancelText: t("classManagement.table.confirmNo"),
+      onOk: async () => {
+        await handleDeleteClass(classId);
+        onDeleted?.();
+      },
+    });
+  };
+
   const handleFormSubmit = async (
     classData: Omit<Class, "id" | "createdAt" | "updatedAt">
   ) => {
@@ -230,6 +245,15 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
     // sitting in state while the drawer is closed (and thus invisible) is
     // harmless.
     setEnrollmentDrawerOpen(false);
+  };
+
+  const handleEditFromDrawer = (cls: ClassWithTimeSlot) => {
+    handleCloseEnrollmentDrawer();
+    handleEditClass(cls);
+  };
+
+  const handleDeleteFromDrawer = (classId: string) => {
+    confirmDeleteClass(classId, handleCloseEnrollmentDrawer);
   };
 
   const getTimeSlotDisplay = (cls: ClassWithTimeSlot) => {
@@ -353,10 +377,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       width: 100,
       align: "center" as const,
       render: (_, record) => (
-        <EnrollmentCount
-          count={enrollmentCounts.get(record.id) || 0}
-          onClick={() => handleShowEnrollment(record)}
-        />
+        <EnrollmentCount count={enrollmentCounts.get(record.id) || 0} />
       ),
     },
     {
@@ -403,7 +424,10 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
             key: "edit",
             label: t("classManagement.table.editButton"),
             icon: <EditOutlined />,
-            onClick: () => handleEditClass(record),
+            onClick: ({ domEvent }) => {
+              domEvent.stopPropagation();
+              handleEditClass(record);
+            },
           },
           {
             type: "divider",
@@ -413,14 +437,9 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
             label: t("classManagement.table.deleteButton"),
             icon: <DeleteOutlined />,
             danger: true,
-            onClick: () => {
-              Modal.confirm({
-                title: t("classManagement.table.deleteConfirmTitle"),
-                content: t("classManagement.table.deleteConfirmDescription"),
-                okText: t("classManagement.table.confirmYes"),
-                cancelText: t("classManagement.table.confirmNo"),
-                onOk: () => handleDeleteClass(record.id),
-              });
+            onClick: ({ domEvent }) => {
+              domEvent.stopPropagation();
+              confirmDeleteClass(record.id);
             },
           },
         ];
@@ -435,6 +454,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
               icon={<MoreOutlined />}
               size="small"
               title={t("classManagement.table.actions.more")}
+              onClick={e => e.stopPropagation()}
             />
           </Dropdown>
         );
@@ -622,6 +642,10 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
           }}
           scroll={{ x: 1000 }}
           size="small"
+          onRow={record => ({
+            onClick: () => handleShowEnrollment(record),
+            style: { cursor: "pointer" },
+          })}
         />
       </Card>
 
@@ -650,6 +674,8 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
         open={enrollmentDrawerOpen}
         onClose={handleCloseEnrollmentDrawer}
         classInfo={enrollmentDrawerClass}
+        onEdit={handleEditFromDrawer}
+        onDelete={handleDeleteFromDrawer}
       />
     </div>
   );

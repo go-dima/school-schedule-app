@@ -66,6 +66,8 @@ export const Default: Story = {
   render: args => <DrawerWrapper {...args} />,
   args: {
     classInfo: mockClassInfo,
+    onEdit: () => {},
+    onDelete: () => {},
   },
 };
 
@@ -73,5 +75,7 @@ export const NoClassSelected: Story = {
   render: args => <DrawerWrapper {...args} />,
   args: {
     classInfo: null,
+    onEdit: () => {},
+    onDelete: () => {},
   },
 };
