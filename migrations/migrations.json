@@ -143,8 +143,16 @@
       "file": "018_add_group_and_track_fields.sql",
       "created_at": "2026-09-07T00:01:00Z",
       "dependencies": ["017_add_class_slots"]
+    },
+    {
+      "id": "019_add_selection_status",
+      "name": "Add Selection Status",
+      "description": "Add draft/committed status to schedule_selections, replace RLS policies with status-aware ones (also fixing two pre-existing bugs: staff unable to edit each other's committed picks, and staff unable to commit one class for multiple students), and update enrollment functions/view to count committed selections only",
+      "file": "019_add_selection_status.sql",
+      "created_at": "2026-09-09T00:00:00Z",
+      "dependencies": ["018_add_group_and_track_fields"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 18
+  "schema_version": 19
 }
