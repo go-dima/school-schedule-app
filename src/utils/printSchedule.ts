@@ -3,6 +3,10 @@ import ReactDOM from "react-dom/client";
 import PrintableSchedule from "../components/PrintableSchedule";
 import type { Child, TimeSlot, WeeklySchedule } from "../types";
 import { getPrintStyles } from "./loadPrintStyles";
+import {
+  PRINT_PAGE_CONTENT_WIDTH_PX,
+  PRINT_PAGE_CONTENT_HEIGHT_PX,
+} from "./printPageSize";
 
 // HTML encoding function to prevent XSS
 const encodeHTML = (str: string): string => {
@@ -93,6 +97,33 @@ export const printSchedule = async (data: PrintScheduleData): Promise<void> => {
 
         root.render(printableScheduleElement);
 
+        // Shrink the schedule to fit a single printed page, however many
+        // time slots it has. `zoom` (unlike `transform: scale`) actually
+        // shrinks the layout box the print engine paginates against, so -
+        // unlike a CSS-only max-height/page-break approach - this reliably
+        // keeps the whole schedule on one page instead of spilling a mostly
+        // blank second page.
+        const fitToSinglePage = () => {
+          const scheduleEl = printWindow.document.querySelector<HTMLElement>(
+            ".printable-schedule"
+          );
+          if (!scheduleEl) return;
+
+          const naturalWidth = scheduleEl.scrollWidth;
+          const naturalHeight = scheduleEl.scrollHeight;
+          if (naturalWidth === 0 || naturalHeight === 0) return;
+
+          const scale = Math.min(
+            1,
+            PRINT_PAGE_CONTENT_WIDTH_PX / naturalWidth,
+            PRINT_PAGE_CONTENT_HEIGHT_PX / naturalHeight
+          );
+
+          if (scale < 1) {
+            scheduleEl.style.setProperty("zoom", String(scale));
+          }
+        };
+
         // Use requestAnimationFrame for better timing control
         const renderAndPrint = () => {
           try {
@@ -107,6 +138,8 @@ export const printSchedule = async (data: PrintScheduleData): Promise<void> => {
             // Use requestAnimationFrame to ensure styles are applied
             requestAnimationFrame(() => {
               requestAnimationFrame(() => {
+                fitToSinglePage();
+
                 printWindow.print();
 
                 let hasResolved = false;
