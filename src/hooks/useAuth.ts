@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { authApi, usersApi } from "../services/api";
 import type { User, UserRoleData } from "../types";
+import { withTimeout } from "../utils/asyncUtils";
+
+// Keep below App.tsx's 5s loading-timeout screen so a stuck query resolves to
+// the existing "proceed as signed out" fallback instead of that blunter screen.
+const AUTH_QUERY_TIMEOUT_MS = 4000;
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -49,7 +54,10 @@ export function useAuth() {
       controller: AbortController
     ) => {
       try {
-        const roles = await usersApi.getUserRoles(userId);
+        const roles = await withTimeout(
+          usersApi.getUserRoles(userId),
+          AUTH_QUERY_TIMEOUT_MS
+        );
 
         if (controller.signal.aborted || !mounted) return;
 
@@ -115,7 +123,10 @@ export function useAuth() {
 
       try {
         if (supabaseUser) {
-          const userProfile = await usersApi.getUserProfile(supabaseUser.id);
+          const userProfile = await withTimeout(
+            usersApi.getUserProfile(supabaseUser.id),
+            AUTH_QUERY_TIMEOUT_MS
+          );
 
           if (authStateController.signal.aborted || !mounted) return;
 
