@@ -1,22 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
+import { useEffect, useState } from "react";
 import { scheduleApi } from "../services/api";
-import type { Child, ScheduleSelectionWithClass } from "../types";
+import type {
+  Child,
+  ScheduleSelectionWithClass,
+  SelectionStatus,
+} from "../types";
 
-export function useChildSchedule(child: Child | undefined) {
+export function useChildSchedule(
+  child: Child | undefined,
+  status: SelectionStatus
+) {
   const [schedule, setSchedule] = useState<ScheduleSelectionWithClass[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { hasRole } = useAuth();
-
-  // Memoize the dependencies to prevent unnecessary re-renders
-  const deps = useMemo(
-    () => [child?.id, hasRole("parent"), hasRole("staff")],
-    [child?.id, hasRole]
-  );
 
   useEffect(() => {
-    if (!child || (!hasRole("parent") && !hasRole("staff"))) {
+    if (!child) {
       setSchedule([]);
       setLoading(false);
       return;
@@ -28,7 +27,10 @@ export function useChildSchedule(child: Child | undefined) {
       setLoading(true);
       setError(null);
       try {
-        const childSchedule = await scheduleApi.getChildSchedule(child.id);
+        const childSchedule = await scheduleApi.getChildSchedule(
+          child.id,
+          status
+        );
         if (mounted) {
           setSchedule(childSchedule);
         }
@@ -50,11 +52,11 @@ export function useChildSchedule(child: Child | undefined) {
     return () => {
       mounted = false;
     };
-  }, deps);
+  }, [child?.id, status]);
 
   const refetch = async (): Promise<void> => {
     if (!child) return;
-    const childSchedule = await scheduleApi.getChildSchedule(child.id);
+    const childSchedule = await scheduleApi.getChildSchedule(child.id, status);
     setSchedule(childSchedule);
   };
 
@@ -62,9 +64,12 @@ export function useChildSchedule(child: Child | undefined) {
     if (!child) throw new Error("No child selected");
 
     try {
-      await scheduleApi.selectClassForChild(child.id, classId);
+      await scheduleApi.selectClassForChild(child.id, classId, status);
       // Refresh schedule
-      const childSchedule = await scheduleApi.getChildSchedule(child.id);
+      const childSchedule = await scheduleApi.getChildSchedule(
+        child.id,
+        status
+      );
       setSchedule(childSchedule);
     } catch (err) {
       const message =
@@ -78,9 +83,12 @@ export function useChildSchedule(child: Child | undefined) {
     if (!child) throw new Error("No child selected");
 
     try {
-      await scheduleApi.unselectClassForChild(child.id, classId);
+      await scheduleApi.unselectClassForChild(child.id, classId, status);
       // Refresh schedule
-      const childSchedule = await scheduleApi.getChildSchedule(child.id);
+      const childSchedule = await scheduleApi.getChildSchedule(
+        child.id,
+        status
+      );
       setSchedule(childSchedule);
     } catch (err) {
       const message =
