@@ -127,17 +127,6 @@ export interface ChildWithParents extends Child {
   }>;
 }
 
-export interface ChildShareToken {
-  id: string;
-  childId: string;
-  token: string;
-  sharedByUserId: string;
-  expiresAt: string;
-  usedAt?: string;
-  usedByUserId?: string;
-  createdAt: string;
-}
-
 export interface ScheduleSelectionWithChild
   extends Omit<ScheduleSelection, "userId"> {
   childId: string;

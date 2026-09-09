@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { childrenApi } from "../services/api";
 import { withTimeout } from "../utils/asyncUtils";
-import type { Child, ChildShareToken } from "../types";
+import type { Child } from "../types";
 
 export function useChildren() {
   const [children, setChildren] = useState<Child[]>([]);
@@ -119,53 +119,6 @@ export function useChildren() {
     }
   };
 
-  const generateShareToken = async (
-    childId: string,
-    expiresInHours: number = 48
-  ): Promise<string> => {
-    try {
-      const token = await childrenApi.generateShareToken(
-        childId,
-        expiresInHours
-      );
-      return token;
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to generate share token";
-      setError(message);
-      throw new Error(message);
-    }
-  };
-
-  const acceptSharedChild = async (token: string): Promise<void> => {
-    try {
-      await childrenApi.acceptSharedChild(token);
-      // Refresh children list
-      if (user?.id) {
-        const childrenData = await childrenApi.getParentChildren(user.id);
-        setChildren(childrenData);
-      }
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to accept shared child";
-      setError(message);
-      throw new Error(message);
-    }
-  };
-
-  const getChildShareTokens = async (
-    childId: string
-  ): Promise<ChildShareToken[]> => {
-    try {
-      return await childrenApi.getChildShareTokens(childId);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to get share tokens";
-      setError(message);
-      throw new Error(message);
-    }
-  };
-
   return {
     children,
     loading,
@@ -173,8 +126,5 @@ export function useChildren() {
     createChild,
     updateChild,
     removeChild,
-    generateShareToken,
-    acceptSharedChild,
-    getChildShareTokens,
   };
 }
