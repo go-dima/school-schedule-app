@@ -63,7 +63,8 @@ export function ChildManagement() {
       if (data.trackNumber) {
         await TrackSelectionService.syncTrackClasses(
           newChild,
-          data.trackNumber
+          data.trackNumber,
+          "draft"
         );
       }
       setIsFormModalOpen(false);
@@ -90,7 +91,8 @@ export function ChildManagement() {
       if (editingChild.trackNumber !== newTrackNumber) {
         await TrackSelectionService.syncTrackClasses(
           updatedChild,
-          newTrackNumber
+          newTrackNumber,
+          "draft"
         );
       }
       setIsFormModalOpen(false);

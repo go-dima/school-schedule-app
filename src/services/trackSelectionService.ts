@@ -3,6 +3,7 @@ import type {
   Child,
   ClassWithTimeSlot,
   ScheduleSelectionWithClass,
+  SelectionStatus,
 } from "../types";
 
 export interface TrackClassChanges {
@@ -49,13 +50,16 @@ export const TrackSelectionService = {
 
   async applyTrackClassChanges(
     childId: string,
-    { toSelect, toUnselectIds }: TrackClassChanges
+    { toSelect, toUnselectIds }: TrackClassChanges,
+    status: SelectionStatus
   ): Promise<void> {
     await Promise.all([
       ...toUnselectIds.map(classId =>
-        scheduleApi.unselectClassForChild(childId, classId)
+        scheduleApi.unselectClassForChild(childId, classId, status)
       ),
-      ...toSelect.map(cls => scheduleApi.selectClassForChild(childId, cls.id)),
+      ...toSelect.map(cls =>
+        scheduleApi.selectClassForChild(childId, cls.id, status)
+      ),
     ]);
   },
 
@@ -67,11 +71,12 @@ export const TrackSelectionService = {
    */
   async syncTrackClasses(
     child: Pick<Child, "id" | "grade">,
-    newTrackNumber: number | null
+    newTrackNumber: number | null,
+    status: SelectionStatus
   ): Promise<void> {
     const [allClasses, currentSchedule] = await Promise.all([
       classesApi.getClasses(),
-      scheduleApi.getChildSchedule(child.id),
+      scheduleApi.getChildSchedule(child.id, status),
     ]);
 
     const changes = this.computeTrackClassChanges(
@@ -81,6 +86,6 @@ export const TrackSelectionService = {
       newTrackNumber
     );
 
-    await this.applyTrackClassChanges(child.id, changes);
+    await this.applyTrackClassChanges(child.id, changes, status);
   },
 };
