@@ -111,55 +111,62 @@ export const authApi = {
   },
 
   onAuthStateChange(callback: (user: any) => void) {
-    return supabase.auth.onAuthStateChange(async (_event, session) => {
+    return supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user || null;
-
-      // If user signed in with OAuth and doesn't exist in our users table, create profile
-      if (user && session && _event === "SIGNED_IN") {
-        const { data: existingUser } = await supabase
-          .from("users")
-          .select("id")
-          .eq("id", user.id)
-          .single();
-
-        if (!existingUser) {
-          // Create user profile
-          const { error: profileError } = await supabase.from("users").insert([
-            {
-              id: user.id,
-              email: user.email,
-              first_name: user.user_metadata?.full_name?.split(" ")[0] || "",
-              last_name:
-                user.user_metadata?.full_name?.split(" ").slice(1).join(" ") ||
-                "",
-            },
-          ]);
-
-          if (profileError) {
-            log.error("OAuth profile creation failed", { error: profileError });
-          }
-
-          // Create parent role for OAuth users
-          const { error: roleError } = await supabase
-            .from("user_roles")
-            .insert([
-              {
-                user_id: user.id,
-                role: "parent",
-                approved: false, // Requires admin approval
-              },
-            ]);
-
-          if (roleError) {
-            log.error("OAuth role creation failed", { error: roleError });
-          }
-        }
-      }
-
       callback(user);
+
+      // If user signed in with OAuth and doesn't exist in our users table, create profile.
+      // This must not be awaited here: supabase-js awaits this handler while holding its
+      // internal auth lock, and `supabase.from(...)` needs that same lock to attach the
+      // session, which deadlocks. Deferring lets the lock release before this query runs.
+      if (user && session && _event === "SIGNED_IN") {
+        setTimeout(() => {
+          ensureOAuthProfile(user).catch(err => {
+            log.error("OAuth profile ensure failed", { error: err });
+          });
+        }, 0);
+      }
     });
   },
 };
+
+async function ensureOAuthProfile(user: any) {
+  const { data: existingUser } = await supabase
+    .from("users")
+    .select("id")
+    .eq("id", user.id)
+    .single();
+
+  if (existingUser) return;
+
+  // Create user profile
+  const { error: profileError } = await supabase.from("users").insert([
+    {
+      id: user.id,
+      email: user.email,
+      first_name: user.user_metadata?.full_name?.split(" ")[0] || "",
+      last_name:
+        user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || "",
+    },
+  ]);
+
+  if (profileError) {
+    log.error("OAuth profile creation failed", { error: profileError });
+  }
+
+  // Create parent role for OAuth users
+  const { error: roleError } = await supabase.from("user_roles").insert([
+    {
+      user_id: user.id,
+      role: "parent",
+      approved: false, // Requires admin approval
+    },
+  ]);
+
+  if (roleError) {
+    log.error("OAuth role creation failed", { error: roleError });
+  }
+}
 
 // Users API
 export const usersApi = {
