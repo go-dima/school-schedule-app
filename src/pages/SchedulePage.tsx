@@ -271,6 +271,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
         timeSlots,
         weeklySchedule,
         selectedClasses: getSelectedClasses(),
+        showDraftMarker: viewStatus === "draft",
       });
     } catch (error) {
       message.error(

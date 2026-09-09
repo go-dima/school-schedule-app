@@ -19,6 +19,7 @@ interface PrintableScheduleProps {
   timeSlots: TimeSlot[];
   weeklySchedule: WeeklySchedule;
   selectedClasses: string[];
+  showDraftMarker?: boolean;
 }
 
 interface ScheduleRow {
@@ -32,6 +33,7 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
   timeSlots,
   weeklySchedule,
   selectedClasses,
+  showDraftMarker,
 }) => {
   const { t } = useTranslation();
   const renderClassCell = (timeSlot: TimeSlot, dayOfWeek: number) => {
@@ -227,6 +229,9 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
           מערכת של {child.firstName} {child.lastName} -{" "}
           {GetGradeName(child.grade)}
         </h1>
+        {showDraftMarker && (
+          <div className="print-draft-marker">{t("schedule.draftBanner")}</div>
+        )}
       </div>
 
       <div className="print-schedule-container">

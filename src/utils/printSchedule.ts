@@ -19,6 +19,7 @@ interface PrintScheduleData {
   timeSlots: TimeSlot[];
   weeklySchedule: WeeklySchedule;
   selectedClasses: string[];
+  showDraftMarker: boolean;
 }
 
 export const printSchedule = async (data: PrintScheduleData): Promise<void> => {
@@ -88,6 +89,7 @@ export const printSchedule = async (data: PrintScheduleData): Promise<void> => {
             timeSlots: data.timeSlots,
             weeklySchedule: data.weeklySchedule,
             selectedClasses: data.selectedClasses,
+            showDraftMarker: data.showDraftMarker,
           }
         );
 
