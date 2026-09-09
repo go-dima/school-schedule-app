@@ -338,6 +338,9 @@
       "unknownDay": "יום לא ידוע",
       "dayPrefix": "יום {{dayName}}",
       "loadDataError": "שגיאה בטעינת הנתונים"
+    },
+    "enrollmentDrawer": {
+      "noChildren": "עדיין לא נרשמו תלמידים לשיעור זה"
     }
   },
   "mandatoryClassManager": {
