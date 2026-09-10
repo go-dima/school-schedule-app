@@ -183,8 +183,16 @@
       "file": "023_split_track_draft_committed.sql",
       "created_at": "2026-09-09T00:03:00Z",
       "dependencies": ["022_add_selection_status"]
+    },
+    {
+      "id": "025_allow_staff_delete_children",
+      "name": "Allow Staff Delete Children",
+      "description": "Add an admin-or-staff DELETE policy on public.children so staff can delete children they don't have a parent relationship to, which previously silently no-op'd (0 rows deleted, no error) because RLS filtered the delete out",
+      "file": "025_allow_staff_delete_children.sql",
+      "created_at": "2026-09-10T00:00:00Z",
+      "dependencies": ["023_split_track_draft_committed"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 23
+  "schema_version": 25
 }
