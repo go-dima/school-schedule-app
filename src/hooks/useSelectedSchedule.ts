@@ -1,21 +1,31 @@
 import { useEffect, useState } from "react";
 import { scheduleApi } from "../services/api";
 import type {
-  Child,
   ScheduleSelectionWithClass,
+  ScheduleTarget,
   SelectionStatus,
 } from "../types";
 
-export function useChildSchedule(
-  child: Child | undefined,
+// A specific person's selected classes -- either a student a parent/staff
+// member has picked ({ childId }) or the "child" role's own picks
+// ({ userId }). Replaces the old useChildSchedule and the selections half
+// of the old useSchedule.
+export function useSelectedSchedule(
+  target: ScheduleTarget | undefined,
   status: SelectionStatus
 ) {
   const [schedule, setSchedule] = useState<ScheduleSelectionWithClass[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const targetKey = target
+    ? "userId" in target
+      ? `user:${target.userId}`
+      : `child:${target.childId}`
+    : undefined;
+
   useEffect(() => {
-    if (!child) {
+    if (!target) {
       setSchedule([]);
       setLoading(false);
       return;
@@ -27,17 +37,17 @@ export function useChildSchedule(
       setLoading(true);
       setError(null);
       try {
-        const childSchedule = await scheduleApi.getChildSchedule(
-          child.id,
+        const selectedSchedule = await scheduleApi.getSelectedSchedule(
+          target,
           status
         );
         if (mounted) {
-          setSchedule(childSchedule);
+          setSchedule(selectedSchedule);
         }
       } catch (err) {
         if (mounted) {
           setError(
-            err instanceof Error ? err.message : "Failed to load child schedule"
+            err instanceof Error ? err.message : "Failed to load schedule"
           );
         }
       } finally {
@@ -52,25 +62,27 @@ export function useChildSchedule(
     return () => {
       mounted = false;
     };
-  }, [child?.id, status]);
+  }, [targetKey, status]);
 
   const refetch = async (): Promise<void> => {
-    if (!child) return;
-    const childSchedule = await scheduleApi.getChildSchedule(child.id, status);
-    setSchedule(childSchedule);
+    if (!target) return;
+    const selectedSchedule = await scheduleApi.getSelectedSchedule(
+      target,
+      status
+    );
+    setSchedule(selectedSchedule);
   };
 
-  const selectClassForChild = async (classId: string): Promise<void> => {
-    if (!child) throw new Error("No child selected");
+  const select = async (classId: string): Promise<void> => {
+    if (!target) throw new Error("No selection target");
 
     try {
-      await scheduleApi.selectClassForChild(child.id, classId, status);
-      // Refresh schedule
-      const childSchedule = await scheduleApi.getChildSchedule(
-        child.id,
+      await scheduleApi.selectSchedule(target, classId, status);
+      const selectedSchedule = await scheduleApi.getSelectedSchedule(
+        target,
         status
       );
-      setSchedule(childSchedule);
+      setSchedule(selectedSchedule);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to select class";
@@ -79,17 +91,16 @@ export function useChildSchedule(
     }
   };
 
-  const unselectClassForChild = async (classId: string): Promise<void> => {
-    if (!child) throw new Error("No child selected");
+  const unselect = async (classId: string): Promise<void> => {
+    if (!target) throw new Error("No selection target");
 
     try {
-      await scheduleApi.unselectClassForChild(child.id, classId, status);
-      // Refresh schedule
-      const childSchedule = await scheduleApi.getChildSchedule(
-        child.id,
+      await scheduleApi.unselectSchedule(target, classId, status);
+      const selectedSchedule = await scheduleApi.getSelectedSchedule(
+        target,
         status
       );
-      setSchedule(childSchedule);
+      setSchedule(selectedSchedule);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to unselect class";
@@ -106,8 +117,8 @@ export function useChildSchedule(
     schedule,
     loading,
     error,
-    selectClassForChild,
-    unselectClassForChild,
+    select,
+    unselect,
     isClassSelected,
     refetch,
   };
