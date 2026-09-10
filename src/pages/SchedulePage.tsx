@@ -612,6 +612,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
           canSelectClasses={canSelectClasses}
           canViewClasses={canViewClasses}
           isAdmin={isAdmin()}
+          showEnrollmentCount={isStaff || isAdmin()}
           onCreateClass={handleCreateClass}
           searchTerm={searchTerm}
         />
