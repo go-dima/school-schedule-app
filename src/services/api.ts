@@ -875,12 +875,18 @@ export const childrenApi = {
   },
 
   async deleteChild(childId: string): Promise<void> {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("children")
       .delete()
-      .eq("id", childId);
+      .eq("id", childId)
+      .select("id");
 
     if (error) throw new ApiError(error.message);
+    if (!data || data.length === 0) {
+      throw new ApiError(
+        "Delete failed: no matching student found or insufficient permissions."
+      );
+    }
   },
 
   async getAllChildren(): Promise<(Child & { assignedParent: boolean })[]> {

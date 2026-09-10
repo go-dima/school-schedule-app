@@ -29,7 +29,8 @@ vi.mock("./supabase", () => {
 });
 
 // Import after the mock so `api.ts` picks up the mocked `./supabase` module.
-const { authApi, scheduleApi } = await import("./api");
+const { authApi, scheduleApi, childrenApi } = await import("./api");
+const { supabase } = await import("./supabase");
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -76,5 +77,39 @@ describe("scheduleApi.selectSchedule (childId target)", () => {
     await vi.advanceTimersByTimeAsync(10000);
 
     await expect(call).rejects.toThrow();
+  });
+});
+
+describe("childrenApi.deleteChild", () => {
+  const originalFrom = supabase.from;
+
+  afterEach(() => {
+    supabase.from = originalFrom;
+  });
+
+  it("throws instead of reporting false success when RLS silently filters the delete to 0 rows", async () => {
+    const builder = {
+      delete: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockResolvedValue({ data: [], error: null }),
+    };
+    supabase.from = vi.fn().mockReturnValue(builder) as typeof supabase.from;
+
+    await expect(childrenApi.deleteChild("child-1")).rejects.toThrow(
+      /no matching student found or insufficient permissions/
+    );
+  });
+
+  it("resolves when the row was actually deleted", async () => {
+    const builder = {
+      delete: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      select: vi
+        .fn()
+        .mockResolvedValue({ data: [{ id: "child-1" }], error: null }),
+    };
+    supabase.from = vi.fn().mockReturnValue(builder) as typeof supabase.from;
+
+    await expect(childrenApi.deleteChild("child-1")).resolves.toBeUndefined();
   });
 });
