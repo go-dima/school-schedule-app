@@ -12,17 +12,11 @@
   right: auto;
 }
 
-.enrollment-drawer-title {
-  width: 100%;
-}
-
-.enrollment-drawer-title .ant-typography {
-  margin-bottom: 8px;
-}
-
-.enrollment-time-slot-info {
+.enrollment-info-footer {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 4px;
+  justify-content: flex-end;
+  padding: 8px 12px;
+  border: 1px solid #f0f0f0;
+  border-top: none;
+  background: #fafafa;
 }

@@ -12,13 +12,19 @@ import {
   Button,
   Divider,
   Select,
+  Input,
   message,
 } from "antd";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  CheckOutlined,
+  CloseOutlined,
+} from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { scheduleApi, classesApi } from "../services/api";
 import { ScheduleService } from "../services/scheduleService";
-import type { ClassWithTimeSlot, Child } from "../types";
+import type { ClassWithTimeSlot, Child, ClassSlotWithTimeSlot } from "../types";
 import { GRADES } from "../types";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
 import { GetGradeName } from "@/utils/grades";
@@ -58,11 +64,17 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
   // copy of the same one, e.g. after loadData()).
   const [localClassInfo, setLocalClassInfo] =
     useState<ClassWithTimeSlot | null>(classInfo);
-  const [editingGrades, setEditingGrades] = useState(false);
+
+  // Teacher/room/grades edit together as one group, toggled from a single
+  // footer control rather than three separate per-row pencils.
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
+  const [draftTeacher, setDraftTeacher] = useState("");
+  const [draftRoom, setDraftRoom] = useState("");
   const [draftGrades, setDraftGrades] = useState<number[]>([]);
 
   useEffect(() => {
     setLocalClassInfo(classInfo);
+    setIsEditingInfo(false);
   }, [classInfo]);
 
   useEffect(() => {
@@ -127,42 +139,49 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
     saveField({ title: trimmed });
   };
 
-  const handleTeacherChange = (value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) {
+  const startEditingInfo = () => {
+    if (!localClassInfo) return;
+    setDraftTeacher(localClassInfo.teacher);
+    setDraftRoom(localClassInfo.room);
+    setDraftGrades(localClassInfo.grades);
+    setIsEditingInfo(true);
+  };
+
+  const cancelEditingInfo = () => {
+    setIsEditingInfo(false);
+  };
+
+  const saveEditingInfo = () => {
+    if (!localClassInfo) return;
+
+    const trimmedTeacher = draftTeacher.trim();
+    if (!trimmedTeacher) {
       message.error(t("form.class.teacherRequired"));
       return;
     }
-    saveField({ teacher: trimmed });
-  };
 
-  const handleRoomChange = (value: string) => {
-    saveField({ room: value.trim() });
-  };
-
-  const startEditingGrades = () => {
-    if (!localClassInfo) return;
-    setDraftGrades(localClassInfo.grades);
-    setEditingGrades(true);
-  };
-
-  const handleGradesSave = () => {
-    setEditingGrades(false);
-    if (!localClassInfo) return;
-
-    const sorted = [...draftGrades].sort((a, b) => a - b);
-    if (sorted.length === 0) {
+    const sortedGrades = [...draftGrades].sort((a, b) => a - b);
+    if (sortedGrades.length === 0) {
       message.error(t("form.class.gradesRequired"));
       return;
     }
-    if (
-      sorted.length === localClassInfo.grades.length &&
-      sorted.every((grade, i) => grade === localClassInfo.grades[i])
-    ) {
-      return;
-    }
-    saveField({ grades: sorted });
+
+    setIsEditingInfo(false);
+    saveField({
+      teacher: trimmedTeacher,
+      room: draftRoom.trim(),
+      grades: sortedGrades,
+    });
   };
+
+  // Earliest day/time first, matching the sort ClassManagementPage's own
+  // table already uses for the class list itself.
+  const sortedSlots = (cls: ClassWithTimeSlot): ClassSlotWithTimeSlot[] =>
+    [...cls.slots].sort((a, b) =>
+      a.dayOfWeek !== b.dayOfWeek
+        ? a.dayOfWeek - b.dayOfWeek
+        : a.timeSlot.startTime.localeCompare(b.timeSlot.startTime)
+    );
 
   const renderTimeSlots = (cls: ClassWithTimeSlot) => {
     if (!cls.slots || cls.slots.length === 0) {
@@ -171,7 +190,7 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
 
     return (
       <Space direction="vertical" size={2}>
-        {cls.slots.map(slot => {
+        {sortedSlots(cls).map(slot => {
           const timeRange = ScheduleService.formatTimeRange(
             slot.timeSlot.startTime,
             slot.timeSlot.endTime
@@ -234,41 +253,34 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
               {
                 key: "teacher",
                 label: t("classManagement.table.teacherColumn"),
-                children: (
-                  <Text editable={{ onChange: handleTeacherChange }}>
-                    {localClassInfo.teacher}
-                  </Text>
+                children: isEditingInfo ? (
+                  <Input
+                    value={draftTeacher}
+                    onChange={e => setDraftTeacher(e.target.value)}
+                  />
+                ) : (
+                  localClassInfo.teacher
                 ),
               },
               {
                 key: "grades",
                 label: t("classManagement.table.gradesColumn"),
-                children: editingGrades ? (
+                children: isEditingInfo ? (
                   <Select
                     mode="multiple"
-                    autoFocus
-                    style={{ minWidth: 160 }}
+                    style={{ width: "100%" }}
                     value={draftGrades}
                     onChange={setDraftGrades}
-                    onBlur={handleGradesSave}
                     options={GRADES.map(grade => ({
                       value: grade,
                       label: GetGradeName(grade),
                     }))}
                   />
                 ) : (
-                  <Space size="small">
-                    <GradesRangeTag
-                      grades={localClassInfo.grades}
-                      color="green"
-                    />
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={<EditOutlined />}
-                      onClick={startEditingGrades}
-                    />
-                  </Space>
+                  <GradesRangeTag
+                    grades={localClassInfo.grades}
+                    color="green"
+                  />
                 ),
               },
               ...(localClassInfo.description
@@ -283,15 +295,14 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
               {
                 key: "room",
                 label: t("classManagement.table.roomColumn"),
-                children: (
-                  <Text
-                    editable={{
-                      text: localClassInfo.room,
-                      onChange: handleRoomChange,
-                    }}>
-                    {localClassInfo.room ||
-                      t("classManagement.table.roomNotSpecified")}
-                  </Text>
+                children: isEditingInfo ? (
+                  <Input
+                    value={draftRoom}
+                    onChange={e => setDraftRoom(e.target.value)}
+                  />
+                ) : (
+                  localClassInfo.room ||
+                  t("classManagement.table.roomNotSpecified")
                 ),
               },
               {
@@ -335,6 +346,33 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
               },
             ]}
           />
+          <div className="enrollment-info-footer">
+            {isEditingInfo ? (
+              <Space>
+                <Button
+                  size="small"
+                  icon={<CloseOutlined />}
+                  onClick={cancelEditingInfo}>
+                  {t("common.buttons.cancel")}
+                </Button>
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<CheckOutlined />}
+                  onClick={saveEditingInfo}>
+                  {t("common.buttons.save")}
+                </Button>
+              </Space>
+            ) : (
+              <Button
+                type="text"
+                size="small"
+                icon={<EditOutlined />}
+                onClick={startEditingInfo}>
+                {t("classManagement.table.editButton")}
+              </Button>
+            )}
+          </div>
           <Divider style={{ margin: "16px 0" }} />
         </>
       )}
