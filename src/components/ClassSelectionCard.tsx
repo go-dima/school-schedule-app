@@ -120,14 +120,6 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
           </Tooltip>
         )}
         <div className="class-card-body">
-          <div className="class-header-tags">
-            <GradesRangeTag grades={cls.grades} color="blue" />
-            {cls.trackNumber !== null && <TrackTag track={cls.trackNumber} />}
-            {cls.isDouble && (
-              <Tag color="orange">{t("schedule.drawer.doubleLessonTag")}</Tag>
-            )}
-          </div>
-
           <div className="class-main">
             <Title level={5} className="class-title">
               {cls.title} <Text className="class-teacher">({cls.teacher})</Text>
@@ -161,6 +153,14 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
                   )
                 </Text>
               </div>
+            )}
+          </div>
+
+          <div className="class-header-tags">
+            <GradesRangeTag grades={cls.grades} color="blue" />
+            {cls.trackNumber !== null && <TrackTag track={cls.trackNumber} />}
+            {cls.isDouble && (
+              <Tag color="orange">{t("schedule.drawer.doubleLessonTag")}</Tag>
             )}
           </div>
         </div>
