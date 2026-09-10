@@ -273,7 +273,7 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
                     }))}
                   />
                 ) : (
-                  <Space size="small">
+                  <Space size="small" style={{ direction: "rtl" }}>
                     <GradesRangeTag
                       grades={localClassInfo.grades}
                       color="green"
