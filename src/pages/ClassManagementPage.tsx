@@ -560,47 +560,6 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
               {t("classManagement.page.clearFiltersButton")}
             </Button>
 
-            <FilterSelect
-              label={t("classManagement.page.trackFilterLabel")}
-              placeholder={t("classManagement.page.trackFilterPlaceholder")}
-              value={selectedTrack}
-              onChange={setSelectedTrack}
-              options={[
-                ...[1, 2].map(track => ({
-                  value: track,
-                  label: t("classManagement.page.trackFilterOption", {
-                    track,
-                  }),
-                })),
-                {
-                  value: NO_TRACK_FILTER,
-                  label: t("classManagement.page.trackFilterOptionNone"),
-                },
-              ]}
-            />
-
-            <FilterSelect
-              label={t("classManagement.page.gradeFilterLabel")}
-              placeholder={t("classManagement.page.gradeFilterPlaceholder")}
-              value={selectedGrade}
-              onChange={setSelectedGrade}
-              options={GRADES.map(grade => ({
-                value: grade,
-                label: GetGradeName(grade),
-              }))}
-            />
-
-            <FilterSelect
-              label={t("classManagement.page.dayFilterLabel")}
-              placeholder={t("classManagement.page.dayFilterPlaceholder")}
-              value={selectedDay}
-              onChange={setSelectedDay}
-              options={DAYS_OF_WEEK.map(day => ({
-                value: day.key,
-                label: day.name,
-              }))}
-            />
-
             <Space size={4} align="center">
               <AutoComplete
                 value={searchTerm}
@@ -661,6 +620,47 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
               />
               <label>{t("classManagement.page.searchTeacherLabel")}</label>
             </Space>
+
+            <FilterSelect
+              label={t("classManagement.page.trackFilterLabel")}
+              placeholder={t("classManagement.page.trackFilterPlaceholder")}
+              value={selectedTrack}
+              onChange={setSelectedTrack}
+              options={[
+                ...[1, 2].map(track => ({
+                  value: track,
+                  label: t("classManagement.page.trackFilterOption", {
+                    track,
+                  }),
+                })),
+                {
+                  value: NO_TRACK_FILTER,
+                  label: t("classManagement.page.trackFilterOptionNone"),
+                },
+              ]}
+            />
+
+            <FilterSelect
+              label={t("classManagement.page.gradeFilterLabel")}
+              placeholder={t("classManagement.page.gradeFilterPlaceholder")}
+              value={selectedGrade}
+              onChange={setSelectedGrade}
+              options={GRADES.map(grade => ({
+                value: grade,
+                label: GetGradeName(grade),
+              }))}
+            />
+
+            <FilterSelect
+              label={t("classManagement.page.dayFilterLabel")}
+              placeholder={t("classManagement.page.dayFilterPlaceholder")}
+              value={selectedDay}
+              onChange={setSelectedDay}
+              options={DAYS_OF_WEEK.map(day => ({
+                value: day.key,
+                label: day.name,
+              }))}
+            />
           </Space>
         </Card>
       </div>
