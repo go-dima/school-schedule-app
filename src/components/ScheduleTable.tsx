@@ -29,6 +29,7 @@ interface ScheduleTableProps {
   weeklySchedule: WeeklySchedule;
   userGrade?: number;
   selectedClasses?: string[];
+  draftPickedClassIds?: string[];
   userSelections?: ScheduleSelectionWithClass[];
   onClassSelect?: (classId: string) => void;
   onClassUnselect?: (classId: string) => void;
@@ -51,6 +52,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   weeklySchedule,
   userGrade,
   selectedClasses = [],
+  draftPickedClassIds = [],
   userSelections = [],
   onClassSelect,
   onClassUnselect,
@@ -509,6 +511,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               timeSlots={timeSlots}
               classes={classesForSlot}
               selectedClasses={selectedClasses}
+              draftPickedClassIds={draftPickedClassIds}
               conflictingClasses={classesForSlot.filter(cls => {
                 if (selectedClasses.includes(cls.id)) return false;
                 const relevantSelections =

@@ -200,4 +200,21 @@ export class ScheduleService {
   static resolveSelectionStatus(role: UserRole | undefined): SelectionStatus {
     return role === "staff" || role === "admin" ? "committed" : "draft";
   }
+
+  /**
+   * Stable-sorts classes so draft-marked ones come first, preserving
+   * relative order within each group. Intended for the drawer's
+   * already-non-selected "available" subset -- a class in both `classes`
+   * and `draftClassIds` just moves to the front, it is never duplicated.
+   */
+  static orderClassesByPickStatus(
+    classes: ClassWithTimeSlot[],
+    draftClassIds: Set<string>
+  ): ClassWithTimeSlot[] {
+    return [...classes].sort((a, b) => {
+      const aIsDraft = draftClassIds.has(a.id) ? 0 : 1;
+      const bIsDraft = draftClassIds.has(b.id) ? 0 : 1;
+      return aIsDraft - bIsDraft;
+    });
+  }
 }

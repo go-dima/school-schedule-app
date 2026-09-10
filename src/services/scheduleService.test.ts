@@ -335,3 +335,47 @@ describe("ScheduleService.resolveSelectionStatus", () => {
     expect(ScheduleService.resolveSelectionStatus(undefined)).toBe("draft");
   });
 });
+
+describe("ScheduleService.orderClassesByPickStatus", () => {
+  it("leaves order unchanged when there are no draft classes", () => {
+    const classes = [
+      makeClass({ id: "class-1" }),
+      makeClass({ id: "class-2" }),
+      makeClass({ id: "class-3" }),
+    ];
+
+    const result = ScheduleService.orderClassesByPickStatus(classes, new Set());
+
+    expect(result.map(c => c.id)).toEqual(["class-1", "class-2", "class-3"]);
+  });
+
+  it("sorts draft-marked classes to the front, preserving relative order within each group", () => {
+    const classes = [
+      makeClass({ id: "class-1" }),
+      makeClass({ id: "class-2" }),
+      makeClass({ id: "class-3" }),
+      makeClass({ id: "class-4" }),
+    ];
+
+    const result = ScheduleService.orderClassesByPickStatus(
+      classes,
+      new Set(["class-2", "class-4"])
+    );
+
+    expect(result.map(c => c.id)).toEqual([
+      "class-2",
+      "class-4",
+      "class-1",
+      "class-3",
+    ]);
+  });
+
+  it("returns an empty array for empty input", () => {
+    const result = ScheduleService.orderClassesByPickStatus(
+      [],
+      new Set(["class-1"])
+    );
+
+    expect(result).toEqual([]);
+  });
+});

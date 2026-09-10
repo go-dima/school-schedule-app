@@ -23,6 +23,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useChildContext } from "../contexts/ChildContext";
 import { useScheduleCatalog } from "../hooks/useScheduleCatalog";
 import { useSelectedSchedule } from "../hooks/useSelectedSchedule";
+import { useDraftSelectionAwareness } from "../hooks/useDraftSelectionAwareness";
 import { useAllChildren } from "../hooks/useAllChildren";
 import ScheduleTable from "../components/ScheduleTable";
 import ClassForm from "../components/ClassForm";
@@ -143,6 +144,14 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     isClassSelected,
     refetch: refetchSelectedSchedule,
   } = useSelectedSchedule(target, viewStatus);
+
+  // Staff/admin only: read-only awareness of the child's draft picks, so
+  // the drawer can show a heart marker for pending parent intent. Parents
+  // get `undefined`, which makes the hook's effect a no-op -- zero extra
+  // network activity for them.
+  const { draftClassIds } = useDraftSelectionAwareness(
+    viewStatus === "committed" ? target : undefined
+  );
 
   const makeTrackChangeHandler =
     (
@@ -596,6 +605,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
           weeklySchedule={weeklySchedule}
           userGrade={selectedGrade}
           selectedClasses={selectedClasses}
+          draftPickedClassIds={Array.from(draftClassIds)}
           userSelections={selectedSchedule}
           onClassSelect={handleClassSelect}
           onClassUnselect={handleClassSelect}
