@@ -1,6 +1,10 @@
 import React from "react";
 import { Card, Button, Tag, Alert, Typography, Tooltip } from "antd";
-import { CheckOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import {
+  CheckOutlined,
+  ExclamationCircleOutlined,
+  HeartFilled,
+} from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { ScheduleService } from "../services/scheduleService";
 import type { TimeSlot, ClassWithTimeSlot } from "../types";
@@ -51,6 +55,7 @@ interface ClassSelectionCardProps {
   canSelectClasses: boolean;
   onToggle: () => void;
   allTimeSlots: TimeSlot[];
+  isDraftPick?: boolean;
 }
 
 const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
@@ -62,6 +67,7 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
   canSelectClasses,
   onToggle,
   allTimeSlots,
+  isDraftPick = false,
 }) => {
   const { t } = useTranslation();
 
@@ -108,6 +114,11 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
           : undefined
       }>
       <div className="class-card-content">
+        {isDraftPick && (
+          <Tooltip title={t("schedule.drawer.draftPickTooltip")}>
+            <HeartFilled className="draft-pick-marker" />
+          </Tooltip>
+        )}
         <div className="class-card-body">
           <div className="class-main">
             <Title level={5} className="class-title">

@@ -167,7 +167,8 @@
       "availableClasses": "שיעורים זמינים:",
       "conflictWarningTitle": "שים לב לחפיפות",
       "conflictDescription": "ישנם {{count}} שיעורים עם חפיפה בזמן. בחירת שיעור חדש תבטל אוטומטית את השיעורים החופפים.",
-      "dayNamePrefix": "יום {{dayName}}"
+      "dayNamePrefix": "יום {{dayName}}",
+      "draftPickTooltip": "נבחר בטיוטה"
     }
   },
   "roles": {

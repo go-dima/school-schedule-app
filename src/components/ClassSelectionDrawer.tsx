@@ -17,6 +17,7 @@ interface ClassSelectionDrawerProps {
   dayOfWeek: number;
   classes: ClassWithTimeSlot[];
   selectedClasses?: string[];
+  draftPickedClassIds?: string[];
   onClassSelect?: (classId: string) => void;
   onClassUnselect?: (classId: string) => void;
   conflictingClasses?: ClassWithTimeSlot[];
@@ -33,6 +34,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
   dayOfWeek,
   classes,
   selectedClasses = [],
+  draftPickedClassIds = [],
   onClassSelect,
   onClassUnselect,
   conflictingClasses = [],
@@ -83,14 +85,16 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
       canSelectClasses={canSelectClasses}
       onToggle={() => handleClassToggle(cls.id)}
       allTimeSlots={allTimeSlots}
+      isDraftPick={draftPickedClassIds.includes(cls.id)}
     />
   );
 
   const selectedClassesInTimeSlot = classes.filter(cls =>
     selectedClasses.includes(cls.id)
   );
-  const availableClasses = classes.filter(
-    cls => !selectedClasses.includes(cls.id)
+  const availableClasses = ScheduleService.orderClassesByPickStatus(
+    classes.filter(cls => !selectedClasses.includes(cls.id)),
+    new Set(draftPickedClassIds)
   );
 
   return (

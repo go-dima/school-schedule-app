@@ -185,3 +185,18 @@ export const WithMandatoryClasses: Story = {
     timeSlots: mockTimeSlots,
   },
 };
+
+export const WithDraftPick: Story = {
+  render: args => <DrawerWrapper {...args} />,
+  args: {
+    timeSlot: mockTimeSlot,
+    dayOfWeek: 0,
+    classes: mockClasses,
+    // class-3 ("אומנות") is last in `mockClasses` but has a parent draft
+    // pick, so it should render first among the available classes, with a
+    // heart marker pinned to its top-right corner.
+    draftPickedClassIds: ["class-3"],
+    canSelectClasses: true,
+    timeSlots: mockTimeSlots,
+  },
+};

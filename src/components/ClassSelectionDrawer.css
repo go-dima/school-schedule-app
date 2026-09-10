@@ -32,6 +32,7 @@
 }
 
 .class-selection-card {
+  position: relative;
   width: 100%;
   border: 1px solid #d9d9d9;
   border-radius: 6px;
@@ -96,7 +97,7 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
 }
 
@@ -106,6 +107,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding-right: 20px;
 }
 
 .class-header-tags {
@@ -114,6 +116,16 @@
   align-items: flex-end;
   gap: 4px;
   flex-shrink: 0;
+}
+
+.draft-pick-marker {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 16px;
+  color: #a8071a;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .class-title {
