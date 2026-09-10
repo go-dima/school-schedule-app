@@ -55,10 +55,10 @@ export const TrackSelectionService = {
   ): Promise<void> {
     await Promise.all([
       ...toUnselectIds.map(classId =>
-        scheduleApi.unselectClassForChild(childId, classId, status)
+        scheduleApi.unselectSchedule({ childId }, classId, status)
       ),
       ...toSelect.map(cls =>
-        scheduleApi.selectClassForChild(childId, cls.id, status)
+        scheduleApi.selectSchedule({ childId }, cls.id, status)
       ),
     ]);
   },
@@ -76,7 +76,7 @@ export const TrackSelectionService = {
   ): Promise<void> {
     const [allClasses, currentSchedule] = await Promise.all([
       classesApi.getClasses(),
-      scheduleApi.getChildSchedule(child.id, status),
+      scheduleApi.getSelectedSchedule({ childId: child.id }, status),
     ]);
 
     const changes = this.computeTrackClassChanges(

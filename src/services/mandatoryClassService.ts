@@ -49,8 +49,13 @@ export class MandatoryClassService {
         return;
       }
 
-      // Get user's current selections to avoid duplicates
-      const currentSelections = await scheduleApi.getUserSchedule(userId);
+      // Get user's current selections to avoid duplicates. Not called
+      // anywhere today (see #65 re: this "child" self-selection path being
+      // broken), but "draft" mirrors resolveSelectionStatus("child").
+      const currentSelections = await scheduleApi.getSelectedSchedule(
+        { userId },
+        "draft"
+      );
       const selectedClassIds = currentSelections.map(
         selection => selection.classId
       );
@@ -67,7 +72,11 @@ export class MandatoryClassService {
       // Select each mandatory class
       for (const mandatoryClass of classesToSelect) {
         try {
-          await scheduleApi.selectClass(userId, mandatoryClass.id);
+          await scheduleApi.selectSchedule(
+            { userId },
+            mandatoryClass.id,
+            "draft"
+          );
           log.info(`Auto-selected mandatory class: ${mandatoryClass.title}`);
         } catch (error) {
           log.error(
@@ -223,7 +232,10 @@ export class MandatoryClassService {
     try {
       const mandatoryClasses =
         await this.getMandatoryClassesForGrade(userGrade);
-      const userSelections = await scheduleApi.getUserSchedule(userId);
+      const userSelections = await scheduleApi.getSelectedSchedule(
+        { userId },
+        "draft"
+      );
       const selectedClassIds = userSelections.map(
         selection => selection.classId
       );

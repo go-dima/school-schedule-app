@@ -6,6 +6,7 @@ import type {
   ClassWithTimeSlot,
   PendingApproval,
   ScheduleSelectionWithClass,
+  ScheduleTarget,
   Scope,
   SelectionStatus,
   TimeSlot,
@@ -609,19 +610,36 @@ export const classesApi = {
 };
 
 // Schedule Selections API
+//
+// Every schedule_selections row is either child-linked (a parent/staff
+// member picking for a student, target: { childId }) or user-linked (the
+// "child" role picking for themselves, target: { userId }). Known
+// limitation carried over unchanged from the pre-unification getUserSchedule
+// /selectClass/unselectClass: the { userId } insert never sets child_id,
+// which is NOT NULL on schedule_selections -- so a "child"-role user's own
+// selectSchedule call fails today. Tracked in #65, not fixed here.
 export const scheduleApi = {
-  async getUserSchedule(userId: string): Promise<ScheduleSelectionWithClass[]> {
+  async getSelectedSchedule(
+    target: ScheduleTarget,
+    status: SelectionStatus
+  ): Promise<ScheduleSelectionWithClass[]> {
     const isProduction = process.env.NODE_ENV === "production";
-    const [{ data, error }, timeSlotsById] = await Promise.all([
-      supabase
-        .from("schedule_selections")
-        .select(
-          `
+    let query = supabase
+      .from("schedule_selections")
+      .select(
+        `
         *,
         class:classes(*)
       `
-        )
-        .eq("user_id", userId),
+      )
+      .eq("status", status);
+    query =
+      "userId" in target
+        ? query.eq("user_id", target.userId)
+        : query.eq("child_id", target.childId);
+
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      query,
       fetchTimeSlotsById(),
     ]);
 
@@ -635,6 +653,7 @@ export const scheduleApi = {
     return filteredData.map(selection => ({
       id: selection.id,
       userId: selection.user_id,
+      childId: selection.child_id ?? undefined,
       classId: selection.class_id,
       status: selection.status,
       createdAt: selection.created_at,
@@ -643,105 +662,56 @@ export const scheduleApi = {
     }));
   },
 
-  async selectClass(userId: string, classId: string) {
+  async selectSchedule(
+    target: ScheduleTarget,
+    classId: string,
+    status: SelectionStatus
+  ) {
+    const row =
+      "childId" in target
+        ? await (async () => {
+            // Get current user ID (parent/staff making the selection)
+            const {
+              data: { user },
+            } = await withTimeout(
+              supabase.auth.getUser(),
+              AUTH_LOCKED_CALL_TIMEOUT_MS
+            );
+            if (!user) throw new ApiError("User not authenticated");
+            return {
+              user_id: user.id,
+              child_id: target.childId,
+              class_id: classId,
+              status,
+            };
+          })()
+        : { user_id: target.userId, class_id: classId, status };
+
     const { data, error } = await supabase
       .from("schedule_selections")
-      .insert([
-        {
-          user_id: userId,
-          class_id: classId,
-        },
-      ])
+      .insert([row])
       .select();
 
     if (error) throw new ApiError(error.message);
     return data[0];
   },
 
-  async unselectClass(userId: string, classId: string) {
-    const { error } = await supabase
-      .from("schedule_selections")
-      .delete()
-      .eq("user_id", userId)
-      .eq("class_id", classId);
-
-    if (error) throw new ApiError(error.message);
-  },
-
-  async getChildSchedule(
-    childId: string,
-    status: SelectionStatus
-  ): Promise<ScheduleSelectionWithClass[]> {
-    const isProduction = process.env.NODE_ENV === "production";
-    const [{ data, error }, timeSlotsById] = await Promise.all([
-      supabase
-        .from("schedule_selections")
-        .select(
-          `
-        *,
-        class:classes(*)
-      `
-        )
-        .eq("child_id", childId)
-        .eq("status", status),
-      fetchTimeSlotsById(),
-    ]);
-
-    if (error) throw new ApiError(error.message);
-
-    let filteredData = data;
-    if (isProduction) {
-      filteredData = data.filter(selection => selection.class.scope !== "test");
-    }
-    return filteredData.map(selection => ({
-      id: selection.id,
-      userId: selection.user_id,
-      classId: selection.class_id,
-      status: selection.status,
-      createdAt: selection.created_at,
-      updatedAt: selection.updated_at,
-      class: mapClassRow(selection.class, timeSlotsById),
-    }));
-  },
-
-  async selectClassForChild(
-    childId: string,
+  async unselectSchedule(
+    target: ScheduleTarget,
     classId: string,
     status: SelectionStatus
   ) {
-    // Get current user ID (parent making the selection)
-    const {
-      data: { user },
-    } = await withTimeout(supabase.auth.getUser(), AUTH_LOCKED_CALL_TIMEOUT_MS);
-    if (!user) throw new ApiError("User not authenticated");
-
-    const { data, error } = await supabase
-      .from("schedule_selections")
-      .insert([
-        {
-          user_id: user.id,
-          child_id: childId,
-          class_id: classId,
-          status,
-        },
-      ])
-      .select();
-
-    if (error) throw new ApiError(error.message);
-    return data[0];
-  },
-
-  async unselectClassForChild(
-    childId: string,
-    classId: string,
-    status: SelectionStatus
-  ) {
-    const { error } = await supabase
+    let query = supabase
       .from("schedule_selections")
       .delete()
-      .eq("child_id", childId)
       .eq("class_id", classId)
       .eq("status", status);
+    query =
+      "userId" in target
+        ? query.eq("user_id", target.userId)
+        : query.eq("child_id", target.childId);
+
+    const { error } = await query;
 
     if (error) throw new ApiError(error.message);
   },
