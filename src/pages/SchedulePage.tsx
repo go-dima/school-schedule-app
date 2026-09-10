@@ -117,7 +117,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     selectClass,
     unselectClass,
     isClassSelected: isUserClassSelected,
-  } = useSchedule(isParent ? null : user?.id);
+  } = useSchedule(currentRole?.role === "child" ? user?.id : null);
 
   const {
     schedule: childSchedule,
@@ -245,7 +245,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
             select: selectClassForChild,
             unselect: unselectClassForChild,
           }
-        : !isParent && !isStaff && user?.id
+        : currentRole?.role === "child" && user?.id
           ? {
               kind: "legacy",
               isSelected: isUserClassSelected,
@@ -275,19 +275,18 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     }
   };
 
-  const getSelectedClasses = () => {
-    if (isParent || (isStaff && staffSelectedChild)) {
-      return childSchedule.map(selection => selection.classId);
-    }
-    return userSelections.map(selection => selection.classId);
-  };
-
   const getSelectedSchedule = () => {
     if (isParent || (isStaff && staffSelectedChild)) {
       return childSchedule;
     }
-    return userSelections;
+    if (currentRole?.role === "child") {
+      return userSelections;
+    }
+    return [];
   };
+
+  const getSelectedClasses = () =>
+    getSelectedSchedule().map(selection => selection.classId);
 
   const handleExportSchedule = async () => {
     const currentChild = isParent ? selectedChild : staffSelectedChild;
