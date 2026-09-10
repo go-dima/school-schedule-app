@@ -76,6 +76,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [teacherSearchTerm, setTeacherSearchTerm] = useState<string>("");
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   // 1 | 2 select an actual track; NO_TRACK_FILTER selects classes with no
@@ -97,6 +98,13 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       );
     }
 
+    if (teacherSearchTerm) {
+      const lowerTeacherSearchTerm = teacherSearchTerm.toLowerCase();
+      filtered = filtered.filter(cls =>
+        cls.teacher.toLowerCase().includes(lowerTeacherSearchTerm)
+      );
+    }
+
     if (selectedDay !== null) {
       filtered = filtered.filter(cls =>
         cls.slots.some(slot => slot.dayOfWeek === selectedDay)
@@ -115,27 +123,15 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       );
     }
 
-    // Sort by primary slot's day, then start time, then by grade (lowest first)
-    return filtered.sort((a, b) => {
-      const aPrimary = ScheduleService.getPrimarySlot(a);
-      const bPrimary = ScheduleService.getPrimarySlot(b);
-
-      if (aPrimary.dayOfWeek !== bPrimary.dayOfWeek) {
-        return aPrimary.dayOfWeek - bPrimary.dayOfWeek;
-      }
-
-      if (aPrimary.timeSlot.startTime !== bPrimary.timeSlot.startTime) {
-        return aPrimary.timeSlot.startTime.localeCompare(
-          bPrimary.timeSlot.startTime
-        );
-      }
-
-      // Finally sort by lowest grade in the grades array
-      const aMinGrade = Math.min(...(a.grades || []));
-      const bMinGrade = Math.min(...(b.grades || []));
-      return aMinGrade - bMinGrade;
-    });
-  }, [classes, searchTerm, selectedDay, selectedGrade, selectedTrack]);
+    return filtered;
+  }, [
+    classes,
+    searchTerm,
+    teacherSearchTerm,
+    selectedDay,
+    selectedGrade,
+    selectedTrack,
+  ]);
 
   const loadData = async () => {
     setLoading(true);
@@ -292,8 +288,8 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
             {t("classManagement.table.dayPrefix", {
               dayName: GetDayName(first.dayOfWeek),
             })}
+            {combinedTimeRange && ` ${combinedTimeRange}`}
           </div>
-          {combinedTimeRange && <div>{combinedTimeRange}</div>}
           <div style={{ fontSize: "12px", color: "#666" }}>
             {first.timeSlot.name} + {second.timeSlot.name}
           </div>
@@ -325,8 +321,8 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
                 {t("classManagement.table.dayPrefix", {
                   dayName: GetDayName(slot.dayOfWeek),
                 })}
+                {timeRange && ` ${timeRange}`}
               </div>
-              {timeRange && <div>{timeRange}</div>}
               <div style={{ fontSize: "12px", color: "#666" }}>
                 {slot.timeSlot.name}
               </div>
@@ -342,8 +338,13 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       title: t("classManagement.table.nameColumn"),
       dataIndex: "title",
       key: "title",
-      width: 150,
+      width: 120,
       ellipsis: true,
+      sorter: {
+        compare: (a, b) => a.title.localeCompare(b.title, "he"),
+        multiple: 1,
+      },
+      defaultSortOrder: "ascend",
     },
     {
       title: t("classManagement.table.descriptionColumn"),
@@ -363,7 +364,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       title: t("classManagement.table.roomColumn"),
       dataIndex: "room",
       key: "room",
-      width: 120,
+      width: 90,
       render: (room: string) =>
         room || t("classManagement.table.roomNotSpecified"),
     },
@@ -371,7 +372,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       title: t("classManagement.table.gradesColumn"),
       dataIndex: "grades",
       key: "grades",
-      width: 110,
+      width: 90,
       render: (grades: number[]) => (
         <GradesRangeTag grades={grades} color="geekblue" />
       ),
@@ -380,6 +381,22 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       title: t("classManagement.table.timeColumn"),
       key: "timeSlot",
       width: 150,
+      sorter: {
+        compare: (a, b) => {
+          const aPrimary = ScheduleService.getPrimarySlot(a);
+          const bPrimary = ScheduleService.getPrimarySlot(b);
+
+          if (aPrimary.dayOfWeek !== bPrimary.dayOfWeek) {
+            return aPrimary.dayOfWeek - bPrimary.dayOfWeek;
+          }
+
+          return aPrimary.timeSlot.startTime.localeCompare(
+            bPrimary.timeSlot.startTime
+          );
+        },
+        multiple: 2,
+      },
+      defaultSortOrder: "ascend",
       render: (_, record: ClassWithTimeSlot) => getTimeSlotDisplay(record),
     },
     {
@@ -387,6 +404,8 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       key: "enrollment",
       width: 100,
       align: "center" as const,
+      sorter: (a, b) =>
+        (enrollmentCounts.get(a.id) || 0) - (enrollmentCounts.get(b.id) || 0),
       render: (_, record) => (
         <EnrollmentCount count={enrollmentCounts.get(record.id) || 0} />
       ),
@@ -563,6 +582,17 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
             />
 
             <FilterSelect
+              label={t("classManagement.page.dayFilterLabel")}
+              placeholder={t("classManagement.page.dayFilterPlaceholder")}
+              value={selectedDay}
+              onChange={setSelectedDay}
+              options={DAYS_OF_WEEK.map(day => ({
+                value: day.key,
+                label: day.name,
+              }))}
+            />
+
+            <FilterSelect
               label={t("classManagement.page.gradeFilterLabel")}
               placeholder={t("classManagement.page.gradeFilterPlaceholder")}
               value={selectedGrade}
@@ -573,16 +603,38 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
               }))}
             />
 
-            <FilterSelect
-              label={t("classManagement.page.dayFilterLabel")}
-              placeholder={t("classManagement.page.dayFilterPlaceholder")}
-              value={selectedDay}
-              onChange={setSelectedDay}
-              options={DAYS_OF_WEEK.map(day => ({
-                value: day.key,
-                label: day.name,
-              }))}
-            />
+            <Space size={4} align="center">
+              <AutoComplete
+                value={teacherSearchTerm}
+                onChange={setTeacherSearchTerm}
+                options={(() => {
+                  if (!teacherSearchTerm) return [];
+
+                  const lowerTeacherSearchTerm =
+                    teacherSearchTerm.toLowerCase();
+                  const uniqueTeacherNames = Array.from(
+                    new Set(
+                      classes
+                        .filter(cls =>
+                          cls.teacher
+                            .toLowerCase()
+                            .includes(lowerTeacherSearchTerm)
+                        )
+                        .map(cls => cls.teacher)
+                    )
+                  ).sort();
+
+                  return uniqueTeacherNames.map(teacher => ({
+                    value: teacher,
+                  }));
+                })()}
+                placeholder={t("classManagement.page.searchTeacherPlaceholder")}
+                style={{ width: 200 }}
+                allowClear
+                filterOption={false}
+              />
+              <label>{t("classManagement.page.searchTeacherLabel")}</label>
+            </Space>
 
             <Space size={4} align="center">
               <AutoComplete
