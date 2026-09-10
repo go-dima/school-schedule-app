@@ -12,6 +12,7 @@ import {
   Button,
   Divider,
   Select,
+  Input,
   message,
 } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
@@ -27,6 +28,15 @@ import { GroupTrackTags } from "./GroupTrackTags";
 import "./ClassEnrollmentDrawer.css";
 
 const { Title, Text } = Typography;
+
+// Shared layout for every inline-editable Descriptions row: value on the
+// label-adjacent side, edit pencil pushed to the row's far edge.
+const editableRowStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  width: "100%",
+};
 
 interface ClassEnrollmentDrawerProps {
   open: boolean;
@@ -59,14 +69,20 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
   const [localClassInfo, setLocalClassInfo] =
     useState<ClassWithTimeSlot | null>(classInfo);
 
-  // Grades has no Typography-editable equivalent for a multi-select, so it
-  // keeps its own row-local edit toggle; teacher/room use Text's built-in
-  // `editable` prop instead.
+  // Teacher, room, and grades each keep their own row-local edit toggle
+  // (rather than Typography.Text's built-in `editable` prop) so the pencil
+  // can be laid out independently of the value, pushed to the row's far edge.
+  const [editingTeacher, setEditingTeacher] = useState(false);
+  const [draftTeacher, setDraftTeacher] = useState("");
+  const [editingRoom, setEditingRoom] = useState(false);
+  const [draftRoom, setDraftRoom] = useState("");
   const [editingGrades, setEditingGrades] = useState(false);
   const [draftGrades, setDraftGrades] = useState<number[]>([]);
 
   useEffect(() => {
     setLocalClassInfo(classInfo);
+    setEditingTeacher(false);
+    setEditingRoom(false);
     setEditingGrades(false);
   }, [classInfo]);
 
@@ -132,17 +148,41 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
     saveField({ title: trimmed });
   };
 
-  const handleTeacherChange = (value: string) => {
-    const trimmed = value.trim();
+  const startEditingTeacher = () => {
+    if (!localClassInfo) return;
+    setDraftTeacher(localClassInfo.teacher);
+    setEditingTeacher(true);
+  };
+
+  const handleTeacherSave = () => {
+    if (!localClassInfo) return;
+
+    const trimmed = draftTeacher.trim();
     if (!trimmed) {
       message.error(t("form.class.teacherRequired"));
       return;
     }
+
+    setEditingTeacher(false);
+    if (trimmed === localClassInfo.teacher) return;
+
     saveField({ teacher: trimmed });
   };
 
-  const handleRoomChange = (value: string) => {
-    saveField({ room: value.trim() });
+  const startEditingRoom = () => {
+    if (!localClassInfo) return;
+    setDraftRoom(localClassInfo.room);
+    setEditingRoom(true);
+  };
+
+  const handleRoomSave = () => {
+    if (!localClassInfo) return;
+
+    const trimmed = draftRoom.trim();
+    setEditingRoom(false);
+    if (trimmed === localClassInfo.room) return;
+
+    saveField({ room: trimmed });
   };
 
   const startEditingGrades = () => {
@@ -250,10 +290,23 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
               {
                 key: "teacher",
                 label: t("classManagement.table.teacherColumn"),
-                children: (
-                  <Text editable={{ onChange: handleTeacherChange }}>
-                    {localClassInfo.teacher}
-                  </Text>
+                children: editingTeacher ? (
+                  <Input
+                    autoFocus
+                    value={draftTeacher}
+                    onChange={e => setDraftTeacher(e.target.value)}
+                    onBlur={handleTeacherSave}
+                  />
+                ) : (
+                  <div style={editableRowStyle}>
+                    <Text>{localClassInfo.teacher}</Text>
+                    <Button
+                      type="link"
+                      size="small"
+                      icon={<EditOutlined />}
+                      onClick={startEditingTeacher}
+                    />
+                  </div>
                 ),
               },
               {
@@ -273,18 +326,18 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
                     }))}
                   />
                 ) : (
-                  <Space size="small" style={{ direction: "rtl" }}>
+                  <div style={editableRowStyle}>
                     <GradesRangeTag
                       grades={localClassInfo.grades}
                       color="green"
                     />
                     <Button
-                      type="text"
+                      type="link"
                       size="small"
                       icon={<EditOutlined />}
                       onClick={startEditingGrades}
                     />
-                  </Space>
+                  </div>
                 ),
               },
               ...(localClassInfo.description
@@ -299,15 +352,26 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
               {
                 key: "room",
                 label: t("classManagement.table.roomColumn"),
-                children: (
-                  <Text
-                    editable={{
-                      text: localClassInfo.room,
-                      onChange: handleRoomChange,
-                    }}>
-                    {localClassInfo.room ||
-                      t("classManagement.table.roomNotSpecified")}
-                  </Text>
+                children: editingRoom ? (
+                  <Input
+                    autoFocus
+                    value={draftRoom}
+                    onChange={e => setDraftRoom(e.target.value)}
+                    onBlur={handleRoomSave}
+                  />
+                ) : (
+                  <div style={editableRowStyle}>
+                    <Text>
+                      {localClassInfo.room ||
+                        t("classManagement.table.roomNotSpecified")}
+                    </Text>
+                    <Button
+                      type="link"
+                      size="small"
+                      icon={<EditOutlined />}
+                      onClick={startEditingRoom}
+                    />
+                  </div>
                 ),
               },
               {
