@@ -123,26 +123,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       );
     }
 
-    // Sort by primary slot's day, then start time, then by grade (lowest first)
-    return filtered.sort((a, b) => {
-      const aPrimary = ScheduleService.getPrimarySlot(a);
-      const bPrimary = ScheduleService.getPrimarySlot(b);
-
-      if (aPrimary.dayOfWeek !== bPrimary.dayOfWeek) {
-        return aPrimary.dayOfWeek - bPrimary.dayOfWeek;
-      }
-
-      if (aPrimary.timeSlot.startTime !== bPrimary.timeSlot.startTime) {
-        return aPrimary.timeSlot.startTime.localeCompare(
-          bPrimary.timeSlot.startTime
-        );
-      }
-
-      // Finally sort by lowest grade in the grades array
-      const aMinGrade = Math.min(...(a.grades || []));
-      const bMinGrade = Math.min(...(b.grades || []));
-      return aMinGrade - bMinGrade;
-    });
+    return filtered;
   }, [
     classes,
     searchTerm,
@@ -359,7 +340,10 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       key: "title",
       width: 120,
       ellipsis: true,
-      sorter: (a, b) => a.title.localeCompare(b.title, "he"),
+      sorter: {
+        compare: (a, b) => a.title.localeCompare(b.title, "he"),
+        multiple: 1,
+      },
       defaultSortOrder: "ascend",
     },
     {
@@ -397,6 +381,22 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       title: t("classManagement.table.timeColumn"),
       key: "timeSlot",
       width: 150,
+      sorter: {
+        compare: (a, b) => {
+          const aPrimary = ScheduleService.getPrimarySlot(a);
+          const bPrimary = ScheduleService.getPrimarySlot(b);
+
+          if (aPrimary.dayOfWeek !== bPrimary.dayOfWeek) {
+            return aPrimary.dayOfWeek - bPrimary.dayOfWeek;
+          }
+
+          return aPrimary.timeSlot.startTime.localeCompare(
+            bPrimary.timeSlot.startTime
+          );
+        },
+        multiple: 2,
+      },
+      defaultSortOrder: "ascend",
       render: (_, record: ClassWithTimeSlot) => getTimeSlotDisplay(record),
     },
     {
@@ -404,6 +404,8 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       key: "enrollment",
       width: 100,
       align: "center" as const,
+      sorter: (a, b) =>
+        (enrollmentCounts.get(a.id) || 0) - (enrollmentCounts.get(b.id) || 0),
       render: (_, record) => (
         <EnrollmentCount count={enrollmentCounts.get(record.id) || 0} />
       ),
@@ -560,33 +562,46 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
               {t("classManagement.page.clearFiltersButton")}
             </Button>
 
-            <Space size={4} align="center">
-              <AutoComplete
-                value={searchTerm}
-                onChange={setSearchTerm}
-                options={(() => {
-                  if (!searchTerm) return [];
+            <FilterSelect
+              label={t("classManagement.page.trackFilterLabel")}
+              placeholder={t("classManagement.page.trackFilterPlaceholder")}
+              value={selectedTrack}
+              onChange={setSelectedTrack}
+              options={[
+                ...[1, 2].map(track => ({
+                  value: track,
+                  label: t("classManagement.page.trackFilterOption", {
+                    track,
+                  }),
+                })),
+                {
+                  value: NO_TRACK_FILTER,
+                  label: t("classManagement.page.trackFilterOptionNone"),
+                },
+              ]}
+            />
 
-                  const lowerSearchTerm = searchTerm.toLowerCase();
-                  const uniqueClassNames = Array.from(
-                    new Set(
-                      classes
-                        .filter(cls =>
-                          cls.title.toLowerCase().includes(lowerSearchTerm)
-                        )
-                        .map(cls => cls.title)
-                    )
-                  ).sort();
+            <FilterSelect
+              label={t("classManagement.page.dayFilterLabel")}
+              placeholder={t("classManagement.page.dayFilterPlaceholder")}
+              value={selectedDay}
+              onChange={setSelectedDay}
+              options={DAYS_OF_WEEK.map(day => ({
+                value: day.key,
+                label: day.name,
+              }))}
+            />
 
-                  return uniqueClassNames.map(title => ({ value: title }));
-                })()}
-                placeholder={t("classManagement.page.searchPlaceholder")}
-                style={{ width: 200 }}
-                allowClear
-                filterOption={false}
-              />
-              <label>{t("classManagement.page.searchLabel")}</label>
-            </Space>
+            <FilterSelect
+              label={t("classManagement.page.gradeFilterLabel")}
+              placeholder={t("classManagement.page.gradeFilterPlaceholder")}
+              value={selectedGrade}
+              onChange={setSelectedGrade}
+              options={GRADES.map(grade => ({
+                value: grade,
+                label: GetGradeName(grade),
+              }))}
+            />
 
             <Space size={4} align="center">
               <AutoComplete
@@ -621,46 +636,33 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
               <label>{t("classManagement.page.searchTeacherLabel")}</label>
             </Space>
 
-            <FilterSelect
-              label={t("classManagement.page.trackFilterLabel")}
-              placeholder={t("classManagement.page.trackFilterPlaceholder")}
-              value={selectedTrack}
-              onChange={setSelectedTrack}
-              options={[
-                ...[1, 2].map(track => ({
-                  value: track,
-                  label: t("classManagement.page.trackFilterOption", {
-                    track,
-                  }),
-                })),
-                {
-                  value: NO_TRACK_FILTER,
-                  label: t("classManagement.page.trackFilterOptionNone"),
-                },
-              ]}
-            />
+            <Space size={4} align="center">
+              <AutoComplete
+                value={searchTerm}
+                onChange={setSearchTerm}
+                options={(() => {
+                  if (!searchTerm) return [];
 
-            <FilterSelect
-              label={t("classManagement.page.gradeFilterLabel")}
-              placeholder={t("classManagement.page.gradeFilterPlaceholder")}
-              value={selectedGrade}
-              onChange={setSelectedGrade}
-              options={GRADES.map(grade => ({
-                value: grade,
-                label: GetGradeName(grade),
-              }))}
-            />
+                  const lowerSearchTerm = searchTerm.toLowerCase();
+                  const uniqueClassNames = Array.from(
+                    new Set(
+                      classes
+                        .filter(cls =>
+                          cls.title.toLowerCase().includes(lowerSearchTerm)
+                        )
+                        .map(cls => cls.title)
+                    )
+                  ).sort();
 
-            <FilterSelect
-              label={t("classManagement.page.dayFilterLabel")}
-              placeholder={t("classManagement.page.dayFilterPlaceholder")}
-              value={selectedDay}
-              onChange={setSelectedDay}
-              options={DAYS_OF_WEEK.map(day => ({
-                value: day.key,
-                label: day.name,
-              }))}
-            />
+                  return uniqueClassNames.map(title => ({ value: title }));
+                })()}
+                placeholder={t("classManagement.page.searchPlaceholder")}
+                style={{ width: 200 }}
+                allowClear
+                filterOption={false}
+              />
+              <label>{t("classManagement.page.searchLabel")}</label>
+            </Space>
           </Space>
         </Card>
       </div>
