@@ -199,8 +199,16 @@
       "file": "025_allow_staff_delete_children.sql",
       "created_at": "2026-09-10T00:00:00Z",
       "dependencies": ["023_split_track_draft_committed"]
+    },
+    {
+      "id": "026_harden_visibility_and_search_path",
+      "name": "Harden Visibility And Search Path",
+      "description": "Close out remaining Security Advisor findings: revoke anon SELECT on tables where RLS already returns zero rows to anonymous callers (children, parent_child_relationships, schedule_selections, user_roles, users), restrict classes/time_slots to authenticated only (no pre-login schedule view exists or is planned), pin search_path on is_admin/get_class_enrollment_count/get_class_enrollment_counts, and drop the orphaned, unreferenced is_admin_user()",
+      "file": "026_harden_visibility_and_search_path.sql",
+      "created_at": "2026-09-10T00:01:00Z",
+      "dependencies": ["025_allow_staff_delete_children"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 25
+  "schema_version": 26
 }
