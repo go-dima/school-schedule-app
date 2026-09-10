@@ -1,0 +1,13 @@
+# Copy this file to supabase/.env.local (gitignored) and fill in real values.
+# Then push to the deployed function with:
+#   npx supabase secrets set --env-file supabase/.env.local
+
+# Telegram bot token from @BotFather
+TELEGRAM_BOT_TOKEN=
+
+# Telegram chat id the bot should post signup notifications to
+TELEGRAM_CHAT_ID=
+
+# Arbitrary random string shared between the Database Webhook and this
+# function (not a Telegram value) — generate with: openssl rand -hex 32
+WEBHOOK_SECRET=
