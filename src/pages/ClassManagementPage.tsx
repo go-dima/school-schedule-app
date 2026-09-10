@@ -38,10 +38,12 @@ import ClassForm from "../components/ClassForm";
 import { GroupTrackTags } from "../components/GroupTrackTags";
 import { FilterSelect } from "../components/FilterSelect";
 import "./ClassManagementPage.css";
-import { GetGradeName, GetGradeNameShort } from "@/utils/grades";
+import { GetGradeName } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
 import { EnrollmentCount } from "@/elements/EnrollmentCount";
+import { GradesRangeTag } from "@/elements/GradesRangeTag";
 import { EnrollmentService } from "../services/enrollmentService";
+import ClassEnrollmentDrawer from "../components/ClassEnrollmentDrawer";
 
 const { Title } = Typography;
 
@@ -68,6 +70,9 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
   const [enrollmentCounts, setEnrollmentCounts] = useState<Map<string, number>>(
     new Map()
   );
+  const [enrollmentDrawerOpen, setEnrollmentDrawerOpen] = useState(false);
+  const [enrollmentDrawerClass, setEnrollmentDrawerClass] =
+    useState<ClassWithTimeSlot | null>(null);
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -181,6 +186,21 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
     }
   };
 
+  // Shared by the row actions dropdown and the enrollment drawer's delete
+  // button, so the confirmation copy only lives in one place.
+  const confirmDeleteClass = (classId: string, onDeleted?: () => void) => {
+    Modal.confirm({
+      title: t("classManagement.table.deleteConfirmTitle"),
+      content: t("classManagement.table.deleteConfirmDescription"),
+      okText: t("classManagement.table.confirmYes"),
+      cancelText: t("classManagement.table.confirmNo"),
+      onOk: async () => {
+        await handleDeleteClass(classId);
+        onDeleted?.();
+      },
+    });
+  };
+
   const handleFormSubmit = async (
     classData: Omit<Class, "id" | "createdAt" | "updatedAt">
   ) => {
@@ -211,6 +231,40 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
   const handleModalCancel = () => {
     setModalVisible(false);
     setEditingClass(null);
+  };
+
+  const handleShowEnrollment = (cls: ClassWithTimeSlot) => {
+    setEnrollmentDrawerClass(cls);
+    setEnrollmentDrawerOpen(true);
+  };
+
+  const handleCloseEnrollmentDrawer = () => {
+    // Deliberately not clearing enrollmentDrawerClass here -- doing so blanks
+    // the drawer's title/header during the ~300ms AntD close-slide animation.
+    // It gets overwritten the next time a row is clicked, and a stale value
+    // sitting in state while the drawer is closed (and thus invisible) is
+    // harmless.
+    setEnrollmentDrawerOpen(false);
+  };
+
+  const handleEditFromDrawer = (cls: ClassWithTimeSlot) => {
+    handleCloseEnrollmentDrawer();
+    handleEditClass(cls);
+  };
+
+  const handleDeleteFromDrawer = (classId: string) => {
+    confirmDeleteClass(classId, handleCloseEnrollmentDrawer);
+  };
+
+  // The drawer's inline-editable fields (name/teacher/room/grades) already
+  // persisted via classesApi before calling this -- just sync local state
+  // so the table row and the open drawer both reflect the new value without
+  // a full reload.
+  const handleClassUpdatedFromDrawer = (updated: ClassWithTimeSlot) => {
+    setClasses(prev =>
+      prev.map(cls => (cls.id === updated.id ? updated : cls))
+    );
+    setEnrollmentDrawerClass(updated);
   };
 
   const getTimeSlotDisplay = (cls: ClassWithTimeSlot) => {
@@ -288,20 +342,22 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       title: t("classManagement.table.nameColumn"),
       dataIndex: "title",
       key: "title",
-      width: 200,
+      width: 150,
+      ellipsis: true,
     },
     {
       title: t("classManagement.table.descriptionColumn"),
       dataIndex: "description",
       key: "description",
-      width: 250,
+      width: 180,
       ellipsis: true,
     },
     {
       title: t("classManagement.table.teacherColumn"),
       dataIndex: "teacher",
       key: "teacher",
-      width: 150,
+      width: 110,
+      ellipsis: true,
     },
     {
       title: t("classManagement.table.roomColumn"),
@@ -315,17 +371,9 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
       title: t("classManagement.table.gradesColumn"),
       dataIndex: "grades",
       key: "grades",
-      width: 150,
+      width: 110,
       render: (grades: number[]) => (
-        <Space size="small">
-          {grades
-            ?.sort((a, b) => b - a)
-            .map(grade => (
-              <Tag key={grade} color="geekblue">
-                {GetGradeNameShort(grade)}
-              </Tag>
-            ))}
-        </Space>
+        <GradesRangeTag grades={grades} color="geekblue" />
       ),
     },
     {
@@ -346,7 +394,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
     {
       title: t("classManagement.table.typeColumn"),
       key: "classType",
-      width: 120,
+      width: 100,
       render: (_, record) => (
         <Space direction="vertical" size="small">
           <Tag color={record.isMandatory ? "red" : "blue"}>
@@ -387,7 +435,10 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
             key: "edit",
             label: t("classManagement.table.editButton"),
             icon: <EditOutlined />,
-            onClick: () => handleEditClass(record),
+            onClick: ({ domEvent }) => {
+              domEvent.stopPropagation();
+              handleEditClass(record);
+            },
           },
           {
             type: "divider",
@@ -397,14 +448,9 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
             label: t("classManagement.table.deleteButton"),
             icon: <DeleteOutlined />,
             danger: true,
-            onClick: () => {
-              Modal.confirm({
-                title: t("classManagement.table.deleteConfirmTitle"),
-                content: t("classManagement.table.deleteConfirmDescription"),
-                okText: t("classManagement.table.confirmYes"),
-                cancelText: t("classManagement.table.confirmNo"),
-                onOk: () => handleDeleteClass(record.id),
-              });
+            onClick: ({ domEvent }) => {
+              domEvent.stopPropagation();
+              confirmDeleteClass(record.id);
             },
           },
         ];
@@ -419,6 +465,7 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
               icon={<MoreOutlined />}
               size="small"
               title={t("classManagement.table.actions.more")}
+              onClick={e => e.stopPropagation()}
             />
           </Dropdown>
         );
@@ -606,6 +653,10 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
           }}
           scroll={{ x: 1000 }}
           size="small"
+          onRow={record => ({
+            onClick: () => handleShowEnrollment(record),
+            style: { cursor: "pointer" },
+          })}
         />
       </Card>
 
@@ -629,6 +680,15 @@ const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
           isNewLesson={!editingClass}
         />
       </Modal>
+
+      <ClassEnrollmentDrawer
+        open={enrollmentDrawerOpen}
+        onClose={handleCloseEnrollmentDrawer}
+        classInfo={enrollmentDrawerClass}
+        onEdit={handleEditFromDrawer}
+        onDelete={handleDeleteFromDrawer}
+        onUpdated={handleClassUpdatedFromDrawer}
+      />
     </div>
   );
 };

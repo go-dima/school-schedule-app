@@ -715,6 +715,35 @@ export const scheduleApi = {
 
     if (error) throw new ApiError(error.message);
   },
+
+  async getClassEnrolledChildren(classId: string): Promise<Child[]> {
+    const { data, error } = await supabase.rpc("get_class_enrolled_children", {
+      p_class_id: classId,
+    });
+
+    if (error) throw new ApiError(error.message);
+
+    return (data ?? [])
+      .map((child: any) => ({
+        id: child.id,
+        firstName: child.first_name,
+        lastName: child.last_name,
+        grade: child.grade,
+        groupNumber: child.group_number,
+        trackNumber: child.track_number,
+        scope: child.scope,
+        createdAt: child.created_at,
+        updatedAt: child.updated_at,
+      }))
+      .sort((a: Child, b: Child) =>
+        a.grade !== b.grade
+          ? a.grade - b.grade
+          : `${a.lastName}${a.firstName}`.localeCompare(
+              `${b.lastName}${b.firstName}`,
+              "he"
+            )
+      );
+  },
 };
 
 // Children API

@@ -1,0 +1,13 @@
+.class-enrollment-drawer {
+  direction: rtl;
+}
+
+.class-enrollment-drawer .ant-drawer-header {
+  direction: rtl;
+  text-align: right;
+}
+
+.class-enrollment-drawer .ant-drawer-close {
+  left: 16px;
+  right: auto;
+}
