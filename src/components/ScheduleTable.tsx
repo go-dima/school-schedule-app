@@ -36,6 +36,7 @@ interface ScheduleTableProps {
   canSelectClasses?: boolean;
   canViewClasses?: boolean;
   isAdmin?: boolean;
+  showEnrollmentCount?: boolean;
   onCreateClass?: (timeSlotId: string, dayOfWeek: number) => void;
   searchTerm?: string;
 }
@@ -59,6 +60,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   canSelectClasses = false,
   canViewClasses = false,
   isAdmin = false,
+  showEnrollmentCount = false,
   onCreateClass,
   searchTerm = "",
 }) => {
@@ -85,10 +87,10 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       }
     };
 
-    if (classes.length > 0) {
+    if (showEnrollmentCount && classes.length > 0) {
       fetchEnrollmentCounts();
     }
-  }, [classes]);
+  }, [classes, showEnrollmentCount]);
 
   const handleCellClick = (timeSlot: TimeSlot, dayOfWeek: number) => {
     if (!canViewClasses) return;
@@ -211,11 +213,13 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                   <DoubleLessonTag />
                 </div>
               </div>
-              <div className="class-enrollment-icon">
-                <EnrollmentCount
-                  count={enrollmentCounts.get(doubleClass.id) || 0}
-                />
-              </div>
+              {showEnrollmentCount && (
+                <div className="class-enrollment-icon">
+                  <EnrollmentCount
+                    count={enrollmentCounts.get(doubleClass.id) || 0}
+                  />
+                </div>
+              )}
             </div>
           </Card>
         </div>
@@ -297,11 +301,13 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                       {isDoubleLesson && <DoubleLessonTag />}
                     </div>
                   </div>
-                  <div className="class-enrollment-icon">
-                    <EnrollmentCount
-                      count={enrollmentCounts.get(cls.id) || 0}
-                    />
-                  </div>
+                  {showEnrollmentCount && (
+                    <div className="class-enrollment-icon">
+                      <EnrollmentCount
+                        count={enrollmentCounts.get(cls.id) || 0}
+                      />
+                    </div>
+                  )}
                 </div>
               </Card>
             );
