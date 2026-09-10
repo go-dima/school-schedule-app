@@ -17,8 +17,6 @@ import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { ChildForm } from "./ChildForm";
 import { GroupTrackTags } from "./GroupTrackTags";
 import { useChildren } from "../hooks/useChildren";
-import { TrackSelectionService } from "../services/trackSelectionService";
-import { childrenApi } from "../services/api";
 import type { Child, Scope } from "../types";
 import { GetGradeName } from "@/utils/grades";
 
@@ -31,9 +29,6 @@ export function ChildManagement() {
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | undefined>();
-  const [editingChildCommittedTrack, setEditingChildCommittedTrack] = useState<
-    number | null
-  >(null);
   const [formLoading, setFormLoading] = useState(false);
 
   const handleCreateChild = async (data: {
@@ -41,25 +36,16 @@ export function ChildManagement() {
     lastName: string;
     grade: number;
     groupNumber: number | null;
-    trackNumber?: number | null;
     scope?: Scope;
   }) => {
     setFormLoading(true);
     try {
-      const newChild = await createChild(
+      await createChild(
         data.firstName,
         data.lastName,
         data.grade,
-        data.groupNumber,
-        data.trackNumber ?? null
+        data.groupNumber
       );
-      if (data.trackNumber) {
-        await TrackSelectionService.syncTrackClasses(
-          newChild,
-          data.trackNumber,
-          "draft"
-        );
-      }
       setIsFormModalOpen(false);
       setEditingChild(undefined);
     } finally {
@@ -72,27 +58,13 @@ export function ChildManagement() {
     lastName: string;
     grade: number;
     groupNumber: number | null;
-    trackNumber?: number | null;
     scope?: Scope;
   }) => {
     if (!editingChild) return;
 
     setFormLoading(true);
     try {
-      const updatedChild = await updateChild(editingChild.id, data);
-      // trackNumber is undefined when the form's Track field was read-only
-      // (showing the committed value) -- this form never touched draft
-      // track in that case, so there's nothing to sync.
-      if (data.trackNumber !== undefined) {
-        const newTrackNumber = data.trackNumber ?? null;
-        if (editingChild.trackNumber !== newTrackNumber) {
-          await TrackSelectionService.syncTrackClasses(
-            updatedChild,
-            newTrackNumber,
-            "draft"
-          );
-        }
-      }
+      await updateChild(editingChild.id, data);
       setIsFormModalOpen(false);
       setEditingChild(undefined);
     } finally {
@@ -113,21 +85,9 @@ export function ChildManagement() {
     }
   };
 
-  const openEditModal = async (child: Child) => {
+  const openEditModal = (child: Child) => {
     setEditingChild(child);
-    setEditingChildCommittedTrack(null);
     setIsFormModalOpen(true);
-    try {
-      const committedChild = await childrenApi.getChildById(
-        child.id,
-        "committed"
-      );
-      setEditingChildCommittedTrack(committedChild.trackNumber);
-    } catch {
-      // Read-only display only -- if this fails, the field just shows
-      // empty rather than blocking the rest of the edit form.
-      setEditingChildCommittedTrack(null);
-    }
   };
 
   const openCreateModal = () => {
@@ -138,7 +98,6 @@ export function ChildManagement() {
   const closeModals = () => {
     setIsFormModalOpen(false);
     setEditingChild(undefined);
-    setEditingChildCommittedTrack(null);
   };
 
   if (loading) {
@@ -265,8 +224,6 @@ export function ChildManagement() {
         destroyOnHidden>
         <ChildForm
           child={editingChild}
-          committedTrackNumber={editingChildCommittedTrack}
-          trackNumberReadOnly={!!editingChild}
           onSubmit={editingChild ? handleUpdateChild : handleCreateChild}
           onCancel={closeModals}
           loading={formLoading}

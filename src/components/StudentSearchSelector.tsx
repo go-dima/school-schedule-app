@@ -191,7 +191,6 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
     lastName: string;
     grade: number;
     groupNumber: number | null;
-    trackNumber?: number | null;
     scope?: "test" | "prod";
   }) => {
     setAddLoading(true);
@@ -202,7 +201,7 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
         data.grade,
         data.groupNumber,
         data.scope || "prod",
-        data.trackNumber ?? null,
+        null,
         "committed"
       );
       setIsAddModalOpen(false);
