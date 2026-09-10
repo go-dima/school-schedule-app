@@ -11,12 +11,3 @@
   left: 16px;
   right: auto;
 }
-
-.enrollment-info-footer {
-  display: flex;
-  justify-content: flex-end;
-  padding: 8px 12px;
-  border: 1px solid #f0f0f0;
-  border-top: none;
-  background: #fafafa;
-}
