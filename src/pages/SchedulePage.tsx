@@ -249,8 +249,24 @@ const SchedulePage: React.FC = () => {
   // child's group is admin-set, mandatory is a fixed class attribute) --
   // unlike Track, which syncs from makeTrackChangeHandler, this syncs
   // whenever the active child or the loaded catalog/schedule changes.
+  //
+  // Re-entrancy guard: `classes` and `selectedSchedule` load somewhat
+  // independently, so this effect can fire twice in close succession
+  // (also reliably reproduced by React 18 StrictMode's dev double-invoke)
+  // before the first invocation's applyChanges + refetchSelectedSchedule
+  // has updated `selectedSchedule`. Both invocations would then compute
+  // the same toSelect/toUnselect against identical stale state and both
+  // call the API for the same class, tripping the DB's unique constraint.
+  // syncInFlightRef guards against starting a second call while one is
+  // still running; it's set before the async work begins and cleared in
+  // `finally` (not in the cleanup function, which fires on every
+  // dependency change, not just unmount). Once the in-flight call's own
+  // refetchSelectedSchedule() updates `selectedSchedule`, the effect
+  // re-runs and finds nothing further to do.
+  const syncInFlightRef = React.useRef(false);
   React.useEffect(() => {
     if (!currentTrackChild || classes.length === 0) return;
+    if (syncInFlightRef.current) return;
 
     const changes = GroupMandatoryLockService.computeChanges(
       classes,
@@ -263,6 +279,7 @@ const SchedulePage: React.FC = () => {
     }
 
     let cancelled = false;
+    syncInFlightRef.current = true;
     (async () => {
       try {
         await GroupMandatoryLockService.applyChanges(
@@ -281,6 +298,8 @@ const SchedulePage: React.FC = () => {
               : t("schedule.page.error.updateClassSelection")
           );
         }
+      } finally {
+        syncInFlightRef.current = false;
       }
     })();
 
