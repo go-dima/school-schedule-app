@@ -33,6 +33,7 @@ import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { ChildTrackSelector } from "../components/ChildTrackSelector";
 import { classesApi, timeSlotsApi } from "../services/api";
 import { TrackSelectionService } from "../services/trackSelectionService";
+import { GroupMandatoryLockService } from "../services/groupMandatoryLockService";
 import { ScheduleService } from "../services/scheduleService";
 import { DraftBanner } from "../elements/DraftBanner";
 import { GRADES } from "../types";
@@ -226,23 +227,84 @@ const SchedulePage: React.FC = () => {
   // Classes auto-selected by the active child's track can't be picked apart
   // one at a time -- only changing the track (which re-syncs them) can.
   const currentTrackChild = isStaff ? staffSelectedChild : selectedChild;
-  const lockedClassIds = new Set(
-    currentTrackChild?.trackNumber
+  const lockedClassIds = new Set([
+    ...(currentTrackChild?.trackNumber
       ? classes
           .filter(cls => cls.trackNumber === currentTrackChild.trackNumber)
           .map(cls => cls.id)
-      : []
-  );
+      : []),
+    ...(currentTrackChild
+      ? classes
+          .filter(cls =>
+            GroupMandatoryLockService.isLockedMatch(
+              cls,
+              currentTrackChild.groupNumber
+            )
+          )
+          .map(cls => cls.id)
+      : []),
+  ]);
+
+  // Group and Mandatory have no user-driven change event on this page (a
+  // child's group is admin-set, mandatory is a fixed class attribute) --
+  // unlike Track, which syncs from makeTrackChangeHandler, this syncs
+  // whenever the active child or the loaded catalog/schedule changes.
+  React.useEffect(() => {
+    if (!currentTrackChild || classes.length === 0) return;
+
+    const changes = GroupMandatoryLockService.computeChanges(
+      classes,
+      selectedSchedule,
+      currentTrackChild
+    );
+
+    if (changes.toSelect.length === 0 && changes.toUnselectIds.length === 0) {
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        await GroupMandatoryLockService.applyChanges(
+          currentTrackChild.id,
+          changes,
+          viewStatus
+        );
+        if (!cancelled) {
+          await refetchSelectedSchedule();
+        }
+      } catch (err) {
+        if (!cancelled) {
+          message.error(
+            err instanceof Error
+              ? err.message
+              : t("schedule.page.error.updateClassSelection")
+          );
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    currentTrackChild?.id,
+    currentTrackChild?.grade,
+    currentTrackChild?.groupNumber,
+    classes,
+    selectedSchedule,
+    viewStatus,
+  ]);
 
   const handleClassSelect = async (classId: string) => {
     if (!target) return;
     try {
       if (isClassSelected(classId)) {
-        // Track-locked classes only apply to the child-entity flows
-        // (parent/staff); the "child" role's own selections aren't tied to
-        // a Child record with a track.
+        // Locked classes (track, group, or mandatory match) only apply to
+        // the child-entity flows (parent/staff); the "child" role's own
+        // selections aren't tied to a Child record with these attributes.
         if ("childId" in target && lockedClassIds.has(classId)) {
-          message.warning(t("schedule.page.error.trackClassLocked"));
+          message.warning(t("schedule.page.error.lockedClassCannotUnselect"));
           return;
         }
         await unselectSchedule(classId);
@@ -621,6 +683,8 @@ const SchedulePage: React.FC = () => {
           showEnrollmentCount={isStaff || isAdmin()}
           onCreateClass={handleCreateClass}
           searchTerm={searchTerm}
+          childGroupNumber={currentTrackChild?.groupNumber}
+          lockedClassIds={Array.from(lockedClassIds)}
         />
       </Card>
 
@@ -654,7 +718,7 @@ const SchedulePage: React.FC = () => {
               return isLocked ? (
                 <Tooltip
                   key={selection.id}
-                  title={t("schedule.drawer.trackLockedTooltip")}>
+                  title={t("schedule.drawer.lockedClassTooltip")}>
                   <span style={{ display: "inline-block" }}>{button}</span>
                 </Tooltip>
               ) : (
