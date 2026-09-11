@@ -60,7 +60,7 @@ export const GroupMandatoryLockService = {
     const toSelect = allClasses.filter(
       cls =>
         cls.grades.includes(child.grade) &&
-        this.isLockedMatch(cls, child.groupNumber) &&
+        GroupMandatoryLockService.isLockedMatch(cls, child.groupNumber) &&
         !alreadySelectedIds.has(cls.id)
     );
 
@@ -69,7 +69,8 @@ export const GroupMandatoryLockService = {
         const cls = selection.class;
         const wasGroupOrMandatory = cls.groupNumber !== null || cls.isMandatory;
         return (
-          wasGroupOrMandatory && !this.isLockedMatch(cls, child.groupNumber)
+          wasGroupOrMandatory &&
+          !GroupMandatoryLockService.isLockedMatch(cls, child.groupNumber)
         );
       })
       .map(selection => selection.classId);

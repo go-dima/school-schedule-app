@@ -207,6 +207,22 @@ describe("GroupMandatoryLockService.computeChanges", () => {
 
     expect(committedResult).toEqual(draftResult);
   });
+
+  it("works when destructured off the service (no `this` binding required)", () => {
+    const { computeChanges } = GroupMandatoryLockService;
+    const group1 = makeClass({ id: "g1", groupNumber: 1, grades: [1] });
+    const stale = makeSelection(
+      makeClass({ id: "g2", groupNumber: 2, grades: [1] })
+    );
+
+    const { toSelect, toUnselectIds } = computeChanges([group1], [stale], {
+      grade: 1,
+      groupNumber: 1,
+    });
+
+    expect(toSelect.map(c => c.id)).toEqual(["g1"]);
+    expect(toUnselectIds).toEqual(["g2"]);
+  });
 });
 
 // Mirrors the runtime shape of `ApiError` from ./api: an Error carrying the

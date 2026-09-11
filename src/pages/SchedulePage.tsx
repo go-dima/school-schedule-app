@@ -233,13 +233,18 @@ const SchedulePage: React.FC = () => {
           .filter(cls => cls.trackNumber === currentTrackChild.trackNumber)
           .map(cls => cls.id)
       : []),
+    // Must mirror GroupMandatoryLockService.computeChanges's criteria exactly
+    // (grade AND locked-match), so "what we lock in the UI" can never drift
+    // from "what we actually auto-select in the DB".
     ...(currentTrackChild
       ? classes
-          .filter(cls =>
-            GroupMandatoryLockService.isLockedMatch(
-              cls,
-              currentTrackChild.groupNumber
-            )
+          .filter(
+            cls =>
+              cls.grades.includes(currentTrackChild.grade) &&
+              GroupMandatoryLockService.isLockedMatch(
+                cls,
+                currentTrackChild.groupNumber
+              )
           )
           .map(cls => cls.id)
       : []),
@@ -263,7 +268,14 @@ const SchedulePage: React.FC = () => {
   // dependency change, not just unmount). Once the in-flight call's own
   // refetchSelectedSchedule() updates `selectedSchedule`, the effect
   // re-runs and finds nothing further to do.
-  const syncInFlightRef = React.useRef(false);
+  //
+  // The lock holds the id of the child currently being synced (undefined =
+  // no sync in flight) rather than a plain boolean: syncs for two different
+  // children touch disjoint schedule_selections rows, so one child's
+  // in-flight sync must not suppress another child's. Only a re-entrant
+  // firing for the SAME child -- the actual duplicate-insert race -- is
+  // blocked.
+  const syncInFlightRef = React.useRef<string | undefined>(undefined);
   // activeChildIdRef always tracks the most recently seen child id, updated
   // synchronously on every effect run (before the early-return checks) so
   // that a resolving async call can tell "the child changed" (skip the
@@ -273,6 +285,24 @@ const SchedulePage: React.FC = () => {
   const activeChildIdRef = React.useRef<string | undefined>(undefined);
   React.useEffect(() => {
     activeChildIdRef.current = currentTrackChild?.id;
+
+    // `target` (parent-role precedence) and `currentTrackChild` (staff-role
+    // precedence) can disagree for a user who holds BOTH the parent and staff
+    // roles: ChildContext auto-selects their own first child, so `target`
+    // stays on that child while `currentTrackChild` follows the staff student
+    // selector. Track only ever read `currentTrackChild`, so the divergence was
+    // harmless there -- but this effect WRITES for `currentTrackChild` while
+    // reading `selectedSchedule`/`refetchSelectedSchedule`, which belong to
+    // `target`. Mismatched, computeChanges would never see its own writes land,
+    // looping writes against the wrong child forever. Only sync when both
+    // agree on the same child.
+    if (
+      !target ||
+      !("childId" in target) ||
+      target.childId !== currentTrackChild?.id
+    ) {
+      return;
+    }
 
     if (!currentTrackChild || classes.length === 0) return;
     // selectedSchedule loads independently of classes (a separate hook,
@@ -284,7 +314,7 @@ const SchedulePage: React.FC = () => {
     // that already exist in the DB, tripping the unique constraint on
     // every fresh page load for an already-synced child.
     if (selectedScheduleLoading) return;
-    if (syncInFlightRef.current) return;
+    if (syncInFlightRef.current === currentTrackChild.id) return;
 
     const changes = GroupMandatoryLockService.computeChanges(
       classes,
@@ -297,7 +327,7 @@ const SchedulePage: React.FC = () => {
     }
 
     const syncingChildId = currentTrackChild.id;
-    syncInFlightRef.current = true;
+    syncInFlightRef.current = syncingChildId;
     (async () => {
       try {
         await GroupMandatoryLockService.applyChanges(
@@ -317,9 +347,21 @@ const SchedulePage: React.FC = () => {
           );
         }
       } finally {
-        syncInFlightRef.current = false;
+        // Only release the lock if it's still ours -- a sync started for a
+        // different child in the meantime owns the ref now.
+        if (syncInFlightRef.current === syncingChildId) {
+          syncInFlightRef.current = undefined;
+        }
       }
     })();
+    // `refetchSelectedSchedule` is deliberately excluded from the deps: it is
+    // not memoized (a new function identity every render), so including it
+    // would re-fire this effect on every render and defeat the in-flight
+    // guard. `message` and `t` are stable enough to omit for the same reason.
+    // `target` is likewise omitted -- it's a fresh object literal every render;
+    // it's read only by the mismatch guard above, and any real change to it
+    // also changes `selectedSchedule`/`selectedScheduleLoading`, which ARE
+    // deps. Do not "fix" any of these with exhaustive-deps.
   }, [
     currentTrackChild?.id,
     currentTrackChild?.grade,
