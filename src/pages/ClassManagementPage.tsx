@@ -26,13 +26,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
 import { classesApi, timeSlotsApi } from "../services/api";
 import { ScheduleService } from "../services/scheduleService";
-import type {
-  ClassWithTimeSlot,
-  TimeSlot,
-  Class,
-  Scope,
-  AppOnNavigate,
-} from "../types";
+import type { ClassWithTimeSlot, TimeSlot, Class, Scope } from "../types";
 import { DAYS_OF_WEEK, GRADES } from "../types";
 import ClassForm from "../components/ClassForm";
 import { GroupTrackTags } from "../components/GroupTrackTags";
@@ -51,11 +45,7 @@ const { Title } = Typography;
 // `null` which means the track filter is not applied.
 const NO_TRACK_FILTER = 0;
 
-interface ClassManagementPageProps {
-  onNavigate?: AppOnNavigate;
-}
-
-const ClassManagementPage: React.FC<ClassManagementPageProps> = () => {
+const ClassManagementPage: React.FC = () => {
   const { t } = useTranslation();
   const { canManageClasses } = useAuth();
   const [classes, setClasses] = useState<ClassWithTimeSlot[]>([]);

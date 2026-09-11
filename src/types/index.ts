@@ -141,15 +141,3 @@ export interface ScheduleSelectionWithChild
   childId: string;
   child: Child;
 }
-
-export type AppPages =
-  | "schedule"
-  | "class-management"
-  | "students"
-  | "pending-approvals"
-  | "user-management"
-  | "user-list"
-  | "profile-settings";
-
-// For App navigation
-export type AppOnNavigate = (page: AppPages) => void;

@@ -219,6 +219,8 @@ npm run build
 # Upload dist folder to web server
 ```
 
+Since this app uses client-side routing, configure your web server to serve `index.html` for all paths that don't match a static file (e.g. nginx: `try_files $uri /index.html;`) — otherwise a deep link or page refresh on a non-root route will 404.
+
 ## Contributing
 
 1. Fork the project
