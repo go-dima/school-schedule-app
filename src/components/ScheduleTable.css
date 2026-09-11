@@ -431,7 +431,7 @@
 .class-labels-row {
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
+  justify-content: center;
   margin-top: 4px;
 }
 
