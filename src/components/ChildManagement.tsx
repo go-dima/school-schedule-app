@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { ChildForm } from "./ChildForm";
 import { GroupTrackTags } from "./GroupTrackTags";
-import { useChildren } from "../hooks/useChildren";
+import { useChildContext } from "../contexts/ChildContext";
 import type { Child, Scope } from "../types";
 import { GetGradeName } from "@/utils/grades";
 
@@ -25,7 +25,7 @@ const { Title, Text } = Typography;
 export function ChildManagement() {
   const { t } = useTranslation();
   const { children, loading, error, createChild, updateChild, removeChild } =
-    useChildren();
+    useChildContext();
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | undefined>();

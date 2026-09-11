@@ -149,7 +149,7 @@
 .continuation-suffix {
   font-style: italic;
   color: var(--schedule-accent-orange);
-  font-size: 11px;
+  font-size: 0.75em;
   margin-inline-start: 4px;
 }
 
@@ -431,7 +431,7 @@
 .class-labels-row {
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
+  justify-content: center;
   margin-top: 4px;
 }
 

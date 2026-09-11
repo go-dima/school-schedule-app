@@ -13,8 +13,6 @@ import {
   Tooltip,
 } from "antd";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import { ROUTES } from "../routes/paths";
 import {
   ReloadOutlined,
   UserSwitchOutlined,
@@ -30,6 +28,7 @@ import { useAllChildren } from "../hooks/useAllChildren";
 import ScheduleTable from "../components/ScheduleTable";
 import ClassForm from "../components/ClassForm";
 import { ChildSelector } from "../components/ChildSelector";
+import { AddChildButton } from "../components/AddChildButton";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { ChildTrackSelector } from "../components/ChildTrackSelector";
 import { classesApi, timeSlotsApi } from "../services/api";
@@ -47,7 +46,6 @@ const { Option } = Select;
 
 const SchedulePage: React.FC = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
   const getRoleDisplayName = (role: string): string => {
     const roleKey = `roles.${role}`;
@@ -195,6 +193,14 @@ const SchedulePage: React.FC = () => {
     // Auto-select the newly created student for staff
     setStaffSelectedChild(newChild);
     setSelectedGrade(newChild.grade);
+  };
+
+  // Handler for when a parent adds a new child via AddChildButton
+  const handleParentChildAdded = (newChild: Child) => {
+    setSelectedChild(newChild);
+    if (!isAdmin()) {
+      setSelectedGrade(newChild.grade);
+    }
   };
 
   // Auto-update grade filter when selected child changes (only for non-admin parents)
@@ -389,6 +395,7 @@ const SchedulePage: React.FC = () => {
                 </Space>
               </>
             )}
+            {isParent && <AddChildButton onAdded={handleParentChildAdded} />}
             {isStaff && (
               <>
                 <ChildTrackSelector
@@ -415,7 +422,7 @@ const SchedulePage: React.FC = () => {
                 </Space>
               </>
             )}
-            {(!isParent || !userChildren.length || isAdmin()) && (
+            {(isStaff || isAdmin()) && (
               <>
                 <Select
                   value={selectedGrade}
@@ -520,17 +527,23 @@ const SchedulePage: React.FC = () => {
       {isParent && userChildren.length === 0 && (
         <Alert
           message={t("schedule.page.alerts.noChildrenFound.title")}
-          description={t("schedule.page.alerts.noChildrenFound.description")}
+          description={
+            <>
+              {t("schedule.page.alerts.noChildrenFound.descriptionPrefix")}
+              <AddChildButton
+                onAdded={handleParentChildAdded}
+                renderTrigger={open => (
+                  <Typography.Link onClick={open}>
+                    {t("schedule.page.addChildButton")}
+                  </Typography.Link>
+                )}
+              />
+              {t("schedule.page.alerts.noChildrenFound.descriptionSuffix")}
+            </>
+          }
           type="info"
           showIcon
           style={{ marginBottom: 16 }}
-          action={
-            <Button
-              size="small"
-              onClick={() => navigate(ROUTES.PROFILE_SETTINGS)}>
-              {t("schedule.page.addChildButton")}
-            </Button>
-          }
         />
       )}
 

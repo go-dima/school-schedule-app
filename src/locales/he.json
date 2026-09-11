@@ -110,7 +110,8 @@
         },
         "noChildrenFound": {
           "title": "לא נמצאו ילדים",
-          "description": "אין ילדים רשומים בחשבון שלך. הוסף ילד בפרופיל כדי להתחיל לבחור שיעורים."
+          "descriptionPrefix": "אין ילדים רשומים. ",
+          "descriptionSuffix": " כדי להתחיל לבחור שיעורים."
         }
       },
       "addChildButton": "הוסף ילד",

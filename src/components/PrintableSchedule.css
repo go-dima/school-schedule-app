@@ -215,12 +215,11 @@
   print-color-adjust: exact;
 }
 
-.print-continuation-text {
-  font-size: 9px;
+.continuation-suffix {
   font-style: italic;
   color: var(--schedule-accent-orange);
-  margin-top: 2px;
-  line-height: 1.2;
+  font-size: 0.75em;
+  margin-inline-start: 4px;
 }
 
 .print-empty-text {
