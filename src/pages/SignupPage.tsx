@@ -1,3 +1,4 @@
+// src/pages/SignupPage.tsx
 import React, { useState } from "react";
 import {
   Form,
@@ -12,7 +13,9 @@ import {
 } from "antd";
 import { LockOutlined, MailOutlined, GoogleOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { ROUTES } from "../routes/paths";
 import "./AuthPages.css";
 
 const { Title, Text, Link } = Typography;
@@ -24,15 +27,11 @@ interface SignupFormValues {
   terms: boolean;
 }
 
-interface SignupPageProps {
-  onSwitchToLogin: () => void;
-}
-
-const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
+const SignupPage: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [form] = Form.useForm();
   const [localError, setLocalError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const { signUp, signInWithGoogle, loading } = useAuth();
 
   const onFinish = async (values: SignupFormValues) => {
@@ -40,8 +39,10 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
 
     try {
       await signUp(values.email, values.password);
-      setSuccess(true);
-      form.resetFields();
+      navigate(ROUTES.SIGNUP_VERIFY_EMAIL, {
+        state: { fromSignup: true },
+        replace: true,
+      });
     } catch (err) {
       setLocalError(
         err instanceof Error ? err.message : t("auth.signup.error")
@@ -60,44 +61,6 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
       );
     }
   };
-
-  if (success) {
-    return (
-      <div className="auth-page">
-        <div className="auth-container">
-          <Card className="auth-card">
-            <div className="auth-header">
-              <Title level={2}>{t("auth.signup.successTitle")}</Title>
-            </div>
-
-            <Alert
-              message={t("auth.signup.successAlertTitle")}
-              description={
-                <div>
-                  <p>{t("auth.signup.successMessage1")}</p>
-                  <p>{t("auth.signup.successMessage2")}</p>
-                  <p>{t("auth.signup.successMessage3")}</p>
-                </div>
-              }
-              type="success"
-              showIcon
-              className="success-alert"
-            />
-
-            <div className="auth-footer">
-              <Button
-                type="primary"
-                size="large"
-                onClick={onSwitchToLogin}
-                block>
-                {t("auth.signup.returnToLogin")}
-              </Button>
-            </div>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="auth-page">
@@ -223,7 +186,7 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
           <div className="auth-footer">
             <Text>
               {t("auth.signup.loginPrompt")}{" "}
-              <Link onClick={onSwitchToLogin}>
+              <Link onClick={() => navigate(ROUTES.LOGIN)}>
                 {t("auth.signup.loginLink")}
               </Link>
             </Text>
