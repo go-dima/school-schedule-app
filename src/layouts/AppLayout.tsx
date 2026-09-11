@@ -1,23 +1,14 @@
+// src/layouts/AppLayout.tsx
 import React, { useState } from "react";
 import { Layout } from "antd";
+import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
-import type { AppOnNavigate } from "../types";
 import "./layouts.css";
 
 const { Content } = Layout;
 
-interface AppLayoutProps {
-  children: React.ReactNode;
-  onNavigate?: AppOnNavigate;
-  currentPage: string;
-}
-
-const AppLayout: React.FC<AppLayoutProps> = ({
-  children,
-  onNavigate,
-  currentPage,
-}) => {
+const AppLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(true);
 
   const toggleSidebar = () => {
@@ -26,15 +17,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({
 
   return (
     <Layout className="app-layout">
-      <Header onNavigate={onNavigate} currentPage={currentPage} />
+      <Header />
       <Layout>
-        <Sidebar
-          collapsed={collapsed}
-          onNavigate={onNavigate}
-          currentPage={currentPage}
-          onToggle={toggleSidebar}
-        />
-        <Content className="app-layout-content">{children}</Content>
+        <Sidebar collapsed={collapsed} onToggle={toggleSidebar} />
+        <Content className="app-layout-content">
+          <Outlet />
+        </Content>
       </Layout>
     </Layout>
   );
