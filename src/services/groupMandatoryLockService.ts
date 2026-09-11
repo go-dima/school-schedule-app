@@ -11,6 +11,25 @@ export interface GroupMandatoryChanges {
   toUnselectIds: string[];
 }
 
+/** Postgres SQLSTATE for unique_violation. */
+const PG_UNIQUE_VIOLATION = "23505";
+
+/**
+ * True when `err` is a database unique-constraint violation.
+ *
+ * Matched strictly on the Postgres SQLSTATE carried by the error (surfaced
+ * as `ApiError.code`, originally the PostgrestError's `code`) -- never on
+ * the message text, which is wording- and locale-dependent.
+ */
+export function isDuplicateKeyError(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    (err as { code?: unknown }).code === PG_UNIQUE_VIOLATION
+  );
+}
+
 export const GroupMandatoryLockService = {
   /**
    * A class is a Locked Selection for a child when its group matches the
@@ -58,6 +77,20 @@ export const GroupMandatoryLockService = {
     return { toSelect, toUnselectIds };
   },
 
+  /**
+   * Auto-assignment is idempotent by nature: the goal is "this child ends up
+   * with exactly the locked selections for their group/grade", not "this
+   * particular insert was the one that created the row". A unique-constraint
+   * violation on schedule_selections therefore means the desired row already
+   * exists (a concurrent sync, another tab, or a computeChanges run against a
+   * not-yet-refetched snapshot) -- the end state is already correct, so it is
+   * swallowed rather than surfaced as a user-facing error. Every other error
+   * still propagates.
+   *
+   * Unselects are not wrapped: they are DELETEs keyed on
+   * child_id + class_id + status, and deleting zero rows is a success, not an
+   * error -- a redundant concurrent unselect simply no-ops in Postgres.
+   */
   async applyChanges(
     childId: string,
     { toSelect, toUnselectIds }: GroupMandatoryChanges,
@@ -68,7 +101,10 @@ export const GroupMandatoryLockService = {
         scheduleApi.unselectSchedule({ childId }, classId, status)
       ),
       ...toSelect.map(cls =>
-        scheduleApi.selectSchedule({ childId }, cls.id, status)
+        scheduleApi.selectSchedule({ childId }, cls.id, status).catch(err => {
+          if (isDuplicateKeyError(err)) return undefined;
+          throw err;
+        })
       ),
     ]);
   },

@@ -1,11 +1,22 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   ClassWithTimeSlot,
   ScheduleSelectionWithClass,
   SelectionStatus,
   TimeSlot,
 } from "../types";
-import { GroupMandatoryLockService } from "./groupMandatoryLockService";
+
+vi.mock("./api", () => ({
+  scheduleApi: {
+    selectSchedule: vi.fn(),
+    unselectSchedule: vi.fn(),
+  },
+}));
+
+const { GroupMandatoryLockService, isDuplicateKeyError } = await import(
+  "./groupMandatoryLockService"
+);
+const { scheduleApi } = await import("./api");
 
 const timeSlot = (id: string): TimeSlot => ({
   id,
@@ -195,5 +206,105 @@ describe("GroupMandatoryLockService.computeChanges", () => {
     );
 
     expect(committedResult).toEqual(draftResult);
+  });
+});
+
+// Mirrors the runtime shape of `ApiError` from ./api: an Error carrying the
+// underlying PostgrestError's SQLSTATE on `code`.
+const apiError = (message: string, code?: string) =>
+  Object.assign(new Error(message), { name: "ApiError", code });
+
+describe("isDuplicateKeyError", () => {
+  it("recognises a unique_violation by its Postgres SQLSTATE", () => {
+    expect(
+      isDuplicateKeyError(
+        apiError(
+          'duplicate key value violates unique constraint "schedule_selections_child_class_status_key"',
+          "23505"
+        )
+      )
+    ).toBe(true);
+  });
+
+  it("rejects other database errors, plain errors and non-errors", () => {
+    expect(
+      isDuplicateKeyError(apiError("foreign key violation", "23503"))
+    ).toBe(false);
+    expect(isDuplicateKeyError(apiError("network failure"))).toBe(false);
+    expect(isDuplicateKeyError(new Error("duplicate key value"))).toBe(false);
+    expect(isDuplicateKeyError(null)).toBe(false);
+    expect(isDuplicateKeyError("23505")).toBe(false);
+  });
+});
+
+describe("GroupMandatoryLockService.applyChanges", () => {
+  const selectMock = vi.mocked(scheduleApi.selectSchedule);
+  const unselectMock = vi.mocked(scheduleApi.unselectSchedule);
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    selectMock.mockResolvedValue(undefined as never);
+    unselectMock.mockResolvedValue(undefined as never);
+  });
+
+  const changes = (): Parameters<
+    typeof GroupMandatoryLockService.applyChanges
+  >[1] => ({
+    toSelect: [makeClass({ id: "g1", groupNumber: 1 })],
+    toUnselectIds: ["old-1"],
+  });
+
+  it("selects and unselects for the given child and status", async () => {
+    await GroupMandatoryLockService.applyChanges("child-1", changes(), "draft");
+
+    expect(selectMock).toHaveBeenCalledWith(
+      { childId: "child-1" },
+      "g1",
+      "draft"
+    );
+    expect(unselectMock).toHaveBeenCalledWith(
+      { childId: "child-1" },
+      "old-1",
+      "draft"
+    );
+  });
+
+  it("resolves without throwing when a select hits a duplicate-key violation", async () => {
+    selectMock.mockRejectedValue(
+      apiError(
+        'duplicate key value violates unique constraint "schedule_selections_child_class_status_key"',
+        "23505"
+      )
+    );
+
+    await expect(
+      GroupMandatoryLockService.applyChanges("child-1", changes(), "draft")
+    ).resolves.toBeUndefined();
+  });
+
+  it("still propagates an unrelated select failure", async () => {
+    selectMock.mockRejectedValue(apiError("Failed to fetch"));
+
+    await expect(
+      GroupMandatoryLockService.applyChanges("child-1", changes(), "draft")
+    ).rejects.toThrow("Failed to fetch");
+  });
+
+  it("still propagates a different Postgres error from a select", async () => {
+    selectMock.mockRejectedValue(
+      apiError("insert violates foreign key constraint", "23503")
+    );
+
+    await expect(
+      GroupMandatoryLockService.applyChanges("child-1", changes(), "draft")
+    ).rejects.toThrow("insert violates foreign key constraint");
+  });
+
+  it("still propagates an unselect failure", async () => {
+    unselectMock.mockRejectedValue(apiError("permission denied", "42501"));
+
+    await expect(
+      GroupMandatoryLockService.applyChanges("child-1", changes(), "draft")
+    ).rejects.toThrow("permission denied");
   });
 });
