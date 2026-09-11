@@ -12,6 +12,7 @@ import {
 } from "../utils/timeSlots";
 import type { TimeSlot, WeeklySchedule, Child } from "../types";
 import { GetGradeName } from "../utils/grades";
+import ClassTitleWithContinuation from "./ClassTitleWithContinuation";
 import "./PrintableSchedule.css";
 
 interface PrintableScheduleProps {
@@ -72,16 +73,17 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
       return (
         <div className="print-schedule-cell selected double-continuation">
           <div className="print-class-card">
-            <div className="print-class-title">{doubleClass.title}</div>
+            <ClassTitleWithContinuation
+              title={doubleClass.title}
+              isContinuation
+              className="print-class-title"
+            />
             <div className="print-class-teacher">{doubleClass.teacher}</div>
             {doubleClass.room && (
               <div className="print-class-room">
                 {t("schedule.table.room", { room: doubleClass.room })}
               </div>
             )}
-            <div className="print-continuation-text">
-              {t("schedule.table.continuationText")}
-            </div>
           </div>
         </div>
       );
