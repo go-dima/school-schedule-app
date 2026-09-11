@@ -17,6 +17,7 @@ interface ChildFormProps {
   }) => Promise<void>;
   onCancel: () => void;
   loading?: boolean;
+  showScope?: boolean;
 }
 
 export function ChildForm({
@@ -24,6 +25,7 @@ export function ChildForm({
   onSubmit,
   onCancel,
   loading = false,
+  showScope = true,
 }: ChildFormProps) {
   const { t } = useTranslation();
   const [form] = Form.useForm();
@@ -96,7 +98,7 @@ export function ChildForm({
         />
       </Form.Item>
 
-      <ScopeSelector />
+      {showScope && <ScopeSelector />}
 
       <Form.Item>
         <Space>

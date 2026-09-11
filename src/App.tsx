@@ -181,7 +181,7 @@ function AppContent() {
       case "profile-settings":
         return <ProfileSettingsPage />;
       default:
-        return <SchedulePage onNavigate={setCurrentPage} />;
+        return <SchedulePage />;
     }
   };
 

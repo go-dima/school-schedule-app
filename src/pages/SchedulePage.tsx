@@ -28,6 +28,7 @@ import { useAllChildren } from "../hooks/useAllChildren";
 import ScheduleTable from "../components/ScheduleTable";
 import ClassForm from "../components/ClassForm";
 import { ChildSelector } from "../components/ChildSelector";
+import { AddChildButton } from "../components/AddChildButton";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { ChildTrackSelector } from "../components/ChildTrackSelector";
 import { classesApi, timeSlotsApi } from "../services/api";
@@ -35,13 +36,7 @@ import { TrackSelectionService } from "../services/trackSelectionService";
 import { ScheduleService } from "../services/scheduleService";
 import { DraftBanner } from "../elements/DraftBanner";
 import { GRADES } from "../types";
-import type {
-  AppOnNavigate,
-  Class,
-  TimeSlot,
-  Child,
-  ScheduleTarget,
-} from "../types";
+import type { Class, TimeSlot, Child, ScheduleTarget } from "../types";
 import "./SchedulePage.css";
 import { GetGradeName } from "@/utils/grades";
 import { printSchedule } from "../utils/printSchedule";
@@ -49,11 +44,7 @@ import { printSchedule } from "../utils/printSchedule";
 const { Title } = Typography;
 const { Option } = Select;
 
-interface SchedulePageProps {
-  onNavigate?: AppOnNavigate;
-}
-
-const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
+const SchedulePage: React.FC = () => {
   const { t } = useTranslation();
 
   const getRoleDisplayName = (role: string): string => {
@@ -202,6 +193,14 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     // Auto-select the newly created student for staff
     setStaffSelectedChild(newChild);
     setSelectedGrade(newChild.grade);
+  };
+
+  // Handler for when a parent adds a new child via AddChildButton
+  const handleParentChildAdded = (newChild: Child) => {
+    setSelectedChild(newChild);
+    if (!isAdmin()) {
+      setSelectedGrade(newChild.grade);
+    }
   };
 
   // Auto-update grade filter when selected child changes (only for non-admin parents)
@@ -396,6 +395,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                 </Space>
               </>
             )}
+            {isParent && <AddChildButton onAdded={handleParentChildAdded} />}
             {isStaff && (
               <>
                 <ChildTrackSelector
@@ -527,17 +527,23 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
       {isParent && userChildren.length === 0 && (
         <Alert
           message={t("schedule.page.alerts.noChildrenFound.title")}
-          description={t("schedule.page.alerts.noChildrenFound.description")}
+          description={
+            <>
+              {t("schedule.page.alerts.noChildrenFound.descriptionPrefix")}
+              <AddChildButton
+                onAdded={handleParentChildAdded}
+                renderTrigger={open => (
+                  <Typography.Link onClick={open}>
+                    {t("schedule.page.addChildButton")}
+                  </Typography.Link>
+                )}
+              />
+              {t("schedule.page.alerts.noChildrenFound.descriptionSuffix")}
+            </>
+          }
           type="info"
           showIcon
           style={{ marginBottom: 16 }}
-          action={
-            <Button
-              size="small"
-              onClick={() => onNavigate?.("profile-settings")}>
-              {t("schedule.page.addChildButton")}
-            </Button>
-          }
         />
       )}
 
