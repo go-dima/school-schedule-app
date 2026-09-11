@@ -264,7 +264,16 @@ const SchedulePage: React.FC = () => {
   // refetchSelectedSchedule() updates `selectedSchedule`, the effect
   // re-runs and finds nothing further to do.
   const syncInFlightRef = React.useRef(false);
+  // activeChildIdRef always tracks the most recently seen child id, updated
+  // synchronously on every effect run (before the early-return checks) so
+  // that a resolving async call can tell "the child changed" (skip the
+  // refetch/error) apart from "the effect re-fired for the same child"
+  // (still apply the refetch/error), instead of relying on a `cancelled`
+  // closure flag that conflated the two cases.
+  const activeChildIdRef = React.useRef<string | undefined>(undefined);
   React.useEffect(() => {
+    activeChildIdRef.current = currentTrackChild?.id;
+
     if (!currentTrackChild || classes.length === 0) return;
     if (syncInFlightRef.current) return;
 
@@ -278,7 +287,7 @@ const SchedulePage: React.FC = () => {
       return;
     }
 
-    let cancelled = false;
+    const syncingChildId = currentTrackChild.id;
     syncInFlightRef.current = true;
     (async () => {
       try {
@@ -287,11 +296,11 @@ const SchedulePage: React.FC = () => {
           changes,
           viewStatus
         );
-        if (!cancelled) {
+        if (activeChildIdRef.current === syncingChildId) {
           await refetchSelectedSchedule();
         }
       } catch (err) {
-        if (!cancelled) {
+        if (activeChildIdRef.current === syncingChildId) {
           message.error(
             err instanceof Error
               ? err.message
@@ -302,10 +311,6 @@ const SchedulePage: React.FC = () => {
         syncInFlightRef.current = false;
       }
     })();
-
-    return () => {
-      cancelled = true;
-    };
   }, [
     currentTrackChild?.id,
     currentTrackChild?.grade,
