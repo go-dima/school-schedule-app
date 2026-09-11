@@ -890,19 +890,6 @@ export const childrenApi = {
     if (error) throw new ApiError(error.message);
   },
 
-  async removeChildFromParent(
-    parentId: string,
-    childId: string
-  ): Promise<void> {
-    const { error } = await supabase
-      .from("parent_child_relationships")
-      .delete()
-      .eq("parent_id", parentId)
-      .eq("child_id", childId);
-
-    if (error) throw new ApiError(error.message);
-  },
-
   async deleteChild(childId: string): Promise<void> {
     const { data, error } = await supabase
       .from("children")
