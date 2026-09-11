@@ -102,7 +102,7 @@
         },
         "noChildrenFound": {
           "title": "לא נמצאו ילדים",
-          "descriptionPrefix": "אין ילדים רשומים בחשבון שלך. ",
+          "descriptionPrefix": "אין ילדים רשומים. ",
           "descriptionSuffix": " כדי להתחיל לבחור שיעורים."
         }
       },
