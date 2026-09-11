@@ -422,7 +422,7 @@ const SchedulePage: React.FC = () => {
                 </Space>
               </>
             )}
-            {(!isParent || !userChildren.length || isAdmin()) && (
+            {(isStaff || isAdmin()) && (
               <>
                 <Select
                   value={selectedGrade}
