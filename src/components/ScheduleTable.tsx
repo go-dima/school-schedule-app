@@ -17,6 +17,7 @@ import type {
   WeeklySchedule,
 } from "../types";
 import ClassSelectionDrawer from "./ClassSelectionDrawer";
+import ClassTitleWithContinuation from "./ClassTitleWithContinuation";
 import "./ScheduleTable.css";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
 import { DoubleLessonTag } from "@/elements/DoubleLessonTag";
@@ -133,14 +134,11 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     isContinuation: boolean
   ) => (
     <>
-      <div className="class-title">
-        {cls.title}
-        {isContinuation && (
-          <span className="continuation-suffix">
-            {t("schedule.table.continuationText")}
-          </span>
-        )}
-      </div>
+      <ClassTitleWithContinuation
+        title={cls.title}
+        isContinuation={isContinuation}
+        className="class-title"
+      />
       {(cls.teacher || cls.room) && (
         <div className="class-teacher-room">
           {cls.teacher && <span className="class-teacher">{cls.teacher}</span>}
