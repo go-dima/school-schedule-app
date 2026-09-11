@@ -13,6 +13,8 @@ import {
   Tooltip,
 } from "antd";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "../routes/paths";
 import {
   ReloadOutlined,
   UserSwitchOutlined,
@@ -35,13 +37,7 @@ import { TrackSelectionService } from "../services/trackSelectionService";
 import { ScheduleService } from "../services/scheduleService";
 import { DraftBanner } from "../elements/DraftBanner";
 import { GRADES } from "../types";
-import type {
-  AppOnNavigate,
-  Class,
-  TimeSlot,
-  Child,
-  ScheduleTarget,
-} from "../types";
+import type { Class, TimeSlot, Child, ScheduleTarget } from "../types";
 import "./SchedulePage.css";
 import { GetGradeName } from "@/utils/grades";
 import { printSchedule } from "../utils/printSchedule";
@@ -49,12 +45,9 @@ import { printSchedule } from "../utils/printSchedule";
 const { Title } = Typography;
 const { Option } = Select;
 
-interface SchedulePageProps {
-  onNavigate?: AppOnNavigate;
-}
-
-const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
+const SchedulePage: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const getRoleDisplayName = (role: string): string => {
     const roleKey = `roles.${role}`;
@@ -534,7 +527,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
           action={
             <Button
               size="small"
-              onClick={() => onNavigate?.("profile-settings")}>
+              onClick={() => navigate(ROUTES.PROFILE_SETTINGS)}>
               {t("schedule.page.addChildButton")}
             </Button>
           }
