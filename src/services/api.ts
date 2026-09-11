@@ -47,37 +47,6 @@ export const authApi = {
       throw new ApiError(error.message);
     }
 
-    // If user was created successfully, create their profile in public.users
-    if (data.user && data.session) {
-      const { error: profileError } = await supabase.from("users").insert([
-        {
-          id: data.user.id,
-          email: data.user.email,
-        },
-      ]);
-
-      if (profileError) {
-        log.error("Profile creation failed", { error: profileError });
-        throw new ApiError(
-          "Failed to create user profile: " + profileError.message
-        );
-      }
-
-      // Automatically create parent role for new users
-      const { error: roleError } = await supabase.from("user_roles").insert([
-        {
-          user_id: data.user.id,
-          role: "parent",
-          approved: false, // Requires admin approval
-        },
-      ]);
-
-      if (roleError) {
-        log.error("Role creation failed", { error: roleError });
-        throw new ApiError("Failed to create user role: " + roleError.message);
-      }
-    }
-
     return data;
   },
 
@@ -120,24 +89,35 @@ export const authApi = {
   onAuthStateChange(callback: (user: any) => void) {
     return supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user || null;
-      callback(user);
 
-      // If user signed in with OAuth and doesn't exist in our users table, create profile.
-      // This must not be awaited here: supabase-js awaits this handler while holding its
-      // internal auth lock, and `supabase.from(...)` needs that same lock to attach the
-      // session, which deadlocks. Deferring lets the lock release before this query runs.
+      // On sign-in, the profile/role rows must exist before the caller's callback
+      // triggers its profile fetch — otherwise a brand-new user's fetch can race
+      // ahead of the ensure insert and get treated as signed-out. So for SIGNED_IN,
+      // defer (see below) and only invoke callback once the ensure attempt settles.
+      // Other events (session restore, token refresh) have no new user to ensure,
+      // so callback fires immediately as before.
       if (user && session && _event === "SIGNED_IN") {
+        // This must not be awaited here: supabase-js awaits this handler while holding
+        // its internal auth lock, and `supabase.from(...)` needs that same lock to attach
+        // the session, which deadlocks. Deferring lets the lock release before this query
+        // runs.
         setTimeout(() => {
-          ensureOAuthProfile(user).catch(err => {
-            log.error("OAuth profile ensure failed", { error: err });
-          });
+          ensureUserProfile(user)
+            .catch(err => {
+              log.error("User profile ensure failed", { error: err });
+            })
+            .finally(() => {
+              callback(user);
+            });
         }, 0);
+      } else {
+        callback(user);
       }
     });
   },
 };
 
-async function ensureOAuthProfile(user: any) {
+async function ensureUserProfile(user: any) {
   const { data: existingUser } = await supabase
     .from("users")
     .select("id")
@@ -158,10 +138,10 @@ async function ensureOAuthProfile(user: any) {
   ]);
 
   if (profileError) {
-    log.error("OAuth profile creation failed", { error: profileError });
+    log.error("User profile creation failed", { error: profileError });
   }
 
-  // Create parent role for OAuth users
+  // Create default parent role for new users
   const { error: roleError } = await supabase.from("user_roles").insert([
     {
       user_id: user.id,
@@ -171,7 +151,7 @@ async function ensureOAuthProfile(user: any) {
   ]);
 
   if (roleError) {
-    log.error("OAuth role creation failed", { error: roleError });
+    log.error("User role creation failed", { error: roleError });
   }
 }
 
