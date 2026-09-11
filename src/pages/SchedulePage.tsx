@@ -275,6 +275,15 @@ const SchedulePage: React.FC = () => {
     activeChildIdRef.current = currentTrackChild?.id;
 
     if (!currentTrackChild || classes.length === 0) return;
+    // selectedSchedule loads independently of classes (a separate hook,
+    // useSelectedSchedule) and starts as `[]` until its own fetch resolves.
+    // Without this guard, a fast `classes` load racing a slow
+    // `selectedSchedule` fetch would run computeChanges against that empty
+    // placeholder -- not because nothing is actually selected, but because
+    // the fetch simply hasn't returned yet -- and try to re-insert rows
+    // that already exist in the DB, tripping the unique constraint on
+    // every fresh page load for an already-synced child.
+    if (selectedScheduleLoading) return;
     if (syncInFlightRef.current) return;
 
     const changes = GroupMandatoryLockService.computeChanges(
@@ -317,6 +326,7 @@ const SchedulePage: React.FC = () => {
     currentTrackChild?.groupNumber,
     classes,
     selectedSchedule,
+    selectedScheduleLoading,
     viewStatus,
   ]);
 
