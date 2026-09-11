@@ -40,6 +40,8 @@ interface ScheduleTableProps {
   showEnrollmentCount?: boolean;
   onCreateClass?: (timeSlotId: string, dayOfWeek: number) => void;
   searchTerm?: string;
+  childGroupNumber?: number | null;
+  lockedClassIds?: string[];
 }
 
 interface ScheduleRow {
@@ -64,6 +66,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   showEnrollmentCount = false,
   onCreateClass,
   searchTerm = "",
+  childGroupNumber,
+  lockedClassIds = [],
 }) => {
   const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -111,6 +115,20 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     setSelectedDayOfWeek(null);
   };
 
+  // A grouped class (groupNumber !== null) only appears as an option when
+  // it matches the active child's group exactly. Ungrouped classes always
+  // pass through untouched, regardless of the child's group -- this is
+  // purely a visibility filter, independent of the separate lock/disable
+  // logic driven by `lockedClassIds`.
+  const filterByGroup = (
+    classesToFilter: ClassWithTimeSlot[]
+  ): ClassWithTimeSlot[] => {
+    if (childGroupNumber === undefined) return classesToFilter;
+    return classesToFilter.filter(
+      cls => cls.groupNumber === null || cls.groupNumber === childGroupNumber
+    );
+  };
+
   // Helper function to check if a time slot should be highlighted based on search term
   const shouldHighlightTimeSlot = (
     timeSlot: TimeSlot,
@@ -123,6 +141,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     let filteredClasses = userGrade
       ? dayClasses.filter(cls => cls.grades?.includes(userGrade))
       : dayClasses;
+    filteredClasses = filterByGroup(filteredClasses);
 
     return filteredClasses.some(cls =>
       cls.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -161,6 +180,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     let filteredClasses = userGrade
       ? dayClasses.filter(cls => cls.grades?.includes(userGrade))
       : dayClasses;
+    filteredClasses = filterByGroup(filteredClasses);
 
     const displayInfo = getTimeSlotDisplayInfo(timeSlot);
     const isSelectableSlot = displayInfo.isSelectable && canViewClasses;
@@ -478,17 +498,19 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       {selectedTimeSlot &&
         selectedDayOfWeek !== null &&
         (() => {
-          const classesForSlot = classes.filter(cls => {
-            if (userGrade && !cls.grades?.includes(userGrade)) {
-              return false;
-            }
+          const classesForSlot = filterByGroup(
+            classes.filter(cls => {
+              if (userGrade && !cls.grades?.includes(userGrade)) {
+                return false;
+              }
 
-            return cls.slots.some(
-              slot =>
-                slot.dayOfWeek === selectedDayOfWeek &&
-                slot.timeSlotId === selectedTimeSlot.id
-            );
-          });
+              return cls.slots.some(
+                slot =>
+                  slot.dayOfWeek === selectedDayOfWeek &&
+                  slot.timeSlotId === selectedTimeSlot.id
+              );
+            })
+          );
 
           // Selections for the slot being viewed shouldn't count as a
           // conflict against ordinary alternatives in that same slot —
@@ -516,6 +538,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               classes={classesForSlot}
               selectedClasses={selectedClasses}
               draftPickedClassIds={draftPickedClassIds}
+              lockedClassIds={lockedClassIds}
               conflictingClasses={classesForSlot.filter(cls => {
                 if (selectedClasses.includes(cls.id)) return false;
                 const relevantSelections =
