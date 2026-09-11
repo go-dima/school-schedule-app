@@ -1,4 +1,3 @@
-// src/layouts/AppLayout.tsx
 import React, { useState } from "react";
 import { Layout } from "antd";
 import { Outlet } from "react-router-dom";

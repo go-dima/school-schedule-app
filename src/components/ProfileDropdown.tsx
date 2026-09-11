@@ -1,4 +1,3 @@
-// src/components/ProfileDropdown.tsx
 import React from "react";
 import { Dropdown, Avatar, Typography, Space } from "antd";
 import {

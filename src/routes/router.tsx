@@ -1,5 +1,4 @@
-// src/routes/router.tsx
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import AppLayout from "../layouts/AppLayout";
 import LoginPage from "../pages/LoginPage";
 import SignupPage from "../pages/SignupPage";
@@ -23,74 +22,90 @@ import {
   NotFoundGate,
 } from "./guards";
 import { ROUTES } from "./paths";
+import { RouteErrorFallback } from "../components/ErrorBoundary";
 
 export const router = createBrowserRouter([
   {
-    element: <PublicOnlyGate />,
-    children: [
-      { path: ROUTES.LOGIN, element: <LoginPage /> },
-      { path: ROUTES.SIGNUP, element: <SignupPage /> },
-    ],
-  },
-  {
-    element: <SignupVerifyEmailGate />,
+    element: <Outlet />,
+    errorElement: <RouteErrorFallback />,
     children: [
       {
-        path: ROUTES.SIGNUP_VERIFY_EMAIL,
-        element: <SignupVerifyEmailPage />,
-      },
-    ],
-  },
-  {
-    element: <ProfileSetupGate />,
-    children: [{ path: ROUTES.PROFILE_SETUP, element: <ProfileSetupPage /> }],
-  },
-  {
-    element: <PendingApprovalGate />,
-    children: [
-      { path: ROUTES.PENDING_APPROVAL, element: <PendingApprovalPage /> },
-    ],
-  },
-  {
-    element: <AuthGate />,
-    children: [
-      {
-        element: <AppLayout />,
+        element: <PublicOnlyGate />,
         children: [
-          { index: true, element: <Navigate to={ROUTES.SCHEDULE} replace /> },
-          { path: ROUTES.SCHEDULE, element: <SchedulePage /> },
+          { path: ROUTES.LOGIN, element: <LoginPage /> },
+          { path: ROUTES.SIGNUP, element: <SignupPage /> },
+        ],
+      },
+      {
+        element: <SignupVerifyEmailGate />,
+        children: [
           {
-            element: <RequireClassManager />,
-            children: [
-              {
-                path: ROUTES.CLASS_MANAGEMENT,
-                element: <ClassManagementPage />,
-              },
-              { path: ROUTES.STUDENTS, element: <StudentsPage /> },
-            ],
-          },
-          {
-            path: ROUTES.USER_MANAGEMENT,
-            element: <RequireAdmin />,
-            children: [
-              {
-                index: true,
-                element: <Navigate to={ROUTES.USER_MANAGEMENT_LIST} replace />,
-              },
-              { path: "list", element: <UserListPage /> },
-              {
-                path: "pending-approvals",
-                element: <PendingApprovalsPage />,
-              },
-            ],
-          },
-          {
-            path: ROUTES.PROFILE_SETTINGS,
-            element: <ProfileSettingsPage />,
+            path: ROUTES.SIGNUP_VERIFY_EMAIL,
+            element: <SignupVerifyEmailPage />,
           },
         ],
       },
+      {
+        element: <ProfileSetupGate />,
+        children: [
+          { path: ROUTES.PROFILE_SETUP, element: <ProfileSetupPage /> },
+        ],
+      },
+      {
+        element: <PendingApprovalGate />,
+        children: [
+          { path: ROUTES.PENDING_APPROVAL, element: <PendingApprovalPage /> },
+        ],
+      },
+      {
+        element: <AuthGate />,
+        children: [
+          {
+            element: <AppLayout />,
+            children: [
+              {
+                index: true,
+                element: <Navigate to={ROUTES.SCHEDULE} replace />,
+              },
+              { path: ROUTES.SCHEDULE, element: <SchedulePage /> },
+              {
+                element: <RequireClassManager />,
+                children: [
+                  {
+                    path: ROUTES.CLASS_MANAGEMENT,
+                    element: <ClassManagementPage />,
+                  },
+                  { path: ROUTES.STUDENTS, element: <StudentsPage /> },
+                ],
+              },
+              {
+                path: ROUTES.USER_MANAGEMENT,
+                element: <RequireAdmin />,
+                // "list"/"pending-approvals" here must match the trailing segment of
+                // ROUTES.USER_MANAGEMENT_LIST / ROUTES.USER_MANAGEMENT_PENDING_APPROVALS in ./paths.ts
+                children: [
+                  {
+                    index: true,
+                    element: (
+                      <Navigate to={ROUTES.USER_MANAGEMENT_LIST} replace />
+                    ),
+                  },
+                  { path: "list", element: <UserListPage /> },
+                  {
+                    path: "pending-approvals",
+                    element: <PendingApprovalsPage />,
+                  },
+                ],
+              },
+              {
+                path: ROUTES.PROFILE_SETTINGS,
+                element: <ProfileSettingsPage />,
+              },
+            ],
+          },
+        ],
+      },
+      { path: "*", element: <NotFoundGate /> },
     ],
   },
-  { path: "*", element: <NotFoundGate /> },
 ]);

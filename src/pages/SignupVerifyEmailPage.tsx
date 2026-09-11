@@ -1,4 +1,3 @@
-// src/pages/SignupVerifyEmailPage.tsx
 import React from "react";
 import { Card, Typography, Alert, Button } from "antd";
 import { useTranslation } from "react-i18next";

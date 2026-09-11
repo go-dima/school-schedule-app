@@ -1,4 +1,3 @@
-// src/pages/SignupPage.tsx
 import React, { useState } from "react";
 import {
   Form,
@@ -39,6 +38,12 @@ const SignupPage: React.FC = () => {
 
     try {
       await signUp(values.email, values.password);
+      // This runs after signUp's shared `loading` flag has already unmounted and
+      // remounted this component (see docs/superpowers/plans/2026-09-11-url-based-routing.md).
+      // navigate() still works post-unmount because react-router v6's internal
+      // navigate-stability guard isn't reset on unmount — an implementation detail,
+      // not a documented contract. If a future react-router upgrade changes this,
+      // this call would silently become a no-op.
       navigate(ROUTES.SIGNUP_VERIFY_EMAIL, {
         state: { fromSignup: true },
         replace: true,

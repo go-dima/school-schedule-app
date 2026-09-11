@@ -1,17 +1,11 @@
-// src/routes/guards.tsx
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { resolveGate } from "./resolveGate";
 import { ROUTES } from "./paths";
 
-function useHasProfile(): boolean {
-  const { user } = useAuth();
-  return Boolean(user?.firstName && user?.lastName);
-}
-
 function useGate() {
   const { user, userRoles } = useAuth();
-  const hasProfile = useHasProfile();
+  const hasProfile = Boolean(user?.firstName && user?.lastName);
   return resolveGate({ user, hasProfile, roles: userRoles });
 }
 

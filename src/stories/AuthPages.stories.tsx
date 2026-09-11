@@ -1,4 +1,3 @@
-// src/stories/AuthPages.stories.tsx
 import type { Meta, StoryObj } from "@storybook/react";
 import LoginPage from "../pages/LoginPage";
 import SignupPage from "../pages/SignupPage";

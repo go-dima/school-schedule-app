@@ -1,6 +1,4 @@
-// src/routes/paths.ts
 export const ROUTES = {
-  ROOT: "/",
   SCHEDULE: "/schedule",
   CLASS_MANAGEMENT: "/class-management",
   STUDENTS: "/students",
@@ -14,5 +12,3 @@ export const ROUTES = {
   PROFILE_SETUP: "/profile-setup",
   PENDING_APPROVAL: "/pending-approval",
 } as const;
-
-export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES];

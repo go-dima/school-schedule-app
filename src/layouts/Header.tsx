@@ -1,4 +1,3 @@
-// src/layouts/Header.tsx
 import React from "react";
 import { Layout, Typography } from "antd";
 import {
@@ -8,6 +7,7 @@ import {
   SettingOutlined,
   CheckCircleOutlined,
   HomeOutlined,
+  UsergroupAddOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
@@ -29,6 +29,11 @@ const Header: React.FC = () => {
         return {
           title: t("navigation.classManagement"),
           icon: <BookOutlined />,
+        };
+      case ROUTES.STUDENTS:
+        return {
+          title: t("navigation.students"),
+          icon: <UsergroupAddOutlined />,
         };
       case ROUTES.USER_MANAGEMENT_LIST:
         return { title: t("navigation.userList"), icon: <UserOutlined /> };
