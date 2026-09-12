@@ -214,6 +214,80 @@ describe("ScheduleService.getConflictingClasses / hasTimeConflict", () => {
   });
 });
 
+describe("ScheduleService.getDrawerConflicts", () => {
+  it("flags a double lesson that overlaps a different, already-selected class in its other (empty) slot", () => {
+    const b = makeClass({
+      id: "b",
+      slots: [{ dayOfWeek: 0, timeSlotId: tsFirst.id, timeSlot: tsFirst }],
+    });
+    const doubleA = makeClass({
+      id: "double-a",
+      isDouble: true,
+      slots: [
+        { dayOfWeek: 0, timeSlotId: tsFirst.id, timeSlot: tsFirst },
+        { dayOfWeek: 0, timeSlotId: tsSecond.id, timeSlot: tsSecond },
+      ],
+    });
+    const userSelections = [makeSelection(b)];
+
+    const conflicts = ScheduleService.getDrawerConflicts(
+      [doubleA],
+      userSelections,
+      ["b"],
+      0,
+      tsSecond.id
+    );
+
+    expect(conflicts.map(c => c.id)).toEqual(["double-a"]);
+  });
+
+  it("does not flag any candidate as conflicted once the viewed slot already has a selection (blocked by single-choice-per-slot instead)", () => {
+    const b = makeClass({
+      id: "b",
+      slots: [{ dayOfWeek: 0, timeSlotId: tsFirst.id, timeSlot: tsFirst }],
+    });
+    const c = makeClass({
+      id: "c",
+      slots: [{ dayOfWeek: 0, timeSlotId: tsSecond.id, timeSlot: tsSecond }],
+    });
+    const doubleA = makeClass({
+      id: "double-a",
+      isDouble: true,
+      slots: [
+        { dayOfWeek: 0, timeSlotId: tsFirst.id, timeSlot: tsFirst },
+        { dayOfWeek: 0, timeSlotId: tsSecond.id, timeSlot: tsSecond },
+      ],
+    });
+    const userSelections = [makeSelection(b), makeSelection(c)];
+
+    const conflicts = ScheduleService.getDrawerConflicts(
+      [c, doubleA],
+      userSelections,
+      ["b", "c"],
+      0,
+      tsSecond.id
+    );
+
+    expect(conflicts).toEqual([]);
+  });
+
+  it("does not flag a track-linked candidate against a class already selected in the very same slot", () => {
+    const selectedInSlot = makeClass({ id: "selected" });
+    const trackCandidate = makeClass({ id: "track-candidate", trackNumber: 1 });
+    const userSelections = [makeSelection(selectedInSlot)];
+
+    const conflicts = ScheduleService.getDrawerConflicts(
+      [selectedInSlot, trackCandidate],
+      userSelections,
+      ["selected"],
+      0,
+      tsFirst.id
+    );
+
+    expect(conflicts).toEqual([]);
+  });
+});
+
 describe("ScheduleService.getNextConsecutiveTimeSlot", () => {
   const lesson1: TimeSlot = { ...tsFirst, name: "שיעור ראשון" };
   const lesson2: TimeSlot = { ...tsSecond, name: "שיעור שני" };

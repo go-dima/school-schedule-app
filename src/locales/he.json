@@ -164,6 +164,7 @@
       "selectButton": "בחר שיעור",
       "trackLockedTooltip": "שיעור זה נבחר אוטומטית לפי המסלול. יש לשנות את המסלול כדי להסירו",
       "trackUnselectableTooltip": "לא ניתן לבחור שיעור במסלול, יש לבחר את המסלול כולו",
+      "timeConflictUnselectableTooltip": "לא ניתן לבחור - השיעור השני תפוס על ידי שיעור אחר",
       "doubleLessonTag": "שיעור כפול",
       "teacherLabel": "מורה: ",
       "timeLabel": "זמן: ",
