@@ -77,7 +77,7 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
       type={isSelected ? "default" : "primary"}
       icon={isSelected ? <CheckOutlined /> : undefined}
       onClick={onToggle}
-      disabled={isGrayedOut || isLocked}
+      disabled={isGrayedOut || isLocked || hasConflict}
       block>
       {isSelected
         ? t("schedule.drawer.unselectButton")
@@ -101,8 +101,15 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
                   <Tooltip
                     title={t(
                       isSelected
-                        ? "schedule.drawer.trackLockedTooltip"
-                        : "schedule.drawer.trackUnselectableTooltip"
+                        ? "schedule.drawer.lockedClassTooltip"
+                        : "schedule.drawer.lockedClassUnselectableTooltip"
+                    )}>
+                    <span style={{ display: "block" }}>{toggleButton}</span>
+                  </Tooltip>
+                ) : hasConflict ? (
+                  <Tooltip
+                    title={t(
+                      "schedule.drawer.timeConflictUnselectableTooltip"
                     )}>
                     <span style={{ display: "block" }}>{toggleButton}</span>
                   </Tooltip>
