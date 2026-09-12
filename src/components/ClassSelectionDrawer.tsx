@@ -18,6 +18,7 @@ interface ClassSelectionDrawerProps {
   classes: ClassWithTimeSlot[];
   selectedClasses?: string[];
   draftPickedClassIds?: string[];
+  lockedClassIds?: string[];
   onClassSelect?: (classId: string) => void;
   onClassUnselect?: (classId: string) => void;
   conflictingClasses?: ClassWithTimeSlot[];
@@ -35,6 +36,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
   classes,
   selectedClasses = [],
   draftPickedClassIds = [],
+  lockedClassIds = [],
   onClassSelect,
   onClassUnselect,
   conflictingClasses = [],
@@ -80,7 +82,7 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
       cls={cls}
       isGrayedOut={isGrayedOut}
       isSelected={selectedClasses.includes(cls.id)}
-      isLocked={cls.trackNumber !== null}
+      isLocked={cls.trackNumber !== null || lockedClassIds.includes(cls.id)}
       hasConflict={conflictingClasses.some(conflict => conflict.id === cls.id)}
       canSelectClasses={canSelectClasses}
       onToggle={() => handleClassToggle(cls.id)}
