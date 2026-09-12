@@ -101,8 +101,8 @@ const ClassSelectionCard: React.FC<ClassSelectionCardProps> = ({
                   <Tooltip
                     title={t(
                       isSelected
-                        ? "schedule.drawer.trackLockedTooltip"
-                        : "schedule.drawer.trackUnselectableTooltip"
+                        ? "schedule.drawer.lockedClassTooltip"
+                        : "schedule.drawer.lockedClassUnselectableTooltip"
                     )}>
                     <span style={{ display: "block" }}>{toggleButton}</span>
                   </Tooltip>

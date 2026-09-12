@@ -28,7 +28,12 @@ const AUTH_LOCKED_CALL_TIMEOUT_MS = 4000;
 export class ApiError extends Error {
   constructor(
     message: string,
-    public status?: number
+    public status?: number,
+    // Postgres SQLSTATE from the underlying PostgrestError, when the failure
+    // came from the database (e.g. "23505" = unique_violation). Callers that
+    // treat a specific failure as benign must key off this, never off the
+    // message text, which is locale- and wording-dependent.
+    public code?: string
   ) {
     super(message);
     this.name = "ApiError";
@@ -692,7 +697,10 @@ export const scheduleApi = {
       .insert([row])
       .select();
 
-    if (error) throw new ApiError(error.message);
+    // Preserve the SQLSTATE: an idempotent auto-assignment caller needs to
+    // distinguish a benign unique_violation ("23505" -- the row it wanted
+    // already exists) from a real failure.
+    if (error) throw new ApiError(error.message, undefined, error.code);
     return data[0];
   },
 

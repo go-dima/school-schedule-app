@@ -25,7 +25,7 @@ _Avoid_: Group, Cohort — kept distinct from Group even though both follow the 
 A Class attribute meaning a Child cannot unset it once selected, producing a Locked Selection. Used mainly for grades 1–2.
 
 **Locked Selection**:
-A Selection the Child cannot remove. Produced by Mandatory, a Group match, or a Track match — one mechanism, three triggers. Only the Mandatory trigger is implemented so far; Group and Track matching are schema/UI groundwork without auto-assignment logic behind them yet.
+A Selection the Child cannot remove. Produced by Mandatory, a Group match, or a Track match. All three triggers are implemented: Track locking lives in `SchedulePage`'s track-change sync flow; Mandatory and Group share a single auto-assign-and-lock mechanism (`GroupMandatoryLockService`), synced whenever the active child's schedule is viewed.
 
 **Selection**:
 A Class a Child has chosen for their schedule. Free by default; a Locked Selection is the exception.
