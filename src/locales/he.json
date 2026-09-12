@@ -164,6 +164,7 @@
       "selectButton": "בחר שיעור",
       "lockedClassTooltip": "שיעור זה נבחר אוטומטית ולא ניתן להסירו ידנית",
       "lockedClassUnselectableTooltip": "לא ניתן לבחור שיעור זה ידנית",
+      "timeConflictUnselectableTooltip": "לא ניתן לבחור - השיעור השני תפוס על ידי שיעור אחר",
       "doubleLessonTag": "שיעור כפול",
       "teacherLabel": "מורה: ",
       "timeLabel": "זמן: ",
