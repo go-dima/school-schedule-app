@@ -490,22 +490,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
             );
           });
 
-          // Selections for the slot being viewed shouldn't count as a
-          // conflict against ordinary alternatives in that same slot —
-          // those are already mutually exclusive via the drawer's
-          // grayed-out single-choice UI. Track-locked candidates are the
-          // exception: a track can land a class on a slot the user
-          // already picked manually, which is a real conflict that can't
-          // be resolved by choosing differently in this drawer.
-          const otherUserSelections = userSelections.filter(
-            selection =>
-              !selection.class.slots.some(
-                slot =>
-                  slot.dayOfWeek === selectedDayOfWeek &&
-                  slot.timeSlotId === selectedTimeSlot.id
-              )
-          );
-
           return (
             <ClassSelectionDrawer
               open={drawerOpen}
@@ -516,14 +500,13 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               classes={classesForSlot}
               selectedClasses={selectedClasses}
               draftPickedClassIds={draftPickedClassIds}
-              conflictingClasses={classesForSlot.filter(cls => {
-                if (selectedClasses.includes(cls.id)) return false;
-                const relevantSelections =
-                  cls.trackNumber !== null
-                    ? userSelections
-                    : otherUserSelections;
-                return ScheduleService.hasTimeConflict(relevantSelections, cls);
-              })}
+              conflictingClasses={ScheduleService.getDrawerConflicts(
+                classesForSlot,
+                userSelections,
+                selectedClasses,
+                selectedDayOfWeek,
+                selectedTimeSlot.id
+              )}
               onClassSelect={onClassSelect}
               onClassUnselect={onClassUnselect}
               canSelectClasses={canSelectClasses}

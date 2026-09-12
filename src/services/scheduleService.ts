@@ -132,6 +132,39 @@ export class ScheduleService {
     return this.getConflictingClasses(userSelections, newClass).length > 0;
   }
 
+  /**
+   * Conflicts to flag among the drawer's candidates for one slot. Candidates
+   * are already blocked from selection whenever the slot itself has a
+   * selection (single-choice-per-slot), so that state is never a "conflict"
+   * to warn about -- only a candidate that could otherwise be picked (e.g. a
+   * double lesson whose other slot is already taken by a different
+   * selection) counts as a real conflict.
+   */
+  static getDrawerConflicts(
+    classesForSlot: ClassWithTimeSlot[],
+    userSelections: ScheduleSelectionWithClass[],
+    selectedClasses: string[],
+    dayOfWeek: number,
+    timeSlotId: string
+  ): ClassWithTimeSlot[] {
+    const hasSelectionInThisSlot = classesForSlot.some(cls =>
+      selectedClasses.includes(cls.id)
+    );
+    if (hasSelectionInThisSlot) return [];
+
+    const otherUserSelections = userSelections.filter(
+      selection =>
+        !selection.class.slots.some(
+          slot => slot.dayOfWeek === dayOfWeek && slot.timeSlotId === timeSlotId
+        )
+    );
+
+    return classesForSlot.filter(cls => {
+      if (selectedClasses.includes(cls.id)) return false;
+      return this.hasTimeConflict(otherUserSelections, cls);
+    });
+  }
+
   static getNextConsecutiveTimeSlot(
     currentTimeSlot: TimeSlot,
     allTimeSlots: TimeSlot[]
