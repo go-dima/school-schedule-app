@@ -3,7 +3,9 @@ import type {
   ClassSlotWithTimeSlot,
   ClassWithTimeSlot,
   ScheduleSelectionWithClass,
+  SelectionStatus,
   TimeSlot,
+  UserRole,
   WeeklySchedule,
 } from "../types";
 import { isLessonTimeSlot } from "../utils/timeSlots";
@@ -130,6 +132,39 @@ export class ScheduleService {
     return this.getConflictingClasses(userSelections, newClass).length > 0;
   }
 
+  /**
+   * Conflicts to flag among the drawer's candidates for one slot. Candidates
+   * are already blocked from selection whenever the slot itself has a
+   * selection (single-choice-per-slot), so that state is never a "conflict"
+   * to warn about -- only a candidate that could otherwise be picked (e.g. a
+   * double lesson whose other slot is already taken by a different
+   * selection) counts as a real conflict.
+   */
+  static getDrawerConflicts(
+    classesForSlot: ClassWithTimeSlot[],
+    userSelections: ScheduleSelectionWithClass[],
+    selectedClasses: string[],
+    dayOfWeek: number,
+    timeSlotId: string
+  ): ClassWithTimeSlot[] {
+    const hasSelectionInThisSlot = classesForSlot.some(cls =>
+      selectedClasses.includes(cls.id)
+    );
+    if (hasSelectionInThisSlot) return [];
+
+    const otherUserSelections = userSelections.filter(
+      selection =>
+        !selection.class.slots.some(
+          slot => slot.dayOfWeek === dayOfWeek && slot.timeSlotId === timeSlotId
+        )
+    );
+
+    return classesForSlot.filter(cls => {
+      if (selectedClasses.includes(cls.id)) return false;
+      return this.hasTimeConflict(otherUserSelections, cls);
+    });
+  }
+
   static getNextConsecutiveTimeSlot(
     currentTimeSlot: TimeSlot,
     allTimeSlots: TimeSlot[]
@@ -188,5 +223,31 @@ export class ScheduleService {
     const end = new Date(`1970-01-01T${endTime}:00`);
 
     return start < end;
+  }
+
+  /**
+   * The single decision point for which selection state a viewer edits/sees:
+   * staff and admin always work in committed, everyone else (parent, child,
+   * or no role yet) works in draft.
+   */
+  static resolveSelectionStatus(role: UserRole | undefined): SelectionStatus {
+    return role === "staff" || role === "admin" ? "committed" : "draft";
+  }
+
+  /**
+   * Stable-sorts classes so draft-marked ones come first, preserving
+   * relative order within each group. Intended for the drawer's
+   * already-non-selected "available" subset -- a class in both `classes`
+   * and `draftClassIds` just moves to the front, it is never duplicated.
+   */
+  static orderClassesByPickStatus(
+    classes: ClassWithTimeSlot[],
+    draftClassIds: Set<string>
+  ): ClassWithTimeSlot[] {
+    return [...classes].sort((a, b) => {
+      const aIsDraft = draftClassIds.has(a.id) ? 0 : 1;
+      const bIsDraft = draftClassIds.has(b.id) ? 0 : 1;
+      return aIsDraft - bIsDraft;
+    });
   }
 }

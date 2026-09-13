@@ -13,11 +13,11 @@ interface ChildFormProps {
     lastName: string;
     grade: number;
     groupNumber: number | null;
-    trackNumber?: number | null;
     scope?: Scope;
   }) => Promise<void>;
   onCancel: () => void;
   loading?: boolean;
+  showScope?: boolean;
 }
 
 export function ChildForm({
@@ -25,6 +25,7 @@ export function ChildForm({
   onSubmit,
   onCancel,
   loading = false,
+  showScope = true,
 }: ChildFormProps) {
   const { t } = useTranslation();
   const [form] = Form.useForm();
@@ -37,7 +38,6 @@ export function ChildForm({
         lastName: values.lastName,
         grade: values.grade,
         groupNumber: values.groupNumber ?? null,
-        trackNumber: values.trackNumber ?? null,
         scope: values.scope,
       });
       message.success(
@@ -60,7 +60,6 @@ export function ChildForm({
         lastName: child?.lastName || "",
         grade: child?.grade || 1,
         groupNumber: child?.groupNumber ?? null,
-        trackNumber: child?.trackNumber ?? null,
         scope: child?.scope || "prod",
       }}>
       <Form.Item
@@ -99,14 +98,7 @@ export function ChildForm({
         />
       </Form.Item>
 
-      <Form.Item label={t("form.child.trackLabel")} name="trackNumber">
-        <GroupTrackSelect
-          optionLabel={track => t("form.child.trackOption", { track })}
-          placeholder={t("form.child.trackPlaceholder")}
-        />
-      </Form.Item>
-
-      <ScopeSelector />
+      {showScope && <ScopeSelector />}
 
       <Form.Item>
         <Space>

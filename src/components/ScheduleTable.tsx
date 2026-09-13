@@ -17,6 +17,7 @@ import type {
   WeeklySchedule,
 } from "../types";
 import ClassSelectionDrawer from "./ClassSelectionDrawer";
+import ClassTitleWithContinuation from "./ClassTitleWithContinuation";
 import "./ScheduleTable.css";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
 import { DoubleLessonTag } from "@/elements/DoubleLessonTag";
@@ -29,14 +30,18 @@ interface ScheduleTableProps {
   weeklySchedule: WeeklySchedule;
   userGrade?: number;
   selectedClasses?: string[];
+  draftPickedClassIds?: string[];
   userSelections?: ScheduleSelectionWithClass[];
   onClassSelect?: (classId: string) => void;
   onClassUnselect?: (classId: string) => void;
   canSelectClasses?: boolean;
   canViewClasses?: boolean;
   isAdmin?: boolean;
+  showEnrollmentCount?: boolean;
   onCreateClass?: (timeSlotId: string, dayOfWeek: number) => void;
   searchTerm?: string;
+  childGroupNumber?: number | null;
+  lockedClassIds?: string[];
 }
 
 interface ScheduleRow {
@@ -51,14 +56,18 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   weeklySchedule,
   userGrade,
   selectedClasses = [],
+  draftPickedClassIds = [],
   userSelections = [],
   onClassSelect,
   onClassUnselect,
   canSelectClasses = false,
   canViewClasses = false,
   isAdmin = false,
+  showEnrollmentCount = false,
   onCreateClass,
   searchTerm = "",
+  childGroupNumber,
+  lockedClassIds = [],
 }) => {
   const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -83,10 +92,10 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       }
     };
 
-    if (classes.length > 0) {
+    if (showEnrollmentCount && classes.length > 0) {
       fetchEnrollmentCounts();
     }
-  }, [classes]);
+  }, [classes, showEnrollmentCount]);
 
   const handleCellClick = (timeSlot: TimeSlot, dayOfWeek: number) => {
     if (!canViewClasses) return;
@@ -106,6 +115,20 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     setSelectedDayOfWeek(null);
   };
 
+  // A grouped class (groupNumber !== null) only appears as an option when
+  // it matches the active child's group exactly. Ungrouped classes always
+  // pass through untouched, regardless of the child's group -- this is
+  // purely a visibility filter, independent of the separate lock/disable
+  // logic driven by `lockedClassIds`.
+  const filterByGroup = (
+    classesToFilter: ClassWithTimeSlot[]
+  ): ClassWithTimeSlot[] => {
+    if (childGroupNumber === undefined) return classesToFilter;
+    return classesToFilter.filter(
+      cls => cls.groupNumber === null || cls.groupNumber === childGroupNumber
+    );
+  };
+
   // Helper function to check if a time slot should be highlighted based on search term
   const shouldHighlightTimeSlot = (
     timeSlot: TimeSlot,
@@ -118,6 +141,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     let filteredClasses = userGrade
       ? dayClasses.filter(cls => cls.grades?.includes(userGrade))
       : dayClasses;
+    filteredClasses = filterByGroup(filteredClasses);
 
     return filteredClasses.some(cls =>
       cls.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -128,12 +152,39 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   const classHasConflict = (cls: ClassWithTimeSlot): boolean =>
     ScheduleService.hasTimeConflict(userSelections, cls);
 
+  const renderClassCardHeader = (
+    cls: ClassWithTimeSlot,
+    isContinuation: boolean
+  ) => (
+    <>
+      <ClassTitleWithContinuation
+        title={cls.title}
+        isContinuation={isContinuation}
+        className="class-title"
+      />
+      {(cls.teacher || cls.room) && (
+        <div className="class-teacher-room">
+          {cls.teacher && <span className="class-teacher">{cls.teacher}</span>}
+          {cls.teacher && cls.room && (
+            <span className="class-teacher-room-sep"> • </span>
+          )}
+          {cls.room && (
+            <span className="class-room">
+              {t("schedule.table.room", { room: cls.room })}
+            </span>
+          )}
+        </div>
+      )}
+    </>
+  );
+
   const renderClassCell = (timeSlot: TimeSlot, dayOfWeek: number) => {
     const dayClasses = weeklySchedule[dayOfWeek]?.[timeSlot.id] || [];
 
     let filteredClasses = userGrade
       ? dayClasses.filter(cls => cls.grades?.includes(userGrade))
       : dayClasses;
+    filteredClasses = filterByGroup(filteredClasses);
 
     const displayInfo = getTimeSlotDisplayInfo(timeSlot);
     const isSelectableSlot = displayInfo.isSelectable && canViewClasses;
@@ -178,24 +229,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           <Card
             size="small"
             className={`class-card selected-card double-card ${isMandatory ? "mandatory-card" : ""}`}>
-            <div className="class-title">{doubleClass.title}</div>
-            <div className="class-teacher">{doubleClass.teacher}</div>
-            {doubleClass.room && (
-              <div className="class-room">
-                {t("schedule.table.room", { room: doubleClass.room })}
-              </div>
-            )}
-            <div
-              className="continuation-text"
-              style={{
-                marginBottom: 4,
-                fontSize: "10px",
-                fontStyle: "italic",
-                color: "#fa8c16",
-                textAlign: "center",
-              }}>
-              {t("schedule.table.continuationText")}
-            </div>
+            {renderClassCardHeader(doubleClass, true)}
             <div className="class-labels-row">
               <div className="class-enrollment-labels">
                 <div className="class-tags">
@@ -203,11 +237,13 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                   <DoubleLessonTag />
                 </div>
               </div>
-              <div className="class-enrollment-icon">
-                <EnrollmentCount
-                  count={enrollmentCounts.get(doubleClass.id) || 0}
-                />
-              </div>
+              {showEnrollmentCount && (
+                <div className="class-enrollment-icon">
+                  <EnrollmentCount
+                    count={enrollmentCounts.get(doubleClass.id) || 0}
+                  />
+                </div>
+              )}
             </div>
           </Card>
         </div>
@@ -283,13 +319,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                 style={{
                   marginBottom: selectedPrimaryClasses.length > 1 ? 4 : 0,
                 }}>
-                <div className="class-title">{cls.title}</div>
-                <div className="class-teacher">{cls.teacher}</div>
-                {cls.room && (
-                  <div className="class-room">
-                    {t("schedule.table.room", { room: cls.room })}
-                  </div>
-                )}
+                {renderClassCardHeader(cls, false)}
                 <div className="class-labels-row">
                   <div className="class-enrollment-labels">
                     <div className="class-tags">
@@ -297,11 +327,13 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
                       {isDoubleLesson && <DoubleLessonTag />}
                     </div>
                   </div>
-                  <div className="class-enrollment-icon">
-                    <EnrollmentCount
-                      count={enrollmentCounts.get(cls.id) || 0}
-                    />
-                  </div>
+                  {showEnrollmentCount && (
+                    <div className="class-enrollment-icon">
+                      <EnrollmentCount
+                        count={enrollmentCounts.get(cls.id) || 0}
+                      />
+                    </div>
+                  )}
                 </div>
               </Card>
             );
@@ -471,32 +503,49 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
         rowClassName={record => record.className || ""}
       />
 
-      {selectedTimeSlot && selectedDayOfWeek !== null && (
-        <ClassSelectionDrawer
-          open={drawerOpen}
-          onClose={handleCloseDrawer}
-          timeSlot={selectedTimeSlot}
-          dayOfWeek={selectedDayOfWeek}
-          timeSlots={timeSlots}
-          classes={classes.filter(cls => {
-            if (userGrade && !cls.grades?.includes(userGrade)) {
-              return false;
-            }
+      {selectedTimeSlot &&
+        selectedDayOfWeek !== null &&
+        (() => {
+          const classesForSlot = filterByGroup(
+            classes.filter(cls => {
+              if (userGrade && !cls.grades?.includes(userGrade)) {
+                return false;
+              }
 
-            return cls.slots.some(
-              slot =>
-                slot.dayOfWeek === selectedDayOfWeek &&
-                slot.timeSlotId === selectedTimeSlot.id
-            );
-          })}
-          selectedClasses={selectedClasses}
-          onClassSelect={onClassSelect}
-          onClassUnselect={onClassUnselect}
-          canSelectClasses={canSelectClasses}
-          isAdmin={isAdmin}
-          onCreateClass={onCreateClass}
-        />
-      )}
+              return cls.slots.some(
+                slot =>
+                  slot.dayOfWeek === selectedDayOfWeek &&
+                  slot.timeSlotId === selectedTimeSlot.id
+              );
+            })
+          );
+
+          return (
+            <ClassSelectionDrawer
+              open={drawerOpen}
+              onClose={handleCloseDrawer}
+              timeSlot={selectedTimeSlot}
+              dayOfWeek={selectedDayOfWeek}
+              timeSlots={timeSlots}
+              classes={classesForSlot}
+              selectedClasses={selectedClasses}
+              draftPickedClassIds={draftPickedClassIds}
+              lockedClassIds={lockedClassIds}
+              conflictingClasses={ScheduleService.getDrawerConflicts(
+                classesForSlot,
+                userSelections,
+                selectedClasses,
+                selectedDayOfWeek,
+                selectedTimeSlot.id
+              )}
+              onClassSelect={onClassSelect}
+              onClassUnselect={onClassUnselect}
+              canSelectClasses={canSelectClasses}
+              isAdmin={isAdmin}
+              onCreateClass={onCreateClass}
+            />
+          );
+        })()}
     </div>
   );
 };

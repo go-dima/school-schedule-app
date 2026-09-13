@@ -24,7 +24,7 @@ export const mockTimeSlots: TimeSlot[] = getDefaultTimeSlots().map(
 const lessonSlots = mockTimeSlots.filter(isLessonTimeSlot);
 
 const subjects = [
-  { title: "מתמטיקה", teacher: "מורה שרה" },
+  { title: "מתמטיקה", teacher: "מורה ג'ון נאש" },
   { title: "עברית", teacher: "מורה רחל" },
   { title: "אנגלית", teacher: "מורה דוד" },
   { title: "מדעים", teacher: "מורה מיכל" },
@@ -228,6 +228,7 @@ export const buildUserSelections = (
       id: `selection-${cls.id}`,
       userId: "user-1",
       classId: cls.id,
+      status: "committed" as const,
       createdAt: "2024-01-01T00:00:00Z",
       updatedAt: "2024-01-01T00:00:00Z",
       class: cls,

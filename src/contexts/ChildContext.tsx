@@ -9,6 +9,13 @@ interface ChildContextType {
   children: Child[];
   loading: boolean;
   error: string | null;
+  createChild: (
+    firstName: string,
+    lastName: string,
+    grade: number,
+    groupNumber?: number | null,
+    trackNumber?: number | null
+  ) => Promise<Child>;
   updateChild: (
     childId: string,
     updates: {
@@ -20,6 +27,7 @@ interface ChildContextType {
       scope?: Scope;
     }
   ) => Promise<Child>;
+  removeChild: (childId: string) => Promise<void>;
 }
 
 const ChildContext = createContext<ChildContextType | undefined>(undefined);
@@ -33,7 +41,8 @@ export function ChildProvider({
     undefined
   );
   const { hasRole } = useAuth();
-  const { children, loading, error, updateChild } = useChildren();
+  const { children, loading, error, createChild, updateChild, removeChild } =
+    useChildren();
   const isParent = hasRole("parent");
 
   // Auto-select first child if user is a parent and no child is selected
@@ -68,7 +77,9 @@ export function ChildProvider({
         children,
         loading,
         error,
+        createChild,
         updateChild,
+        removeChild,
       }}>
       {reactChildren}
     </ChildContext.Provider>

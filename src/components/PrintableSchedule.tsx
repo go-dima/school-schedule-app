@@ -12,6 +12,7 @@ import {
 } from "../utils/timeSlots";
 import type { TimeSlot, WeeklySchedule, Child } from "../types";
 import { GetGradeName } from "../utils/grades";
+import ClassTitleWithContinuation from "./ClassTitleWithContinuation";
 import "./PrintableSchedule.css";
 
 interface PrintableScheduleProps {
@@ -19,6 +20,7 @@ interface PrintableScheduleProps {
   timeSlots: TimeSlot[];
   weeklySchedule: WeeklySchedule;
   selectedClasses: string[];
+  showDraftMarker?: boolean;
 }
 
 interface ScheduleRow {
@@ -32,6 +34,7 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
   timeSlots,
   weeklySchedule,
   selectedClasses,
+  showDraftMarker,
 }) => {
   const { t } = useTranslation();
   const renderClassCell = (timeSlot: TimeSlot, dayOfWeek: number) => {
@@ -70,16 +73,17 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
       return (
         <div className="print-schedule-cell selected double-continuation">
           <div className="print-class-card">
-            <div className="print-class-title">{doubleClass.title}</div>
+            <ClassTitleWithContinuation
+              title={doubleClass.title}
+              isContinuation
+              className="print-class-title"
+            />
             <div className="print-class-teacher">{doubleClass.teacher}</div>
             {doubleClass.room && (
               <div className="print-class-room">
                 {t("schedule.table.room", { room: doubleClass.room })}
               </div>
             )}
-            <div className="print-continuation-text">
-              {t("schedule.table.continuationText")}
-            </div>
           </div>
         </div>
       );
@@ -227,6 +231,9 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
           מערכת של {child.firstName} {child.lastName} -{" "}
           {GetGradeName(child.grade)}
         </h1>
+        {showDraftMarker && (
+          <div className="print-draft-marker">{t("schedule.draftBanner")}</div>
+        )}
       </div>
 
       <div className="print-schedule-container">

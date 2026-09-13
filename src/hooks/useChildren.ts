@@ -69,7 +69,8 @@ export function useChildren() {
         grade,
         groupNumber,
         undefined,
-        trackNumber
+        trackNumber,
+        "draft"
       );
       setChildren(prev => [...prev, newChild]);
       return newChild;
@@ -92,7 +93,25 @@ export function useChildren() {
     }
   ): Promise<Child> => {
     try {
-      const updatedChild = await childrenApi.updateChild(childId, updates);
+      const { trackNumber, ...profileUpdates } = updates;
+      const hasProfileUpdates = Object.values(profileUpdates).some(
+        value => value !== undefined
+      );
+
+      let updatedChild: Child;
+      if (hasProfileUpdates) {
+        updatedChild = await childrenApi.updateChild(childId, profileUpdates);
+      } else {
+        const existing = children.find(child => child.id === childId);
+        if (!existing) throw new Error("Child not found");
+        updatedChild = existing;
+      }
+
+      if (trackNumber !== undefined) {
+        await childrenApi.updateChildTrack(childId, "draft", trackNumber);
+        updatedChild = { ...updatedChild, trackNumber };
+      }
+
       setChildren(prev =>
         prev.map(child => (child.id === childId ? updatedChild : child))
       );
@@ -109,7 +128,7 @@ export function useChildren() {
     if (!user?.id) throw new Error("User not authenticated");
 
     try {
-      await childrenApi.removeChildFromParent(user.id, childId);
+      await childrenApi.deleteChild(childId);
       setChildren(prev => prev.filter(child => child.id !== childId));
     } catch (err) {
       const message =

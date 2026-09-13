@@ -11,7 +11,9 @@ import {
 } from "antd";
 import { UserOutlined, LockOutlined, GoogleOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { ROUTES } from "../routes/paths";
 import "./AuthPages.css";
 
 const { Title, Text, Link } = Typography;
@@ -21,12 +23,9 @@ interface LoginFormValues {
   password: string;
 }
 
-interface LoginPageProps {
-  onSwitchToSignup: () => void;
-}
-
-const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
+const LoginPage: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [form] = Form.useForm();
   const [localError, setLocalError] = useState<string | null>(null);
   const { signIn, signInWithGoogle, loading } = useAuth();
@@ -140,7 +139,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
           <div className="auth-footer">
             <Text>
               {t("auth.login.signupPrompt")}{" "}
-              <Link onClick={onSwitchToSignup}>
+              <Link onClick={() => navigate(ROUTES.SIGNUP)}>
                 {t("auth.login.signupLink")}
               </Link>
             </Text>

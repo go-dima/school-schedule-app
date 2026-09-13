@@ -22,6 +22,14 @@
       "title": "הרשמה",
       "subtitle": "צור חשבון הורה חדש במערכת השעות",
       "error": "שגיאה בהרשמה",
+      "verifyEmail": {
+        "title": "כמעט סיימת!",
+        "alertTitle": "אנא אשר/י את כתובת הדוא\"ל",
+        "message1": "שלחנו אליך מייל אישור לכתובת שהזנת בהרשמה.",
+        "message2": "לאחר אישור הדוא\"ל, בקשתך תמתין לאישור מנהל המערכת ותקבל/י הודעה כאשר החשבון יאושר.",
+        "message3": "בינתיים, אפשר לחזור לעמוד ההתחברות.",
+        "returnToLogin": "חזור לעמוד ההתחברות"
+      },
       "successTitle": "הרשמה הושלמה בהצלחה!",
       "successAlertTitle": "בקשת הרשמה נשלחה",
       "successMessage1": "תודה על הרשמתך למערכת השעות כהורה!",
@@ -59,6 +67,7 @@
     }
   },
   "schedule": {
+    "draftBanner": "הבחירה היא טויטה בלבד",
     "page": {
       "title": "מערכת שעות",
       "loading": "טוען את מערכת השעות...",
@@ -101,7 +110,8 @@
         },
         "noChildrenFound": {
           "title": "לא נמצאו ילדים",
-          "description": "אין ילדים רשומים בחשבון שלך. הוסף ילד בפרופיל כדי להתחיל לבחור שיעורים."
+          "descriptionPrefix": "אין ילדים רשומים. ",
+          "descriptionSuffix": " כדי להתחיל לבחור שיעורים."
         }
       },
       "addChildButton": "הוסף ילד",
@@ -121,7 +131,7 @@
         "exportFailed": "שגיאה בהדפסת מערכת השעות",
         "updateClassSelection": "שגיאה בעדכון בחירת השיעור",
         "updateTrack": "שגיאה בעדכון המסלול",
-        "trackClassLocked": "לא ניתן לבטל בחירה של שיעור מסלול. יש לשנות את המסלול כדי להסירו",
+        "lockedClassCannotUnselect": "לא ניתן לבטל בחירה של שיעור נעול",
         "loadData": "שגיאה בטעינת הנתונים",
         "loadTimeSlots": "שגיאה בטעינת זמני השיעורים",
         "timeSlotNotFound": "זמן השיעור לא נמצא",
@@ -153,17 +163,23 @@
       "viewTitle": "צפייה בשיעורים",
       "unselectButton": "בטל בחירה",
       "selectButton": "בחר שיעור",
-      "trackLockedTooltip": "שיעור זה נבחר אוטומטית לפי המסלול. יש לשנות את המסלול כדי להסירו",
-      "trackUnselectableTooltip": "לא ניתן לבחור שיעור במסלול, יש לבחר את המסלול כולו",
+      "lockedClassTooltip": "שיעור זה נבחר אוטומטית ולא ניתן להסירו ידנית",
+      "lockedClassUnselectableTooltip": "לא ניתן לבחור שיעור זה ידנית",
+      "timeConflictUnselectableTooltip": "לא ניתן לבחור - השיעור השני תפוס על ידי שיעור אחר",
       "doubleLessonTag": "שיעור כפול",
       "teacherLabel": "מורה: ",
       "timeLabel": "זמן: ",
       "roomLabel": "כיתה: ",
+      "timeConflictTitle": "קיימת חפיפה בזמן",
+      "timeConflictDescription": "שיעור זה חופף עם שיעור אחר שנבחר",
       "noClassesAvailable": "אין שיעורים זמינים בזמן זה",
       "selectedClassesSection": "שיעורים שנבחרו:",
       "otherAvailableClasses": "שיעורים אחרים זמינים:",
       "availableClasses": "שיעורים זמינים:",
-      "dayNamePrefix": "יום {{dayName}}"
+      "conflictWarningTitle": "שים לב לחפיפות",
+      "conflictDescription": "ישנם {{count}} שיעורים עם חפיפה בזמן. בחירת שיעור חדש תבטל אוטומטית את השיעורים החופפים.",
+      "dayNamePrefix": "יום {{dayName}}",
+      "draftPickTooltip": "נבחר בטיוטה"
     }
   },
   "roles": {
@@ -238,9 +254,6 @@
       "groupRequired": "נא לבחור קבוצה",
       "groupPlaceholder": "ללא קבוצה",
       "groupOption": "קבוצה {{group}}",
-      "trackLabel": "מסלול",
-      "trackPlaceholder": "ללא מסלול",
-      "trackOption": "מסלול {{track}}",
       "updateButton": "עדכן",
       "addButton": "הוסף",
       "updateSuccess": "הילד עודכן בהצלחה",
@@ -281,6 +294,8 @@
       "filtersTitle": "מסננים",
       "searchLabel": "חיפוש:",
       "searchPlaceholder": "חפש שיעור לפי שם",
+      "searchTeacherLabel": "חיפוש מורה:",
+      "searchTeacherPlaceholder": "חפש שיעור לפי מורה",
       "dayFilterLabel": "יום בשבוע:",
       "dayFilterPlaceholder": "בחר יום",
       "gradeFilterLabel": "כיתה:",
@@ -301,7 +316,7 @@
       "nameColumn": "שם השיעור",
       "descriptionColumn": "תיאור",
       "teacherColumn": "מורה",
-      "roomColumn": "כיתה",
+      "roomColumn": "חדר",
       "roomNotSpecified": "לא צוין",
       "gradesColumn": "כיתות",
       "timeColumn": "זמן השיעור",
@@ -333,6 +348,9 @@
       "unknownDay": "יום לא ידוע",
       "dayPrefix": "יום {{dayName}}",
       "loadDataError": "שגיאה בטעינת הנתונים"
+    },
+    "enrollmentDrawer": {
+      "noChildren": "עדיין לא נרשמו תלמידים לשיעור זה"
     }
   },
   "mandatoryClassManager": {

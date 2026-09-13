@@ -47,6 +47,7 @@ const makeSelection = (cls: ClassWithTimeSlot): ScheduleSelectionWithClass => ({
   id: `sel-${cls.id}`,
   userId: "user-1",
   classId: cls.id,
+  status: "draft",
   createdAt: "",
   updatedAt: "",
   class: cls,
@@ -213,6 +214,80 @@ describe("ScheduleService.getConflictingClasses / hasTimeConflict", () => {
   });
 });
 
+describe("ScheduleService.getDrawerConflicts", () => {
+  it("flags a double lesson that overlaps a different, already-selected class in its other (empty) slot", () => {
+    const b = makeClass({
+      id: "b",
+      slots: [{ dayOfWeek: 0, timeSlotId: tsFirst.id, timeSlot: tsFirst }],
+    });
+    const doubleA = makeClass({
+      id: "double-a",
+      isDouble: true,
+      slots: [
+        { dayOfWeek: 0, timeSlotId: tsFirst.id, timeSlot: tsFirst },
+        { dayOfWeek: 0, timeSlotId: tsSecond.id, timeSlot: tsSecond },
+      ],
+    });
+    const userSelections = [makeSelection(b)];
+
+    const conflicts = ScheduleService.getDrawerConflicts(
+      [doubleA],
+      userSelections,
+      ["b"],
+      0,
+      tsSecond.id
+    );
+
+    expect(conflicts.map(c => c.id)).toEqual(["double-a"]);
+  });
+
+  it("does not flag any candidate as conflicted once the viewed slot already has a selection (blocked by single-choice-per-slot instead)", () => {
+    const b = makeClass({
+      id: "b",
+      slots: [{ dayOfWeek: 0, timeSlotId: tsFirst.id, timeSlot: tsFirst }],
+    });
+    const c = makeClass({
+      id: "c",
+      slots: [{ dayOfWeek: 0, timeSlotId: tsSecond.id, timeSlot: tsSecond }],
+    });
+    const doubleA = makeClass({
+      id: "double-a",
+      isDouble: true,
+      slots: [
+        { dayOfWeek: 0, timeSlotId: tsFirst.id, timeSlot: tsFirst },
+        { dayOfWeek: 0, timeSlotId: tsSecond.id, timeSlot: tsSecond },
+      ],
+    });
+    const userSelections = [makeSelection(b), makeSelection(c)];
+
+    const conflicts = ScheduleService.getDrawerConflicts(
+      [c, doubleA],
+      userSelections,
+      ["b", "c"],
+      0,
+      tsSecond.id
+    );
+
+    expect(conflicts).toEqual([]);
+  });
+
+  it("does not flag a track-linked candidate against a class already selected in the very same slot", () => {
+    const selectedInSlot = makeClass({ id: "selected" });
+    const trackCandidate = makeClass({ id: "track-candidate", trackNumber: 1 });
+    const userSelections = [makeSelection(selectedInSlot)];
+
+    const conflicts = ScheduleService.getDrawerConflicts(
+      [selectedInSlot, trackCandidate],
+      userSelections,
+      ["selected"],
+      0,
+      tsFirst.id
+    );
+
+    expect(conflicts).toEqual([]);
+  });
+});
+
 describe("ScheduleService.getNextConsecutiveTimeSlot", () => {
   const lesson1: TimeSlot = { ...tsFirst, name: "שיעור ראשון" };
   const lesson2: TimeSlot = { ...tsSecond, name: "שיעור שני" };
@@ -310,5 +385,71 @@ describe("ScheduleService.getDoubleLessonPair / isDoubleLessonSecondSlot", () =>
     expect(
       ScheduleService.isDoubleLessonSecondSlot(cls, 2, lesson3.id, allSlots)
     ).toBe(false);
+  });
+});
+
+describe("ScheduleService.resolveSelectionStatus", () => {
+  it("resolves staff to committed", () => {
+    expect(ScheduleService.resolveSelectionStatus("staff")).toBe("committed");
+  });
+
+  it("resolves admin to committed", () => {
+    expect(ScheduleService.resolveSelectionStatus("admin")).toBe("committed");
+  });
+
+  it("resolves parent to draft", () => {
+    expect(ScheduleService.resolveSelectionStatus("parent")).toBe("draft");
+  });
+
+  it("resolves child to draft", () => {
+    expect(ScheduleService.resolveSelectionStatus("child")).toBe("draft");
+  });
+
+  it("resolves no role (undefined) to draft", () => {
+    expect(ScheduleService.resolveSelectionStatus(undefined)).toBe("draft");
+  });
+});
+
+describe("ScheduleService.orderClassesByPickStatus", () => {
+  it("leaves order unchanged when there are no draft classes", () => {
+    const classes = [
+      makeClass({ id: "class-1" }),
+      makeClass({ id: "class-2" }),
+      makeClass({ id: "class-3" }),
+    ];
+
+    const result = ScheduleService.orderClassesByPickStatus(classes, new Set());
+
+    expect(result.map(c => c.id)).toEqual(["class-1", "class-2", "class-3"]);
+  });
+
+  it("sorts draft-marked classes to the front, preserving relative order within each group", () => {
+    const classes = [
+      makeClass({ id: "class-1" }),
+      makeClass({ id: "class-2" }),
+      makeClass({ id: "class-3" }),
+      makeClass({ id: "class-4" }),
+    ];
+
+    const result = ScheduleService.orderClassesByPickStatus(
+      classes,
+      new Set(["class-2", "class-4"])
+    );
+
+    expect(result.map(c => c.id)).toEqual([
+      "class-2",
+      "class-4",
+      "class-1",
+      "class-3",
+    ]);
+  });
+
+  it("returns an empty array for empty input", () => {
+    const result = ScheduleService.orderClassesByPickStatus(
+      [],
+      new Set(["class-1"])
+    );
+
+    expect(result).toEqual([]);
   });
 });

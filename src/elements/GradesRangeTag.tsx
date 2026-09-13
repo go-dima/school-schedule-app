@@ -12,7 +12,7 @@ export const GradesRangeTag: React.FC<{ grades: number[]; color: string }> = ({
   const maxGrade = Math.max(...grades);
 
   return (
-    <Tag className="class-tags" color={color}>
+    <Tag color={color}>
       {grades.length === 1
         ? GetGradeName(minGrade)
         : `כיתה ${GetGradeNameShort(minGrade)} - ${GetGradeNameShort(maxGrade)}`}

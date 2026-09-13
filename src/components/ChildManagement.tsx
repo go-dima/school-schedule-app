@@ -16,8 +16,7 @@ import { useTranslation } from "react-i18next";
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { ChildForm } from "./ChildForm";
 import { GroupTrackTags } from "./GroupTrackTags";
-import { useChildren } from "../hooks/useChildren";
-import { TrackSelectionService } from "../services/trackSelectionService";
+import { useChildContext } from "../contexts/ChildContext";
 import type { Child, Scope } from "../types";
 import { GetGradeName } from "@/utils/grades";
 
@@ -26,7 +25,7 @@ const { Title, Text } = Typography;
 export function ChildManagement() {
   const { t } = useTranslation();
   const { children, loading, error, createChild, updateChild, removeChild } =
-    useChildren();
+    useChildContext();
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | undefined>();
@@ -37,24 +36,16 @@ export function ChildManagement() {
     lastName: string;
     grade: number;
     groupNumber: number | null;
-    trackNumber?: number | null;
     scope?: Scope;
   }) => {
     setFormLoading(true);
     try {
-      const newChild = await createChild(
+      await createChild(
         data.firstName,
         data.lastName,
         data.grade,
-        data.groupNumber,
-        data.trackNumber ?? null
+        data.groupNumber
       );
-      if (data.trackNumber) {
-        await TrackSelectionService.syncTrackClasses(
-          newChild,
-          data.trackNumber
-        );
-      }
       setIsFormModalOpen(false);
       setEditingChild(undefined);
     } finally {
@@ -67,21 +58,13 @@ export function ChildManagement() {
     lastName: string;
     grade: number;
     groupNumber: number | null;
-    trackNumber?: number | null;
     scope?: Scope;
   }) => {
     if (!editingChild) return;
 
     setFormLoading(true);
     try {
-      const updatedChild = await updateChild(editingChild.id, data);
-      const newTrackNumber = data.trackNumber ?? null;
-      if (editingChild.trackNumber !== newTrackNumber) {
-        await TrackSelectionService.syncTrackClasses(
-          updatedChild,
-          newTrackNumber
-        );
-      }
+      await updateChild(editingChild.id, data);
       setIsFormModalOpen(false);
       setEditingChild(undefined);
     } finally {

@@ -151,8 +151,72 @@
       "file": "019_drop_child_sharing.sql",
       "created_at": "2026-09-09T00:00:00Z",
       "dependencies": ["018_add_group_and_track_fields"]
+    },
+    {
+      "id": "020_fix_children_roster_permissions",
+      "name": "Fix Children Roster Permissions",
+      "description": "Close a public data leak: switch children_with_parents to security_invoker and add an admin-or-staff check inside get_children_with_parent_status, revoking public/anon access to both",
+      "file": "020_fix_children_roster_permissions.sql",
+      "created_at": "2026-09-09T00:01:00Z",
+      "dependencies": ["019_drop_child_sharing"]
+    },
+    {
+      "id": "021_allow_staff_update_children",
+      "name": "Allow Staff Update Children",
+      "description": "Add an admin-or-staff UPDATE policy on public.children so staff can update children they don't have a parent relationship to (e.g. clearing a track), which previously failed with PGRST116 because RLS filtered the update to 0 rows",
+      "file": "021_allow_staff_update_children.sql",
+      "created_at": "2026-09-09T00:02:00Z",
+      "dependencies": ["020_fix_children_roster_permissions"]
+    },
+    {
+      "id": "022_add_selection_status",
+      "name": "Add Selection Status",
+      "description": "Add draft/committed status to schedule_selections, replace RLS policies with status-aware ones (also fixing two pre-existing bugs: staff unable to edit each other's committed picks, and staff unable to commit one class for multiple students), and update enrollment functions/view to count committed selections only",
+      "file": "022_add_selection_status.sql",
+      "created_at": "2026-09-09T00:00:00Z",
+      "dependencies": ["021_allow_staff_update_children"]
+    },
+    {
+      "id": "023_split_track_draft_committed",
+      "name": "Split Track Draft Committed",
+      "description": "Split children.track_number into track_number_draft (parent-owned) and track_number_committed (staff/admin-owned), mirroring the schedule_selections draft/committed split. No new RLS policy -- enforced at the API layer. Updates create_child_with_relationship (gains p_status), get_children_with_parent_status (always resolves committed), and children_with_parents (new column shape) accordingly.",
+      "file": "023_split_track_draft_committed.sql",
+      "created_at": "2026-09-09T00:03:00Z",
+      "dependencies": ["022_add_selection_status"]
+    },
+    {
+      "id": "024_add_get_class_enrolled_children",
+      "name": "Add Get Class Enrolled Children",
+      "description": "Introduce committed_enrollments as the single source of truth for \"what counts as enrolled\" (child_id IS NOT NULL AND status = 'committed'), used by get_class_enrollment_counts/get_class_enrollment_count/classes_with_enrollment (rewritten to read from it instead of duplicating the predicate) and by a new get_class_enrolled_children(p_class_id) SECURITY DEFINER function returning the roster of children committed-enrolled in a class, bypassing the children table's parent-scoped RLS SELECT policy for staff/admin (same problem get_children_with_parent_status solves for the Students page), with its own internal admin/staff+approved check so the roster can't be enumerated by arbitrary authenticated users",
+      "file": "024_add_get_class_enrolled_children.sql",
+      "created_at": "2026-09-09T00:04:00Z",
+      "dependencies": ["023_split_track_draft_committed"]
+    },
+    {
+      "id": "025_allow_staff_delete_children",
+      "name": "Allow Staff Delete Children",
+      "description": "Add an admin-or-staff DELETE policy on public.children so staff can delete children they don't have a parent relationship to, which previously silently no-op'd (0 rows deleted, no error) because RLS filtered the delete out",
+      "file": "025_allow_staff_delete_children.sql",
+      "created_at": "2026-09-10T00:00:00Z",
+      "dependencies": ["023_split_track_draft_committed"]
+    },
+    {
+      "id": "026_harden_visibility_and_search_path",
+      "name": "Harden Visibility And Search Path",
+      "description": "Close out remaining Security Advisor findings: revoke anon SELECT on tables where RLS already returns zero rows to anonymous callers (children, parent_child_relationships, schedule_selections, user_roles, users), restrict classes/time_slots to authenticated only (no pre-login schedule view exists or is planned), pin search_path on is_admin/get_class_enrollment_count/get_class_enrollment_counts, and drop the orphaned, unreferenced is_admin_user()",
+      "file": "026_harden_visibility_and_search_path.sql",
+      "created_at": "2026-09-10T00:01:00Z",
+      "dependencies": ["025_allow_staff_delete_children"]
+    },
+    {
+      "id": "027_lock_down_enrollment_views_and_child_creation",
+      "name": "Lock Down Enrollment Views And Child Creation",
+      "description": "Revoke anon/authenticated access to committed_enrollments (an RLS-bypassing internal view that was never locked down, exposing every class's child_id/class_id enrollment pairs to anon), revoke anon SELECT on classes_with_enrollment (anon-exposed since it was created, missed in 026), and harden create_child_with_relationship: pin search_path (missed in 026) and add an approved parent/staff/admin role check (the original share-token fix in 019 deliberately left this function's authorization unchanged)",
+      "file": "027_lock_down_enrollment_views_and_child_creation.sql",
+      "created_at": "2026-09-10T00:02:00Z",
+      "dependencies": ["026_harden_visibility_and_search_path"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 19
+  "schema_version": 27
 }

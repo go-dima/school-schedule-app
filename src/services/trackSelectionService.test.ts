@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type {
   ClassWithTimeSlot,
   ScheduleSelectionWithClass,
+  SelectionStatus,
   TimeSlot,
 } from "../types";
 import { TrackSelectionService } from "./trackSelectionService";
@@ -37,10 +38,14 @@ const makeClass = (
   ...overrides,
 });
 
-const makeSelection = (cls: ClassWithTimeSlot): ScheduleSelectionWithClass => ({
+const makeSelection = (
+  cls: ClassWithTimeSlot,
+  status: SelectionStatus = "draft"
+): ScheduleSelectionWithClass => ({
   id: `sel-${cls.id}`,
   userId: "user-1",
   classId: cls.id,
+  status,
   createdAt: "",
   updatedAt: "",
   class: cls,
@@ -151,5 +156,27 @@ describe("TrackSelectionService.computeTrackClassChanges", () => {
     );
 
     expect(toUnselectIds).toEqual([]);
+  });
+
+  it("computes identical changes regardless of which status the given selections carry", () => {
+    const track1Math = makeClass({ id: "math-1", trackNumber: 1 });
+    const track2Math = makeClass({ id: "math-2", trackNumber: 2 });
+
+    const draftResult = TrackSelectionService.computeTrackClassChanges(
+      [track1Math, track2Math],
+      [makeSelection(track1Math, "draft")],
+      4,
+      2
+    );
+    const committedResult = TrackSelectionService.computeTrackClassChanges(
+      [track1Math, track2Math],
+      [makeSelection(track1Math, "committed")],
+      4,
+      2
+    );
+
+    expect(committedResult).toEqual(draftResult);
+    expect(draftResult.toSelect.map(c => c.id)).toEqual(["math-2"]);
+    expect(draftResult.toUnselectIds).toEqual(["math-1"]);
   });
 });

@@ -6,7 +6,9 @@ import type {
   ClassWithTimeSlot,
   PendingApproval,
   ScheduleSelectionWithClass,
+  ScheduleTarget,
   Scope,
+  SelectionStatus,
   TimeSlot,
   User,
   UserRole,
@@ -26,7 +28,12 @@ const AUTH_LOCKED_CALL_TIMEOUT_MS = 4000;
 export class ApiError extends Error {
   constructor(
     message: string,
-    public status?: number
+    public status?: number,
+    // Postgres SQLSTATE from the underlying PostgrestError, when the failure
+    // came from the database (e.g. "23505" = unique_violation). Callers that
+    // treat a specific failure as benign must key off this, never off the
+    // message text, which is locale- and wording-dependent.
+    public code?: string
   ) {
     super(message);
     this.name = "ApiError";
@@ -43,37 +50,6 @@ export const authApi = {
 
     if (error) {
       throw new ApiError(error.message);
-    }
-
-    // If user was created successfully, create their profile in public.users
-    if (data.user && data.session) {
-      const { error: profileError } = await supabase.from("users").insert([
-        {
-          id: data.user.id,
-          email: data.user.email,
-        },
-      ]);
-
-      if (profileError) {
-        log.error("Profile creation failed", { error: profileError });
-        throw new ApiError(
-          "Failed to create user profile: " + profileError.message
-        );
-      }
-
-      // Automatically create parent role for new users
-      const { error: roleError } = await supabase.from("user_roles").insert([
-        {
-          user_id: data.user.id,
-          role: "parent",
-          approved: false, // Requires admin approval
-        },
-      ]);
-
-      if (roleError) {
-        log.error("Role creation failed", { error: roleError });
-        throw new ApiError("Failed to create user role: " + roleError.message);
-      }
     }
 
     return data;
@@ -118,24 +94,35 @@ export const authApi = {
   onAuthStateChange(callback: (user: any) => void) {
     return supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user || null;
-      callback(user);
 
-      // If user signed in with OAuth and doesn't exist in our users table, create profile.
-      // This must not be awaited here: supabase-js awaits this handler while holding its
-      // internal auth lock, and `supabase.from(...)` needs that same lock to attach the
-      // session, which deadlocks. Deferring lets the lock release before this query runs.
+      // On sign-in, the profile/role rows must exist before the caller's callback
+      // triggers its profile fetch — otherwise a brand-new user's fetch can race
+      // ahead of the ensure insert and get treated as signed-out. So for SIGNED_IN,
+      // defer (see below) and only invoke callback once the ensure attempt settles.
+      // Other events (session restore, token refresh) have no new user to ensure,
+      // so callback fires immediately as before.
       if (user && session && _event === "SIGNED_IN") {
+        // This must not be awaited here: supabase-js awaits this handler while holding
+        // its internal auth lock, and `supabase.from(...)` needs that same lock to attach
+        // the session, which deadlocks. Deferring lets the lock release before this query
+        // runs.
         setTimeout(() => {
-          ensureOAuthProfile(user).catch(err => {
-            log.error("OAuth profile ensure failed", { error: err });
-          });
+          ensureUserProfile(user)
+            .catch(err => {
+              log.error("User profile ensure failed", { error: err });
+            })
+            .finally(() => {
+              callback(user);
+            });
         }, 0);
+      } else {
+        callback(user);
       }
     });
   },
 };
 
-async function ensureOAuthProfile(user: any) {
+async function ensureUserProfile(user: any) {
   const { data: existingUser } = await supabase
     .from("users")
     .select("id")
@@ -156,10 +143,10 @@ async function ensureOAuthProfile(user: any) {
   ]);
 
   if (profileError) {
-    log.error("OAuth profile creation failed", { error: profileError });
+    log.error("User profile creation failed", { error: profileError });
   }
 
-  // Create parent role for OAuth users
+  // Create default parent role for new users
   const { error: roleError } = await supabase.from("user_roles").insert([
     {
       user_id: user.id,
@@ -169,7 +156,7 @@ async function ensureOAuthProfile(user: any) {
   ]);
 
   if (roleError) {
-    log.error("OAuth role creation failed", { error: roleError });
+    log.error("User role creation failed", { error: roleError });
   }
 }
 
@@ -608,19 +595,36 @@ export const classesApi = {
 };
 
 // Schedule Selections API
+//
+// Every schedule_selections row is either child-linked (a parent/staff
+// member picking for a student, target: { childId }) or user-linked (the
+// "child" role picking for themselves, target: { userId }). Known
+// limitation carried over unchanged from the pre-unification getUserSchedule
+// /selectClass/unselectClass: the { userId } insert never sets child_id,
+// which is NOT NULL on schedule_selections -- so a "child"-role user's own
+// selectSchedule call fails today. Tracked in #65, not fixed here.
 export const scheduleApi = {
-  async getUserSchedule(userId: string): Promise<ScheduleSelectionWithClass[]> {
+  async getSelectedSchedule(
+    target: ScheduleTarget,
+    status: SelectionStatus
+  ): Promise<ScheduleSelectionWithClass[]> {
     const isProduction = process.env.NODE_ENV === "production";
-    const [{ data, error }, timeSlotsById] = await Promise.all([
-      supabase
-        .from("schedule_selections")
-        .select(
-          `
+    let query = supabase
+      .from("schedule_selections")
+      .select(
+        `
         *,
         class:classes(*)
       `
-        )
-        .eq("user_id", userId),
+      )
+      .eq("status", status);
+    query =
+      "userId" in target
+        ? query.eq("user_id", target.userId)
+        : query.eq("child_id", target.childId);
+
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      query,
       fetchTimeSlotsById(),
     ]);
 
@@ -634,101 +638,99 @@ export const scheduleApi = {
     return filteredData.map(selection => ({
       id: selection.id,
       userId: selection.user_id,
+      childId: selection.child_id ?? undefined,
       classId: selection.class_id,
+      status: selection.status,
       createdAt: selection.created_at,
       updatedAt: selection.updated_at,
       class: mapClassRow(selection.class, timeSlotsById),
     }));
   },
 
-  async selectClass(userId: string, classId: string) {
-    const { data, error } = await supabase
-      .from("schedule_selections")
-      .insert([
-        {
-          user_id: userId,
-          class_id: classId,
-        },
-      ])
-      .select();
-
-    if (error) throw new ApiError(error.message);
-    return data[0];
-  },
-
-  async unselectClass(userId: string, classId: string) {
-    const { error } = await supabase
-      .from("schedule_selections")
-      .delete()
-      .eq("user_id", userId)
-      .eq("class_id", classId);
-
-    if (error) throw new ApiError(error.message);
-  },
-
-  async getChildSchedule(
-    childId: string
-  ): Promise<ScheduleSelectionWithClass[]> {
-    const isProduction = process.env.NODE_ENV === "production";
-    const [{ data, error }, timeSlotsById] = await Promise.all([
-      supabase
-        .from("schedule_selections")
-        .select(
-          `
-        *,
-        class:classes(*)
-      `
-        )
-        .eq("child_id", childId),
-      fetchTimeSlotsById(),
-    ]);
-
-    if (error) throw new ApiError(error.message);
-
-    let filteredData = data;
-    if (isProduction) {
-      filteredData = data.filter(selection => selection.class.scope !== "test");
-    }
-    return filteredData.map(selection => ({
-      id: selection.id,
-      userId: selection.user_id,
-      classId: selection.class_id,
-      createdAt: selection.created_at,
-      updatedAt: selection.updated_at,
-      class: mapClassRow(selection.class, timeSlotsById),
-    }));
-  },
-
-  async selectClassForChild(childId: string, classId: string) {
-    // Get current user ID (parent making the selection)
-    const {
-      data: { user },
-    } = await withTimeout(supabase.auth.getUser(), AUTH_LOCKED_CALL_TIMEOUT_MS);
-    if (!user) throw new ApiError("User not authenticated");
+  async selectSchedule(
+    target: ScheduleTarget,
+    classId: string,
+    status: SelectionStatus
+  ) {
+    const row =
+      "childId" in target
+        ? await (async () => {
+            // Get current user ID (parent/staff making the selection)
+            const {
+              data: { user },
+            } = await withTimeout(
+              supabase.auth.getUser(),
+              AUTH_LOCKED_CALL_TIMEOUT_MS
+            );
+            if (!user) throw new ApiError("User not authenticated");
+            return {
+              user_id: user.id,
+              child_id: target.childId,
+              class_id: classId,
+              status,
+            };
+          })()
+        : { user_id: target.userId, class_id: classId, status };
 
     const { data, error } = await supabase
       .from("schedule_selections")
-      .insert([
-        {
-          user_id: user.id,
-          child_id: childId,
-          class_id: classId,
-        },
-      ])
+      .insert([row])
       .select();
 
-    if (error) throw new ApiError(error.message);
+    // Preserve the SQLSTATE: an idempotent auto-assignment caller needs to
+    // distinguish a benign unique_violation ("23505" -- the row it wanted
+    // already exists) from a real failure.
+    if (error) throw new ApiError(error.message, undefined, error.code);
     return data[0];
   },
 
-  async unselectClassForChild(childId: string, classId: string) {
-    const { error } = await supabase
+  async unselectSchedule(
+    target: ScheduleTarget,
+    classId: string,
+    status: SelectionStatus
+  ) {
+    let query = supabase
       .from("schedule_selections")
       .delete()
-      .eq("child_id", childId)
-      .eq("class_id", classId);
+      .eq("class_id", classId)
+      .eq("status", status);
+    query =
+      "userId" in target
+        ? query.eq("user_id", target.userId)
+        : query.eq("child_id", target.childId);
+
+    const { error } = await query;
 
     if (error) throw new ApiError(error.message);
+  },
+
+  async getClassEnrolledChildren(classId: string): Promise<Child[]> {
+    const { data, error } = await supabase.rpc("get_class_enrolled_children", {
+      p_class_id: classId,
+    });
+
+    if (error) throw new ApiError(error.message);
+
+    return (data ?? [])
+      .map((child: any) => ({
+        id: child.id,
+        firstName: child.first_name,
+        lastName: child.last_name,
+        grade: child.grade,
+        groupNumber: child.group_number,
+        trackNumber: child.track_number,
+        scope: child.scope,
+        createdAt: child.created_at,
+        updatedAt: child.updated_at,
+      }))
+      .sort((a: Child, b: Child) =>
+        a.grade !== b.grade
+          ? a.grade - b.grade
+          : `${a.lastName}${a.firstName}`.localeCompare(
+              `${b.lastName}${b.firstName}`,
+              "he"
+            )
+      );
   },
 };
 
@@ -764,7 +766,7 @@ export const childrenApi = {
       lastName: rel?.child?.last_name,
       grade: rel?.child?.grade,
       groupNumber: rel?.child?.group_number,
-      trackNumber: rel?.child?.track_number,
+      trackNumber: rel?.child?.track_number_draft,
       scope: rel?.child?.scope,
       createdAt: rel?.child?.created_at,
       updatedAt: rel?.child?.updated_at,
@@ -777,7 +779,8 @@ export const childrenApi = {
     grade: number,
     groupNumber: number | null = 1,
     scope: Scope = "prod",
-    trackNumber: number | null = null
+    trackNumber: number | null = null,
+    status: SelectionStatus = "draft"
   ): Promise<Child> {
     const { data, error } = await supabase.rpc(
       "create_child_with_relationship",
@@ -788,6 +791,7 @@ export const childrenApi = {
         p_group_number: groupNumber,
         p_scope: scope,
         p_track_number: trackNumber,
+        p_status: status,
       }
     );
 
@@ -800,7 +804,10 @@ export const childrenApi = {
       lastName: data.last_name,
       grade: data.grade,
       groupNumber: data.group_number,
-      trackNumber: data.track_number,
+      trackNumber:
+        status === "committed"
+          ? data.track_number_committed
+          : data.track_number_draft,
       scope: data.scope,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
@@ -814,7 +821,6 @@ export const childrenApi = {
       lastName?: string;
       grade?: number;
       groupNumber?: number | null;
-      trackNumber?: number | null;
       scope?: Scope;
     }
   ): Promise<Child> {
@@ -825,8 +831,6 @@ export const childrenApi = {
     if (updates.grade !== undefined) updateData.grade = updates.grade;
     if (updates.groupNumber !== undefined)
       updateData.group_number = updates.groupNumber;
-    if (updates.trackNumber !== undefined)
-      updateData.track_number = updates.trackNumber;
     if (updates.scope !== undefined) updateData.scope = updates.scope;
 
     const { data, error } = await supabase
@@ -844,33 +848,49 @@ export const childrenApi = {
       lastName: data.last_name,
       grade: data.grade,
       groupNumber: data.group_number,
-      trackNumber: data.track_number,
+      trackNumber: data.track_number_draft,
       scope: data.scope,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
   },
 
-  async removeChildFromParent(
-    parentId: string,
-    childId: string
+  /**
+   * Track is split into track_number_draft (parent-owned) and
+   * track_number_committed (staff/admin-owned) -- a separate write path
+   * from updateChild since the two are never touched by the same caller's
+   * intent. No DB-level enforcement of which status a caller may write
+   * (see migration 023's header) -- callers must pass the correct status.
+   */
+  async updateChildTrack(
+    childId: string,
+    status: SelectionStatus,
+    trackNumber: number | null
   ): Promise<void> {
+    const column =
+      status === "committed" ? "track_number_committed" : "track_number_draft";
+
     const { error } = await supabase
-      .from("parent_child_relationships")
-      .delete()
-      .eq("parent_id", parentId)
-      .eq("child_id", childId);
+      .from("children")
+      .update({ [column]: trackNumber })
+      .eq("id", childId);
 
     if (error) throw new ApiError(error.message);
   },
 
   async deleteChild(childId: string): Promise<void> {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("children")
       .delete()
-      .eq("id", childId);
+      .eq("id", childId)
+      .select("id");
 
     if (error) throw new ApiError(error.message);
+    if (!data || data.length === 0) {
+      throw new ApiError(
+        "Delete failed: no matching student found or insufficient permissions."
+      );
+    }
   },
 
   async getAllChildren(): Promise<(Child & { assignedParent: boolean })[]> {
@@ -902,7 +922,10 @@ export const childrenApi = {
     });
   },
 
-  async getChildById(childId: string): Promise<Child> {
+  async getChildById(
+    childId: string,
+    status: SelectionStatus = "draft"
+  ): Promise<Child> {
     const { data, error } = await supabase
       .from("children")
       .select("*")
@@ -917,14 +940,20 @@ export const childrenApi = {
       lastName: data.last_name,
       grade: data.grade,
       groupNumber: data.group_number,
-      trackNumber: data.track_number,
+      trackNumber:
+        status === "committed"
+          ? data.track_number_committed
+          : data.track_number_draft,
       scope: data.scope,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
   },
 
-  async getChildWithParents(childId: string): Promise<ChildWithParents> {
+  async getChildWithParents(
+    childId: string,
+    status: SelectionStatus = "draft"
+  ): Promise<ChildWithParents> {
     const { data, error } = await supabase
       .from("children_with_parents")
       .select("*")
@@ -939,7 +968,10 @@ export const childrenApi = {
       lastName: data.last_name,
       grade: data.grade,
       groupNumber: data.group_number,
-      trackNumber: data.track_number,
+      trackNumber:
+        status === "committed"
+          ? data.track_number_committed
+          : data.track_number_draft,
       scope: data.scope,
       createdAt: data.created_at,
       updatedAt: data.updated_at,

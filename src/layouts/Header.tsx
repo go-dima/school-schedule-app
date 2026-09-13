@@ -3,95 +3,56 @@ import { Layout, Typography } from "antd";
 import {
   CalendarOutlined,
   BookOutlined,
-  TeamOutlined,
   UserOutlined,
   SettingOutlined,
   CheckCircleOutlined,
   HomeOutlined,
+  UsergroupAddOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 import ProfileDropdown from "../components/ProfileDropdown";
-import type { AppOnNavigate } from "../types";
+import { ROUTES } from "../routes/paths";
 
 const { Header: AntHeader } = Layout;
 const { Title } = Typography;
 
-interface HeaderProps {
-  onNavigate?: AppOnNavigate;
-  currentPage: string;
-}
-
-const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
+const Header: React.FC = () => {
   const { t } = useTranslation();
+  const location = useLocation();
 
-  const getPageInfo = (page: string) => {
-    switch (page) {
-      case "schedule":
-        return {
-          title: t("navigation.schedule"),
-          icon: <CalendarOutlined />,
-          breadcrumb: [
-            { title: t("navigation.schedule"), icon: <CalendarOutlined /> },
-          ],
-        };
-      case "class-management":
+  const getPageInfo = (pathname: string) => {
+    switch (pathname) {
+      case ROUTES.SCHEDULE:
+        return { title: t("navigation.schedule"), icon: <CalendarOutlined /> };
+      case ROUTES.CLASS_MANAGEMENT:
         return {
           title: t("navigation.classManagement"),
           icon: <BookOutlined />,
-          breadcrumb: [
-            { title: t("navigation.classManagement"), icon: <BookOutlined /> },
-          ],
         };
-      case "user-management":
+      case ROUTES.STUDENTS:
         return {
-          title: t("navigation.userManagement"),
-          icon: <TeamOutlined />,
-          breadcrumb: [
-            { title: t("navigation.userManagement"), icon: <TeamOutlined /> },
-          ],
+          title: t("navigation.students"),
+          icon: <UsergroupAddOutlined />,
         };
-      case "user-list":
-        return {
-          title: t("navigation.userList"),
-          icon: <UserOutlined />,
-          breadcrumb: [
-            { title: t("navigation.userManagement"), icon: <TeamOutlined /> },
-            { title: t("navigation.userList"), icon: <UserOutlined /> },
-          ],
-        };
-      case "pending-approvals":
+      case ROUTES.USER_MANAGEMENT_LIST:
+        return { title: t("navigation.userList"), icon: <UserOutlined /> };
+      case ROUTES.USER_MANAGEMENT_PENDING_APPROVALS:
         return {
           title: t("navigation.pendingApprovals"),
           icon: <CheckCircleOutlined />,
-          breadcrumb: [
-            { title: t("navigation.userManagement"), icon: <TeamOutlined /> },
-            {
-              title: t("navigation.pendingApprovals"),
-              icon: <CheckCircleOutlined />,
-            },
-          ],
         };
-      case "profile-settings":
+      case ROUTES.PROFILE_SETTINGS:
         return {
           title: t("navigation.profileSettings"),
           icon: <SettingOutlined />,
-          breadcrumb: [
-            {
-              title: t("navigation.profileSettings"),
-              icon: <SettingOutlined />,
-            },
-          ],
         };
       default:
-        return {
-          title: t("app.title"),
-          icon: <HomeOutlined />,
-          breadcrumb: [{ title: t("app.title"), icon: <HomeOutlined /> }],
-        };
+        return { title: t("app.title"), icon: <HomeOutlined /> };
     }
   };
 
-  const pageInfo = getPageInfo(currentPage);
+  const pageInfo = getPageInfo(location.pathname);
 
   return (
     <AntHeader className="app-header">
@@ -109,12 +70,11 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
               {pageInfo.title}
             </Title>
           </div>
-          {/* <Breadcrumb className="page-breadcrumb" items={pageInfo.breadcrumb} /> */}
         </div>
       </div>
 
       <div className="app-header-right">
-        <ProfileDropdown onNavigate={onNavigate} />
+        <ProfileDropdown />
       </div>
     </AntHeader>
   );

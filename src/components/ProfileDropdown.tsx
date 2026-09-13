@@ -7,22 +7,20 @@ import {
   DownOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import type { AppOnNavigate } from "../types";
+import { ROUTES } from "../routes/paths";
 import type { MenuProps } from "antd";
 
 const { Text } = Typography;
 
-interface ProfileDropdownProps {
-  onNavigate?: AppOnNavigate;
-}
-
-const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onNavigate }) => {
+const ProfileDropdown: React.FC = () => {
   const { t } = useTranslation();
   const { user, signOut, currentRole } = useAuth();
+  const navigate = useNavigate();
 
   const handleEditProfile = () => {
-    onNavigate?.("profile-settings");
+    navigate(ROUTES.PROFILE_SETTINGS);
   };
 
   const handleLogout = () => {

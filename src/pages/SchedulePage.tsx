@@ -21,18 +21,23 @@ import {
 } from "@ant-design/icons";
 import { useAuth } from "../contexts/AuthContext";
 import { useChildContext } from "../contexts/ChildContext";
-import { useSchedule } from "../hooks/useSchedule";
-import { useChildSchedule } from "../hooks/useChildSchedule";
+import { useScheduleCatalog } from "../hooks/useScheduleCatalog";
+import { useSelectedSchedule } from "../hooks/useSelectedSchedule";
+import { useDraftSelectionAwareness } from "../hooks/useDraftSelectionAwareness";
 import { useAllChildren } from "../hooks/useAllChildren";
 import ScheduleTable from "../components/ScheduleTable";
 import ClassForm from "../components/ClassForm";
 import { ChildSelector } from "../components/ChildSelector";
+import { AddChildButton } from "../components/AddChildButton";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { ChildTrackSelector } from "../components/ChildTrackSelector";
 import { classesApi, timeSlotsApi } from "../services/api";
 import { TrackSelectionService } from "../services/trackSelectionService";
+import { GroupMandatoryLockService } from "../services/groupMandatoryLockService";
+import { ScheduleService } from "../services/scheduleService";
+import { DraftBanner } from "../elements/DraftBanner";
 import { GRADES } from "../types";
-import type { AppOnNavigate, Class, TimeSlot, Child } from "../types";
+import type { Class, TimeSlot, Child, ScheduleTarget } from "../types";
 import "./SchedulePage.css";
 import { GetGradeName } from "@/utils/grades";
 import { printSchedule } from "../utils/printSchedule";
@@ -40,11 +45,7 @@ import { printSchedule } from "../utils/printSchedule";
 const { Title } = Typography;
 const { Option } = Select;
 
-interface SchedulePageProps {
-  onNavigate?: AppOnNavigate;
-}
-
-const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
+const SchedulePage: React.FC = () => {
   const { t } = useTranslation();
 
   const getRoleDisplayName = (role: string): string => {
@@ -86,6 +87,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
   const [searchTerm, setSearchTerm] = useState<string>("");
 
   const isParent = hasRole("parent");
+  const viewStatus = ScheduleService.resolveSelectionStatus(currentRole?.role);
 
   const handleStaffChildSelect = (childId: string | undefined) => {
     if (!childId) {
@@ -102,29 +104,46 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     }
   };
 
-  // For parents, use child schedule; for others, use user schedule
+  // Catalog (classes/time slots/weekly grid): role-independent, always loaded.
   const {
     classes,
     timeSlots,
-    userSelections,
     weeklySchedule,
     loading: scheduleLoading,
     error: scheduleError,
     loadScheduleData,
-    selectClass,
-    unselectClass,
-    isClassSelected: isUserClassSelected,
-  } = useSchedule(isParent ? null : user?.id);
+  } = useScheduleCatalog();
+
+  // Whose selections to read/write: a parent's or staff's chosen student, or
+  // (for the "child" role only) the logged-in user's own picks. Everyone
+  // else (no child chosen yet, or a role with no self-select concept) gets
+  // no target and therefore no selections.
+  const target: ScheduleTarget | undefined =
+    isParent && selectedChild
+      ? { childId: selectedChild.id }
+      : isStaff && staffSelectedChild
+        ? { childId: staffSelectedChild.id }
+        : currentRole?.role === "child" && user?.id
+          ? { userId: user.id }
+          : undefined;
 
   const {
-    schedule: childSchedule,
-    loading: childScheduleLoading,
-    error: childScheduleError,
-    selectClassForChild,
-    unselectClassForChild,
-    isClassSelected: isChildClassSelected,
-    refetch: refetchChildSchedule,
-  } = useChildSchedule(isStaff ? staffSelectedChild : selectedChild);
+    schedule: selectedSchedule,
+    loading: selectedScheduleLoading,
+    error: selectedScheduleError,
+    select: selectSchedule,
+    unselect: unselectSchedule,
+    isClassSelected,
+    refetch: refetchSelectedSchedule,
+  } = useSelectedSchedule(target, viewStatus);
+
+  // Staff/admin only: read-only awareness of the child's draft picks, so
+  // the drawer can show a heart marker for pending parent intent. Parents
+  // get `undefined`, which makes the hook's effect a no-op -- zero extra
+  // network activity for them.
+  const { draftClassIds } = useDraftSelectionAwareness(
+    viewStatus === "committed" ? target : undefined
+  );
 
   const makeTrackChangeHandler =
     (
@@ -139,15 +158,16 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
         setChild(updatedChild);
         const changes = TrackSelectionService.computeTrackClassChanges(
           classes,
-          childSchedule,
+          selectedSchedule,
           updatedChild.grade,
           trackNumber
         );
         await TrackSelectionService.applyTrackClassChanges(
           updatedChild.id,
-          changes
+          changes,
+          viewStatus
         );
-        await refetchChildSchedule();
+        await refetchSelectedSchedule();
       } catch (err) {
         message.error(
           err instanceof Error
@@ -176,6 +196,14 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     setSelectedGrade(newChild.grade);
   };
 
+  // Handler for when a parent adds a new child via AddChildButton
+  const handleParentChildAdded = (newChild: Child) => {
+    setSelectedChild(newChild);
+    if (!isAdmin()) {
+      setSelectedGrade(newChild.grade);
+    }
+  };
+
   // Auto-update grade filter when selected child changes (only for non-admin parents)
   React.useEffect(() => {
     if (selectedChild && isParent && !isAdmin()) {
@@ -183,12 +211,11 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     }
   }, [selectedChild, isParent, isAdmin]);
 
-  const loading = isParent
-    ? scheduleLoading || childScheduleLoading || childrenLoading
-    : isStaff
-      ? scheduleLoading || childScheduleLoading || allChildrenLoading
-      : scheduleLoading;
-  const error = scheduleError || childScheduleError || childrenError;
+  const loading =
+    scheduleLoading ||
+    selectedScheduleLoading ||
+    (isParent ? childrenLoading : isStaff ? allChildrenLoading : false);
+  const error = scheduleError || selectedScheduleError || childrenError;
 
   const handleRoleSwitch = (roleId: string) => {
     const role = userRoles.find(r => r.id === roleId);
@@ -200,32 +227,165 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
   // Classes auto-selected by the active child's track can't be picked apart
   // one at a time -- only changing the track (which re-syncs them) can.
   const currentTrackChild = isStaff ? staffSelectedChild : selectedChild;
-  const lockedClassIds = new Set(
-    currentTrackChild?.trackNumber
+  const lockedClassIds = new Set([
+    ...(currentTrackChild?.trackNumber
       ? classes
           .filter(cls => cls.trackNumber === currentTrackChild.trackNumber)
           .map(cls => cls.id)
-      : []
-  );
+      : []),
+    // Must mirror GroupMandatoryLockService.computeChanges's criteria exactly
+    // (grade AND locked-match), so "what we lock in the UI" can never drift
+    // from "what we actually auto-select in the DB".
+    ...(currentTrackChild
+      ? classes
+          .filter(
+            cls =>
+              cls.grades.includes(currentTrackChild.grade) &&
+              GroupMandatoryLockService.isLockedMatch(
+                cls,
+                currentTrackChild.groupNumber
+              )
+          )
+          .map(cls => cls.id)
+      : []),
+  ]);
+
+  // Group and Mandatory have no user-driven change event on this page (a
+  // child's group is admin-set, mandatory is a fixed class attribute) --
+  // unlike Track, which syncs from makeTrackChangeHandler, this syncs
+  // whenever the active child or the loaded catalog/schedule changes.
+  //
+  // Re-entrancy guard: `classes` and `selectedSchedule` load somewhat
+  // independently, so this effect can fire twice in close succession
+  // (also reliably reproduced by React 18 StrictMode's dev double-invoke)
+  // before the first invocation's applyChanges + refetchSelectedSchedule
+  // has updated `selectedSchedule`. Both invocations would then compute
+  // the same toSelect/toUnselect against identical stale state and both
+  // call the API for the same class, tripping the DB's unique constraint.
+  // syncInFlightRef guards against starting a second call while one is
+  // still running; it's set before the async work begins and cleared in
+  // `finally` (not in the cleanup function, which fires on every
+  // dependency change, not just unmount). Once the in-flight call's own
+  // refetchSelectedSchedule() updates `selectedSchedule`, the effect
+  // re-runs and finds nothing further to do.
+  //
+  // The lock holds the id of the child currently being synced (undefined =
+  // no sync in flight) rather than a plain boolean: syncs for two different
+  // children touch disjoint schedule_selections rows, so one child's
+  // in-flight sync must not suppress another child's. Only a re-entrant
+  // firing for the SAME child -- the actual duplicate-insert race -- is
+  // blocked.
+  const syncInFlightRef = React.useRef<string | undefined>(undefined);
+  // activeChildIdRef always tracks the most recently seen child id, updated
+  // synchronously on every effect run (before the early-return checks) so
+  // that a resolving async call can tell "the child changed" (skip the
+  // refetch/error) apart from "the effect re-fired for the same child"
+  // (still apply the refetch/error), instead of relying on a `cancelled`
+  // closure flag that conflated the two cases.
+  const activeChildIdRef = React.useRef<string | undefined>(undefined);
+  React.useEffect(() => {
+    activeChildIdRef.current = currentTrackChild?.id;
+
+    // `target` (parent-role precedence) and `currentTrackChild` (staff-role
+    // precedence) can disagree for a user who holds BOTH the parent and staff
+    // roles: ChildContext auto-selects their own first child, so `target`
+    // stays on that child while `currentTrackChild` follows the staff student
+    // selector. Track only ever read `currentTrackChild`, so the divergence was
+    // harmless there -- but this effect WRITES for `currentTrackChild` while
+    // reading `selectedSchedule`/`refetchSelectedSchedule`, which belong to
+    // `target`. Mismatched, computeChanges would never see its own writes land,
+    // looping writes against the wrong child forever. Only sync when both
+    // agree on the same child.
+    if (
+      !target ||
+      !("childId" in target) ||
+      target.childId !== currentTrackChild?.id
+    ) {
+      return;
+    }
+
+    if (!currentTrackChild || classes.length === 0) return;
+    // selectedSchedule loads independently of classes (a separate hook,
+    // useSelectedSchedule) and starts as `[]` until its own fetch resolves.
+    // Without this guard, a fast `classes` load racing a slow
+    // `selectedSchedule` fetch would run computeChanges against that empty
+    // placeholder -- not because nothing is actually selected, but because
+    // the fetch simply hasn't returned yet -- and try to re-insert rows
+    // that already exist in the DB, tripping the unique constraint on
+    // every fresh page load for an already-synced child.
+    if (selectedScheduleLoading) return;
+    if (syncInFlightRef.current === currentTrackChild.id) return;
+
+    const changes = GroupMandatoryLockService.computeChanges(
+      classes,
+      selectedSchedule,
+      currentTrackChild
+    );
+
+    if (changes.toSelect.length === 0 && changes.toUnselectIds.length === 0) {
+      return;
+    }
+
+    const syncingChildId = currentTrackChild.id;
+    syncInFlightRef.current = syncingChildId;
+    (async () => {
+      try {
+        await GroupMandatoryLockService.applyChanges(
+          currentTrackChild.id,
+          changes,
+          viewStatus
+        );
+        if (activeChildIdRef.current === syncingChildId) {
+          await refetchSelectedSchedule();
+        }
+      } catch (err) {
+        if (activeChildIdRef.current === syncingChildId) {
+          message.error(
+            err instanceof Error
+              ? err.message
+              : t("schedule.page.error.updateClassSelection")
+          );
+        }
+      } finally {
+        // Only release the lock if it's still ours -- a sync started for a
+        // different child in the meantime owns the ref now.
+        if (syncInFlightRef.current === syncingChildId) {
+          syncInFlightRef.current = undefined;
+        }
+      }
+    })();
+    // `refetchSelectedSchedule` is deliberately excluded from the deps: it is
+    // not memoized (a new function identity every render), so including it
+    // would re-fire this effect on every render and defeat the in-flight
+    // guard. `message` and `t` are stable enough to omit for the same reason.
+    // `target` is likewise omitted -- it's a fresh object literal every render;
+    // it's read only by the mismatch guard above, and any real change to it
+    // also changes `selectedSchedule`/`selectedScheduleLoading`, which ARE
+    // deps. Do not "fix" any of these with exhaustive-deps.
+  }, [
+    currentTrackChild?.id,
+    currentTrackChild?.grade,
+    currentTrackChild?.groupNumber,
+    classes,
+    selectedSchedule,
+    selectedScheduleLoading,
+    viewStatus,
+  ]);
 
   const handleClassSelect = async (classId: string) => {
+    if (!target) return;
     try {
-      if (isParent && selectedChild) {
-        if (isChildClassSelected(classId)) {
-          if (lockedClassIds.has(classId)) {
-            message.warning(t("schedule.page.error.trackClassLocked"));
-            return;
-          }
-          await unselectClassForChild(classId);
-        } else {
-          await selectClassForChild(classId);
+      if (isClassSelected(classId)) {
+        // Locked classes (track, group, or mandatory match) only apply to
+        // the child-entity flows (parent/staff); the "child" role's own
+        // selections aren't tied to a Child record with these attributes.
+        if ("childId" in target && lockedClassIds.has(classId)) {
+          message.warning(t("schedule.page.error.lockedClassCannotUnselect"));
+          return;
         }
-      } else if (!isParent && user?.id) {
-        if (isUserClassSelected(classId)) {
-          await unselectClass(classId);
-        } else {
-          await selectClass(classId);
-        }
+        await unselectSchedule(classId);
+      } else {
+        await selectSchedule(classId);
       }
     } catch (err) {
       message.error(
@@ -234,20 +394,6 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
           : t("schedule.page.error.updateClassSelection")
       );
     }
-  };
-
-  const getSelectedClasses = () => {
-    if (isParent || (isStaff && staffSelectedChild)) {
-      return childSchedule.map(selection => selection.classId);
-    }
-    return userSelections.map(selection => selection.classId);
-  };
-
-  const getSelectedSchedule = () => {
-    if (isParent || (isStaff && staffSelectedChild)) {
-      return childSchedule;
-    }
-    return userSelections;
   };
 
   const handleExportSchedule = async () => {
@@ -263,7 +409,8 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
         child: currentChild,
         timeSlots,
         weeklySchedule,
-        selectedClasses: getSelectedClasses(),
+        selectedClasses: selectedSchedule.map(selection => selection.classId),
+        showDraftMarker: viewStatus === "draft",
       });
     } catch (error) {
       message.error(
@@ -316,7 +463,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
       message.success(t("schedule.page.success.classCreated"));
       handleCloseCreateModal();
       // Reload schedule data to show the new class
-      await loadScheduleData();
+      await Promise.all([loadScheduleData(), refetchSelectedSchedule()]);
     } catch (err) {
       message.error(
         err instanceof Error
@@ -328,7 +475,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
     }
   };
 
-  const selectedClasses = getSelectedClasses();
+  const selectedClasses = selectedSchedule.map(selection => selection.classId);
   const canSelectClasses =
     ((currentRole?.role === "child" || currentRole?.role === "parent") &&
       (!isParent || selectedChild !== null)) ||
@@ -386,6 +533,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                 </Space>
               </>
             )}
+            {isParent && <AddChildButton onAdded={handleParentChildAdded} />}
             {isStaff && (
               <>
                 <ChildTrackSelector
@@ -412,7 +560,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
                 </Space>
               </>
             )}
-            {(!isParent || !userChildren.length || isAdmin()) && (
+            {(isStaff || isAdmin()) && (
               <>
                 <Select
                   value={selectedGrade}
@@ -458,7 +606,10 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
             )}
             <Button
               icon={<ReloadOutlined />}
-              onClick={loadScheduleData}
+              onClick={() => {
+                loadScheduleData();
+                refetchSelectedSchedule();
+              }}
               disabled={loading}>
               {t("common.buttons.refresh")}
             </Button>
@@ -514,17 +665,23 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
       {isParent && userChildren.length === 0 && (
         <Alert
           message={t("schedule.page.alerts.noChildrenFound.title")}
-          description={t("schedule.page.alerts.noChildrenFound.description")}
+          description={
+            <>
+              {t("schedule.page.alerts.noChildrenFound.descriptionPrefix")}
+              <AddChildButton
+                onAdded={handleParentChildAdded}
+                renderTrigger={open => (
+                  <Typography.Link onClick={open}>
+                    {t("schedule.page.addChildButton")}
+                  </Typography.Link>
+                )}
+              />
+              {t("schedule.page.alerts.noChildrenFound.descriptionSuffix")}
+            </>
+          }
           type="info"
           showIcon
           style={{ marginBottom: 16 }}
-          action={
-            <Button
-              size="small"
-              onClick={() => onNavigate?.("profile-settings")}>
-              {t("schedule.page.addChildButton")}
-            </Button>
-          }
         />
       )}
 
@@ -583,6 +740,8 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
         />
       )}
 
+      {viewStatus === "draft" && <DraftBanner />}
+
       <Card className="schedule-card">
         <ScheduleTable
           timeSlots={timeSlots}
@@ -590,18 +749,22 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
           weeklySchedule={weeklySchedule}
           userGrade={selectedGrade}
           selectedClasses={selectedClasses}
-          userSelections={getSelectedSchedule()}
+          draftPickedClassIds={Array.from(draftClassIds)}
+          userSelections={selectedSchedule}
           onClassSelect={handleClassSelect}
           onClassUnselect={handleClassSelect}
           canSelectClasses={canSelectClasses}
           canViewClasses={canViewClasses}
           isAdmin={isAdmin()}
+          showEnrollmentCount={isStaff || isAdmin()}
           onCreateClass={handleCreateClass}
           searchTerm={searchTerm}
+          childGroupNumber={currentTrackChild?.groupNumber}
+          lockedClassIds={Array.from(lockedClassIds)}
         />
       </Card>
 
-      {canSelectClasses && getSelectedSchedule().length > 0 && (
+      {canSelectClasses && selectedSchedule.length > 0 && (
         <Card
           title={
             (isParent && selectedChild) || (isStaff && staffSelectedChild)
@@ -615,7 +778,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
           }
           className="selected-classes-summary">
           <Space wrap>
-            {getSelectedSchedule().map(selection => {
+            {selectedSchedule.map(selection => {
               const isLocked = lockedClassIds.has(selection.classId);
               const button = (
                 <Button
@@ -631,7 +794,7 @@ const SchedulePage: React.FC<SchedulePageProps> = ({ onNavigate }) => {
               return isLocked ? (
                 <Tooltip
                   key={selection.id}
-                  title={t("schedule.drawer.trackLockedTooltip")}>
+                  title={t("schedule.drawer.lockedClassTooltip")}>
                   <span style={{ display: "inline-block" }}>{button}</span>
                 </Tooltip>
               ) : (

@@ -12,55 +12,40 @@ import {
   UsergroupAddOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { usePendingApprovals } from "../hooks/usePendingApprovals";
-import type { AppOnNavigate } from "../types";
+import { ROUTES } from "../routes/paths";
 import type { MenuProps } from "antd";
 
 const { Sider } = Layout;
 
 interface SidebarProps {
   collapsed: boolean;
-  onNavigate?: AppOnNavigate;
-  currentPage: string;
   onToggle?: () => void;
 }
 
-type Page =
-  | "schedule"
-  | "class-management"
-  | "students"
-  | "user-list"
-  | "pending-approvals"
-  | "profile-settings"
-  | "user-management";
+const USER_MANAGEMENT_SUBMENU_KEY = "user-management-submenu";
 
-const Sidebar: React.FC<SidebarProps> = ({
-  collapsed,
-  onNavigate,
-  currentPage,
-  onToggle,
-}) => {
+const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
   const { t } = useTranslation();
   const { isAdmin, canManageClasses } = useAuth();
   const { pendingApprovalsCount } = usePendingApprovals();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [openKeys, setOpenKeys] = React.useState<string[]>([]);
 
-  // Initialize open keys based on current page
+  const isUserManagementPath = location.pathname.startsWith(
+    ROUTES.USER_MANAGEMENT
+  );
+
+  // Initialize/refresh open keys based on current path
   React.useEffect(() => {
-    const initialOpenKeys: string[] = [];
-    if (
-      currentPage === "user-list" ||
-      currentPage === "pending-approvals" ||
-      currentPage === "user-management"
-    ) {
-      initialOpenKeys.push("user-management-submenu");
-    }
-    setOpenKeys(initialOpenKeys);
-  }, [currentPage]);
+    setOpenKeys(isUserManagementPath ? [USER_MANAGEMENT_SUBMENU_KEY] : []);
+  }, [isUserManagementPath]);
 
   const handleMenuClick = ({ key }: { key: string }) => {
-    onNavigate?.(key as Page);
+    navigate(key);
   };
 
   const handleOpenChange = (keys: string[]) => {
@@ -69,60 +54,37 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  // Determine selected keys based on current page
-  const getSelectedKeys = () => {
-    const keys: string[] = [];
-
-    if (currentPage === "schedule") {
-      keys.push("schedule");
-    } else if (currentPage === "class-management") {
-      keys.push("class-management");
-    } else if (currentPage === "students") {
-      keys.push("students");
-    } else if (
-      currentPage === "user-list" ||
-      currentPage === "pending-approvals" ||
-      currentPage === "user-management"
-    ) {
-      keys.push(currentPage);
-    } else if (currentPage === "profile-settings") {
-      keys.push("profile-settings");
-    }
-
-    return keys;
-  };
-
   const items: MenuProps["items"] = [
     {
-      key: "schedule",
+      key: ROUTES.SCHEDULE,
       icon: <CalendarOutlined />,
       label: t("navigation.schedule"),
     },
     {
-      key: "class-management",
+      key: ROUTES.CLASS_MANAGEMENT,
       icon: <BookOutlined />,
       label: t("navigation.classManagement"),
       style: canManageClasses() ? {} : { display: "none" },
     },
     {
-      key: "students",
+      key: ROUTES.STUDENTS,
       icon: <UsergroupAddOutlined />,
       label: t("navigation.students"),
       style: canManageClasses() ? {} : { display: "none" },
     },
     isAdmin()
       ? {
-          key: "user-management-submenu",
+          key: USER_MANAGEMENT_SUBMENU_KEY,
           icon: <TeamOutlined />,
           label: t("navigation.userManagement"),
           children: [
             {
-              key: "user-list",
+              key: ROUTES.USER_MANAGEMENT_LIST,
               icon: <UserOutlined />,
               label: t("navigation.userList"),
             },
             {
-              key: "pending-approvals",
+              key: ROUTES.USER_MANAGEMENT_PENDING_APPROVALS,
               icon:
                 pendingApprovalsCount > 0 ? (
                   <Badge count={pendingApprovalsCount} size="small" />
@@ -145,7 +107,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         }
       : null,
     {
-      key: "profile-settings",
+      key: ROUTES.PROFILE_SETTINGS,
       icon: <SettingOutlined />,
       label: t("navigation.profileSettings"),
     },
@@ -164,7 +126,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <Menu
           className="sidebar-menu"
           mode="inline"
-          selectedKeys={getSelectedKeys()}
+          selectedKeys={[location.pathname]}
           openKeys={collapsed ? [] : openKeys}
           items={items}
           onClick={handleMenuClick}

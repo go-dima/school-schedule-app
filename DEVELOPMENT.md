@@ -479,6 +479,14 @@ useEffect(() => {
 }, []);
 ```
 
+### Edge Functions
+
+Edge Functions live in `supabase/functions/`, managed via `npx supabase` (no global CLI install needed).
+
+**`notify-signup-telegram`** — posts a Telegram message with the new user's email whenever a row is inserted into `public.users`. It's invoked by a Supabase Database Webhook (Dashboard → Integrations → Webhooks — not under Database on this project), not by app code, and authenticates the caller via a shared `x-webhook-secret` header instead of a user JWT (deployed with `--no-verify-jwt`).
+
+See [supabase/functions/notify-signup-telegram/README.md](supabase/functions/notify-signup-telegram/README.md) for full setup, secrets, deploy, and Database Webhook configuration steps.
+
 ## Optimization and Performance
 
 ### Code Splitting

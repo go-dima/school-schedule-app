@@ -69,17 +69,26 @@ export interface ClassWithTimeSlot extends Omit<Class, "slots"> {
   slots: ClassSlotWithTimeSlot[];
 }
 
+export type SelectionStatus = "draft" | "committed";
+
 export interface ScheduleSelection {
   id: string;
   userId: string;
   classId: string;
+  status: SelectionStatus;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface ScheduleSelectionWithClass extends ScheduleSelection {
+  childId?: string;
   class: ClassWithTimeSlot;
 }
+
+// Identifies whose schedule_selections rows to read/write: either a
+// child-linked selection (parent/staff acting for a student) or a
+// user-linked one (the "child" role selecting for themselves).
+export type ScheduleTarget = { userId: string } | { childId: string };
 
 export interface WeeklySchedule {
   [dayOfWeek: number]: {
@@ -132,15 +141,3 @@ export interface ScheduleSelectionWithChild
   childId: string;
   child: Child;
 }
-
-export type AppPages =
-  | "schedule"
-  | "class-management"
-  | "students"
-  | "pending-approvals"
-  | "user-management"
-  | "user-list"
-  | "profile-settings";
-
-// For App navigation
-export type AppOnNavigate = (page: AppPages) => void;

@@ -1,6 +1,7 @@
 import React from "react";
 import { Button, Result } from "antd";
 import { useTranslation } from "react-i18next";
+import { useRouteError } from "react-router-dom";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -118,6 +119,46 @@ function DefaultErrorFallback({
     </div>
   );
 }
+
+function RouteErrorFallback() {
+  const { t } = useTranslation();
+  const error = useRouteError();
+
+  if (process.env.NODE_ENV === "development") {
+    console.error("Route Error:", error);
+  }
+
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
+  return (
+    <div
+      style={{
+        padding: "50px",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "50vh",
+      }}>
+      <Result
+        status="error"
+        title={t("errors.boundary.title", "Something went wrong")}
+        subTitle={t(
+          "errors.boundary.subtitle",
+          "An unexpected error occurred. Please try refreshing the page."
+        )}
+        extra={[
+          <Button type="primary" key="refresh" onClick={handleRefresh}>
+            {t("errors.boundary.refresh", "Refresh Page")}
+          </Button>,
+        ]}
+      />
+    </div>
+  );
+}
+
+export { RouteErrorFallback };
 
 // Context Error Boundary specifically for auth/context issues
 export function ContextErrorBoundary({
