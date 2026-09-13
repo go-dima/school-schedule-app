@@ -24,13 +24,14 @@ import { useChildContext } from "../contexts/ChildContext";
 import { useScheduleCatalog } from "../hooks/useScheduleCatalog";
 import { useSelectedSchedule } from "../hooks/useSelectedSchedule";
 import { useDraftSelectionAwareness } from "../hooks/useDraftSelectionAwareness";
-import { useAllChildren } from "../hooks/useAllChildren";
+import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import ScheduleTable from "../components/ScheduleTable";
 import ClassForm from "../components/ClassForm";
 import { ChildSelector } from "../components/ChildSelector";
 import { AddChildButton } from "../components/AddChildButton";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
-import { ChildTrackSelector } from "../components/ChildTrackSelector";
+import { ChildGroupTrackSelector } from "../components/ChildGroupTrackSelector";
+import type { SelectionField } from "../components/ChildGroupTrackSelector";
 import { classesApi, timeSlotsApi } from "../services/api";
 import { TrackSelectionService } from "../services/trackSelectionService";
 import { GroupMandatoryLockService } from "../services/groupMandatoryLockService";
@@ -63,15 +64,14 @@ const SchedulePage: React.FC = () => {
     updateChild: updateChildForParent,
   } = useChildContext();
 
-  // For staff users - get all children and manage separate selected child state
+  // For staff users - get all children and the shared staff-selected-child state
   const {
     children: allChildren,
     loading: allChildrenLoading,
+    selectedChild: staffSelectedChild,
+    setSelectedChild: setStaffSelectedChild,
     updateChild: updateChildForStaff,
-  } = useAllChildren();
-  const [staffSelectedChild, setStaffSelectedChild] = useState<
-    Child | undefined
-  >(undefined);
+  } = useAllChildrenContext();
   const isStaff = hasRole("staff");
 
   const [selectedGrade, setSelectedGrade] = useState<number | undefined>(1);
@@ -145,45 +145,55 @@ const SchedulePage: React.FC = () => {
     viewStatus === "committed" ? target : undefined
   );
 
-  const makeTrackChangeHandler =
+  const makeFieldChangeHandler =
     (
       child: Child | undefined,
       updateFn: typeof updateChildForParent,
       setChild: (child: Child) => void
     ) =>
-    async (trackNumber: number | null) => {
+    async (field: SelectionField, value: number | null) => {
       if (!child) return;
       try {
-        const updatedChild = await updateFn(child.id, { trackNumber });
+        const updatedChild = await updateFn(child.id, { [field]: value });
         setChild(updatedChild);
-        const changes = TrackSelectionService.computeTrackClassChanges(
-          classes,
-          selectedSchedule,
-          updatedChild.grade,
-          trackNumber
-        );
-        await TrackSelectionService.applyTrackClassChanges(
-          updatedChild.id,
-          changes,
-          viewStatus
-        );
-        await refetchSelectedSchedule();
+
+        if (field === "trackNumber") {
+          // Track has no reactive sync -- unlike Group/Mandatory, which the
+          // effect below re-syncs automatically whenever the active child's
+          // groupNumber changes -- so apply the class diff explicitly here.
+          const changes = TrackSelectionService.computeTrackClassChanges(
+            classes,
+            selectedSchedule,
+            updatedChild.grade,
+            value
+          );
+          await TrackSelectionService.applyTrackClassChanges(
+            updatedChild.id,
+            changes,
+            viewStatus
+          );
+          await refetchSelectedSchedule();
+        }
       } catch (err) {
         message.error(
           err instanceof Error
             ? err.message
-            : t("schedule.page.error.updateTrack")
+            : t(
+                field === "groupNumber"
+                  ? "schedule.page.error.updateGroup"
+                  : "schedule.page.error.updateTrack"
+              )
         );
       }
     };
 
-  const handleParentTrackChange = makeTrackChangeHandler(
+  const handleParentFieldChange = makeFieldChangeHandler(
     selectedChild,
     updateChildForParent,
     setSelectedChild
   );
 
-  const handleStaffTrackChange = makeTrackChangeHandler(
+  const handleStaffFieldChange = makeFieldChangeHandler(
     staffSelectedChild,
     updateChildForStaff,
     setStaffSelectedChild
@@ -504,9 +514,9 @@ const SchedulePage: React.FC = () => {
           <Space wrap>
             {isParent && userChildren.length > 0 && (
               <>
-                <ChildTrackSelector
+                <ChildGroupTrackSelector
                   child={selectedChild}
-                  onChange={handleParentTrackChange}
+                  onChange={handleParentFieldChange}
                   disabled={childrenLoading}
                 />
                 <Space size="small">
@@ -536,9 +546,9 @@ const SchedulePage: React.FC = () => {
             {isParent && <AddChildButton onAdded={handleParentChildAdded} />}
             {isStaff && (
               <>
-                <ChildTrackSelector
+                <ChildGroupTrackSelector
                   child={staffSelectedChild}
-                  onChange={handleStaffTrackChange}
+                  onChange={handleStaffFieldChange}
                   disabled={allChildrenLoading}
                 />
                 <Space size="small">

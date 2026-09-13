@@ -28,8 +28,7 @@ import { ChildForm } from "../components/ChildForm";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { GroupTrackTags } from "../components/GroupTrackTags";
 import { useAuth } from "../contexts/AuthContext";
-import { useAllChildren } from "../hooks/useAllChildren";
-import { childrenApi } from "../services/api";
+import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import type { Child } from "../types";
 import { GRADES } from "../types";
 
@@ -55,8 +54,9 @@ const ParentIcon: React.FC<{ assignedParent: boolean }> = ({
 
 const StudentsPage: React.FC = () => {
   const { t } = useTranslation();
-  const { canManageClasses } = useAuth();
-  const { children, loading, error } = useAllChildren();
+  const { canManageClasses, isAdmin } = useAuth();
+  const { children, loading, error, createChild, updateChild, removeChild } =
+    useAllChildrenContext();
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | undefined>();
   const [formLoading, setFormLoading] = useState(false);
@@ -74,20 +74,16 @@ const StudentsPage: React.FC = () => {
   }) => {
     setFormLoading(true);
     try {
-      await childrenApi.createChild(
+      await createChild(
         data.firstName,
         data.lastName,
         data.grade,
         data.groupNumber,
-        data.scope || "prod",
-        null,
-        "committed"
+        data.scope || "prod"
       );
       setIsFormModalOpen(false);
       setEditingChild(undefined);
       message.success(t("students.page.addSuccess"));
-      // Reload the page to refresh the children list
-      window.location.reload();
     } catch (err) {
       message.error(
         err instanceof Error ? err.message : t("students.page.addError")
@@ -108,12 +104,10 @@ const StudentsPage: React.FC = () => {
 
     setFormLoading(true);
     try {
-      await childrenApi.updateChild(editingChild.id, data);
+      await updateChild(editingChild.id, data);
       setIsFormModalOpen(false);
       setEditingChild(undefined);
       message.success(t("students.page.updateSuccess"));
-      // Reload the page to refresh the children list
-      window.location.reload();
     } catch (err) {
       message.error(
         err instanceof Error ? err.message : t("students.page.updateError")
@@ -125,10 +119,8 @@ const StudentsPage: React.FC = () => {
 
   const handleDeleteChild = async (childId: string) => {
     try {
-      await childrenApi.deleteChild(childId);
+      await removeChild(childId);
       message.success(t("students.page.deleteSuccess"));
-      // Reload the page to refresh the children list
-      window.location.reload();
     } catch (err) {
       message.error(
         err instanceof Error ? err.message : t("students.page.deleteError")
@@ -407,6 +399,7 @@ const StudentsPage: React.FC = () => {
           onSubmit={editingChild ? handleUpdateChild : handleCreateChild}
           onCancel={closeModal}
           loading={formLoading}
+          showScope={isAdmin()}
         />
       </Modal>
     </div>
