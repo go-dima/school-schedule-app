@@ -449,23 +449,21 @@ const ClassManagementPage: React.FC = () => {
               handleEditClass(record);
             },
           },
+          {
+            type: "divider",
+          },
+          {
+            key: "delete",
+            label: t("classManagement.table.deleteButton"),
+            icon: <DeleteOutlined />,
+            danger: true,
+            disabled: !canDeleteClasses(),
+            onClick: ({ domEvent }) => {
+              domEvent.stopPropagation();
+              confirmDeleteClass(record.id);
+            },
+          },
         ];
-
-        if (canDeleteClasses()) {
-          menuItems.push(
-            { type: "divider" },
-            {
-              key: "delete",
-              label: t("classManagement.table.deleteButton"),
-              icon: <DeleteOutlined />,
-              danger: true,
-              onClick: ({ domEvent }) => {
-                domEvent.stopPropagation();
-                confirmDeleteClass(record.id);
-              },
-            }
-          );
-        }
 
         return (
           <Dropdown
@@ -517,14 +515,13 @@ const ClassManagementPage: React.FC = () => {
         <div className="header-main">
           <Title level={2}>{t("classManagement.page.title")}</Title>
           <Space>
-            {canCreateClasses() && (
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={handleAddClass}>
-                {t("classManagement.page.addNewClass")}
-              </Button>
-            )}
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              disabled={!canCreateClasses()}
+              onClick={handleAddClass}>
+              {t("classManagement.page.addNewClass")}
+            </Button>
             <Button
               icon={<ReloadOutlined />}
               onClick={loadData}
@@ -734,6 +731,7 @@ const ClassManagementPage: React.FC = () => {
         classInfo={enrollmentDrawerClass}
         onEdit={handleEditFromDrawer}
         onDelete={handleDeleteFromDrawer}
+        canDelete={canDeleteClasses()}
         onUpdated={handleClassUpdatedFromDrawer}
       />
     </div>
