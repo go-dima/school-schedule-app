@@ -47,7 +47,7 @@ const NO_TRACK_FILTER = 0;
 
 const ClassManagementPage: React.FC = () => {
   const { t } = useTranslation();
-  const { canManageClasses } = useAuth();
+  const { canManageClasses, canCreateClasses, canDeleteClasses } = useAuth();
   const [classes, setClasses] = useState<ClassWithTimeSlot[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -457,6 +457,7 @@ const ClassManagementPage: React.FC = () => {
             label: t("classManagement.table.deleteButton"),
             icon: <DeleteOutlined />,
             danger: true,
+            disabled: !canDeleteClasses(),
             onClick: ({ domEvent }) => {
               domEvent.stopPropagation();
               confirmDeleteClass(record.id);
@@ -517,6 +518,7 @@ const ClassManagementPage: React.FC = () => {
             <Button
               type="primary"
               icon={<PlusOutlined />}
+              disabled={!canCreateClasses()}
               onClick={handleAddClass}>
               {t("classManagement.page.addNewClass")}
             </Button>
@@ -729,6 +731,7 @@ const ClassManagementPage: React.FC = () => {
         classInfo={enrollmentDrawerClass}
         onEdit={handleEditFromDrawer}
         onDelete={handleDeleteFromDrawer}
+        canDelete={canDeleteClasses()}
         onUpdated={handleClassUpdatedFromDrawer}
       />
     </div>

@@ -56,8 +56,15 @@ const SchedulePageContent: React.FC = () => {
     const roleKey = `roles.${role}`;
     return t(roleKey, role); // fallback to role if translation not found
   };
-  const { user, currentRole, userRoles, switchRole, isAdmin, hasRole } =
-    useAuth();
+  const {
+    user,
+    currentRole,
+    userRoles,
+    switchRole,
+    isAdmin,
+    hasRole,
+    canCreateClasses,
+  } = useAuth();
   const {
     selectedChild,
     setSelectedChild,
@@ -769,7 +776,7 @@ const SchedulePageContent: React.FC = () => {
           onClassUnselect={handleClassSelect}
           canSelectClasses={canSelectClasses}
           canViewClasses={canViewClasses}
-          isAdmin={isAdmin()}
+          isAdmin={canCreateClasses()}
           showEnrollmentCount={isStaff || isAdmin()}
           onCreateClass={handleCreateClass}
           searchTerm={searchTerm}
