@@ -17,6 +17,8 @@ export interface AuthContextType {
   hasRole: (role: string) => boolean;
   isAdmin: () => boolean;
   canManageClasses: () => boolean;
+  canCreateClasses: () => boolean;
+  canDeleteClasses: () => boolean;
   canViewAllSchedules: () => boolean;
   clearApplicationState: () => void;
 }

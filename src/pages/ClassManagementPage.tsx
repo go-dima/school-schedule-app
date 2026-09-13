@@ -47,7 +47,7 @@ const NO_TRACK_FILTER = 0;
 
 const ClassManagementPage: React.FC = () => {
   const { t } = useTranslation();
-  const { canManageClasses } = useAuth();
+  const { canManageClasses, canCreateClasses, canDeleteClasses } = useAuth();
   const [classes, setClasses] = useState<ClassWithTimeSlot[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -449,20 +449,23 @@ const ClassManagementPage: React.FC = () => {
               handleEditClass(record);
             },
           },
-          {
-            type: "divider",
-          },
-          {
-            key: "delete",
-            label: t("classManagement.table.deleteButton"),
-            icon: <DeleteOutlined />,
-            danger: true,
-            onClick: ({ domEvent }) => {
-              domEvent.stopPropagation();
-              confirmDeleteClass(record.id);
-            },
-          },
         ];
+
+        if (canDeleteClasses()) {
+          menuItems.push(
+            { type: "divider" },
+            {
+              key: "delete",
+              label: t("classManagement.table.deleteButton"),
+              icon: <DeleteOutlined />,
+              danger: true,
+              onClick: ({ domEvent }) => {
+                domEvent.stopPropagation();
+                confirmDeleteClass(record.id);
+              },
+            }
+          );
+        }
 
         return (
           <Dropdown
@@ -514,12 +517,14 @@ const ClassManagementPage: React.FC = () => {
         <div className="header-main">
           <Title level={2}>{t("classManagement.page.title")}</Title>
           <Space>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleAddClass}>
-              {t("classManagement.page.addNewClass")}
-            </Button>
+            {canCreateClasses() && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={handleAddClass}>
+                {t("classManagement.page.addNewClass")}
+              </Button>
+            )}
             <Button
               icon={<ReloadOutlined />}
               onClick={loadData}

@@ -233,6 +233,14 @@ export function useAuth() {
     return hasRole("admin") || hasRole("staff");
   };
 
+  const canCreateClasses = (): boolean => {
+    return isAdmin();
+  };
+
+  const canDeleteClasses = (): boolean => {
+    return isAdmin();
+  };
+
   const canViewAllSchedules = (): boolean => {
     return hasRole("admin") || hasRole("staff");
   };
@@ -299,6 +307,8 @@ export function useAuth() {
     hasRole,
     isAdmin,
     canManageClasses,
+    canCreateClasses,
+    canDeleteClasses,
     canViewAllSchedules,
     clearApplicationState,
   };
