@@ -77,6 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
           key: USER_MANAGEMENT_SUBMENU_KEY,
           icon: <TeamOutlined />,
           label: t("navigation.userManagement"),
+          onTitleClick: () => navigate(ROUTES.USER_MANAGEMENT_LIST),
           children: [
             {
               key: ROUTES.USER_MANAGEMENT_LIST,
