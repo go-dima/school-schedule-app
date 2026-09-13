@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
 import { childrenApi } from "../services/api";
 import type { Child } from "../types";
 import { withTimeout } from "../utils/asyncUtils";
@@ -9,8 +10,21 @@ export function useAllChildren() {
   const [children, setChildren] = useState<ChildWithParent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, canViewAllSchedules } = useAuth();
+  // get_children_with_parent_status is admin/staff-only at the DB level
+  // (see migration 020) and has anon access revoked entirely -- calling it
+  // for anyone else (including pre-login/anon, since this hook backs a
+  // context mounted at the app root) fails with a Postgres permission
+  // error instead of the RPC's own friendlier role check.
+  const canListAllChildren = !!user?.id && canViewAllSchedules();
 
   useEffect(() => {
+    if (!canListAllChildren) {
+      setChildren([]);
+      setLoading(false);
+      return;
+    }
+
     let mounted = true;
 
     const loadAllChildren = async () => {
@@ -47,7 +61,7 @@ export function useAllChildren() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [canListAllChildren]);
 
   const updateChild = async (
     childId: string,
