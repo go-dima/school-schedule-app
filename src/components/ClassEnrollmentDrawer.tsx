@@ -44,6 +44,7 @@ interface ClassEnrollmentDrawerProps {
   classInfo: ClassWithTimeSlot | null;
   onEdit: (classInfo: ClassWithTimeSlot) => void;
   onDelete: (classId: string) => void;
+  canDelete?: boolean;
   onUpdated: (updatedClass: ClassWithTimeSlot) => void;
 }
 
@@ -53,6 +54,7 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
   classInfo,
   onEdit,
   onDelete,
+  canDelete = true,
   onUpdated,
 }) => {
   const { t } = useTranslation();
@@ -264,6 +266,7 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
               danger
               icon={<DeleteOutlined />}
               title={t("classManagement.table.deleteButton")}
+              disabled={!canDelete}
               onClick={() => onDelete(localClassInfo.id)}
             />
             <Button
