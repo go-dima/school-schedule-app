@@ -91,8 +91,6 @@ const mockClasses: ClassWithTimeSlot[] = [
   },
 ];
 
-const conflictingClasses: ClassWithTimeSlot[] = [mockClasses[1]];
-
 // Wrapper component for interactive stories - the drawer is shown open, with
 // no trigger button, since that's the only thing these stories demonstrate.
 function DrawerWrapper(args: any) {
@@ -139,18 +137,6 @@ export const WithSelectedClasses: Story = {
     dayOfWeek: 0,
     classes: mockClasses,
     selectedClasses: ["class-1"],
-    timeSlots: mockTimeSlots,
-  },
-};
-
-export const WithConflicts: Story = {
-  render: args => <DrawerWrapper {...args} />,
-  args: {
-    timeSlot: mockTimeSlot,
-    dayOfWeek: 0,
-    classes: mockClasses,
-    selectedClasses: ["class-2"],
-    conflictingClasses: conflictingClasses,
     timeSlots: mockTimeSlots,
   },
 };
