@@ -10,6 +10,10 @@ import type {
 } from "../types";
 import { isLessonTimeSlot } from "../utils/timeSlots";
 
+// Placeholder "all option" classes that only staff/admin may select; hidden
+// entirely from the schedule catalog for everyone else.
+const STAFF_ONLY_CLASS_TITLES = new Set(["חונכות", "שילוב"]);
+
 export class ScheduleService {
   static slotKey(slot: ClassSlot): string {
     return `${slot.dayOfWeek}:${slot.timeSlotId}`;
@@ -249,5 +253,18 @@ export class ScheduleService {
       const bIsDraft = draftClassIds.has(b.id) ? 0 : 1;
       return aIsDraft - bIsDraft;
     });
+  }
+
+  /**
+   * Removes staff-only placeholder classes (e.g. "חונכות", "שילוב") from the
+   * catalog for non-staff/admin viewers, so they never appear as pickable
+   * options for parents/children.
+   */
+  static excludeStaffOnlyClasses(
+    classes: ClassWithTimeSlot[],
+    isStaffOrAdmin: boolean
+  ): ClassWithTimeSlot[] {
+    if (isStaffOrAdmin) return classes;
+    return classes.filter(cls => !STAFF_ONLY_CLASS_TITLES.has(cls.title));
   }
 }
