@@ -51,6 +51,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   weeklySchedule,
   userGrade,
   selectedClasses = [],
+  userSelections = [],
   onClassSelect,
   onClassUnselect,
   canSelectClasses = false,
@@ -123,6 +124,10 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     );
   };
 
+  // Helper function to check if a class time-conflicts with another selected class
+  const classHasConflict = (cls: ClassWithTimeSlot): boolean =>
+    ScheduleService.hasTimeConflict(userSelections, cls);
+
   const renderClassCell = (timeSlot: TimeSlot, dayOfWeek: number) => {
     const dayClasses = weeklySchedule[dayOfWeek]?.[timeSlot.id] || [];
 
@@ -160,13 +165,14 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       // This is the second slot of a SELECTED double lesson
       const doubleClass = selectedContinuationClasses[0];
       const isMandatory = doubleClass.isMandatory;
+      const hasConflict = classHasConflict(doubleClass);
 
       // Show full class details in second slot when selected
       return (
         <div
           className={`schedule-cell selected-classes double-continuation selected ${
             isMandatory ? "mandatory-cell" : ""
-          } ${isSelectableSlot ? "clickable" : ""} ${highlightClass}`}
+          } ${hasConflict ? "conflict" : ""} ${isSelectableSlot ? "clickable" : ""} ${highlightClass}`}
           onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
           <Card
             size="small"
@@ -253,12 +259,13 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       const hasMandatoryClass = selectedPrimaryClasses.some(
         cls => cls.isMandatory
       );
+      const hasConflict = selectedPrimaryClasses.some(classHasConflict);
 
       return (
         <div
           className={`schedule-cell selected-classes ${
             hasMandatoryClass ? "mandatory-cell" : ""
-          } ${isSelectableSlot ? "clickable" : ""} ${highlightClass}`}
+          } ${hasConflict ? "conflict" : ""} ${isSelectableSlot ? "clickable" : ""} ${highlightClass}`}
           onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
           {selectedPrimaryClasses.map(cls => {
             const isDoubleLesson = cls.isDouble;

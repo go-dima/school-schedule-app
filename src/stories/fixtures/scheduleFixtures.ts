@@ -1,7 +1,11 @@
 import { ScheduleService } from "../../services/scheduleService";
 import { getDefaultTimeSlots, isLessonTimeSlot } from "../../utils/timeSlots";
 import { DAYS_OF_WEEK } from "../../types";
-import type { TimeSlot, ClassWithTimeSlot } from "../../types";
+import type {
+  TimeSlot,
+  ClassWithTimeSlot,
+  ScheduleSelectionWithClass,
+} from "../../types";
 
 // Shared mock schedule data for stories (ScheduleTable, PrintableSchedule),
 // so both render the exact same week and stay in sync as it evolves.
@@ -211,3 +215,34 @@ export const selectedClassIds = DAYS_OF_WEEK.filter(
   day => day.key !== doubleDayKey
 ).map(day => `class-${day.key}-1`);
 selectedClassIds.push(`class-${doubleDayKey}-double`);
+
+// Builds the ScheduleSelectionWithClass[] the ScheduleTable needs (via
+// `userSelections`) to detect time conflicts, from a list of selected class ids.
+export const buildUserSelections = (
+  classIds: string[]
+): ScheduleSelectionWithClass[] =>
+  classIds
+    .map(classId => mockClasses.find(cls => cls.id === classId))
+    .filter((cls): cls is ClassWithTimeSlot => Boolean(cls))
+    .map(cls => ({
+      id: `selection-${cls.id}`,
+      userId: "user-1",
+      classId: cls.id,
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
+      class: cls,
+    }));
+
+export const mockUserSelections = buildUserSelections(selectedClassIds);
+
+// Two of Thursday's "multiple classes" options ("מחשבים" and "מוזיקה") share
+// the same day/time slot. Selecting both at once (which the drawer normally
+// prevents, but can happen e.g. via a conflicting track pick) demonstrates
+// the conflict border on the schedule cell.
+export const conflictingClassIds = [
+  ...selectedClassIds,
+  "class-4-4-extra-1",
+  "class-4-4-extra-2",
+];
+export const conflictingUserSelections =
+  buildUserSelections(conflictingClassIds);

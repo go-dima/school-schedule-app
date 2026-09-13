@@ -246,6 +246,10 @@
   border: 1px solid var(--schedule-unknown-border);
 }
 
+.schedule-cell.conflict {
+  border: 1px solid var(--schedule-conflict-border);
+}
+
 .non-lesson-card {
   background: transparent;
   border: none;
