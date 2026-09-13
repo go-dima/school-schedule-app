@@ -452,4 +452,36 @@ describe("ScheduleService.orderClassesByPickStatus", () => {
 
     expect(result).toEqual([]);
   });
+
+  it("pushes staff-only placeholder classes after regular classes within each group", () => {
+    const classes = [
+      makeClass({ id: "class-1", title: "חונכות" }),
+      makeClass({ id: "class-2" }),
+      makeClass({ id: "class-3", title: "שילוב" }),
+      makeClass({ id: "class-4" }),
+    ];
+
+    const result = ScheduleService.orderClassesByPickStatus(classes, new Set());
+
+    expect(result.map(c => c.id)).toEqual([
+      "class-2",
+      "class-4",
+      "class-1",
+      "class-3",
+    ]);
+  });
+
+  it("keeps staff-only classes after regular classes even when draft-picked", () => {
+    const classes = [
+      makeClass({ id: "class-1", title: "חונכות" }),
+      makeClass({ id: "class-2" }),
+    ];
+
+    const result = ScheduleService.orderClassesByPickStatus(
+      classes,
+      new Set(["class-1", "class-2"])
+    );
+
+    expect(result.map(c => c.id)).toEqual(["class-2", "class-1"]);
+  });
 });
