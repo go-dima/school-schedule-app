@@ -54,7 +54,7 @@ const ParentIcon: React.FC<{ assignedParent: boolean }> = ({
 
 const StudentsPage: React.FC = () => {
   const { t } = useTranslation();
-  const { canManageClasses } = useAuth();
+  const { canManageClasses, isAdmin } = useAuth();
   const { children, loading, error, createChild, updateChild, removeChild } =
     useAllChildrenContext();
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -399,6 +399,7 @@ const StudentsPage: React.FC = () => {
           onSubmit={editingChild ? handleUpdateChild : handleCreateChild}
           onCancel={closeModal}
           loading={formLoading}
+          showScope={isAdmin()}
         />
       </Modal>
     </div>
