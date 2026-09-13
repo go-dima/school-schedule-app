@@ -10,6 +10,10 @@ import type {
 } from "../types";
 import { isLessonTimeSlot } from "../utils/timeSlots";
 
+// Placeholder "all option" classes that only staff/admin may select; hidden
+// entirely from the schedule catalog for everyone else.
+const STAFF_ONLY_CLASS_TITLES = new Set(["חונכות", "שילוב"]);
+
 export class ScheduleService {
   static slotKey(slot: ClassSlot): string {
     return `${slot.dayOfWeek}:${slot.timeSlotId}`;
@@ -235,10 +239,12 @@ export class ScheduleService {
   }
 
   /**
-   * Stable-sorts classes so draft-marked ones come first, preserving
-   * relative order within each group. Intended for the drawer's
-   * already-non-selected "available" subset -- a class in both `classes`
-   * and `draftClassIds` just moves to the front, it is never duplicated.
+   * Stable-sorts classes so draft-marked ones come first (preserving
+   * relative order within each group), with staff-only placeholder classes
+   * (e.g. "חונכות", "שילוב") pushed after all non-staff-only classes within
+   * each group. Intended for the drawer's already-non-selected "available"
+   * subset -- a class in both `classes` and `draftClassIds` just moves to
+   * the front, it is never duplicated.
    */
   static orderClassesByPickStatus(
     classes: ClassWithTimeSlot[],
@@ -247,7 +253,24 @@ export class ScheduleService {
     return [...classes].sort((a, b) => {
       const aIsDraft = draftClassIds.has(a.id) ? 0 : 1;
       const bIsDraft = draftClassIds.has(b.id) ? 0 : 1;
-      return aIsDraft - bIsDraft;
+      if (aIsDraft !== bIsDraft) return aIsDraft - bIsDraft;
+
+      const aIsStaffOnly = STAFF_ONLY_CLASS_TITLES.has(a.title) ? 1 : 0;
+      const bIsStaffOnly = STAFF_ONLY_CLASS_TITLES.has(b.title) ? 1 : 0;
+      return aIsStaffOnly - bIsStaffOnly;
     });
+  }
+
+  /**
+   * Removes staff-only placeholder classes (e.g. "חונכות", "שילוב") from the
+   * catalog for non-staff/admin viewers, so they never appear as pickable
+   * options for parents/children.
+   */
+  static excludeStaffOnlyClasses(
+    classes: ClassWithTimeSlot[],
+    isStaffOrAdmin: boolean
+  ): ClassWithTimeSlot[] {
+    if (isStaffOrAdmin) return classes;
+    return classes.filter(cls => !STAFF_ONLY_CLASS_TITLES.has(cls.title));
   }
 }

@@ -21,7 +21,10 @@ import {
 } from "@ant-design/icons";
 import { useAuth } from "../contexts/AuthContext";
 import { useChildContext } from "../contexts/ChildContext";
-import { useScheduleCatalog } from "../hooks/useScheduleCatalog";
+import {
+  ScheduleCatalogProvider,
+  useScheduleCatalog,
+} from "../contexts/ScheduleCatalogContext";
 import { useSelectedSchedule } from "../hooks/useSelectedSchedule";
 import { useDraftSelectionAwareness } from "../hooks/useDraftSelectionAwareness";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
@@ -46,7 +49,7 @@ import { printSchedule } from "../utils/printSchedule";
 const { Title } = Typography;
 const { Option } = Select;
 
-const SchedulePage: React.FC = () => {
+const SchedulePageContent: React.FC = () => {
   const { t } = useTranslation();
 
   const getRoleDisplayName = (role: string): string => {
@@ -111,7 +114,8 @@ const SchedulePage: React.FC = () => {
     }
   };
 
-  // Catalog (classes/time slots/weekly grid): role-independent, always loaded.
+  // Catalog (classes/time slots/weekly grid): staff-only placeholder classes
+  // are already excluded here for non-staff/admin viewers.
   const {
     classes,
     timeSlots,
@@ -878,5 +882,11 @@ const SchedulePage: React.FC = () => {
     </div>
   );
 };
+
+const SchedulePage: React.FC = () => (
+  <ScheduleCatalogProvider>
+    <SchedulePageContent />
+  </ScheduleCatalogProvider>
+);
 
 export default SchedulePage;
