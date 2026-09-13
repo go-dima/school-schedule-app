@@ -87,10 +87,38 @@ export function useAllChildren() {
     return updatedChild;
   };
 
+  const createChild = async (
+    firstName: string,
+    lastName: string,
+    grade: number,
+    groupNumber: number | null = 1,
+    scope: Child["scope"] = "prod",
+    trackNumber: number | null = null
+  ): Promise<Child> => {
+    const newChild = await childrenApi.createChild(
+      firstName,
+      lastName,
+      grade,
+      groupNumber,
+      scope,
+      trackNumber,
+      "committed"
+    );
+    setChildren(prev => [...prev, { ...newChild, assignedParent: false }]);
+    return newChild;
+  };
+
+  const removeChild = async (childId: string): Promise<void> => {
+    await childrenApi.deleteChild(childId);
+    setChildren(prev => prev.filter(child => child.id !== childId));
+  };
+
   return {
     children,
     loading,
     error,
+    createChild,
     updateChild,
+    removeChild,
   };
 }

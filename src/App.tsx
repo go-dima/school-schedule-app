@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { RouterProvider } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ChildProvider } from "./contexts/ChildContext";
+import { AllChildrenProvider } from "./contexts/AllChildrenContext";
 import { ContextErrorBoundary } from "./components/ErrorBoundary";
 import { router } from "./routes/router";
 import { Spin, Button, Result } from "antd";
@@ -135,7 +136,9 @@ function App() {
     <ContextErrorBoundary>
       <AuthProvider>
         <ChildProvider>
-          <AppContent />
+          <AllChildrenProvider>
+            <AppContent />
+          </AllChildrenProvider>
         </ChildProvider>
       </AuthProvider>
     </ContextErrorBoundary>

@@ -86,7 +86,9 @@
         "searchClass": "חיפוש שיעור",
         "track": "מסלול",
         "trackPlaceholder": "ללא מסלול",
-        "trackOption": "מסלול {{track}}"
+        "trackOption": "מסלול {{track}}",
+        "groupPlaceholder": "ללא קבוצה",
+        "groupOption": "קבוצה {{group}}"
       },
       "placeholders": {
         "allGrades": "כל הכיתות",
@@ -131,6 +133,7 @@
         "exportFailed": "שגיאה בהדפסת מערכת השעות",
         "updateClassSelection": "שגיאה בעדכון בחירת השיעור",
         "updateTrack": "שגיאה בעדכון המסלול",
+        "updateGroup": "שגיאה בעדכון הקבוצה",
         "lockedClassCannotUnselect": "לא ניתן לבטל בחירה של שיעור נעול",
         "loadData": "שגיאה בטעינת הנתונים",
         "loadTimeSlots": "שגיאה בטעינת זמני השיעורים",
