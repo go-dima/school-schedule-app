@@ -173,6 +173,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           className={`schedule-cell selected-classes double-continuation selected ${
             isMandatory ? "mandatory-cell" : ""
           } ${hasConflict ? "conflict" : ""} ${isSelectableSlot ? "clickable" : ""} ${highlightClass}`}
+          title={hasConflict ? t("schedule.table.conflictTooltip") : undefined}
           onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
           <Card
             size="small"
@@ -266,6 +267,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           className={`schedule-cell selected-classes ${
             hasMandatoryClass ? "mandatory-cell" : ""
           } ${hasConflict ? "conflict" : ""} ${isSelectableSlot ? "clickable" : ""} ${highlightClass}`}
+          title={hasConflict ? t("schedule.table.conflictTooltip") : undefined}
           onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
           {selectedPrimaryClasses.map(cls => {
             const isDoubleLesson = cls.isDouble;
