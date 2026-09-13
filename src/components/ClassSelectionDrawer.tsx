@@ -5,12 +5,11 @@ import {
   Button,
   Tag,
   Empty,
-  Alert,
   Space,
   Typography,
   Tooltip,
 } from "antd";
-import { CheckOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { CheckOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { ScheduleService } from "../services/scheduleService";
 import type { TimeSlot, ClassWithTimeSlot } from "../types";
@@ -31,7 +30,6 @@ interface ClassSelectionDrawerProps {
   selectedClasses?: string[];
   onClassSelect?: (classId: string) => void;
   onClassUnselect?: (classId: string) => void;
-  conflictingClasses?: ClassWithTimeSlot[];
   canSelectClasses?: boolean;
   isAdmin?: boolean;
   onCreateClass?: (timeSlotId: string, dayOfWeek: number) => void;
@@ -47,7 +45,6 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
   selectedClasses = [],
   onClassSelect,
   onClassUnselect,
-  conflictingClasses = [],
   canSelectClasses = false,
   isAdmin = false,
   onCreateClass,
@@ -119,9 +116,6 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
   ) => {
     const isSelected = selectedClasses.includes(cls.id);
     const isLocked = cls.trackNumber !== null;
-    const hasConflict = conflictingClasses.some(
-      conflict => conflict.id === cls.id
-    );
 
     const toggleButton = (
       <Button
@@ -141,8 +135,8 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
       <Card
         key={cls.id}
         className={`class-selection-card ${isSelected ? "selected" : ""} ${
-          hasConflict ? "conflict" : ""
-        } ${isGrayedOut ? "grayed-out" : ""}`}
+          isGrayedOut ? "grayed-out" : ""
+        }`}
         size="small"
         hoverable={!isGrayedOut}
         actions={
@@ -211,17 +205,6 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
             <div className="class-description">
               <Text>{cls.description}</Text>
             </div>
-          )}
-
-          {hasConflict && (
-            <Alert
-              message={t("schedule.drawer.timeConflictTitle")}
-              description={t("schedule.drawer.timeConflictDescription")}
-              type="warning"
-              showIcon
-              icon={<ExclamationCircleOutlined />}
-              className="conflict-alert"
-            />
           )}
         </div>
       </Card>
@@ -317,20 +300,6 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
                 timeSlotId={timeSlot.id}
                 dayOfWeek={dayOfWeek}
               />
-            )}
-
-            {conflictingClasses.length > 0 && (
-              <div className="conflict-warning">
-                <Alert
-                  message={t("schedule.drawer.conflictWarningTitle")}
-                  description={t("schedule.drawer.conflictDescription", {
-                    count: conflictingClasses.length,
-                  })}
-                  type="info"
-                  showIcon
-                  closable
-                />
-              </div>
             )}
           </Space>
         )}

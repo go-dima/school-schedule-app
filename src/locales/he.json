@@ -158,14 +158,10 @@
       "teacherLabel": "מורה: ",
       "timeLabel": "זמן: ",
       "roomLabel": "כיתה: ",
-      "timeConflictTitle": "קיים חפיפה בזמן",
-      "timeConflictDescription": "שיעור זה חופף עם שיעור אחר שנבחר",
       "noClassesAvailable": "אין שיעורים זמינים בזמן זה",
       "selectedClassesSection": "שיעורים שנבחרו:",
       "otherAvailableClasses": "שיעורים אחרים זמינים:",
       "availableClasses": "שיעורים זמינים:",
-      "conflictWarningTitle": "שים לב לחפיפות",
-      "conflictDescription": "ישנם {{count}} שיעורים עם חפיפה בזמן. בחירת שיעור חדש תבטל אוטומטית את השיעורים החופפים.",
       "dayNamePrefix": "יום {{dayName}}"
     }
   },

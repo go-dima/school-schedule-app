@@ -51,7 +51,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   weeklySchedule,
   userGrade,
   selectedClasses = [],
-  userSelections = [],
   onClassSelect,
   onClassUnselect,
   canSelectClasses = false,
@@ -482,11 +481,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
             );
           })}
           selectedClasses={selectedClasses}
-          conflictingClasses={classes.filter(
-            cls =>
-              !selectedClasses.includes(cls.id) &&
-              ScheduleService.hasTimeConflict(userSelections, cls)
-          )}
           onClassSelect={onClassSelect}
           onClassUnselect={onClassUnselect}
           canSelectClasses={canSelectClasses}
