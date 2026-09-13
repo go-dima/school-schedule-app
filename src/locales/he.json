@@ -151,7 +151,8 @@
       "oneClass": "שיעור אחד",
       "multipleClasses": "{{count}} שיעורים",
       "clickToSelect": "לחץ לבחירה",
-      "clickToView": "לחץ לצפייה"
+      "clickToView": "לחץ לצפייה",
+      "conflictTooltip": "שיעור זה חופף בזמן לשיעור אחר שנבחר"
     },
     "enrollment": {
       "count": "נרשמו",

@@ -259,6 +259,15 @@
   border: 1px solid var(--schedule-unknown-border);
 }
 
+.schedule-cell.conflict {
+  border: 1px solid var(--schedule-conflict-border);
+  border-radius: 4px;
+}
+
+.schedule-cell.double-continuation.conflict {
+  border-top: 1px solid var(--schedule-conflict-border) !important;
+}
+
 .non-lesson-card {
   background: transparent;
   border: none;

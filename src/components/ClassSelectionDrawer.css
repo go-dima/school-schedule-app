@@ -49,11 +49,6 @@
   background: #f6ffed;
 }
 
-.class-selection-card.conflict {
-  border-color: #faad14;
-  background: #fffbf0;
-}
-
 .class-selection-card.grayed-out {
   opacity: 0.4;
   background: #f5f5f5;
@@ -183,14 +178,6 @@
   padding: 0px 4px 0px 4px;
 }
 
-.conflict-alert {
-  margin-top: 12px;
-}
-
-.conflict-alert .ant-alert-message {
-  font-weight: 600;
-}
-
 .selected-classes-section,
 .available-classes-section {
   width: 100%;
@@ -200,10 +187,6 @@
 .available-classes-section > .ant-typography {
   color: #1890ff;
   margin-bottom: 12px !important;
-}
-
-.conflict-warning {
-  margin-top: 16px;
 }
 
 /* Action buttons */
@@ -234,10 +217,6 @@
 /* RTL specific adjustments */
 .class-selection-drawer .ant-space {
   width: 100%;
-}
-
-.class-selection-drawer .ant-alert {
-  text-align: right;
 }
 
 .class-selection-drawer .ant-tag {
