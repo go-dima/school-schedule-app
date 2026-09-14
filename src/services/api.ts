@@ -4,6 +4,8 @@ import type {
   Class,
   ClassSlot,
   ClassWithTimeSlot,
+  DuplicateChildMatch,
+  ParentChildRelationship,
   PendingApproval,
   ScheduleSelectionWithClass,
   ScheduleTarget,
@@ -996,6 +998,81 @@ export const childrenApi = {
         lastName: parent.last_name,
         isPrimary: parent.is_primary,
       })),
+    };
+  },
+
+  /**
+   * Local (client-visible) duplicate check: a direct `children` query, not
+   * an RPC, so it stays cheap enough to run as the user types a new child's
+   * name/grade (see Task 6). Joins `users` via the FK Postgres auto-named
+   * `children_created_by_fkey` (migration 030) to surface who created each
+   * candidate match.
+   */
+  async findLocalDuplicateChildren(
+    firstName: string,
+    lastName: string,
+    grade: number,
+    excludeChildId: string | undefined,
+    currentUserId: string
+  ): Promise<DuplicateChildMatch[]> {
+    let query = supabase
+      .from("children")
+      .select(
+        "id, grade, created_by, creator:users!children_created_by_fkey(first_name, last_name, email)"
+      )
+      .ilike("first_name", firstName.trim())
+      .ilike("last_name", lastName.trim())
+      .eq("grade", grade);
+
+    if (excludeChildId) {
+      query = query.neq("id", excludeChildId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new ApiError(
+        `Failed to check for duplicate children: ${error.message}`
+      );
+    }
+
+    return (data ?? []).map(
+      (row: {
+        id: string;
+        grade: number;
+        created_by: string | null;
+        creator: {
+          first_name: string | null;
+          last_name: string | null;
+          email: string;
+        } | null;
+      }) => ({
+        id: row.id,
+        grade: row.grade,
+        createdByUserId: row.created_by,
+        createdByName: row.creator
+          ? [row.creator.first_name, row.creator.last_name]
+              .filter(Boolean)
+              .join(" ") || row.creator.email
+          : null,
+        createdByIsSelf: row.created_by === currentUserId,
+      })
+    );
+  },
+
+  async claimChild(childId: string): Promise<ParentChildRelationship> {
+    const { data, error } = await supabase.rpc("claim_child", {
+      p_child_id: childId,
+    });
+
+    if (error) throw new ApiError(error.message);
+
+    return {
+      id: data.id,
+      parentId: data.parent_id,
+      childId: data.child_id,
+      isPrimary: data.is_primary,
+      createdAt: data.created_at,
     };
   },
 };
