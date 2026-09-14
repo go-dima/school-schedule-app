@@ -21,18 +21,27 @@ export type Database = {
         Row: {
           id: string;
           email: string;
+          first_name: string | null;
+          last_name: string | null;
+          last_sign_in_at: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
           email: string;
+          first_name?: string | null;
+          last_name?: string | null;
+          last_sign_in_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
           email?: string;
+          first_name?: string | null;
+          last_name?: string | null;
+          last_sign_in_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
