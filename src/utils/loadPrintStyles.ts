@@ -2,6 +2,7 @@ import scheduleColorsCss from "../styles/schedule-colors.css?raw";
 import classCardTextCss from "../styles/class-card-text.css?raw";
 import printTableBaseCss from "../styles/print-table-base.css?raw";
 import printableScheduleCss from "../components/PrintableSchedule.css?raw";
+import printableClassRosterCss from "../components/PrintableClassRoster.css?raw";
 
 // The print popup is a bare document with none of the app's bundled CSS, so
 // its styles are assembled from the same source files the app itself uses
@@ -14,3 +15,6 @@ export const getPrintStyles = (): string =>
     printTableBaseCss,
     printableScheduleCss,
   ].join("\n");
+
+export const getClassRosterPrintStyles = (): string =>
+  [scheduleColorsCss, printableClassRosterCss].join("\n");
