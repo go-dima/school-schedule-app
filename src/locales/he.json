@@ -283,7 +283,7 @@
     },
     "duplicateWarning": {
       "title": "שם דומה כבר קיים",
-      "existsMessage": "שם הילד/ה {{name}} כבר נוצר ע\"י {{creator}} כיתה {{grade}}",
+      "existsMessage": "שם הילד/ה {{name}} (כיתה {{grade}}) כבר נוצר ע\"י {{creator}}",
       "attachExisting": "צרף ילד קיים",
       "addNewChild": "הוסף ילד חדש",
       "continueAnyway": "המשך בכל זאת",
