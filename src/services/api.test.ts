@@ -303,6 +303,8 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
         groupNumber: 1,
         trackNumber: null,
         scope: "prod",
+        createdBy: null,
+        createdByName: null,
         createdAt: "2024-01-05T00:00:00.000Z",
         updatedAt: "2024-01-06T00:00:00.000Z",
       },
@@ -314,6 +316,8 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
         groupNumber: 2,
         trackNumber: null,
         scope: "prod",
+        createdBy: null,
+        createdByName: null,
         createdAt: "2024-01-01T00:00:00.000Z",
         updatedAt: "2024-01-02T00:00:00.000Z",
       },
@@ -325,6 +329,8 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
         groupNumber: null,
         trackNumber: 1,
         scope: "prod",
+        createdBy: null,
+        createdByName: null,
         createdAt: "2024-01-03T00:00:00.000Z",
         updatedAt: "2024-01-04T00:00:00.000Z",
       },
@@ -437,6 +443,11 @@ describe("childrenApi.findLocalDuplicateChildren", () => {
     );
 
     expect(supabase.from).toHaveBeenCalledWith("children");
+    // The mocked `from(...)` chain returns a fresh object per call (see the
+    // mock setup above), so grab the specific chain instance this call
+    // produced to inspect how `.neq(...)` was actually invoked on it.
+    const chain = (supabase.from as any).mock.results[0].value;
+    expect(chain.neq).toHaveBeenCalledWith("id", "child-1");
   });
 });
 
