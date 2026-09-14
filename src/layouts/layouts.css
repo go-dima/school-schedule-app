@@ -364,47 +364,6 @@
   margin-bottom: 24px;
 }
 
-/* Filters section */
-.filters-section {
-  margin-bottom: 24px;
-  padding: 20px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-}
-
-.filters-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.filters-row > .ant-space:first-child {
-  flex: 1;
-  min-width: 300px;
-}
-
-.filters-row > .ant-space:last-child {
-  flex-shrink: 0;
-}
-
-@media (max-width: 768px) {
-  .filters-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .filters-row > .ant-space {
-    justify-content: flex-start;
-  }
-
-  .filters-row > .ant-space:last-child {
-    justify-content: flex-end;
-  }
-}
-
 .page-header {
   margin-bottom: 32px;
   border-bottom: 2px solid #f1f5f9;

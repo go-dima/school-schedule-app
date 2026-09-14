@@ -225,14 +225,22 @@
       "dependencies": ["027_lock_down_enrollment_views_and_child_creation"]
     },
     {
-      "id": "029_add_added_by_to_enrolled_children",
+      "id": "029_add_last_sign_in_at",
+      "name": "Add Last Sign In At",
+      "description": "Add last_sign_in_at column to public.users, synced from auth.users via a sign-in trigger (sync_last_sign_in_at/on_auth_user_sign_in), plus a one-time backfill, so the admin User Management page can display last sign-in time",
+      "file": "029_add_last_sign_in_at.sql",
+      "created_at": "2026-09-13T00:01:00Z",
+      "dependencies": ["028_admin_only_class_create_delete"]
+    },
+    {
+      "id": "030_add_added_by_to_enrolled_children",
       "name": "Add Added By To Enrolled Children",
       "description": "Issue #110: extend get_class_enrolled_children (DROP+CREATE, since its RETURNS TABLE shape changes) to also return the committing user's id, first/last name, and commit timestamp, by widening committed_enrollments to carry schedule_selections.user_id/created_at and joining public.users; reissues the REVOKE/GRANT pair after CREATE to avoid the anon-EXECUTE grant regression DROP FUNCTION would otherwise reintroduce",
-      "file": "029_add_added_by_to_enrolled_children.sql",
+      "file": "030_add_added_by_to_enrolled_children.sql",
       "created_at": "2026-09-14T00:00:00Z",
-      "dependencies": ["028_admin_only_class_create_delete"]
+      "dependencies": ["029_add_last_sign_in_at"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 29
+  "schema_version": 30
 }

@@ -15,7 +15,11 @@ import {
   Input,
   message,
 } from "antd";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  PrinterOutlined,
+} from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { scheduleApi, classesApi } from "../services/api";
 import { ScheduleService } from "../services/scheduleService";
@@ -29,6 +33,7 @@ import { GradesRangeTag } from "@/elements/GradesRangeTag";
 import { AddedByTooltip } from "@/elements/AddedByTooltip";
 import { GetGradeName } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
+import { printClassRoster } from "@/utils/printClassRoster";
 import { GroupTrackTags } from "./GroupTrackTags";
 import "./ClassEnrollmentDrawer.css";
 
@@ -218,6 +223,19 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
     saveField({ grades: sortedGrades });
   };
 
+  const handlePrint = async () => {
+    if (!localClassInfo) return;
+    try {
+      await printClassRoster({ classInfo: localClassInfo, children });
+    } catch (err) {
+      message.error(
+        err instanceof Error
+          ? err.message
+          : t("classManagement.page.dataLoadingError")
+      );
+    }
+  };
+
   // Earliest day/time first, matching the sort ClassManagementPage's own
   // table already uses for the class list itself.
   const sortedSlots = (cls: ClassWithTimeSlot): ClassSlotWithTimeSlot[] =>
@@ -278,6 +296,12 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
               icon={<EditOutlined />}
               title={t("classManagement.table.editButton")}
               onClick={() => onEdit(localClassInfo)}
+            />
+            <Button
+              icon={<PrinterOutlined />}
+              title={t("schedule.page.exportButton")}
+              disabled={loading || children.length === 0}
+              onClick={handlePrint}
             />
           </Space>
         )

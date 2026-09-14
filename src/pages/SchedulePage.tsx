@@ -14,7 +14,6 @@ import {
 } from "antd";
 import { useTranslation } from "react-i18next";
 import {
-  ReloadOutlined,
   UserSwitchOutlined,
   PrinterOutlined,
   LockOutlined,
@@ -30,6 +29,8 @@ import { useDraftSelectionAwareness } from "../hooks/useDraftSelectionAwareness"
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import ScheduleTable from "../components/ScheduleTable";
 import ClassForm from "../components/ClassForm";
+import { FiltersBar } from "../components/FiltersBar";
+import { FilterField } from "../components/FilterField";
 import { ChildSelector } from "../components/ChildSelector";
 import { AddChildButton } from "../components/AddChildButton";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
@@ -520,88 +521,16 @@ const SchedulePageContent: React.FC = () => {
 
   return (
     <div className="page-content">
-      <div className="filters-section">
-        <div className="filters-row">
-          <Space wrap>
-            {isParent && userChildren.length > 0 && (
-              <>
-                <ChildGroupTrackSelector
-                  child={selectedChild}
-                  onChange={handleParentFieldChange}
-                  disabled={childrenLoading}
-                />
-                <Space size="small">
-                  <ChildSelector
-                    children={userChildren}
-                    selectedChildId={selectedChild?.id || null}
-                    onChildSelect={childId => {
-                      if (!childId) {
-                        // Handle clear selection
-                        setSelectedChild(undefined);
-                        return;
-                      }
-                      const child = userChildren.find(c => c.id === childId);
-                      setSelectedChild(child || undefined);
-                      // Auto-update grade filter based on selected child (only for non-admin parents)
-                      if (child && !isAdmin()) {
-                        setSelectedGrade(child.grade);
-                      }
-                    }}
-                    style={{ minWidth: 200 }}
-                    disabled={childrenLoading}
-                  />
-                  <span>{t("schedule.page.labels.selectChild")}:</span>
-                </Space>
-              </>
-            )}
-            {isParent && <AddChildButton onAdded={handleParentChildAdded} />}
-            {isStaff && (
-              <>
-                <ChildGroupTrackSelector
-                  child={staffSelectedChild}
-                  onChange={handleStaffFieldChange}
-                  disabled={allChildrenLoading}
-                />
-                <Space size="small">
-                  <StudentSearchSelector
-                    children={allChildren}
-                    selectedChildId={staffSelectedChild?.id || null}
-                    onChildSelect={handleStaffChildSelect}
-                    onChildAdded={handleChildAdded}
-                    placeholder={t(
-                      "schedule.page.placeholders.selectChildForStaff"
-                    )}
-                    style={{ minWidth: 200 }}
-                    disabled={allChildrenLoading}
-                    defaultGrade={selectedGrade || 1}
-                    mode="select"
-                    isCreateAllowed={isStaff}
-                  />
-                  <span>{t("schedule.page.labels.selectChildForStaff")}:</span>
-                </Space>
-              </>
-            )}
-            {(isStaff || isAdmin()) && (
-              <>
-                <Select
-                  value={selectedGrade}
-                  onChange={setSelectedGrade}
-                  placeholder={t("schedule.page.placeholders.allGrades")}
-                  allowClear
-                  style={{ minWidth: 120 }}
-                  disabled={isStaff && !!staffSelectedChild}>
-                  {GRADES.map(grade => (
-                    <Option key={grade} value={grade}>
-                      {GetGradeName(grade)}
-                    </Option>
-                  ))}
-                </Select>
-                <span>{t("schedule.page.labels.filterByGrade")}:</span>
-              </>
-            )}
-          </Space>
-
-          <Space>
+      <FiltersBar
+        variant="flat"
+        canRefresh
+        onRefresh={() => {
+          loadScheduleData();
+          refetchSelectedSchedule();
+        }}
+        refreshing={loading}
+        actions={
+          <>
             {userRoles.length > 1 && (
               <Select
                 value={currentRole?.id}
@@ -625,16 +554,7 @@ const SchedulePageContent: React.FC = () => {
                 {t("schedule.page.exportButton")}
               </Button>
             )}
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={() => {
-                loadScheduleData();
-                refetchSelectedSchedule();
-              }}
-              disabled={loading}>
-              {t("common.buttons.refresh")}
-            </Button>
-            <Space size="small">
+            <FilterField label={t("schedule.page.labels.searchClass")}>
               <AutoComplete
                 value={searchTerm}
                 onChange={setSearchTerm}
@@ -677,11 +597,83 @@ const SchedulePageContent: React.FC = () => {
                 allowClear
                 filterOption={false}
               />
-              <span>{t("schedule.page.labels.searchClass")}:</span>
-            </Space>
-          </Space>
-        </div>
-      </div>
+            </FilterField>
+          </>
+        }>
+        {isParent && userChildren.length > 0 && (
+          <>
+            <ChildGroupTrackSelector
+              child={selectedChild}
+              onChange={handleParentFieldChange}
+              disabled={childrenLoading}
+            />
+            <FilterField label={t("schedule.page.labels.selectChild")}>
+              <ChildSelector
+                children={userChildren}
+                selectedChildId={selectedChild?.id || null}
+                onChildSelect={childId => {
+                  if (!childId) {
+                    // Handle clear selection
+                    setSelectedChild(undefined);
+                    return;
+                  }
+                  const child = userChildren.find(c => c.id === childId);
+                  setSelectedChild(child || undefined);
+                  // Auto-update grade filter based on selected child (only for non-admin parents)
+                  if (child && !isAdmin()) {
+                    setSelectedGrade(child.grade);
+                  }
+                }}
+                style={{ minWidth: 200 }}
+                disabled={childrenLoading}
+              />
+            </FilterField>
+          </>
+        )}
+        {isParent && <AddChildButton onAdded={handleParentChildAdded} />}
+        {isStaff && (
+          <>
+            <ChildGroupTrackSelector
+              child={staffSelectedChild}
+              onChange={handleStaffFieldChange}
+              disabled={allChildrenLoading}
+            />
+            <FilterField label={t("schedule.page.labels.selectChildForStaff")}>
+              <StudentSearchSelector
+                children={allChildren}
+                selectedChildId={staffSelectedChild?.id || null}
+                onChildSelect={handleStaffChildSelect}
+                onChildAdded={handleChildAdded}
+                placeholder={t(
+                  "schedule.page.placeholders.selectChildForStaff"
+                )}
+                style={{ minWidth: 200 }}
+                disabled={allChildrenLoading}
+                defaultGrade={selectedGrade || 1}
+                mode="select"
+                isCreateAllowed={isStaff}
+              />
+            </FilterField>
+          </>
+        )}
+        {(isStaff || isAdmin()) && (
+          <FilterField label={t("schedule.page.labels.filterByGrade")}>
+            <Select
+              value={selectedGrade}
+              onChange={setSelectedGrade}
+              placeholder={t("schedule.page.placeholders.allGrades")}
+              allowClear
+              style={{ minWidth: 120 }}
+              disabled={isStaff && !!staffSelectedChild}>
+              {GRADES.map(grade => (
+                <Option key={grade} value={grade}>
+                  {GetGradeName(grade)}
+                </Option>
+              ))}
+            </Select>
+          </FilterField>
+        )}
+      </FiltersBar>
 
       {isParent && userChildren.length === 0 && (
         <Alert

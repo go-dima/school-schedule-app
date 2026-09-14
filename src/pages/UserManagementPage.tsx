@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Table,
   Button,
@@ -8,9 +8,12 @@ import {
   message,
   Modal,
   Alert,
+  Select,
 } from "antd";
-import { UserOutlined, CrownOutlined, ReloadOutlined } from "@ant-design/icons";
+import { UserOutlined, CrownOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
+import { FiltersBar } from "../components/FiltersBar";
+import { FilterField } from "../components/FilterField";
 import { usersApi } from "../services/api";
 import type { UserRoleData, UserRole } from "../types";
 import "./UserManagementPage.css";
@@ -35,6 +38,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [roleFilter, setRoleFilter] = useState<UserRole[]>([]);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -124,11 +128,22 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
     return roleColors[role] || "default";
   };
 
+  const filteredUsers = useMemo(() => {
+    if (roleFilter.length === 0) return users;
+    return users.filter(user =>
+      user.roles.some(role => roleFilter.includes(role.role))
+    );
+  }, [users, roleFilter]);
+
   const columns: ColumnsType<UserWithRoles> = [
     {
       title: "שם משתמש",
       key: "name",
       width: 110,
+      sorter: (a, b) =>
+        `${a.firstName || ""} ${a.lastName || ""}`
+          .trim()
+          .localeCompare(`${b.firstName || ""} ${b.lastName || ""}`.trim()),
       render: (_, record) => {
         const firstName = record.firstName || "";
         const lastName = record.lastName || "";
@@ -151,6 +166,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       key: "email",
       width: 140,
       dataIndex: "email",
+      sorter: (a, b) => a.email.localeCompare(b.email),
       render: (email: string) => (
         <Text copyable={{ tooltips: false }}>{email}</Text>
       ),
@@ -160,6 +176,9 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       key: "createdAt",
       width: 60,
       dataIndex: "createdAt",
+      sorter: (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      defaultSortOrder: "descend",
       render: (date: string) => (
         <Text style={{ fontSize: "12px" }}>
           {new Date(date).toLocaleDateString("he-IL")}
@@ -171,6 +190,9 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       key: "lastSignInAt",
       width: 60,
       dataIndex: "lastSignInAt",
+      sorter: (a, b) =>
+        new Date(a.lastSignInAt || 0).getTime() -
+        new Date(b.lastSignInAt || 0).getTime(),
       render: (date?: string) => {
         if (!date) {
           return (
@@ -213,6 +235,17 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       title: "תפקידים",
       key: "roles",
       width: 50,
+      sorter: (a, b) =>
+        a.roles
+          .map(role => getRoleDisplayName(role.role))
+          .sort()
+          .join(",")
+          .localeCompare(
+            b.roles
+              .map(role => getRoleDisplayName(role.role))
+              .sort()
+              .join(",")
+          ),
       render: (_, record) => (
         <Space wrap>
           {record.roles.map(role => (
@@ -280,9 +313,6 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
             ניהול משתמשים
           </Title>
         </Space>
-        <Button icon={<ReloadOutlined />} onClick={loadUsers} loading={loading}>
-          רענן
-        </Button>
       </div>
 
       <Alert
@@ -293,9 +323,27 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         style={{ marginBottom: 24 }}
       />
 
+      <FiltersBar canRefresh onRefresh={loadUsers} refreshing={loading}>
+        <FilterField label="סנן לפי תפקיד">
+          <Select<UserRole[]>
+            mode="multiple"
+            value={roleFilter}
+            onChange={setRoleFilter}
+            placeholder="הצג הכל"
+            allowClear
+            style={{ minWidth: 220 }}
+            options={[
+              { label: getRoleDisplayName("admin"), value: "admin" },
+              { label: getRoleDisplayName("staff"), value: "staff" },
+              { label: getRoleDisplayName("parent"), value: "parent" },
+            ]}
+          />
+        </FilterField>
+      </FiltersBar>
+
       <Table<UserWithRoles>
         columns={columns}
-        dataSource={users}
+        dataSource={filteredUsers}
         rowKey="id"
         loading={loading}
         size="small"

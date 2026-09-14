@@ -1,4 +1,4 @@
--- Migration: 029_add_added_by_to_enrolled_children
+-- Migration: 030_add_added_by_to_enrolled_children
 -- Description: Issue #110 -- surface who committed a child's class
 --   selection (and when) in the Class Management enrollment roster drawer.
 --   schedule_selections.user_id (NOT NULL) and created_at already record
