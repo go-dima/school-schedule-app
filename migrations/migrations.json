@@ -231,8 +231,16 @@
       "file": "029_add_last_sign_in_at.sql",
       "created_at": "2026-09-13T00:01:00Z",
       "dependencies": ["028_admin_only_class_create_delete"]
+    },
+    {
+      "id": "030_child_ownership_and_duplicates",
+      "name": "Child Ownership And Duplicates",
+      "description": "Add children.created_by provenance column (backfilled from each child's current primary parent_child_relationships row), delete parent_child_relationships rows that wrongly link a staff/admin (not also an approved parent) as a child's parent, update create_child_with_relationship to only link the caller as parent when they are an approved parent (staff/admin creations are recorded via created_by instead), and add a claim_child RPC letting an approved parent attach themselves to a parentless child",
+      "file": "030_child_ownership_and_duplicates.sql",
+      "created_at": "2026-09-14T00:00:00Z",
+      "dependencies": ["029_add_last_sign_in_at"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 29
+  "schema_version": 30
 }
