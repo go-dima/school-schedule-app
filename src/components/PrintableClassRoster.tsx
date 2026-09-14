@@ -18,11 +18,9 @@ const PrintableClassRoster: React.FC<PrintableClassRosterProps> = ({
   return (
     <div className="printable-class-roster">
       <div className="print-header">
-        <h1 className="print-title">{classInfo.title}</h1>
-        <div className="print-teacher">{classInfo.teacher}</div>
-        <div className="print-count">
-          {children.length} {t("classManagement.table.enrollmentColumn")}
-        </div>
+        <h1 className="print-title">
+          {classInfo.title} ({classInfo.teacher})
+        </h1>
       </div>
 
       <div className="print-roster-list">
@@ -36,6 +34,10 @@ const PrintableClassRoster: React.FC<PrintableClassRosterProps> = ({
             </span>
           </div>
         ))}
+      </div>
+
+      <div className="print-count">
+        {children.length} {t("classManagement.table.enrollmentColumn")}
       </div>
     </div>
   );
