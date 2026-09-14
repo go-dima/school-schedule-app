@@ -3,7 +3,7 @@
 
 .class-title {
   font-weight: 600;
-  font-size: 20px;
+  font-size: 16px;
   color: var(--schedule-primary);
   margin-bottom: 4px;
   line-height: 1.2;
@@ -19,13 +19,13 @@
 }
 
 .class-teacher {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--schedule-text-secondary);
   line-height: 1.2;
 }
 
 .class-room {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--schedule-text-secondary);
   line-height: 1.2;
 }
