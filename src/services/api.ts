@@ -721,7 +721,7 @@ export const scheduleApi = {
         trackNumber: child.track_number,
         scope: child.scope,
         createdBy: child.created_by ?? null,
-        createdByName: child.created_by_name ?? null,
+        createdByName: null, // creator name populated by callers that join users (see Task 4/7)
         createdAt: child.created_at,
         updatedAt: child.updated_at,
       }))
@@ -771,7 +771,7 @@ export const childrenApi = {
       trackNumber: rel?.child?.track_number_draft,
       scope: rel?.child?.scope,
       createdBy: rel?.child?.created_by ?? null,
-      createdByName: rel?.child?.created_by_name ?? null,
+      createdByName: null, // creator name populated by callers that join users (see Task 4/7)
       createdAt: rel?.child?.created_at,
       updatedAt: rel?.child?.updated_at,
     }));
@@ -814,7 +814,7 @@ export const childrenApi = {
           : data.track_number_draft,
       scope: data.scope,
       createdBy: data.created_by ?? null,
-      createdByName: data.created_by_name ?? null,
+      createdByName: null, // creator name populated by callers that join users (see Task 4/7)
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
@@ -857,7 +857,7 @@ export const childrenApi = {
       trackNumber: data.track_number_draft,
       scope: data.scope,
       createdBy: data.created_by ?? null,
-      createdByName: data.created_by_name ?? null,
+      createdByName: null, // creator name populated by callers that join users (see Task 4/7)
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
@@ -924,7 +924,7 @@ export const childrenApi = {
         trackNumber: child.track_number,
         scope: child.scope || "prod", // Fallback for migration compatibility
         createdBy: child.created_by ?? null,
-        createdByName: child.created_by_name ?? null,
+        createdByName: null, // creator name populated by callers that join users (see Task 4/7)
         createdAt: child.created_at,
         updatedAt: child.updated_at,
         assignedParent: child.has_parent,
@@ -956,7 +956,7 @@ export const childrenApi = {
           : data.track_number_draft,
       scope: data.scope,
       createdBy: data.created_by ?? null,
-      createdByName: data.created_by_name ?? null,
+      createdByName: null, // creator name populated by callers that join users (see Task 4/7)
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
@@ -986,7 +986,7 @@ export const childrenApi = {
           : data.track_number_draft,
       scope: data.scope,
       createdBy: data.created_by ?? null,
-      createdByName: data.created_by_name ?? null,
+      createdByName: null, // creator name populated by callers that join users (see Task 4/7)
       createdAt: data.created_at,
       updatedAt: data.updated_at,
       parents: data.parents.map((parent: any) => ({
