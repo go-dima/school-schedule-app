@@ -44,9 +44,9 @@
 
 .print-roster-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: baseline;
-  gap: 8px;
+  gap: 6px;
   padding: 3px 4px;
   border-bottom: 1px solid var(--schedule-border-light);
   break-inside: avoid;
