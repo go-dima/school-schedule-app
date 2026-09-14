@@ -1,27 +1,26 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import PrintableSchedule from "../components/PrintableSchedule";
-import type { Child, TimeSlot, WeeklySchedule } from "../types";
-import { getPrintStyles } from "./loadPrintStyles";
+import PrintableClassRoster from "../components/PrintableClassRoster";
+import type { Child, ClassWithTimeSlot } from "../types";
+import { getClassRosterPrintStyles } from "./loadPrintStyles";
 import {
-  PRINT_PAGE_CONTENT_WIDTH_PX,
-  PRINT_PAGE_CONTENT_HEIGHT_PX,
+  PRINT_PAGE_PORTRAIT_CONTENT_WIDTH_PX,
+  PRINT_PAGE_PORTRAIT_CONTENT_HEIGHT_PX,
 } from "./printPageSize";
 import { encodeHTML } from "./htmlEscape";
 
-interface PrintScheduleData {
-  child: Child;
-  timeSlots: TimeSlot[];
-  weeklySchedule: WeeklySchedule;
-  selectedClasses: string[];
-  showDraftMarker: boolean;
+interface PrintClassRosterData {
+  classInfo: ClassWithTimeSlot;
+  children: Child[];
 }
 
-export const printSchedule = async (data: PrintScheduleData): Promise<void> => {
+export const printClassRoster = async (
+  data: PrintClassRosterData
+): Promise<void> => {
   return new Promise((resolve, reject) => {
     try {
       // Create a new window for printing
-      const printWindow = window.open("", "_blank", "width=1200,height=800");
+      const printWindow = window.open("", "_blank", "width=900,height=1200");
 
       if (!printWindow) {
         reject(
@@ -32,13 +31,8 @@ export const printSchedule = async (data: PrintScheduleData): Promise<void> => {
         return;
       }
 
-      // Set up the HTML structure for the print window using secure DOM methods
-      // Sanitize child name for title
-      const safeFirstName = encodeHTML(data.child.firstName);
-      const safeLastName = encodeHTML(data.child.lastName);
-
-      // Use a simpler approach by writing HTML directly to the document
-      const titleText = "מערכת של " + safeFirstName + " " + safeLastName;
+      const safeTitle = encodeHTML(data.classInfo.title);
+      const titleText = safeTitle;
 
       const htmlContent = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -76,44 +70,40 @@ export const printSchedule = async (data: PrintScheduleData): Promise<void> => {
         // Create React root and render the component
         const root = ReactDOM.createRoot(rootElement);
 
-        // Create the PrintableSchedule element
-        const printableScheduleElement = React.createElement(
-          PrintableSchedule,
+        const printableClassRosterElement = React.createElement(
+          PrintableClassRoster,
           {
-            child: data.child,
-            timeSlots: data.timeSlots,
-            weeklySchedule: data.weeklySchedule,
-            selectedClasses: data.selectedClasses,
-            showDraftMarker: data.showDraftMarker,
+            classInfo: data.classInfo,
+            children: data.children,
           }
         );
 
-        root.render(printableScheduleElement);
+        root.render(printableClassRosterElement);
 
-        // Shrink the schedule to fit a single printed page, however many
-        // time slots it has. `zoom` (unlike `transform: scale`) actually
+        // Shrink the roster to fit a single printed page, however many
+        // students it has. `zoom` (unlike `transform: scale`) actually
         // shrinks the layout box the print engine paginates against, so -
         // unlike a CSS-only max-height/page-break approach - this reliably
-        // keeps the whole schedule on one page instead of spilling a mostly
+        // keeps the whole roster on one page instead of spilling a mostly
         // blank second page.
         const fitToSinglePage = () => {
-          const scheduleEl = printWindow.document.querySelector<HTMLElement>(
-            ".printable-schedule"
+          const rosterEl = printWindow.document.querySelector<HTMLElement>(
+            ".printable-class-roster"
           );
-          if (!scheduleEl) return;
+          if (!rosterEl) return;
 
-          const naturalWidth = scheduleEl.scrollWidth;
-          const naturalHeight = scheduleEl.scrollHeight;
+          const naturalWidth = rosterEl.scrollWidth;
+          const naturalHeight = rosterEl.scrollHeight;
           if (naturalWidth === 0 || naturalHeight === 0) return;
 
           const scale = Math.min(
             1,
-            PRINT_PAGE_CONTENT_WIDTH_PX / naturalWidth,
-            PRINT_PAGE_CONTENT_HEIGHT_PX / naturalHeight
+            PRINT_PAGE_PORTRAIT_CONTENT_WIDTH_PX / naturalWidth,
+            PRINT_PAGE_PORTRAIT_CONTENT_HEIGHT_PX / naturalHeight
           );
 
           if (scale < 1) {
-            scheduleEl.style.setProperty("zoom", String(scale));
+            rosterEl.style.setProperty("zoom", String(scale));
           }
         };
 
@@ -121,7 +111,7 @@ export const printSchedule = async (data: PrintScheduleData): Promise<void> => {
         const renderAndPrint = () => {
           try {
             // Load the CSS file content
-            const cssContent = getPrintStyles();
+            const cssContent = getClassRosterPrintStyles();
 
             // Add the CSS to the print window
             const style = printWindow.document.createElement("style");
