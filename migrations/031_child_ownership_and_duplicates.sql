@@ -213,20 +213,5 @@ CREATE POLICY "Staff and admins can view all children" ON public.children
 
 COMMIT;
 
--- ---------------------------------------------------------------------
--- Post-migration verification (run manually, eyeball the output --- NOT
--- executed as part of this migration):
---
--- SELECT
---     (SELECT COUNT(*) FROM public.children) AS total_children,
---     (SELECT COUNT(DISTINCT child_id) FROM public.parent_child_relationships) AS children_with_parent,
---     (SELECT COUNT(*) FROM public.children)
---       - (SELECT COUNT(DISTINCT child_id) FROM public.parent_child_relationships) AS children_without_parent;
---
--- Sanity expectation: children_without_parent should roughly equal the
--- number of children that were only ever linked to a staff/admin account
--- (the ones step 3 above just cleaned up) -- these are now the pool of
--- "claimable" children. Get this output back before continuing to Task 3,
--- since Task 4's local duplicate query and Task 7's "created by" UI both
--- depend on created_by actually being populated.
--- ---------------------------------------------------------------------
+-- Post-migration verification: see scripts/verify_migration_031.sql
+-- (kept as a separate file so it can be run independently/repeatedly).
