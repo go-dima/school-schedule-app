@@ -17,7 +17,7 @@ import type {
   WeeklySchedule,
 } from "../types";
 import ClassSelectionDrawer from "./ClassSelectionDrawer";
-import ClassTitleWithContinuation from "./ClassTitleWithContinuation";
+import ClassCardHeader from "./ClassCardHeader";
 import "./ScheduleTable.css";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
 import { DoubleLessonTag } from "@/elements/DoubleLessonTag";
@@ -156,26 +156,12 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     cls: ClassWithTimeSlot,
     isContinuation: boolean
   ) => (
-    <>
-      <ClassTitleWithContinuation
-        title={cls.title}
-        isContinuation={isContinuation}
-        className="class-title"
-      />
-      {(cls.teacher || cls.room) && (
-        <div className="class-teacher-room">
-          {cls.teacher && <span className="class-teacher">{cls.teacher}</span>}
-          {cls.teacher && cls.room && (
-            <span className="class-teacher-room-sep"> • </span>
-          )}
-          {cls.room && (
-            <span className="class-room">
-              {t("schedule.table.room", { room: cls.room })}
-            </span>
-          )}
-        </div>
-      )}
-    </>
+    <ClassCardHeader
+      title={cls.title}
+      isContinuation={isContinuation}
+      teacher={cls.teacher}
+      room={cls.room}
+    />
   );
 
   const renderClassCell = (timeSlot: TimeSlot, dayOfWeek: number) => {

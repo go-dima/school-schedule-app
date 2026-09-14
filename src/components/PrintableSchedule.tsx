@@ -12,7 +12,7 @@ import {
 } from "../utils/timeSlots";
 import type { TimeSlot, WeeklySchedule, Child } from "../types";
 import { GetGradeName } from "../utils/grades";
-import ClassTitleWithContinuation from "./ClassTitleWithContinuation";
+import ClassCardHeader from "./ClassCardHeader";
 import "./PrintableSchedule.css";
 
 interface PrintableScheduleProps {
@@ -73,17 +73,12 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
       return (
         <div className="print-schedule-cell selected double-continuation">
           <div className="print-class-card">
-            <ClassTitleWithContinuation
+            <ClassCardHeader
               title={doubleClass.title}
               isContinuation
-              className="print-class-title"
+              teacher={doubleClass.teacher}
+              room={doubleClass.room}
             />
-            <div className="print-class-teacher">{doubleClass.teacher}</div>
-            {doubleClass.room && (
-              <div className="print-class-room">
-                {t("schedule.table.room", { room: doubleClass.room })}
-              </div>
-            )}
           </div>
         </div>
       );
@@ -121,13 +116,11 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
         <div className="print-schedule-cell selected">
           {selectedPrimaryClasses.map(cls => (
             <div key={cls.id} className="print-class-card">
-              <div className="print-class-title">{cls.title}</div>
-              <div className="print-class-teacher">{cls.teacher}</div>
-              {cls.room && (
-                <div className="print-class-room">
-                  {t("schedule.table.room", { room: cls.room })}
-                </div>
-              )}
+              <ClassCardHeader
+                title={cls.title}
+                teacher={cls.teacher}
+                room={cls.room}
+              />
               {cls.isDouble && (
                 <div className="print-double-indicator">
                   {t("schedule.table.doubleLessonTag")}

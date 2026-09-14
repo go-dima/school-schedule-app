@@ -1,4 +1,5 @@
 import scheduleColorsCss from "../styles/schedule-colors.css?raw";
+import classCardTextCss from "../styles/class-card-text.css?raw";
 import printTableBaseCss from "../styles/print-table-base.css?raw";
 import printableScheduleCss from "../components/PrintableSchedule.css?raw";
 
@@ -7,4 +8,9 @@ import printableScheduleCss from "../components/PrintableSchedule.css?raw";
 // (raw-imported as text) rather than a hand-maintained duplicate. Any change
 // to the shared palette or to PrintableSchedule.css is picked up here too.
 export const getPrintStyles = (): string =>
-  [scheduleColorsCss, printTableBaseCss, printableScheduleCss].join("\n");
+  [
+    scheduleColorsCss,
+    classCardTextCss,
+    printTableBaseCss,
+    printableScheduleCss,
+  ].join("\n");
