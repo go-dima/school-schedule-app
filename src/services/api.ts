@@ -1030,7 +1030,7 @@ export const childrenApi = {
     let query = supabase
       .from("children")
       .select(
-        "id, grade, created_by, creator:users!children_created_by_fkey(first_name, last_name, email)"
+        "id, grade, created_by, creator:users!children_created_by_fkey(first_name, last_name)"
       )
       .ilike("first_name", firstName.trim())
       .ilike("last_name", lastName.trim())
@@ -1056,7 +1056,6 @@ export const childrenApi = {
         creator: {
           first_name: string | null;
           last_name: string | null;
-          email: string;
         } | null;
       }[]
     ).map(row => ({
@@ -1066,7 +1065,7 @@ export const childrenApi = {
       createdByName: row.creator
         ? [row.creator.first_name, row.creator.last_name]
             .filter(Boolean)
-            .join(" ") || row.creator.email
+            .join(" ") || null
         : null,
       createdByIsSelf: row.created_by === currentUserId,
     }));

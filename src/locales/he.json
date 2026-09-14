@@ -283,12 +283,15 @@
     },
     "duplicateWarning": {
       "title": "שם דומה כבר קיים",
-      "existsMessage": "שם הילד/ה {{name}} כבר נוצר ע\"י {{creator}}, כיתה {{grade}}",
+      "existsMessage": "שם הילד/ה {{name}} כבר נוצר ע\"י {{creator}} כיתה {{grade}}",
+      "attachExisting": "צרף ילד קיים",
+      "addNewChild": "הוסף ילד חדש",
       "continueAnyway": "המשך בכל זאת",
       "cancel": "ביטול",
       "sameCreatorMessage": "ניתן לערוך פרטי ילד/ה במסך עריכת תלמיד",
       "goToEdit": "מעבר לעריכה",
-      "unknownCreator": "משתמש אחר"
+      "unknownCreator": "משתמש אחר",
+      "attachSuccess": "הילד/ה צורף/ה אליך בהצלחה"
     }
   },
   "classManagement": {

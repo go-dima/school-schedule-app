@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { Form, Input, Select, Button, Space, message, Modal } from "antd";
 import { useTranslation } from "react-i18next";
-import type { Child, Scope } from "../types";
+import type { Child, DuplicateChildMatch, Scope } from "../types";
 import { GRADES } from "../types";
-import { GetGradeName } from "@/utils/grades";
+import { GetGradeName, GetGradeNameShort } from "@/utils/grades";
 import { ScopeSelector } from "./ScopeSelector";
 import { GroupTrackSelect } from "./GroupTrackSelect";
 import { useAuth } from "../contexts/AuthContext";
@@ -35,9 +36,14 @@ export function ChildForm({
   canNavigateToEdit = false,
 }: ChildFormProps) {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const [form] = Form.useForm();
   const isEditing = !!child;
+  const [duplicateDialog, setDuplicateDialog] = useState<{
+    values: any;
+    match: DuplicateChildMatch;
+  } | null>(null);
+  const [attaching, setAttaching] = useState(false);
 
   const submitChild = async (values: any) => {
     try {
@@ -56,6 +62,30 @@ export function ChildForm({
         error instanceof Error ? error.message : t("form.child.saveError")
       );
     }
+  };
+
+  const handleAttachExisting = async () => {
+    if (!duplicateDialog) return;
+    setAttaching(true);
+    try {
+      await childrenApi.claimChild(duplicateDialog.match.id);
+      message.success(t("child.duplicateWarning.attachSuccess"));
+      setDuplicateDialog(null);
+      window.location.reload();
+    } catch (error) {
+      message.error(
+        error instanceof Error ? error.message : t("form.child.saveError")
+      );
+    } finally {
+      setAttaching(false);
+    }
+  };
+
+  const handleAddNewInstead = async () => {
+    if (!duplicateDialog) return;
+    const { values } = duplicateDialog;
+    setDuplicateDialog(null);
+    await submitChild(values);
   };
 
   const handleSubmit = async (values: any) => {
@@ -93,6 +123,15 @@ export function ChildForm({
     }
 
     if (decision.kind === "confirm") {
+      // An approved parent can attach themselves to the existing (unclaimed)
+      // child instead of creating a duplicate -- offer that as the primary
+      // action. Staff/admin can't claim (claim_child rejects non-parents),
+      // so they only get the create-anyway/cancel choice.
+      if (hasRole("parent")) {
+        setDuplicateDialog({ values, match: decision.match });
+        return;
+      }
+
       Modal.confirm({
         title: t("child.duplicateWarning.title"),
         content: t("child.duplicateWarning.existsMessage", {
@@ -100,7 +139,7 @@ export function ChildForm({
           creator:
             decision.match.createdByName ??
             t("child.duplicateWarning.unknownCreator"),
-          grade: decision.match.grade,
+          grade: GetGradeNameShort(decision.match.grade),
         }),
         okText: t("child.duplicateWarning.continueAnyway"),
         cancelText: t("child.duplicateWarning.cancel"),
@@ -172,6 +211,36 @@ export function ChildForm({
           <Button onClick={onCancel}>{t("common.buttons.cancel")}</Button>
         </Space>
       </Form.Item>
+
+      {duplicateDialog && (
+        <Modal
+          open
+          title={t("child.duplicateWarning.title")}
+          onCancel={() => setDuplicateDialog(null)}
+          footer={[
+            <Button key="cancel" onClick={() => setDuplicateDialog(null)}>
+              {t("child.duplicateWarning.cancel")}
+            </Button>,
+            <Button key="addNew" onClick={handleAddNewInstead}>
+              {t("child.duplicateWarning.addNewChild")}
+            </Button>,
+            <Button
+              key="attach"
+              type="primary"
+              loading={attaching}
+              onClick={handleAttachExisting}>
+              {t("child.duplicateWarning.attachExisting")}
+            </Button>,
+          ]}>
+          {t("child.duplicateWarning.existsMessage", {
+            name: `${duplicateDialog.values.firstName} ${duplicateDialog.values.lastName}`,
+            creator:
+              duplicateDialog.match.createdByName ??
+              t("child.duplicateWarning.unknownCreator"),
+            grade: GetGradeNameShort(duplicateDialog.match.grade),
+          })}
+        </Modal>
+      )}
     </Form>
   );
 }
