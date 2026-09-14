@@ -255,8 +255,16 @@
       "file": "032_expose_creator_in_roster_rpc.sql",
       "created_at": "2026-09-14T00:02:00Z",
       "dependencies": ["031_child_ownership_and_duplicates"]
+    },
+    {
+      "id": "033_allow_parent_view_unclaimed_children",
+      "name": "Allow Parent View Unclaimed Children",
+      "description": "Add a SELECT policy letting any approved parent see children with no parent_child_relationships row yet (unclaimed only, never another family's claimed child), so the client-side duplicate-name+grade check and claim_child RPC can actually see staff-created unclaimed children instead of RLS hiding them entirely",
+      "file": "033_allow_parent_view_unclaimed_children.sql",
+      "created_at": "2026-09-14T00:03:00Z",
+      "dependencies": ["032_expose_creator_in_roster_rpc"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 32
+  "schema_version": 33
 }
