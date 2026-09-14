@@ -51,6 +51,8 @@ vi.mock("./supabase", () => {
         const chain: any = {};
         chain.select = vi.fn(() => chain);
         chain.eq = vi.fn(() => chain);
+        chain.neq = vi.fn(() => chain);
+        chain.ilike = vi.fn(() => chain);
         chain.not = vi.fn(() => chain);
         chain.insert = vi.fn(() => chain);
         chain.single = vi.fn(() => Promise.resolve(mockSingleResult));
@@ -70,6 +72,8 @@ function defaultFromImpl() {
   const chain: any = {};
   chain.select = vi.fn(() => chain);
   chain.eq = vi.fn(() => chain);
+  chain.neq = vi.fn(() => chain);
+  chain.ilike = vi.fn(() => chain);
   chain.not = vi.fn(() => chain);
   chain.insert = vi.fn(() => chain);
   chain.single = vi.fn(() => Promise.resolve(mockSingleResult));
@@ -311,6 +315,8 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
         groupNumber: 1,
         trackNumber: null,
         scope: "prod",
+        createdBy: null,
+        createdByName: null,
         createdAt: "2024-01-05T00:00:00.000Z",
         updatedAt: "2024-01-06T00:00:00.000Z",
         addedByUserId: "user-c",
@@ -326,6 +332,8 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
         groupNumber: 2,
         trackNumber: null,
         scope: "prod",
+        createdBy: null,
+        createdByName: null,
         createdAt: "2024-01-01T00:00:00.000Z",
         updatedAt: "2024-01-02T00:00:00.000Z",
         addedByUserId: "user-b",
@@ -341,6 +349,8 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
         groupNumber: null,
         trackNumber: 1,
         scope: "prod",
+        createdBy: null,
+        createdByName: null,
         createdAt: "2024-01-03T00:00:00.000Z",
         updatedAt: "2024-01-04T00:00:00.000Z",
         addedByUserId: "user-a",
@@ -399,5 +409,113 @@ describe("childrenApi.deleteChild", () => {
     supabase.from = vi.fn().mockReturnValue(builder) as typeof supabase.from;
 
     await expect(childrenApi.deleteChild("child-1")).resolves.toBeUndefined();
+  });
+});
+
+describe("childrenApi.findLocalDuplicateChildren", () => {
+  afterEach(() => {
+    mockFromResult = { data: [], error: null };
+    (supabase.from as any).mockClear();
+  });
+
+  it("queries children directly (no RPC) filtered by name+grade and maps creator info", async () => {
+    mockFromResult = {
+      data: [
+        {
+          id: "child-1",
+          grade: 6,
+          created_by: "user-1",
+          creator: {
+            first_name: "נתלי",
+            last_name: "צינדורף",
+            email: "natalie@example.com",
+          },
+        },
+      ],
+      error: null,
+    };
+
+    const currentUserId = "user-2";
+    const result = await childrenApi.findLocalDuplicateChildren(
+      "ליאו",
+      "פלד",
+      6,
+      undefined,
+      currentUserId
+    );
+
+    expect(result).toEqual([
+      {
+        id: "child-1",
+        grade: 6,
+        createdByUserId: "user-1",
+        createdByName: "נתלי צינדורף",
+        createdByIsSelf: false,
+      },
+    ]);
+  });
+
+  it("excludes the given child id from results", async () => {
+    mockFromResult = { data: [], error: null };
+
+    await childrenApi.findLocalDuplicateChildren(
+      "ליאו",
+      "פלד",
+      6,
+      "child-1",
+      "user-2"
+    );
+
+    expect(supabase.from).toHaveBeenCalledWith("children");
+    // The mocked `from(...)` chain returns a fresh object per call (see the
+    // mock setup above), so grab the specific chain instance this call
+    // produced to inspect how `.neq(...)` was actually invoked on it.
+    const chain = (supabase.from as any).mock.results[0].value;
+    expect(chain.neq).toHaveBeenCalledWith("id", "child-1");
+  });
+});
+
+describe("childrenApi.claimChild", () => {
+  afterEach(() => {
+    mockRpcResult = { data: [], error: null };
+  });
+
+  it("calls claim_child RPC and returns the mapped relationship", async () => {
+    mockRpcResult = {
+      data: {
+        id: "rel-1",
+        parent_id: "user-1",
+        child_id: "child-1",
+        is_primary: true,
+        created_at: "2026-09-14T00:00:00Z",
+      },
+      error: null,
+    };
+
+    const result = await childrenApi.claimChild("child-1");
+
+    expect(supabase.rpc).toHaveBeenCalledWith("claim_child", {
+      p_child_id: "child-1",
+    });
+    expect(result).toEqual({
+      id: "rel-1",
+      parentId: "user-1",
+      childId: "child-1",
+      isPrimary: true,
+      createdAt: "2026-09-14T00:00:00Z",
+    });
+  });
+
+  it("throws when the RPC errors", async () => {
+    mockRpcResult = {
+      data: null,
+      error: {
+        message: "This child already has a linked parent and cannot be claimed",
+      },
+    };
+
+    await expect(childrenApi.claimChild("child-1")).rejects.toThrow(
+      "This child already has a linked parent and cannot be claimed"
+    );
   });
 });

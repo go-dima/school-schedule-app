@@ -18,6 +18,8 @@ const mockChild: Child = {
   groupNumber: null,
   trackNumber: null,
   scope: "test",
+  createdBy: null,
+  createdByName: null,
   createdAt: "2024-01-01T00:00:00Z",
   updatedAt: "2024-01-01T00:00:00Z",
 };
