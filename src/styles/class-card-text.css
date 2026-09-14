@@ -1,0 +1,31 @@
+/* Shared class title/teacher/room text styles, used by both the schedule
+   table view (ScheduleTable.css) and the print popup (loadPrintStyles.ts) */
+
+.class-title {
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--schedule-primary);
+  margin-bottom: 4px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.class-teacher-room {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.class-teacher {
+  font-size: 14px;
+  color: var(--schedule-text-secondary);
+  line-height: 1.2;
+}
+
+.class-room {
+  font-size: 14px;
+  color: var(--schedule-text-secondary);
+  line-height: 1.2;
+}
