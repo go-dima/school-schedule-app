@@ -22,6 +22,7 @@ interface ChildFormProps {
   loading?: boolean;
   showScope?: boolean;
   onDuplicateRedirect?: (childId: string) => void;
+  canNavigateToEdit?: boolean;
 }
 
 export function ChildForm({
@@ -31,6 +32,7 @@ export function ChildForm({
   loading = false,
   showScope = true,
   onDuplicateRedirect,
+  canNavigateToEdit = false,
 }: ChildFormProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -62,20 +64,29 @@ export function ChildForm({
       return;
     }
 
-    const matches = await childrenApi.findLocalDuplicateChildren(
-      values.firstName,
-      values.lastName,
-      values.grade,
-      child?.id,
-      user.id
-    );
+    let matches;
+    try {
+      matches = await childrenApi.findLocalDuplicateChildren(
+        values.firstName,
+        values.lastName,
+        values.grade,
+        child?.id,
+        user.id
+      );
+    } catch (error) {
+      console.error("Failed to check for duplicate children:", error);
+      await submitChild(values);
+      return;
+    }
     const decision = decideDuplicateWarning(matches);
 
     if (decision.kind === "redirect") {
       Modal.info({
         title: t("child.duplicateWarning.title"),
         content: t("child.duplicateWarning.sameCreatorMessage"),
-        okText: t("child.duplicateWarning.goToEdit"),
+        okText: canNavigateToEdit
+          ? t("child.duplicateWarning.goToEdit")
+          : t("common.ok"),
         onOk: () => onDuplicateRedirect?.(decision.childId),
       });
       return;
@@ -86,7 +97,9 @@ export function ChildForm({
         title: t("child.duplicateWarning.title"),
         content: t("child.duplicateWarning.existsMessage", {
           name: `${values.firstName} ${values.lastName}`,
-          creator: decision.match.createdByName ?? "",
+          creator:
+            decision.match.createdByName ??
+            t("child.duplicateWarning.unknownCreator"),
           grade: decision.match.grade,
         }),
         okText: t("child.duplicateWarning.continueAnyway"),

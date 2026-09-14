@@ -185,6 +185,32 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.claim_child(UUID) TO authenticated;
 
+-- 6) Staff/admin SELECT access on children: the only SELECT policy on
+--    public.children is the parent-scoped one from
+--    013_add_children_management.sql (a parent can only see children they
+--    are linked to via parent_child_relationships). Staff/admin already
+--    have UPDATE (021_allow_staff_update_children.sql) and DELETE
+--    (025_allow_staff_delete_children.sql) policies on this table, but no
+--    SELECT policy, so staff/admin can only ever see 0 rows here -- which
+--    breaks the local duplicate-detection query (Task 4) for staff/admin
+--    callers entirely, and after step 3 above removes their bogus parent
+--    links, silently breaks anything else that expects staff/admin to be
+--    able to read children. This adds an additive admin-or-staff SELECT
+--    policy, following the exact same convention as the UPDATE/DELETE
+--    policies above, leaving the parent policy untouched -- RLS ORs
+--    multiple permissive policies for the same command.
+CREATE POLICY "Staff and admins can view all children" ON public.children
+    FOR SELECT
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.user_roles ur
+            WHERE ur.user_id = auth.uid()
+              AND ur.role IN ('admin', 'staff')
+              AND ur.approved = true
+        )
+    );
+
 COMMIT;
 
 -- ---------------------------------------------------------------------

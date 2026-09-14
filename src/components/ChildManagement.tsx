@@ -231,6 +231,7 @@ export function ChildManagement() {
             const match = children.find(c => c.id === childId);
             if (match) openEditModal(match);
           }}
+          canNavigateToEdit
         />
       </Modal>
     </div>

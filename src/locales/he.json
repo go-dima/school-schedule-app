@@ -287,7 +287,8 @@
       "continueAnyway": "המשך בכל זאת",
       "cancel": "ביטול",
       "sameCreatorMessage": "ניתן לערוך פרטי ילד/ה במסך עריכת תלמיד",
-      "goToEdit": "מעבר לעריכה"
+      "goToEdit": "מעבר לעריכה",
+      "unknownCreator": "משתמש אחר"
     }
   },
   "classManagement": {
