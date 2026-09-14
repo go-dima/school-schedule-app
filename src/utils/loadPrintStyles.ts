@@ -1,6 +1,7 @@
 import scheduleColorsCss from "../styles/schedule-colors.css?raw";
 import printTableBaseCss from "../styles/print-table-base.css?raw";
 import printableScheduleCss from "../components/PrintableSchedule.css?raw";
+import printableClassRosterCss from "../components/PrintableClassRoster.css?raw";
 
 // The print popup is a bare document with none of the app's bundled CSS, so
 // its styles are assembled from the same source files the app itself uses
@@ -8,3 +9,6 @@ import printableScheduleCss from "../components/PrintableSchedule.css?raw";
 // to the shared palette or to PrintableSchedule.css is picked up here too.
 export const getPrintStyles = (): string =>
   [scheduleColorsCss, printTableBaseCss, printableScheduleCss].join("\n");
+
+export const getClassRosterPrintStyles = (): string =>
+  [scheduleColorsCss, printableClassRosterCss].join("\n");
