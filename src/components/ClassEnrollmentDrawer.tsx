@@ -19,9 +19,14 @@ import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { scheduleApi, classesApi } from "../services/api";
 import { ScheduleService } from "../services/scheduleService";
-import type { ClassWithTimeSlot, Child, ClassSlotWithTimeSlot } from "../types";
+import type {
+  ClassWithTimeSlot,
+  EnrolledChild,
+  ClassSlotWithTimeSlot,
+} from "../types";
 import { GRADES } from "../types";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
+import { AddedByTooltip } from "@/elements/AddedByTooltip";
 import { GetGradeName } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
 import { GroupTrackTags } from "./GroupTrackTags";
@@ -58,7 +63,7 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
   onUpdated,
 }) => {
   const { t } = useTranslation();
-  const [children, setChildren] = useState<Child[]>([]);
+  const [children, setChildren] = useState<EnrolledChild[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestedClassId = useRef<string | null>(null);
@@ -452,6 +457,11 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
                   {child.firstName} {child.lastName}
                 </Text>
                 <Tag>{GetGradeName(child.grade)}</Tag>
+                <AddedByTooltip
+                  firstName={child.addedByFirstName}
+                  lastName={child.addedByLastName}
+                  at={child.addedByAt}
+                />
               </List.Item>
             )}
           />

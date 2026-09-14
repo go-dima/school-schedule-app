@@ -126,6 +126,13 @@ export interface ParentChildRelationship {
   createdAt: string;
 }
 
+export interface EnrolledChild extends Child {
+  addedByUserId: string;
+  addedByFirstName: string | null;
+  addedByLastName: string | null;
+  addedByAt: string;
+}
+
 export interface ChildWithParents extends Child {
   parents: Array<{
     userId: string;

@@ -353,7 +353,9 @@
       "loadDataError": "שגיאה בטעינת הנתונים"
     },
     "enrollmentDrawer": {
-      "noChildren": "עדיין לא נרשמו תלמידים לשיעור זה"
+      "noChildren": "עדיין לא נרשמו תלמידים לשיעור זה",
+      "addedByTooltip": "נוסף על ידי {{name}} · {{date}}",
+      "addedByUnknown": "משתמש לא ידוע"
     }
   },
   "mandatoryClassManager": {
