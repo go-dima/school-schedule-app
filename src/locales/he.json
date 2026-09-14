@@ -280,6 +280,14 @@
       "addModalTitle": "הוספת ילד חדש",
       "removeSuccess": "הילד הוסר בהצלחה",
       "removeError": "שגיאה בהסרת הילד"
+    },
+    "duplicateWarning": {
+      "title": "שם דומה כבר קיים",
+      "existsMessage": "שם הילד/ה {{name}} כבר נוצר ע\"י {{creator}}, כיתה {{grade}}",
+      "continueAnyway": "המשך בכל זאת",
+      "cancel": "ביטול",
+      "sameCreatorMessage": "ניתן לערוך פרטי ילד/ה במסך עריכת תלמיד",
+      "goToEdit": "מעבר לעריכה"
     }
   },
   "classManagement": {
@@ -481,7 +489,10 @@
       "addError": "שגיאה בהוספת התלמיד",
       "updateError": "שגיאה בעדכון התלמיד",
       "deleteError": "שגיאה במחיקת התלמיד",
-      "createdDate": "נוצר ב: {{date}}"
+      "createdDate": "נוצר ב: {{date}}",
+      "createdByColumn": "נוצר ע\"י",
+      "claimAction": "שייך אליי",
+      "claimSuccess": "הילד/ה שויך/ה אליך בהצלחה"
     },
     "table": {
       "parentStatus": "הורה",
