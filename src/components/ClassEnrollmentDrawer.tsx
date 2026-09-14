@@ -476,16 +476,20 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
             bordered
             dataSource={children}
             renderItem={child => (
-              <List.Item key={child.id}>
-                <Text>
+              <List.Item key={child.id} className="roster-item">
+                <Text className="roster-item-name">
                   {child.firstName} {child.lastName}
                 </Text>
-                <Tag>{GetGradeName(child.grade)}</Tag>
-                <AddedByTooltip
-                  firstName={child.addedByFirstName}
-                  lastName={child.addedByLastName}
-                  at={child.addedByAt}
-                />
+                <span className="roster-item-grade">
+                  <Tag>{GetGradeName(child.grade)}</Tag>
+                </span>
+                <span className="roster-item-added-by">
+                  <AddedByTooltip
+                    firstName={child.addedByFirstName}
+                    lastName={child.addedByLastName}
+                    at={child.addedByAt}
+                  />
+                </span>
               </List.Item>
             )}
           />
