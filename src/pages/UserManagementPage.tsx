@@ -10,9 +10,10 @@ import {
   Alert,
   Select,
 } from "antd";
-import { UserOutlined, CrownOutlined, ReloadOutlined } from "@ant-design/icons";
+import { UserOutlined, CrownOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { FiltersBar } from "../components/FiltersBar";
+import { FilterField } from "../components/FilterField";
 import { usersApi } from "../services/api";
 import type { UserRoleData, UserRole } from "../types";
 import "./UserManagementPage.css";
@@ -322,16 +323,8 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         style={{ marginBottom: 24 }}
       />
 
-      <FiltersBar
-        actions={
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={loadUsers}
-            loading={loading}>
-            רענן
-          </Button>
-        }>
-        <Space size="small">
+      <FiltersBar canRefresh onRefresh={loadUsers} refreshing={loading}>
+        <FilterField label="סנן לפי תפקיד">
           <Select<UserRole[]>
             mode="multiple"
             value={roleFilter}
@@ -345,8 +338,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
               { label: getRoleDisplayName("parent"), value: "parent" },
             ]}
           />
-          <span>סנן לפי תפקיד:</span>
-        </Space>
+        </FilterField>
       </FiltersBar>
 
       <Table<UserWithRoles>

@@ -14,7 +14,6 @@ import {
 } from "antd";
 import { useTranslation } from "react-i18next";
 import {
-  ReloadOutlined,
   UserSwitchOutlined,
   PrinterOutlined,
   LockOutlined,
@@ -31,6 +30,7 @@ import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import ScheduleTable from "../components/ScheduleTable";
 import ClassForm from "../components/ClassForm";
 import { FiltersBar } from "../components/FiltersBar";
+import { FilterField } from "../components/FilterField";
 import { ChildSelector } from "../components/ChildSelector";
 import { AddChildButton } from "../components/AddChildButton";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
@@ -522,6 +522,13 @@ const SchedulePageContent: React.FC = () => {
   return (
     <div className="page-content">
       <FiltersBar
+        variant="flat"
+        canRefresh
+        onRefresh={() => {
+          loadScheduleData();
+          refetchSelectedSchedule();
+        }}
+        refreshing={loading}
         actions={
           <>
             {userRoles.length > 1 && (
@@ -547,16 +554,7 @@ const SchedulePageContent: React.FC = () => {
                 {t("schedule.page.exportButton")}
               </Button>
             )}
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={() => {
-                loadScheduleData();
-                refetchSelectedSchedule();
-              }}
-              disabled={loading}>
-              {t("common.buttons.refresh")}
-            </Button>
-            <Space size="small">
+            <FilterField label={t("schedule.page.labels.searchClass")}>
               <AutoComplete
                 value={searchTerm}
                 onChange={setSearchTerm}
@@ -599,8 +597,7 @@ const SchedulePageContent: React.FC = () => {
                 allowClear
                 filterOption={false}
               />
-              <span>{t("schedule.page.labels.searchClass")}:</span>
-            </Space>
+            </FilterField>
           </>
         }>
         {isParent && userChildren.length > 0 && (
@@ -610,7 +607,7 @@ const SchedulePageContent: React.FC = () => {
               onChange={handleParentFieldChange}
               disabled={childrenLoading}
             />
-            <Space size="small">
+            <FilterField label={t("schedule.page.labels.selectChild")}>
               <ChildSelector
                 children={userChildren}
                 selectedChildId={selectedChild?.id || null}
@@ -630,8 +627,7 @@ const SchedulePageContent: React.FC = () => {
                 style={{ minWidth: 200 }}
                 disabled={childrenLoading}
               />
-              <span>{t("schedule.page.labels.selectChild")}:</span>
-            </Space>
+            </FilterField>
           </>
         )}
         {isParent && <AddChildButton onAdded={handleParentChildAdded} />}
@@ -642,7 +638,7 @@ const SchedulePageContent: React.FC = () => {
               onChange={handleStaffFieldChange}
               disabled={allChildrenLoading}
             />
-            <Space size="small">
+            <FilterField label={t("schedule.page.labels.selectChildForStaff")}>
               <StudentSearchSelector
                 children={allChildren}
                 selectedChildId={staffSelectedChild?.id || null}
@@ -657,12 +653,11 @@ const SchedulePageContent: React.FC = () => {
                 mode="select"
                 isCreateAllowed={isStaff}
               />
-              <span>{t("schedule.page.labels.selectChildForStaff")}:</span>
-            </Space>
+            </FilterField>
           </>
         )}
         {(isStaff || isAdmin()) && (
-          <>
+          <FilterField label={t("schedule.page.labels.filterByGrade")}>
             <Select
               value={selectedGrade}
               onChange={setSelectedGrade}
@@ -676,8 +671,7 @@ const SchedulePageContent: React.FC = () => {
                 </Option>
               ))}
             </Select>
-            <span>{t("schedule.page.labels.filterByGrade")}:</span>
-          </>
+          </FilterField>
         )}
       </FiltersBar>
 
