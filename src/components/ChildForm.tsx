@@ -1,10 +1,13 @@
-import { Form, Input, Select, Button, Space, message } from "antd";
+import { Form, Input, Select, Button, Space, message, Modal } from "antd";
 import { useTranslation } from "react-i18next";
 import type { Child, Scope } from "../types";
 import { GRADES } from "../types";
 import { GetGradeName } from "@/utils/grades";
 import { ScopeSelector } from "./ScopeSelector";
 import { GroupTrackSelect } from "./GroupTrackSelect";
+import { useAuth } from "../contexts/AuthContext";
+import { childrenApi } from "../services/api";
+import { decideDuplicateWarning } from "./childDuplicateWarning";
 
 interface ChildFormProps {
   child?: Child;
@@ -18,6 +21,7 @@ interface ChildFormProps {
   onCancel: () => void;
   loading?: boolean;
   showScope?: boolean;
+  onDuplicateRedirect?: (childId: string) => void;
 }
 
 export function ChildForm({
@@ -26,12 +30,14 @@ export function ChildForm({
   onCancel,
   loading = false,
   showScope = true,
+  onDuplicateRedirect,
 }: ChildFormProps) {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [form] = Form.useForm();
   const isEditing = !!child;
 
-  const handleSubmit = async (values: any) => {
+  const submitChild = async (values: any) => {
     try {
       await onSubmit({
         firstName: values.firstName,
@@ -48,6 +54,49 @@ export function ChildForm({
         error instanceof Error ? error.message : t("form.child.saveError")
       );
     }
+  };
+
+  const handleSubmit = async (values: any) => {
+    if (!user?.id) {
+      await submitChild(values);
+      return;
+    }
+
+    const matches = await childrenApi.findLocalDuplicateChildren(
+      values.firstName,
+      values.lastName,
+      values.grade,
+      child?.id,
+      user.id
+    );
+    const decision = decideDuplicateWarning(matches);
+
+    if (decision.kind === "redirect") {
+      Modal.info({
+        title: t("child.duplicateWarning.title"),
+        content: t("child.duplicateWarning.sameCreatorMessage"),
+        okText: t("child.duplicateWarning.goToEdit"),
+        onOk: () => onDuplicateRedirect?.(decision.childId),
+      });
+      return;
+    }
+
+    if (decision.kind === "confirm") {
+      Modal.confirm({
+        title: t("child.duplicateWarning.title"),
+        content: t("child.duplicateWarning.existsMessage", {
+          name: `${values.firstName} ${values.lastName}`,
+          creator: decision.match.createdByName ?? "",
+          grade: decision.match.grade,
+        }),
+        okText: t("child.duplicateWarning.continueAnyway"),
+        cancelText: t("child.duplicateWarning.cancel"),
+        onOk: () => submitChild(values),
+      });
+      return;
+    }
+
+    await submitChild(values);
   };
 
   return (
