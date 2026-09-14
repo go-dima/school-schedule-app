@@ -10,8 +10,10 @@ import {
   Alert,
   Select,
 } from "antd";
-import { UserOutlined, CrownOutlined, ReloadOutlined } from "@ant-design/icons";
+import { UserOutlined, CrownOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
+import { FiltersBar } from "../components/FiltersBar";
+import { FilterField } from "../components/FilterField";
 import { usersApi } from "../services/api";
 import type { UserRoleData, UserRole } from "../types";
 import "./UserManagementPage.css";
@@ -321,35 +323,23 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         style={{ marginBottom: 24 }}
       />
 
-      <div className="filters-section">
-        <div className="filters-row">
-          <Space>
-            <Select<UserRole[]>
-              mode="multiple"
-              value={roleFilter}
-              onChange={setRoleFilter}
-              placeholder="הצג הכל"
-              allowClear
-              style={{ minWidth: 220 }}
-              options={[
-                { label: getRoleDisplayName("admin"), value: "admin" },
-                { label: getRoleDisplayName("staff"), value: "staff" },
-                { label: getRoleDisplayName("parent"), value: "parent" },
-              ]}
-            />
-            <span>סנן לפי תפקיד:</span>
-          </Space>
-
-          <Space>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={loadUsers}
-              loading={loading}>
-              רענן
-            </Button>
-          </Space>
-        </div>
-      </div>
+      <FiltersBar canRefresh onRefresh={loadUsers} refreshing={loading}>
+        <FilterField label="סנן לפי תפקיד">
+          <Select<UserRole[]>
+            mode="multiple"
+            value={roleFilter}
+            onChange={setRoleFilter}
+            placeholder="הצג הכל"
+            allowClear
+            style={{ minWidth: 220 }}
+            options={[
+              { label: getRoleDisplayName("admin"), value: "admin" },
+              { label: getRoleDisplayName("staff"), value: "staff" },
+              { label: getRoleDisplayName("parent"), value: "parent" },
+            ]}
+          />
+        </FilterField>
+      </FiltersBar>
 
       <Table<UserWithRoles>
         columns={columns}

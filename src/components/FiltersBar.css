@@ -1,0 +1,86 @@
+/* FiltersBar */
+
+.filters-section {
+  margin-bottom: 24px;
+}
+
+.filters-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filters-row > .ant-space:first-child {
+  flex: 1;
+  min-width: 300px;
+}
+
+.filters-row > .ant-space:last-child {
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .filters-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters-row > .ant-space {
+    justify-content: flex-start;
+  }
+
+  .filters-row > .ant-space:last-child {
+    justify-content: flex-end;
+  }
+}
+
+/* Boxed variant: gradient "card" look (User Management) */
+.filters-section--boxed {
+  padding: 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Flat variant: unboxed row (Schedule) */
+.filters-section--flat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+}
+
+/* .filters-row is space-between internally, but as a flex item here it
+   shrinks to its content width by default -- giving it no room to actually
+   spread its two Space groups apart. Stretch it to fill .filters-section--flat
+   so space-between has somewhere to put the space. The base .filters-row rules
+   above also give the first Space `flex: 1` and the last `flex-shrink: 0`,
+   tuned for the boxed variant's original content split -- flex:1 on the
+   first group consumes all the free space itself, leaving nothing for
+   space-between to distribute. Reset both back to content-sized boxes here
+   so space-between alone controls the gap between the two groups. */
+.filters-section--flat .filters-row {
+  width: 100%;
+}
+
+.filters-section--flat .filters-row > .ant-space:first-child,
+.filters-section--flat .filters-row > .ant-space:last-child {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.filters-section--flat span {
+  font-weight: 500;
+  color: #262626;
+}
+
+@media (max-width: 768px) {
+  .filters-section--flat {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
