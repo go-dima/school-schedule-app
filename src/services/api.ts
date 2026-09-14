@@ -5,6 +5,7 @@ import type {
   ClassSlot,
   ClassWithTimeSlot,
   DuplicateChildMatch,
+  EnrolledChild,
   ParentChildRelationship,
   PendingApproval,
   ScheduleSelectionWithClass,
@@ -706,7 +707,7 @@ export const scheduleApi = {
     if (error) throw new ApiError(error.message);
   },
 
-  async getClassEnrolledChildren(classId: string): Promise<Child[]> {
+  async getClassEnrolledChildren(classId: string): Promise<EnrolledChild[]> {
     const { data, error } = await supabase.rpc("get_class_enrolled_children", {
       p_class_id: classId,
     });
@@ -726,8 +727,12 @@ export const scheduleApi = {
         createdByName: null, // creator name populated by callers that join users (see Task 4/7)
         createdAt: child.created_at,
         updatedAt: child.updated_at,
+        addedByUserId: child.added_by_user_id,
+        addedByFirstName: child.added_by_first_name,
+        addedByLastName: child.added_by_last_name,
+        addedByAt: child.added_by_at,
       }))
-      .sort((a: Child, b: Child) =>
+      .sort((a: EnrolledChild, b: EnrolledChild) =>
         a.grade !== b.grade
           ? a.grade - b.grade
           : `${a.lastName}${a.firstName}`.localeCompare(

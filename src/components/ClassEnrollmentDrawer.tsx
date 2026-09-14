@@ -15,15 +15,25 @@ import {
   Input,
   message,
 } from "antd";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  PrinterOutlined,
+} from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { scheduleApi, classesApi } from "../services/api";
 import { ScheduleService } from "../services/scheduleService";
-import type { ClassWithTimeSlot, Child, ClassSlotWithTimeSlot } from "../types";
+import type {
+  ClassWithTimeSlot,
+  EnrolledChild,
+  ClassSlotWithTimeSlot,
+} from "../types";
 import { GRADES } from "../types";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
+import { AddedByTooltip } from "@/elements/AddedByTooltip";
 import { GetGradeName } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
+import { printClassRoster } from "@/utils/printClassRoster";
 import { GroupTrackTags } from "./GroupTrackTags";
 import "./ClassEnrollmentDrawer.css";
 
@@ -58,7 +68,7 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
   onUpdated,
 }) => {
   const { t } = useTranslation();
-  const [children, setChildren] = useState<Child[]>([]);
+  const [children, setChildren] = useState<EnrolledChild[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestedClassId = useRef<string | null>(null);
@@ -213,6 +223,19 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
     saveField({ grades: sortedGrades });
   };
 
+  const handlePrint = async () => {
+    if (!localClassInfo) return;
+    try {
+      await printClassRoster({ classInfo: localClassInfo, children });
+    } catch (err) {
+      message.error(
+        err instanceof Error
+          ? err.message
+          : t("classManagement.page.dataLoadingError")
+      );
+    }
+  };
+
   // Earliest day/time first, matching the sort ClassManagementPage's own
   // table already uses for the class list itself.
   const sortedSlots = (cls: ClassWithTimeSlot): ClassSlotWithTimeSlot[] =>
@@ -273,6 +296,12 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
               icon={<EditOutlined />}
               title={t("classManagement.table.editButton")}
               onClick={() => onEdit(localClassInfo)}
+            />
+            <Button
+              icon={<PrinterOutlined />}
+              title={t("schedule.page.exportButton")}
+              disabled={loading || children.length === 0}
+              onClick={handlePrint}
             />
           </Space>
         )
@@ -447,11 +476,20 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
             bordered
             dataSource={children}
             renderItem={child => (
-              <List.Item key={child.id}>
-                <Text>
+              <List.Item key={child.id} className="roster-item">
+                <Text className="roster-item-name">
                   {child.firstName} {child.lastName}
                 </Text>
-                <Tag>{GetGradeName(child.grade)}</Tag>
+                <span className="roster-item-grade">
+                  <Tag>{GetGradeName(child.grade)}</Tag>
+                </span>
+                <span className="roster-item-added-by">
+                  <AddedByTooltip
+                    firstName={child.addedByFirstName}
+                    lastName={child.addedByLastName}
+                    at={child.addedByAt}
+                  />
+                </span>
               </List.Item>
             )}
           />

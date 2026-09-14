@@ -1,3 +1,5 @@
+@import "../styles/class-card-text.css";
+
 .schedule-table-container {
   width: 100%;
   direction: rtl;
@@ -137,34 +139,11 @@
   padding: 8px;
 }
 
-.class-title {
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--schedule-primary);
-  margin-bottom: 4px;
-  line-height: 1.2;
-  text-align: center;
-}
-
 .continuation-suffix {
   font-style: italic;
   color: var(--schedule-accent-orange);
   font-size: 0.75em;
   margin-inline-start: 4px;
-}
-
-.class-teacher-room {
-  display: flex;
-  justify-content: center;
-  align-items: baseline;
-  gap: 4px;
-  margin-bottom: 6px;
-}
-
-.class-teacher {
-  font-size: 13px;
-  color: var(--schedule-text-secondary);
-  line-height: 1.2;
 }
 
 .class-tags {
@@ -204,10 +183,11 @@
   }
 
   .class-title {
-    font-size: 12px;
+    font-size: 13px;
   }
 
-  .class-teacher {
+  .class-teacher,
+  .class-room {
     font-size: 10px;
   }
 }
@@ -388,12 +368,6 @@
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 2px;
-}
-
-.class-room {
-  font-size: 11px;
-  color: var(--schedule-text-secondary);
-  line-height: 1.2;
 }
 
 /* Selected classes container */

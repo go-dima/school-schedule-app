@@ -1,7 +1,7 @@
--- Migration: 031_expose_creator_in_roster_rpc
+-- Migration: 032_expose_creator_in_roster_rpc
 -- Description: Surface who created each child in the admin/staff roster
 --   (get_children_with_parent_status), so the Students page can show a
---   "created by" column (Task 7). 030_child_ownership_and_duplicates added
+--   "created by" column (Task 7). 031_child_ownership_and_duplicates added
 --   children.created_by but this RPC's RETURNS TABLE never picked it up, so
 --   api.ts's getAllChildren() mapping of `created_by`/creator name was
 --   always null in practice. Joins users the same way Task 4's

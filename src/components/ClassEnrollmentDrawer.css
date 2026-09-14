@@ -11,3 +11,25 @@
   left: 16px;
   right: auto;
 }
+
+.roster-item {
+  justify-content: flex-start !important;
+  gap: 12px;
+}
+
+.roster-item-name {
+  flex: 1;
+}
+
+.roster-item-grade {
+  width: 56px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.roster-item-added-by {
+  width: 20px;
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+}
