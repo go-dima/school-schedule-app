@@ -29,6 +29,7 @@ import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { GroupTrackTags } from "../components/GroupTrackTags";
 import { useAuth } from "../contexts/AuthContext";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
+import { childrenApi } from "../services/api";
 import type { Child } from "../types";
 import { GRADES } from "../types";
 
@@ -54,9 +55,17 @@ const ParentIcon: React.FC<{ assignedParent: boolean }> = ({
 
 const StudentsPage: React.FC = () => {
   const { t } = useTranslation();
-  const { canManageClasses, isAdmin } = useAuth();
-  const { children, loading, error, createChild, updateChild, removeChild } =
-    useAllChildrenContext();
+  const { canManageClasses, isAdmin, hasRole } = useAuth();
+  const {
+    children,
+    loading,
+    error,
+    createChild,
+    updateChild,
+    removeChild,
+    refetch,
+  } = useAllChildrenContext();
+  const isCurrentUserParent = hasRole("parent");
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | undefined>();
   const [formLoading, setFormLoading] = useState(false);
@@ -173,6 +182,16 @@ const StudentsPage: React.FC = () => {
     // The component already reloads the page, so this might not be needed
   };
 
+  const handleClaimChild = async (childId: string) => {
+    try {
+      await childrenApi.claimChild(childId);
+      message.success(t("students.page.claimSuccess"));
+      await refetch();
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : String(err));
+    }
+  };
+
   const columns: ColumnsType<ChildWithParent> = [
     {
       title: t("students.table.name"),
@@ -223,6 +242,12 @@ const StudentsPage: React.FC = () => {
         new Date(createdAt).toLocaleDateString("he-IL"),
     },
     {
+      title: t("students.page.createdByColumn"),
+      dataIndex: "createdByName",
+      key: "createdByName",
+      render: (name: string | null) => name ?? "—",
+    },
+    {
       title: t("students.table.actions"),
       key: "actions",
       width: 60,
@@ -234,8 +259,18 @@ const StudentsPage: React.FC = () => {
             icon: <EditOutlined />,
             onClick: () => openEditModal(record),
           },
+          ...(isCurrentUserParent && !record.assignedParent
+            ? [
+                {
+                  key: "claim",
+                  label: t("students.page.claimAction"),
+                  icon: <UserOutlined />,
+                  onClick: () => handleClaimChild(record.id),
+                },
+              ]
+            : []),
           {
-            type: "divider",
+            type: "divider" as const,
           },
           {
             key: "delete",
@@ -400,6 +435,10 @@ const StudentsPage: React.FC = () => {
           onCancel={closeModal}
           loading={formLoading}
           showScope={isAdmin()}
+          onDuplicateRedirect={childId => {
+            const match = children.find(c => c.id === childId);
+            if (match) openEditModal(match);
+          }}
         />
       </Modal>
     </div>

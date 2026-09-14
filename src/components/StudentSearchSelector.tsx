@@ -186,6 +186,10 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
     }
   };
 
+  // ChildForm already runs the Task 6 local-duplicate check (via
+  // childrenApi.findLocalDuplicateChildren + decideDuplicateWarning) before
+  // ever calling this onSubmit handler, so this stays a plain create --
+  // re-running the same check here would just show the same dialog twice.
   const handleCreateStudent = async (data: {
     firstName: string;
     lastName: string;
@@ -265,6 +269,10 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
           onSubmit={handleCreateStudent}
           onCancel={closeModal}
           loading={addLoading}
+          onDuplicateRedirect={() => {
+            closeModal();
+            message.info(t("child.duplicateWarning.sameCreatorMessage"));
+          }}
         />
       </Modal>
     </>

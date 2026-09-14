@@ -917,6 +917,13 @@ export const childrenApi = {
     if (error) throw new ApiError(error.message);
 
     return data.map((child: any) => {
+      const creatorName =
+        [child.creator_first_name, child.creator_last_name]
+          .filter(Boolean)
+          .join(" ") ||
+        child.creator_email ||
+        null;
+
       return {
         id: child.id,
         firstName: child.first_name,
@@ -926,7 +933,7 @@ export const childrenApi = {
         trackNumber: child.track_number,
         scope: child.scope || "prod", // Fallback for migration compatibility
         createdBy: child.created_by ?? null,
-        createdByName: null, // creator name populated by callers that join users (see Task 4/7)
+        createdByName: creatorName,
         createdAt: child.created_at,
         updatedAt: child.updated_at,
         assignedParent: child.has_parent,
@@ -1036,8 +1043,8 @@ export const childrenApi = {
       );
     }
 
-    return (data ?? []).map(
-      (row: {
+    return (
+      (data ?? []) as unknown as {
         id: string;
         grade: number;
         created_by: string | null;
@@ -1046,18 +1053,18 @@ export const childrenApi = {
           last_name: string | null;
           email: string;
         } | null;
-      }) => ({
-        id: row.id,
-        grade: row.grade,
-        createdByUserId: row.created_by,
-        createdByName: row.creator
-          ? [row.creator.first_name, row.creator.last_name]
-              .filter(Boolean)
-              .join(" ") || row.creator.email
-          : null,
-        createdByIsSelf: row.created_by === currentUserId,
-      })
-    );
+      }[]
+    ).map(row => ({
+      id: row.id,
+      grade: row.grade,
+      createdByUserId: row.created_by,
+      createdByName: row.creator
+        ? [row.creator.first_name, row.creator.last_name]
+            .filter(Boolean)
+            .join(" ") || row.creator.email
+        : null,
+      createdByIsSelf: row.created_by === currentUserId,
+    }));
   },
 
   async claimChild(childId: string): Promise<ParentChildRelationship> {

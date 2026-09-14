@@ -28,6 +28,7 @@ export function useAllChildren() {
     let mounted = true;
 
     const loadAllChildren = async () => {
+      setLoading(true);
       try {
         const childrenData = await withTimeout(
           childrenApi.getAllChildren(),
@@ -62,6 +63,23 @@ export function useAllChildren() {
       mounted = false;
     };
   }, [canListAllChildren]);
+
+  const refetch = async (): Promise<void> => {
+    if (!canListAllChildren) return;
+    setLoading(true);
+    try {
+      const childrenData = await withTimeout(
+        childrenApi.getAllChildren(),
+        10000
+      );
+      setChildren(childrenData);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load children");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const updateChild = async (
     childId: string,
@@ -134,5 +152,6 @@ export function useAllChildren() {
     createChild,
     updateChild,
     removeChild,
+    refetch,
   };
 }

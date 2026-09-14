@@ -227,6 +227,10 @@ export function ChildManagement() {
           onSubmit={editingChild ? handleUpdateChild : handleCreateChild}
           onCancel={closeModals}
           loading={formLoading}
+          onDuplicateRedirect={childId => {
+            const match = children.find(c => c.id === childId);
+            if (match) openEditModal(match);
+          }}
         />
       </Modal>
     </div>
