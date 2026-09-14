@@ -720,6 +720,8 @@ export const scheduleApi = {
         groupNumber: child.group_number,
         trackNumber: child.track_number,
         scope: child.scope,
+        createdBy: child.created_by ?? null,
+        createdByName: child.created_by_name ?? null,
         createdAt: child.created_at,
         updatedAt: child.updated_at,
       }))
@@ -768,6 +770,8 @@ export const childrenApi = {
       groupNumber: rel?.child?.group_number,
       trackNumber: rel?.child?.track_number_draft,
       scope: rel?.child?.scope,
+      createdBy: rel?.child?.created_by ?? null,
+      createdByName: rel?.child?.created_by_name ?? null,
       createdAt: rel?.child?.created_at,
       updatedAt: rel?.child?.updated_at,
     }));
@@ -809,6 +813,8 @@ export const childrenApi = {
           ? data.track_number_committed
           : data.track_number_draft,
       scope: data.scope,
+      createdBy: data.created_by ?? null,
+      createdByName: data.created_by_name ?? null,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
@@ -850,6 +856,8 @@ export const childrenApi = {
       groupNumber: data.group_number,
       trackNumber: data.track_number_draft,
       scope: data.scope,
+      createdBy: data.created_by ?? null,
+      createdByName: data.created_by_name ?? null,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
@@ -915,6 +923,8 @@ export const childrenApi = {
         groupNumber: child.group_number,
         trackNumber: child.track_number,
         scope: child.scope || "prod", // Fallback for migration compatibility
+        createdBy: child.created_by ?? null,
+        createdByName: child.created_by_name ?? null,
         createdAt: child.created_at,
         updatedAt: child.updated_at,
         assignedParent: child.has_parent,
@@ -945,6 +955,8 @@ export const childrenApi = {
           ? data.track_number_committed
           : data.track_number_draft,
       scope: data.scope,
+      createdBy: data.created_by ?? null,
+      createdByName: data.created_by_name ?? null,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
@@ -973,6 +985,8 @@ export const childrenApi = {
           ? data.track_number_committed
           : data.track_number_draft,
       scope: data.scope,
+      createdBy: data.created_by ?? null,
+      createdByName: data.created_by_name ?? null,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
       parents: data.parents.map((parent: any) => ({
