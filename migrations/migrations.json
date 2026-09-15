@@ -271,8 +271,16 @@
       "file": "034_expose_creator_name_for_visible_children.sql",
       "created_at": "2026-09-14T00:04:00Z",
       "dependencies": ["033_allow_parent_view_unclaimed_children"]
+    },
+    {
+      "id": "035_allow_parents_view_committed_selections",
+      "name": "Allow Parents View Committed Selections",
+      "description": "Issue #49: add a read-only SELECT policy so a parent can view (never write) their own children's committed schedule_selections rows -- 022_add_selection_status.sql scoped parents' policy to status = 'draft' only, so the new committed-view toggle silently returned zero rows without this",
+      "file": "035_allow_parents_view_committed_selections.sql",
+      "created_at": "2026-09-15T00:01:00Z",
+      "dependencies": ["034_expose_creator_name_for_visible_children"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 34
+  "schema_version": 35
 }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card,
   Typography,
@@ -11,6 +11,7 @@ import {
   message,
   AutoComplete,
   Tooltip,
+  Radio,
 } from "antd";
 import { useTranslation } from "react-i18next";
 import {
@@ -41,8 +42,15 @@ import { TrackSelectionService } from "../services/trackSelectionService";
 import { GroupMandatoryLockService } from "../services/groupMandatoryLockService";
 import { ScheduleService } from "../services/scheduleService";
 import { DraftBanner } from "../elements/DraftBanner";
+import { CommittedReadOnlyBanner } from "../elements/CommittedReadOnlyBanner";
 import { GRADES } from "../types";
-import type { Class, TimeSlot, Child, ScheduleTarget } from "../types";
+import type {
+  Class,
+  TimeSlot,
+  Child,
+  ScheduleTarget,
+  SelectionStatus,
+} from "../types";
 import "./SchedulePage.css";
 import { GetGradeName } from "@/utils/grades";
 import { printSchedule } from "../utils/printSchedule";
@@ -96,9 +104,29 @@ const SchedulePageContent: React.FC = () => {
   const [allTimeSlots, setAllTimeSlots] = useState<TimeSlot[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [viewCommitted, setViewCommitted] = useState(false);
 
   const isParent = hasRole("parent");
-  const viewStatus = ScheduleService.resolveSelectionStatus(currentRole?.role);
+  const viewStatus: SelectionStatus =
+    isParent && viewCommitted
+      ? "committed"
+      : ScheduleService.resolveSelectionStatus(currentRole?.role);
+
+  // Read-only whenever a parent has toggled to the committed view. Auto-sync
+  // writes (track/group/mandatory changes) must always target the role's
+  // real write status (draft, for parents) even while this is true -- never
+  // `viewStatus`, since that's just what's being displayed and RLS rejects a
+  // parent writing a `committed` row.
+  const canEdit = !(isParent && viewCommitted);
+  const writeStatus: SelectionStatus = ScheduleService.resolveSelectionStatus(
+    currentRole?.role
+  );
+
+  // Snap the toggle back to draft when the child is cleared, so a disabled
+  // toggle never looks visually "stuck on" for the next child selected.
+  useEffect(() => {
+    if (!selectedChild) setViewCommitted(false);
+  }, [selectedChild]);
 
   const handleStaffChildSelect = (childId: string | undefined) => {
     if (!childId) {
@@ -182,7 +210,7 @@ const SchedulePageContent: React.FC = () => {
           await TrackSelectionService.applyTrackClassChanges(
             updatedChild.id,
             changes,
-            viewStatus
+            writeStatus
           );
           await refetchSelectedSchedule();
         }
@@ -308,6 +336,12 @@ const SchedulePageContent: React.FC = () => {
   React.useEffect(() => {
     activeChildIdRef.current = currentTrackChild?.id;
 
+    // Never auto-sync while a parent is viewing the read-only committed
+    // schedule: `selectedSchedule` reflects committed picks in that mode,
+    // not draft, so computing/writing a diff here would be based on the
+    // wrong data and would violate RLS (parents may only write draft rows).
+    if (!canEdit) return;
+
     // `target` (parent-role precedence) and `currentTrackChild` (staff-role
     // precedence) can disagree for a user who holds BOTH the parent and staff
     // roles: ChildContext auto-selects their own first child, so `target`
@@ -355,7 +389,7 @@ const SchedulePageContent: React.FC = () => {
         await GroupMandatoryLockService.applyChanges(
           currentTrackChild.id,
           changes,
-          viewStatus
+          writeStatus
         );
         if (activeChildIdRef.current === syncingChildId) {
           await refetchSelectedSchedule();
@@ -391,7 +425,7 @@ const SchedulePageContent: React.FC = () => {
     classes,
     selectedSchedule,
     selectedScheduleLoading,
-    viewStatus,
+    canEdit,
   ]);
 
   const handleClassSelect = async (classId: string) => {
@@ -498,11 +532,15 @@ const SchedulePageContent: React.FC = () => {
   };
 
   const selectedClasses = selectedSchedule.map(selection => selection.classId);
-  const canSelectClasses =
+  const hasSelectableTarget =
     ((currentRole?.role === "child" || currentRole?.role === "parent") &&
       (!isParent || selectedChild !== null)) ||
     (isStaff && staffSelectedChild !== null);
 
+  // A parent viewing the read-only committed schedule gets no interaction at
+  // all -- cells don't open the drawer, not just "opens read-only" -- so
+  // canViewClasses is gated by canEdit too, same as canSelectClasses.
+  const canSelectClasses = hasSelectableTarget && canEdit;
   const canViewClasses =
     canSelectClasses ||
     currentRole?.role === "admin" ||
@@ -602,10 +640,23 @@ const SchedulePageContent: React.FC = () => {
         }>
         {isParent && userChildren.length > 0 && (
           <>
+            <Radio.Group
+              className="draft-committed-toggle"
+              optionType="button"
+              value={viewCommitted ? "committed" : "draft"}
+              onChange={e => setViewCommitted(e.target.value === "committed")}
+              disabled={!selectedChild}>
+              <Radio.Button value="draft">
+                {t("schedule.page.labels.draftView")}
+              </Radio.Button>
+              <Radio.Button value="committed">
+                {t("schedule.page.labels.committedView")}
+              </Radio.Button>
+            </Radio.Group>
             <ChildGroupTrackSelector
               child={selectedChild}
               onChange={handleParentFieldChange}
-              disabled={childrenLoading}
+              disabled={childrenLoading || !canEdit}
             />
             <FilterField label={t("schedule.page.labels.selectChild")}>
               <ChildSelector
@@ -754,6 +805,7 @@ const SchedulePageContent: React.FC = () => {
       )}
 
       {viewStatus === "draft" && <DraftBanner />}
+      {isParent && viewCommitted && <CommittedReadOnlyBanner />}
 
       <Card className="schedule-card">
         <ScheduleTable
