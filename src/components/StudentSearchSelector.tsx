@@ -155,7 +155,14 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
         );
         if (selectedChild && onChildSelect) {
           onChildSelect(selectedChild.id);
-          // Don't clear in select mode - the searchTerm will be updated via selectedChildId
+          // AutoComplete's onChange fires with the raw option value (this
+          // option's `value` is the child's id in select mode) right before
+          // onSelect, landing that id in internalSearchTerm. searchTerm's
+          // ternary prefers internalSearchTerm over the selectedChildId-
+          // derived name, so leaving it set here would permanently display
+          // the raw id instead of the name. Clear it so the display falls
+          // back to computing the name from selectedChildId.
+          setInternalSearchTerm("");
         }
       } else {
         // In search mode, just update the search term
