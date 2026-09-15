@@ -13,6 +13,14 @@
   margin-bottom: 24px;
 }
 
+/* Locks the refresh button while a reload is in flight (see
+   PendingApprovalsPage's `loading` vs `initialLoading` split), so the
+   Table's own loading overlay isn't the only thing signaling a fetch. */
+.pending-approvals-controls--disabled {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
 .header-main {
   display: flex;
   justify-content: space-between;
