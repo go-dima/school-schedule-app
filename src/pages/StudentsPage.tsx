@@ -169,8 +169,8 @@ const StudentsPage: React.FC = () => {
   }, [children, searchTerm, selectedGrade]);
 
   const handleChildAdded = (_newChild: Child) => {
-    // Optionally handle the new child addition
-    // The component already reloads the page, so this might not be needed
+    // No action needed: AllChildrenContext already appends the new child,
+    // so filteredChildren updates automatically.
   };
 
   const columns: ColumnsType<ChildWithParent> = [
