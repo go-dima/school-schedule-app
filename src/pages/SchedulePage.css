@@ -161,3 +161,15 @@
 .schedule-content .ant-spin-container {
   min-height: 400px;
 }
+
+/* Draft/committed view toggle: antd's default outline style leaves the
+   selected button unfilled (border + text color only) -- add a light blue
+   fill so the selected state reads clearly without the heavier "solid"
+   buttonStyle's full-saturation block. */
+.draft-committed-toggle .ant-radio-button-wrapper-checked {
+  background: #e6f4ff;
+}
+
+.draft-committed-toggle .ant-radio-button-wrapper-checked:hover {
+  background: #d6ecff;
+}

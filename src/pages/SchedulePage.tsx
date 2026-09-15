@@ -637,12 +637,8 @@ const SchedulePageContent: React.FC = () => {
         }>
         {isParent && userChildren.length > 0 && (
           <>
-            <ChildGroupTrackSelector
-              child={selectedChild}
-              onChange={handleParentFieldChange}
-              disabled={childrenLoading || !canEdit}
-            />
             <Radio.Group
+              className="draft-committed-toggle"
               optionType="button"
               value={viewCommitted ? "committed" : "draft"}
               onChange={e => setViewCommitted(e.target.value === "committed")}
@@ -654,6 +650,11 @@ const SchedulePageContent: React.FC = () => {
                 {t("schedule.page.labels.committedView")}
               </Radio.Button>
             </Radio.Group>
+            <ChildGroupTrackSelector
+              child={selectedChild}
+              onChange={handleParentFieldChange}
+              disabled={childrenLoading || !canEdit}
+            />
             <FilterField label={t("schedule.page.labels.selectChild")}>
               <ChildSelector
                 children={userChildren}
