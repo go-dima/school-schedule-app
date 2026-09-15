@@ -11,7 +11,7 @@ import {
   message,
   AutoComplete,
   Tooltip,
-  Switch,
+  Radio,
 } from "antd";
 import { useTranslation } from "react-i18next";
 import {
@@ -111,6 +111,16 @@ const SchedulePageContent: React.FC = () => {
       ? "committed"
       : ScheduleService.resolveSelectionStatus(currentRole?.role);
 
+  // Read-only whenever a parent has toggled to the committed view. Auto-sync
+  // writes (track/group/mandatory changes) must always target the role's
+  // real write status (draft, for parents) even while this is true -- never
+  // `viewStatus`, since that's just what's being displayed and RLS rejects a
+  // parent writing a `committed` row.
+  const canEdit = !(isParent && viewCommitted);
+  const writeStatus: SelectionStatus = ScheduleService.resolveSelectionStatus(
+    currentRole?.role
+  );
+
   // Snap the toggle back to draft when the child is cleared, so a disabled
   // toggle never looks visually "stuck on" for the next child selected.
   useEffect(() => {
@@ -199,7 +209,7 @@ const SchedulePageContent: React.FC = () => {
           await TrackSelectionService.applyTrackClassChanges(
             updatedChild.id,
             changes,
-            viewStatus
+            writeStatus
           );
           await refetchSelectedSchedule();
         }
@@ -325,6 +335,12 @@ const SchedulePageContent: React.FC = () => {
   React.useEffect(() => {
     activeChildIdRef.current = currentTrackChild?.id;
 
+    // Never auto-sync while a parent is viewing the read-only committed
+    // schedule: `selectedSchedule` reflects committed picks in that mode,
+    // not draft, so computing/writing a diff here would be based on the
+    // wrong data and would violate RLS (parents may only write draft rows).
+    if (!canEdit) return;
+
     // `target` (parent-role precedence) and `currentTrackChild` (staff-role
     // precedence) can disagree for a user who holds BOTH the parent and staff
     // roles: ChildContext auto-selects their own first child, so `target`
@@ -372,7 +388,7 @@ const SchedulePageContent: React.FC = () => {
         await GroupMandatoryLockService.applyChanges(
           currentTrackChild.id,
           changes,
-          viewStatus
+          writeStatus
         );
         if (activeChildIdRef.current === syncingChildId) {
           await refetchSelectedSchedule();
@@ -408,7 +424,7 @@ const SchedulePageContent: React.FC = () => {
     classes,
     selectedSchedule,
     selectedScheduleLoading,
-    viewStatus,
+    canEdit,
   ]);
 
   const handleClassSelect = async (classId: string) => {
@@ -520,9 +536,6 @@ const SchedulePageContent: React.FC = () => {
       (!isParent || selectedChild !== null)) ||
     (isStaff && staffSelectedChild !== null);
 
-  // Read-only whenever a parent has toggled to the committed view.
-  const canEdit = !(isParent && viewCommitted);
-
   const canViewClasses =
     hasSelectableTarget ||
     currentRole?.role === "admin" ||
@@ -627,8 +640,21 @@ const SchedulePageContent: React.FC = () => {
             <ChildGroupTrackSelector
               child={selectedChild}
               onChange={handleParentFieldChange}
-              disabled={childrenLoading}
+              disabled={childrenLoading || !canEdit}
             />
+            <Radio.Group
+              optionType="button"
+              buttonStyle="solid"
+              value={viewCommitted ? "committed" : "draft"}
+              onChange={e => setViewCommitted(e.target.value === "committed")}
+              disabled={!selectedChild}>
+              <Radio.Button value="draft">
+                {t("schedule.page.labels.draftView")}
+              </Radio.Button>
+              <Radio.Button value="committed">
+                {t("schedule.page.labels.committedView")}
+              </Radio.Button>
+            </Radio.Group>
             <FilterField label={t("schedule.page.labels.selectChild")}>
               <ChildSelector
                 children={userChildren}
@@ -650,13 +676,6 @@ const SchedulePageContent: React.FC = () => {
                 disabled={childrenLoading}
               />
             </FilterField>
-            <Switch
-              checked={viewCommitted}
-              onChange={setViewCommitted}
-              disabled={!selectedChild}
-              checkedChildren={t("schedule.page.labels.committedView")}
-              unCheckedChildren={t("schedule.page.labels.draftView")}
-            />
           </>
         )}
         {isParent && <AddChildButton onAdded={handleParentChildAdded} />}
