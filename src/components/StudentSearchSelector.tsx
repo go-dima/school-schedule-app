@@ -3,7 +3,7 @@ import { AutoComplete, Modal, message } from "antd";
 import { PlusOutlined, UserOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { ChildForm } from "./ChildForm";
-import { childrenApi } from "../services/api";
+import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import { GetGradeName } from "@/utils/grades";
 import type { Child } from "../types";
 
@@ -39,6 +39,7 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
   value,
 }) => {
   const { t } = useTranslation();
+  const { createChild } = useAllChildrenContext();
   const [internalSearchTerm, setInternalSearchTerm] = useState<string>("");
 
   // Use controlled value if provided (search mode), otherwise internal state (select mode)
@@ -199,14 +200,12 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
   }) => {
     setAddLoading(true);
     try {
-      const newChild = await childrenApi.createChild(
+      const newChild = await createChild(
         data.firstName,
         data.lastName,
         data.grade,
         data.groupNumber,
-        data.scope || "prod",
-        null,
-        "committed"
+        data.scope || "prod"
       );
       setIsAddModalOpen(false);
       setEditingStudent(undefined);
@@ -216,9 +215,6 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
       if (onChildAdded && newChild) {
         onChildAdded(newChild);
       }
-
-      // Reload the page to refresh the children list
-      window.location.reload();
     } catch (err) {
       message.error(
         err instanceof Error ? err.message : t("students.page.addError")
