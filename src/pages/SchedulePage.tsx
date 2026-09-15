@@ -644,7 +644,6 @@ const SchedulePageContent: React.FC = () => {
             />
             <Radio.Group
               optionType="button"
-              buttonStyle="solid"
               value={viewCommitted ? "committed" : "draft"}
               onChange={e => setViewCommitted(e.target.value === "committed")}
               disabled={!selectedChild}>
