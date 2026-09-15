@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card,
   Typography,
@@ -11,6 +11,7 @@ import {
   message,
   AutoComplete,
   Tooltip,
+  Switch,
 } from "antd";
 import { useTranslation } from "react-i18next";
 import {
@@ -42,7 +43,13 @@ import { GroupMandatoryLockService } from "../services/groupMandatoryLockService
 import { ScheduleService } from "../services/scheduleService";
 import { DraftBanner } from "../elements/DraftBanner";
 import { GRADES } from "../types";
-import type { Class, TimeSlot, Child, ScheduleTarget } from "../types";
+import type {
+  Class,
+  TimeSlot,
+  Child,
+  ScheduleTarget,
+  SelectionStatus,
+} from "../types";
 import "./SchedulePage.css";
 import { GetGradeName } from "@/utils/grades";
 import { printSchedule } from "../utils/printSchedule";
@@ -96,9 +103,19 @@ const SchedulePageContent: React.FC = () => {
   const [allTimeSlots, setAllTimeSlots] = useState<TimeSlot[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [viewCommitted, setViewCommitted] = useState(false);
 
   const isParent = hasRole("parent");
-  const viewStatus = ScheduleService.resolveSelectionStatus(currentRole?.role);
+  const viewStatus: SelectionStatus =
+    isParent && viewCommitted
+      ? "committed"
+      : ScheduleService.resolveSelectionStatus(currentRole?.role);
+
+  // Snap the toggle back to draft when the child is cleared, so a disabled
+  // toggle never looks visually "stuck on" for the next child selected.
+  useEffect(() => {
+    if (!selectedChild) setViewCommitted(false);
+  }, [selectedChild]);
 
   const handleStaffChildSelect = (childId: string | undefined) => {
     if (!childId) {
@@ -498,15 +515,20 @@ const SchedulePageContent: React.FC = () => {
   };
 
   const selectedClasses = selectedSchedule.map(selection => selection.classId);
-  const canSelectClasses =
+  const hasSelectableTarget =
     ((currentRole?.role === "child" || currentRole?.role === "parent") &&
       (!isParent || selectedChild !== null)) ||
     (isStaff && staffSelectedChild !== null);
 
+  // Read-only whenever a parent has toggled to the committed view.
+  const canEdit = !(isParent && viewCommitted);
+
   const canViewClasses =
-    canSelectClasses ||
+    hasSelectableTarget ||
     currentRole?.role === "admin" ||
     currentRole?.role === "staff";
+
+  const canSelectClasses = hasSelectableTarget && canEdit;
 
   if (loading) {
     return (
@@ -628,6 +650,13 @@ const SchedulePageContent: React.FC = () => {
                 disabled={childrenLoading}
               />
             </FilterField>
+            <Switch
+              checked={viewCommitted}
+              onChange={setViewCommitted}
+              disabled={!selectedChild}
+              checkedChildren={t("schedule.page.labels.committedView")}
+              unCheckedChildren={t("schedule.page.labels.draftView")}
+            />
           </>
         )}
         {isParent && <AddChildButton onAdded={handleParentChildAdded} />}

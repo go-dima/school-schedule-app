@@ -83,6 +83,8 @@
         "selectChild": "בחר ילד",
         "selectChildForStaff": "בחר תלמיד",
         "filterByGrade": "סנן לפי כיתה",
+        "draftView": "טיוטה",
+        "committedView": "מערכת",
         "searchClass": "חיפוש שיעור",
         "track": "מסלול",
         "trackPlaceholder": "ללא מסלול",
