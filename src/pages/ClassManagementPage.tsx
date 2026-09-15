@@ -526,10 +526,11 @@ const ClassManagementPage: React.FC = () => {
           style={{ marginBottom: 24 }}
         />
 
-        <div
+        <fieldset
           className={`class-management-controls${
             loading ? " class-management-controls--disabled" : ""
           }`}
+          disabled={loading}
           aria-disabled={loading}>
           <div className="header-main">
             <Title level={2}>{t("classManagement.page.title")}</Title>
@@ -671,7 +672,7 @@ const ClassManagementPage: React.FC = () => {
               </Space>
             </Space>
           </Card>
-        </div>
+        </fieldset>
       </div>
 
       {error && (

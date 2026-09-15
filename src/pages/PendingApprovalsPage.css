@@ -13,11 +13,21 @@
   margin-bottom: 24px;
 }
 
-/* Locks the refresh button while a reload is in flight (see
-   PendingApprovalsPage's `loading` vs `initialLoading` split), so the
-   Table's own loading overlay isn't the only thing signaling a fetch. */
+/* Wrapper is a <fieldset> (see PendingApprovalsPage's `loading` vs
+   `initialLoading` split) so the native `disabled` attribute cascades to
+   every real form control inside -- blocking keyboard activation, not just
+   pointer interaction, while a reload is in flight. Reset <fieldset>'s
+   default browser chrome (border, padding, quirky min-width) so it stays
+   an invisible, non-participating wrapper in this flex/block layout. */
+.pending-approvals-controls {
+  display: block;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
 .pending-approvals-controls--disabled {
-  pointer-events: none;
   opacity: 0.6;
 }
 
