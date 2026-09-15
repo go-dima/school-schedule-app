@@ -73,6 +73,7 @@ const SchedulePageContent: React.FC = () => {
     isAdmin,
     hasRole,
     canCreateClasses,
+    canManageClasses,
   } = useAuth();
   const {
     selectedChild,
@@ -183,6 +184,28 @@ const SchedulePageContent: React.FC = () => {
   // network activity for them.
   const { draftClassIds } = useDraftSelectionAwareness(
     viewStatus === "committed" ? target : undefined
+  );
+
+  // A parent/child viewer's own selections come from an unfiltered join, so
+  // they already carry full data for a committed staff-only class (e.g.
+  // חונכות/שילוב) even though the catalog feed above hides it. Merge that
+  // in for display only, so the grid shows an already-committed pick
+  // read-only without making it pickable anywhere else.
+  const selectedWeeklySchedule = React.useMemo(
+    () =>
+      ScheduleService.buildWeeklySchedule(
+        selectedSchedule.map(selection => selection.class)
+      ),
+    [selectedSchedule]
+  );
+
+  const displayWeeklySchedule = React.useMemo(
+    () =>
+      ScheduleService.mergeWeeklySchedules(
+        weeklySchedule,
+        selectedWeeklySchedule
+      ),
+    [weeklySchedule, selectedWeeklySchedule]
   );
 
   const makeFieldChangeHandler =
@@ -296,6 +319,15 @@ const SchedulePageContent: React.FC = () => {
                 currentTrackChild.groupNumber
               )
           )
+          .map(cls => cls.id)
+      : []),
+    // Staff-only placeholder classes (e.g. "חונכות", "שילוב") already chosen
+    // for this child can only be managed by staff/admin -- lock them here so
+    // non-staff/admin viewers can see but never unselect them.
+    ...(!canManageClasses()
+      ? selectedSchedule
+          .map(selection => selection.class)
+          .filter(cls => ScheduleService.isStaffOnlyClass(cls))
           .map(cls => cls.id)
       : []),
   ]);
@@ -811,7 +843,7 @@ const SchedulePageContent: React.FC = () => {
         <ScheduleTable
           timeSlots={timeSlots}
           classes={classes}
-          weeklySchedule={weeklySchedule}
+          weeklySchedule={displayWeeklySchedule}
           userGrade={selectedGrade}
           selectedClasses={selectedClasses}
           draftPickedClassIds={Array.from(draftClassIds)}
