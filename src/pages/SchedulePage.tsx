@@ -586,7 +586,8 @@ const SchedulePageContent: React.FC = () => {
                 onChange={handleRoleSwitch}
                 placeholder={t("schedule.page.placeholders.selectRole")}
                 style={{ minWidth: 120 }}
-                suffixIcon={<UserSwitchOutlined />}>
+                suffixIcon={<UserSwitchOutlined />}
+                disabled={loading}>
                 {userRoles.map(role => (
                   <Option key={role.id} value={role.id}>
                     {getRoleDisplayName(role.role)}
@@ -645,6 +646,7 @@ const SchedulePageContent: React.FC = () => {
                 style={{ minWidth: 200 }}
                 allowClear
                 filterOption={false}
+                disabled={loading}
               />
             </FilterField>
           </>
@@ -656,7 +658,7 @@ const SchedulePageContent: React.FC = () => {
               optionType="button"
               value={viewCommitted ? "committed" : "draft"}
               onChange={e => setViewCommitted(e.target.value === "committed")}
-              disabled={!selectedChild}>
+              disabled={loading || !selectedChild}>
               <Radio.Button value="draft">
                 {t("schedule.page.labels.draftView")}
               </Radio.Button>
@@ -667,7 +669,7 @@ const SchedulePageContent: React.FC = () => {
             <ChildGroupTrackSelector
               child={selectedChild}
               onChange={handleParentFieldChange}
-              disabled={childrenLoading || !canEdit}
+              disabled={loading || childrenLoading || !canEdit}
             />
             <FilterField label={t("schedule.page.labels.selectChild")}>
               <ChildSelector
@@ -687,7 +689,7 @@ const SchedulePageContent: React.FC = () => {
                   }
                 }}
                 style={{ minWidth: 200 }}
-                disabled={childrenLoading}
+                disabled={loading || childrenLoading}
               />
             </FilterField>
           </>
@@ -698,7 +700,7 @@ const SchedulePageContent: React.FC = () => {
             <ChildGroupTrackSelector
               child={staffSelectedChild}
               onChange={handleStaffFieldChange}
-              disabled={allChildrenLoading}
+              disabled={loading || allChildrenLoading}
             />
             <FilterField label={t("schedule.page.labels.selectChildForStaff")}>
               <StudentSearchSelector
@@ -710,7 +712,7 @@ const SchedulePageContent: React.FC = () => {
                   "schedule.page.placeholders.selectChildForStaff"
                 )}
                 style={{ minWidth: 200 }}
-                disabled={allChildrenLoading}
+                disabled={loading || allChildrenLoading}
                 defaultGrade={selectedGrade || 1}
                 mode="select"
                 isCreateAllowed={isStaff}
@@ -726,7 +728,7 @@ const SchedulePageContent: React.FC = () => {
               placeholder={t("schedule.page.placeholders.allGrades")}
               allowClear
               style={{ minWidth: 120 }}
-              disabled={isStaff && !!staffSelectedChild}>
+              disabled={loading || (isStaff && !!staffSelectedChild)}>
               {GRADES.map(grade => (
                 <Option key={grade} value={grade}>
                   {GetGradeName(grade)}
