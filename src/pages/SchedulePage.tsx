@@ -42,6 +42,7 @@ import { TrackSelectionService } from "../services/trackSelectionService";
 import { GroupMandatoryLockService } from "../services/groupMandatoryLockService";
 import { ScheduleService } from "../services/scheduleService";
 import { DraftBanner } from "../elements/DraftBanner";
+import { CommittedReadOnlyBanner } from "../elements/CommittedReadOnlyBanner";
 import { GRADES } from "../types";
 import type {
   Class,
@@ -804,6 +805,7 @@ const SchedulePageContent: React.FC = () => {
       )}
 
       {viewStatus === "draft" && <DraftBanner />}
+      {isParent && viewCommitted && <CommittedReadOnlyBanner />}
 
       <Card className="schedule-card">
         <ScheduleTable

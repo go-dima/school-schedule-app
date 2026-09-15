@@ -68,6 +68,7 @@
   },
   "schedule": {
     "draftBanner": "הבחירה היא טויטה בלבד",
+    "committedReadOnlyBanner": "מערכת מוצגת לצפייה בלבד",
     "page": {
       "title": "מערכת שעות",
       "loading": "טוען את מערכת השעות...",
