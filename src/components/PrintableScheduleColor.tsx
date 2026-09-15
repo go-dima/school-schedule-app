@@ -1,3 +1,6 @@
+// Dead code: the colored print layout, superseded by the black & white
+// PrintableSchedule (see issue #125). Kept around, unwired, in case the
+// colored version is wanted again in the future.
 import React from "react";
 import { Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
@@ -12,9 +15,10 @@ import {
 } from "../utils/timeSlots";
 import type { TimeSlot, WeeklySchedule, Child } from "../types";
 import { GetGradeName } from "../utils/grades";
-import "./PrintableSchedule.css";
+import ClassCardHeader from "./ClassCardHeader";
+import "./PrintableScheduleColor.css";
 
-interface PrintableScheduleProps {
+interface PrintableScheduleColorProps {
   child: Child;
   timeSlots: TimeSlot[];
   weeklySchedule: WeeklySchedule;
@@ -28,7 +32,7 @@ interface ScheduleRow {
   [key: string]: any;
 }
 
-const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
+const PrintableScheduleColor: React.FC<PrintableScheduleColorProps> = ({
   child,
   timeSlots,
   weeklySchedule,
@@ -70,8 +74,15 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
       const doubleClass = selectedContinuationClasses[0];
 
       return (
-        <div className="print-schedule-cell">
-          <div className="print-class-title">{doubleClass.title}</div>
+        <div className="print-schedule-cell selected double-continuation">
+          <div className="print-class-card">
+            <ClassCardHeader
+              title={doubleClass.title}
+              isContinuation
+              teacher={doubleClass.teacher}
+              room={doubleClass.room}
+            />
+          </div>
         </div>
       );
     }
@@ -88,7 +99,13 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
     }
 
     if (primaryClasses.length === 0) {
-      return <div className="print-schedule-cell" />;
+      return (
+        <div className="print-schedule-cell empty">
+          <div className="print-empty-text">
+            {t("schedule.table.noClasses")}
+          </div>
+        </div>
+      );
     }
 
     // Check for selected classes to display
@@ -99,18 +116,31 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
     // If there are selected classes, show them
     if (selectedPrimaryClasses.length > 0) {
       return (
-        <div className="print-schedule-cell">
+        <div className="print-schedule-cell selected">
           {selectedPrimaryClasses.map(cls => (
-            <div key={cls.id} className="print-class-title">
-              {cls.title}
+            <div key={cls.id} className="print-class-card">
+              <ClassCardHeader
+                title={cls.title}
+                teacher={cls.teacher}
+                room={cls.room}
+              />
+              {cls.isDouble && (
+                <div className="print-double-indicator">
+                  {t("schedule.table.doubleLessonTag")}
+                </div>
+              )}
             </div>
           ))}
         </div>
       );
     }
 
-    // No selected classes for this slot - leave empty
-    return <div className="print-schedule-cell" />;
+    // No selected classes for this slot
+    return (
+      <div className="print-schedule-cell empty">
+        <div className="print-empty-text">{t("schedule.table.noClasses")}</div>
+      </div>
+    );
   };
 
   const createScheduleData = (): ScheduleRow[] => {
@@ -217,4 +247,4 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
   );
 };
 
-export default PrintableSchedule;
+export default PrintableScheduleColor;
