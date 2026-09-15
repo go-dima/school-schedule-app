@@ -336,6 +336,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
             placeholder="הצג הכל"
             allowClear
             style={{ minWidth: 220 }}
+            disabled={loading}
             options={[
               { label: getRoleDisplayName("admin"), value: "admin" },
               { label: getRoleDisplayName("staff"), value: "staff" },
