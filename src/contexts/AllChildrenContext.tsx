@@ -30,6 +30,7 @@ interface AllChildrenContextType {
     }
   ) => Promise<Child>;
   removeChild: (childId: string) => Promise<void>;
+  refetch: () => Promise<void>;
 }
 
 const AllChildrenContext = createContext<AllChildrenContextType | undefined>(
@@ -44,8 +45,15 @@ export function AllChildrenProvider({
   const [selectedChild, setSelectedChild] = useState<Child | undefined>(
     undefined
   );
-  const { children, loading, error, createChild, updateChild, removeChild } =
-    useAllChildren();
+  const {
+    children,
+    loading,
+    error,
+    createChild,
+    updateChild,
+    removeChild,
+    refetch,
+  } = useAllChildren();
 
   return (
     <AllChildrenContext.Provider
@@ -58,6 +66,7 @@ export function AllChildrenProvider({
         createChild,
         updateChild,
         removeChild,
+        refetch,
       }}>
       {reactChildren}
     </AllChildrenContext.Provider>

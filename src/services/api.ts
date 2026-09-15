@@ -4,7 +4,9 @@ import type {
   Class,
   ClassSlot,
   ClassWithTimeSlot,
+  DuplicateChildMatch,
   EnrolledChild,
+  ParentChildRelationship,
   PendingApproval,
   ScheduleSelectionWithClass,
   ScheduleTarget,
@@ -721,6 +723,8 @@ export const scheduleApi = {
         groupNumber: child.group_number,
         trackNumber: child.track_number,
         scope: child.scope,
+        createdBy: child.created_by ?? null,
+        createdByName: null, // creator name populated by callers that join users (see Task 4/7)
         createdAt: child.created_at,
         updatedAt: child.updated_at,
         addedByUserId: child.added_by_user_id,
@@ -773,6 +777,8 @@ export const childrenApi = {
       groupNumber: rel?.child?.group_number,
       trackNumber: rel?.child?.track_number_draft,
       scope: rel?.child?.scope,
+      createdBy: rel?.child?.created_by ?? null,
+      createdByName: null, // creator name populated by callers that join users (see Task 4/7)
       createdAt: rel?.child?.created_at,
       updatedAt: rel?.child?.updated_at,
     }));
@@ -814,6 +820,8 @@ export const childrenApi = {
           ? data.track_number_committed
           : data.track_number_draft,
       scope: data.scope,
+      createdBy: data.created_by ?? null,
+      createdByName: null, // creator name populated by callers that join users (see Task 4/7)
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
@@ -855,6 +863,8 @@ export const childrenApi = {
       groupNumber: data.group_number,
       trackNumber: data.track_number_draft,
       scope: data.scope,
+      createdBy: data.created_by ?? null,
+      createdByName: null, // creator name populated by callers that join users (see Task 4/7)
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
@@ -912,6 +922,13 @@ export const childrenApi = {
     if (error) throw new ApiError(error.message);
 
     return data.map((child: any) => {
+      const creatorName =
+        [child.creator_first_name, child.creator_last_name]
+          .filter(Boolean)
+          .join(" ") ||
+        child.creator_email ||
+        null;
+
       return {
         id: child.id,
         firstName: child.first_name,
@@ -920,6 +937,8 @@ export const childrenApi = {
         groupNumber: child.group_number,
         trackNumber: child.track_number,
         scope: child.scope || "prod", // Fallback for migration compatibility
+        createdBy: child.created_by ?? null,
+        createdByName: creatorName,
         createdAt: child.created_at,
         updatedAt: child.updated_at,
         assignedParent: child.has_parent,
@@ -950,6 +969,8 @@ export const childrenApi = {
           ? data.track_number_committed
           : data.track_number_draft,
       scope: data.scope,
+      createdBy: data.created_by ?? null,
+      createdByName: null, // creator name populated by callers that join users (see Task 4/7)
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
@@ -978,6 +999,8 @@ export const childrenApi = {
           ? data.track_number_committed
           : data.track_number_draft,
       scope: data.scope,
+      createdBy: data.created_by ?? null,
+      createdByName: null, // creator name populated by callers that join users (see Task 4/7)
       createdAt: data.created_at,
       updatedAt: data.updated_at,
       parents: data.parents.map((parent: any) => ({
@@ -987,6 +1010,80 @@ export const childrenApi = {
         lastName: parent.last_name,
         isPrimary: parent.is_primary,
       })),
+    };
+  },
+
+  /**
+   * Local (client-visible) duplicate check: a direct `children` query, not
+   * an RPC, so it stays cheap enough to run as the user types a new child's
+   * name/grade (see Task 6). Joins `users` via the FK Postgres auto-named
+   * `children_created_by_fkey` (migration 030) to surface who created each
+   * candidate match.
+   */
+  async findLocalDuplicateChildren(
+    firstName: string,
+    lastName: string,
+    grade: number,
+    excludeChildId: string | undefined,
+    currentUserId: string
+  ): Promise<DuplicateChildMatch[]> {
+    let query = supabase
+      .from("children")
+      .select(
+        "id, grade, created_by, creator:users!children_created_by_fkey(first_name, last_name)"
+      )
+      .ilike("first_name", firstName.trim())
+      .ilike("last_name", lastName.trim())
+      .eq("grade", grade);
+
+    if (excludeChildId) {
+      query = query.neq("id", excludeChildId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new ApiError(
+        `Failed to check for duplicate children: ${error.message}`
+      );
+    }
+
+    return (
+      (data ?? []) as unknown as {
+        id: string;
+        grade: number;
+        created_by: string | null;
+        creator: {
+          first_name: string | null;
+          last_name: string | null;
+        } | null;
+      }[]
+    ).map(row => ({
+      id: row.id,
+      grade: row.grade,
+      createdByUserId: row.created_by,
+      createdByName: row.creator
+        ? [row.creator.first_name, row.creator.last_name]
+            .filter(Boolean)
+            .join(" ") || null
+        : null,
+      createdByIsSelf: row.created_by === currentUserId,
+    }));
+  },
+
+  async claimChild(childId: string): Promise<ParentChildRelationship> {
+    const { data, error } = await supabase.rpc("claim_child", {
+      p_child_id: childId,
+    });
+
+    if (error) throw new ApiError(error.message);
+
+    return {
+      id: data.id,
+      parentId: data.parent_id,
+      childId: data.child_id,
+      isPrimary: data.is_primary,
+      createdAt: data.created_at,
     };
   },
 };

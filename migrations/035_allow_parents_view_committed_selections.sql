@@ -1,4 +1,4 @@
--- Migration: 031_allow_parents_view_committed_selections
+-- Migration: 035_allow_parents_view_committed_selections
 -- Description: Issue #49 added a parent-facing read-only toggle to view a
 --   child's committed (published) schedule, reusing the existing
 --   status-generic scheduleApi.getSelectedSchedule/useSelectedSchedule path.

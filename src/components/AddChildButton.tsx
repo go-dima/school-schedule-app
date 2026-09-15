@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Button, Modal } from "antd";
+import { Button, Modal, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { ChildForm } from "./ChildForm";
@@ -63,6 +63,10 @@ export function AddChildButton({
           onCancel={() => setIsModalOpen(false)}
           loading={loading}
           showScope={false}
+          onDuplicateRedirect={() => {
+            setIsModalOpen(false);
+            message.info(t("child.duplicateWarning.sameCreatorMessage"));
+          }}
         />
       </Modal>
     </>

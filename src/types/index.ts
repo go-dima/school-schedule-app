@@ -114,8 +114,18 @@ export interface Child {
   groupNumber: number | null; // קבוצה: 1, 2, or null. Convention: grades 1-2
   trackNumber: number | null; // מסלול: 1, 2, or null. Convention: grades 3-6
   scope: Scope;
+  createdBy: string | null;
+  createdByName: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface DuplicateChildMatch {
+  id: string;
+  grade: number;
+  createdByUserId: string | null;
+  createdByName: string | null;
+  createdByIsSelf: boolean;
 }
 
 export interface ParentChildRelationship {
