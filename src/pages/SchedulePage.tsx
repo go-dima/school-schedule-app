@@ -536,12 +536,14 @@ const SchedulePageContent: React.FC = () => {
       (!isParent || selectedChild !== null)) ||
     (isStaff && staffSelectedChild !== null);
 
+  // A parent viewing the read-only committed schedule gets no interaction at
+  // all -- cells don't open the drawer, not just "opens read-only" -- so
+  // canViewClasses is gated by canEdit too, same as canSelectClasses.
+  const canSelectClasses = hasSelectableTarget && canEdit;
   const canViewClasses =
-    hasSelectableTarget ||
+    canSelectClasses ||
     currentRole?.role === "admin" ||
     currentRole?.role === "staff";
-
-  const canSelectClasses = hasSelectableTarget && canEdit;
 
   if (loading) {
     return (
