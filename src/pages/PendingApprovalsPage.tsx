@@ -41,6 +41,11 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
     []
   );
   const [loading, setLoading] = useState(true);
+  // True only until the first load resolves. Gates the full-page spinner;
+  // subsequent reloads (refresh button, after approve/reject) use `loading`
+  // to show a local Table overlay and lock the header instead of unmounting
+  // the whole page.
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
@@ -67,6 +72,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       );
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   };
 
@@ -285,7 +291,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
     );
   }
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="page-content">
         <div className="page-loading">
@@ -301,23 +307,30 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
   return (
     <div className="page-content">
       <div className="pending-approvals-header">
-        <div className="header-main">
-          <Title level={2}>
+        <div
+          className={`pending-approvals-controls${
+            loading ? " pending-approvals-controls--disabled" : ""
+          }`}
+          aria-disabled={loading}>
+          <div className="header-main">
+            <Title level={2}>
+              <Space>
+                בקשות ממתינות לאישור
+                {pendingApprovals.length > 0 && (
+                  <Badge count={pendingApprovals.length} color="#ff4d4f" />
+                )}
+              </Space>
+            </Title>
             <Space>
-              בקשות ממתינות לאישור
-              {pendingApprovals.length > 0 && (
-                <Badge count={pendingApprovals.length} color="#ff4d4f" />
-              )}
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={loadData}
+                loading={loading}
+                disabled={loading}>
+                רענן
+              </Button>
             </Space>
-          </Title>
-          <Space>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={loadData}
-              disabled={loading}>
-              רענן
-            </Button>
-          </Space>
+          </div>
         </div>
 
         <Alert
@@ -369,6 +382,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
             columns={columns}
             dataSource={pendingApprovals}
             rowKey="id"
+            loading={loading}
             pagination={{
               pageSize: 10,
               showSizeChanger: true,

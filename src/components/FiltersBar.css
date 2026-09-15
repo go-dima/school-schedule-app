@@ -44,6 +44,15 @@
   border: 1px solid #e2e8f0;
 }
 
+/* Locks the whole bar against interaction (see FiltersBarProps.disabled) --
+   children are arbitrary nodes from the consuming page, so this blocks
+   pointer interaction at the container level rather than threading a
+   `disabled` prop through every possible control. */
+.filters-section--disabled {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
 /* Flat variant: unboxed row (Schedule) */
 .filters-section--flat {
   display: flex;
