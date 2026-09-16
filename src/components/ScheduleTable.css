@@ -69,6 +69,7 @@
 }
 
 .schedule-cell {
+  position: relative;
   min-height: 60px;
   width: 100%;
   padding: 2px;
@@ -226,13 +227,16 @@
   display: none;
 }
 
-/* Force table rows to match the height of break/meeting slots */
+/* Force table rows to match the height of break/meeting slots -- a
+   min-height, not a hard cap, so a day with an override on this slot (which
+   replaces the break/meeting card and needs the normal class-card height)
+   can grow the shared row instead of overflowing it. */
 .schedule-table .ant-table-tbody > tr.compact-row {
-  height: 30px;
+  min-height: 30px;
 }
 
 .schedule-table .ant-table-tbody > tr.compact-row > td {
-  height: 30px;
+  min-height: 30px;
   padding: 0;
   vertical-align: middle;
 }
@@ -258,6 +262,7 @@
 }
 
 .non-lesson-card {
+  position: relative;
   background: transparent;
   border: none;
   box-shadow: none;
@@ -282,10 +287,36 @@
   text-align: center;
 }
 
-.override-footer {
+/* A suffix-style strip anchored to the whole cell container (a sibling of
+   the card, not nested inside its padding) -- fills the card's full
+   height but stays narrow, sitting in the margin a centered single-line
+   label leaves before it starts (rather than a wide block that reaches
+   into the label). Revealed only on hover of the cell. Light, translucent
+   orange so it reads like the app's other tinted slot backgrounds (e.g.
+   --schedule-meeting-bg) rather than a bold block. */
+.override-card-footer {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: 18px;
   display: flex;
+  align-items: center;
   justify-content: center;
-  margin-top: 4px;
+  background-color: rgba(250, 140, 22, 0.35);
+  color: var(--schedule-accent-orange);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.schedule-cell:hover .override-card-footer {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .non-lesson-content .slot-name {

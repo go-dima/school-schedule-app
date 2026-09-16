@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Table, Card, Button, Empty, Tooltip } from "antd";
+import { Table, Card, Button, Empty } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { PlusOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { DAYS_OF_WEEK } from "../types";
 import { ScheduleService } from "../services/scheduleService";
@@ -23,6 +22,7 @@ import ClassCard from "./ClassCard";
 import ClassCardHeader from "./ClassCardHeader";
 import "./ScheduleTable.css";
 import { EnrollmentService } from "../services/enrollmentService";
+import { OverrideCornerButton } from "@/elements/OverrideCornerButton";
 
 interface ScheduleTableProps {
   timeSlots: TimeSlot[];
@@ -184,31 +184,15 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     </Card>
   );
 
-  // A small orange "+" affordance offered wherever a staff member should be
-  // able to drop an override -- notably on fixed slots (breaks/meetings),
-  // which never open the normal selection drawer, so this is their only
-  // entry point into override creation.
   const renderCreateOverrideFooterButton = (
     timeSlot: TimeSlot,
     dayOfWeek: number
   ) =>
     canCreateOverride &&
     onCreateOverride && (
-      <div className="override-footer">
-        <Tooltip title={t("schedule.override.buttonLabel")}>
-          <Button
-            type="primary"
-            shape="circle"
-            size="small"
-            icon={<PlusOutlined />}
-            style={{ backgroundColor: "#fa8c16", borderColor: "#fa8c16" }}
-            onClick={e => {
-              e.stopPropagation();
-              onCreateOverride(timeSlot.id, dayOfWeek);
-            }}
-          />
-        </Tooltip>
-      </div>
+      <OverrideCornerButton
+        onClick={() => onCreateOverride(timeSlot.id, dayOfWeek)}
+      />
     );
 
   const renderClassCell = (timeSlot: TimeSlot, dayOfWeek: number) => {
@@ -273,8 +257,19 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       );
     }
 
-    // Handle non-lesson time slots (breaks, meetings)
+    // Handle non-lesson time slots (breaks, meetings). An override on a
+    // fixed slot completely replaces it -- staff overrode it deliberately,
+    // so it's shown exactly like a regular lesson's committed class, not
+    // layered on top of the break/meeting card underneath.
     if (!isLessonTimeSlot(timeSlot)) {
+      if (cellOverrides.length > 0) {
+        return (
+          <div className={`schedule-cell selected-classes ${highlightClass}`}>
+            {cellOverrides.map(renderOverrideCard)}
+          </div>
+        );
+      }
+
       return (
         <div
           className={`schedule-cell ${displayInfo.cssClass} ${highlightClass}`}
@@ -289,7 +284,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               )}
             </div>
           </Card>
-          {cellOverrides.map(renderOverrideCard)}
           {renderCreateOverrideFooterButton(timeSlot, dayOfWeek)}
         </div>
       );
