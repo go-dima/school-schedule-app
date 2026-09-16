@@ -27,6 +27,9 @@
   background: var(--schedule-time-col-bg) !important;
   min-width: 120px;
   text-align: center;
+  /* See .day-column's comment: needed for percentage heights to resolve
+     against this <td>'s real (row-driven) height. */
+  height: 1px;
 }
 
 .time-cell {
@@ -66,9 +69,31 @@
   width: 160px !important;
   min-width: 160px;
   max-width: 160px;
+  /* The classic table-cell height trick: a <td>'s own computed height is
+     never "specified" per spec even once table layout has stretched it to
+     match its row, so percentage heights on its descendants (our
+     .schedule-cell -> .class-card chain) silently fall back to `auto`
+     instead of tracking the row's actual rendered height. Any explicit
+     height value here -- 1px is overridden by the row's real content-driven
+     height anyway -- is enough to make percentage heights below resolve
+     correctly. Without this, a short-content cell (an unselected "click to
+     select" card, a 2-line override) stays its own intrinsic height even
+     while sitting next to a much taller sibling in the same row. */
+  height: 1px;
 }
 
+/* Every render branch (selected classes, "N classes" placeholder, empty,
+   an override replacing the slot, a plain fixed break/meeting card) wants
+   the exact same "fill the actual cell height" behavior, so it lives here
+   once instead of being repeated (and inevitably missed for some branch --
+   this is the second time) per branch class. Requires .day-column/
+   .time-column's `height: 1px` trick so this cell's height:100% has a real
+   percentage base to resolve against. */
 .schedule-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   min-height: 60px;
   width: 100%;
   padding: 2px;
@@ -118,27 +143,45 @@
   font-weight: 500;
 }
 
+/* Every card variant (selected, override, "N classes" placeholder) is a
+   direct child of .schedule-cell and should fill it exactly the same way
+   -- see .schedule-cell's own comment. */
 .class-card {
   position: relative;
   width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   margin: 0;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
+/* A fixed overlay, not part of the 3-line flow -- stays put in the
+   card's bottom-left corner regardless of content length, and never
+   affects the card's layout height. Left (not right) so it reads after
+   the tags in RTL reading order, rather than before them. */
 .class-enrollment-badge {
   position: absolute;
-  top: 6px;
+  bottom: 6px;
   left: 8px;
   z-index: 1;
   pointer-events: none;
 }
 
-.class-header-tags-inline {
-  display: inline-flex;
+.class-tags-row {
+  display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 4px;
   flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* Reserves physical-left space matching .class-enrollment-badge's corner,
+   so a centered tag never ends up sitting directly under/against the
+   badge. */
+.class-tags-row--with-badge {
+  padding-left: 28px;
 }
 
 .schedule-cell.clickable .class-card {
@@ -153,6 +196,10 @@
 
 .class-card .ant-card-body {
   padding: 8px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex: 1;
 }
 
 .continuation-suffix {
@@ -201,13 +248,16 @@
   }
 }
 
-/* Non-lesson time slot styles */
+/* Non-lesson time slot styles. min-height (not a fixed height/max-height,
+   which used to hard-cap these at 30px no matter what) overrides the base
+   .schedule-cell's own 60px floor back down to the compact default -- but
+   still lets the cell grow to match a row a same-slot override elsewhere
+   has stretched taller, via the base rule's height: 100%. */
 .schedule-cell.break-slot {
   background: var(--schedule-selected-bg);
   border: 1px solid var(--schedule-break-border);
+  border-radius: 4px;
   min-height: 30px;
-  max-height: 30px;
-  height: 30px;
 }
 
 .schedule-cell.break-slot .slot-description {
@@ -217,31 +267,34 @@
 .schedule-cell.meeting-slot {
   background: var(--schedule-meeting-bg);
   border: 1px solid var(--schedule-meeting-border);
+  border-radius: 4px;
   min-height: 30px;
-  max-height: 30px;
-  height: 30px;
 }
 
 .schedule-cell.meeting-slot .slot-description {
   display: none;
 }
 
-/* Force table rows to match the height of break/meeting slots */
+/* Force table rows to match the height of break/meeting slots -- a
+   min-height, not a hard cap, so a day with an override on this slot (which
+   replaces the break/meeting card and needs the normal class-card height)
+   can grow the shared row instead of overflowing it. */
 .schedule-table .ant-table-tbody > tr.compact-row {
-  height: 30px;
+  min-height: 30px;
 }
 
 .schedule-table .ant-table-tbody > tr.compact-row > td {
-  height: 30px;
+  min-height: 30px;
   padding: 0;
   vertical-align: middle;
 }
 
-.schedule-table .ant-table-tbody > tr.compact-row .schedule-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+/* .schedule-cell's own base rule already fills the cell and centers via
+   flex; this used to also force align-items/justify-content: center,
+   which shrank the (unstretched) non-lesson-card to its content's width
+   and height instead of letting it fill a row grown taller by an override
+   sibling. The card's own .ant-card-body already centers its text within
+   whatever box it ends up filling. */
 
 .schedule-cell.unknown-slot {
   background: var(--schedule-unknown-bg);
@@ -258,9 +311,11 @@
 }
 
 .non-lesson-card {
+  position: relative;
   background: transparent;
   border: none;
   box-shadow: none;
+  width: 100%;
   height: 100%;
 }
 
@@ -280,6 +335,38 @@
   justify-content: center;
   width: 100%;
   text-align: center;
+}
+
+/* A suffix-style strip anchored to the whole cell container (a sibling of
+   the card, not nested inside its padding) -- fills the card's full
+   height but stays narrow, sitting in the margin a centered single-line
+   label leaves before it starts (rather than a wide block that reaches
+   into the label). Revealed only on hover of the cell. Light, translucent
+   orange so it reads like the app's other tinted slot backgrounds (e.g.
+   --schedule-meeting-bg) rather than a bold block. */
+.override-card-footer {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(250, 140, 22, 0.35);
+  color: var(--schedule-accent-orange);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.schedule-cell:hover .override-card-footer {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .non-lesson-content .slot-name {
@@ -356,6 +443,14 @@
   background: var(--schedule-double-bg);
 }
 
+/* Staff overrides: orange border, no fill -- deliberately distinct from
+   every other card style (mandatory's tinted fill, selected's plain
+   white), so an override is unmistakable at a glance on the grid. */
+.class-card.override-card {
+  background: transparent;
+  border: 2px solid rgba(250, 140, 22, 0.5);
+}
+
 .schedule-cell.mandatory-cell {
   background: var(--schedule-double-bg);
 }
@@ -379,25 +474,13 @@
   margin-bottom: 2px;
 }
 
-/* Selected classes container */
-.schedule-cell.selected-classes {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 60px;
-}
-
-.schedule-cell.selected-classes .class-card {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.schedule-cell.selected-classes .class-card .ant-card-body {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  flex: 1;
+/* The only thing left branch-specific once .schedule-cell/.class-card
+   handle filling the cell uniformly: the "N classes, click to select"
+   card's own content should sit centered within whatever height it ends
+   up filling, rather than pinned to the top like a normal class card's
+   title. */
+.schedule-cell.multiple .class-card {
+  justify-content: center;
 }
 
 /* Search highlighting styles */

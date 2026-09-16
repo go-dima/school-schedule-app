@@ -1,4 +1,4 @@
--- Migration: 036_add_scope_to_get_class_enrolled_children
+-- Migration: 038_add_scope_to_get_class_enrolled_children
 -- Description: Issue #134 found that get_class_enrolled_children
 --   (024_add_get_class_enrolled_children.sql) has no scope filter at all --
 --   it joins children to committed_enrollments for one p_class_id and

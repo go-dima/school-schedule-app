@@ -281,14 +281,30 @@
       "dependencies": ["034_expose_creator_name_for_visible_children"]
     },
     {
-      "id": "036_add_scope_to_get_class_enrolled_children",
-      "name": "Add Scope To Get Class Enrolled Children",
-      "description": "Issue #134: add a target_scope text[] parameter to get_class_enrolled_children, filtering the joined children rows by scope so a test-scope child enrolled in a prod class no longer leaks into that class's production roster",
-      "file": "036_add_scope_to_get_class_enrolled_children.sql",
+      "id": "036_update_time_slots_schedule",
+      "name": "Update Time Slots Schedule",
+      "description": "Update the school's daily time slots to match the new published schedule: rename הפסקת אוכל -> ארוחת בוקר (09:00-09:10, was 09:00-09:15) and הפסקה -> הפסקה גדולה (unchanged 10:30-11:00), and retime שיעור ראשון/שני/שלישי/רביעי; all rows updated in place by name (no deletes/inserts, so classes.time_slot_id and its ON DELETE CASCADE are untouched). Also fixes validate_time_slot(), which still referenced time_slots.day_of_week, a column dropped in 009_remodel_day_structure.sql -- every INSERT/UPDATE on time_slots (including admin UI edits) has been erroring since migration 009",
+      "file": "036_update_time_slots_schedule.sql",
       "created_at": "2026-09-16T00:00:00Z",
       "dependencies": ["035_allow_parents_view_committed_selections"]
+    },
+    {
+      "id": "037_add_schedule_overrides",
+      "name": "Add Schedule Overrides",
+      "description": "Issue #106: fully isolated schedule_overrides table so staff can drop a one-off lesson into a specific child's schedule without it becoming a classes catalog row or a schedule_selections row. No FK to classes, no coupling to schedule_selections' draft/committed split or RLS.",
+      "file": "037_add_schedule_overrides.sql",
+      "created_at": "2026-09-16T00:01:00Z",
+      "dependencies": ["036_update_time_slots_schedule"]
+    },
+    {
+      "id": "038_add_scope_to_get_class_enrolled_children",
+      "name": "Add Scope To Get Class Enrolled Children",
+      "description": "Issue #134: add a target_scope text[] parameter to get_class_enrolled_children, filtering the joined children rows by scope so a test-scope child enrolled in a prod class no longer leaks into that class's production roster",
+      "file": "038_add_scope_to_get_class_enrolled_children.sql",
+      "created_at": "2026-09-16T00:02:00Z",
+      "dependencies": ["037_add_schedule_overrides"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 36
+  "schema_version": 38
 }

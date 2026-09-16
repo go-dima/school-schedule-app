@@ -7,7 +7,6 @@ import {
   Space,
   Alert,
   Spin,
-  Modal,
   message,
   AutoComplete,
   Tooltip,
@@ -27,9 +26,12 @@ import {
 } from "../contexts/ScheduleCatalogContext";
 import { useSelectedSchedule } from "../hooks/useSelectedSchedule";
 import { useDraftSelectionAwareness } from "../hooks/useDraftSelectionAwareness";
+import { useScheduleOverrides } from "../hooks/useScheduleOverrides";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import ScheduleTable from "../components/ScheduleTable";
-import ClassForm from "../components/ClassForm";
+import { CreateClassModal } from "../components/CreateClassModal";
+import { ScheduleOverrideModal } from "../components/ScheduleOverrideModal";
+import type { ScheduleOverrideFormValues } from "../components/ScheduleOverrideForm";
 import { FiltersBar } from "../components/FiltersBar";
 import { FilterField } from "../components/FilterField";
 import { ChildSelector } from "../components/ChildSelector";
@@ -48,6 +50,7 @@ import type {
   Class,
   TimeSlot,
   Child,
+  ScheduleOverrideWithTimeSlot,
   ScheduleTarget,
   SelectionStatus,
 } from "../types";
@@ -107,11 +110,23 @@ const SchedulePageContent: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [viewCommitted, setViewCommitted] = useState(false);
 
+  const [overrideModalOpen, setOverrideModalOpen] = useState(false);
+  const [overrideDay, setOverrideDay] = useState<number | null>(null);
+  const [overrideTimeSlotId, setOverrideTimeSlotId] = useState<string | null>(
+    null
+  );
+  const [editingOverride, setEditingOverride] =
+    useState<ScheduleOverrideWithTimeSlot | null>(null);
+  const [overrideModalLoading, setOverrideModalLoading] = useState(false);
+
   const isParent = hasRole("parent");
-  const viewStatus: SelectionStatus =
-    isParent && viewCommitted
-      ? "committed"
-      : ScheduleService.resolveSelectionStatus(currentRole?.role);
+  const { viewStatus, overrideChildId, canCreateOverride } =
+    ScheduleService.resolveScheduleView({
+      role: currentRole?.role,
+      viewCommitted,
+      parentSelectedChildId: selectedChild?.id,
+      staffSelectedChildId: staffSelectedChild?.id,
+    });
 
   // Read-only whenever a parent has toggled to the committed view. Auto-sync
   // writes (track/group/mandatory changes) must always target the role's
@@ -185,6 +200,14 @@ const SchedulePageContent: React.FC = () => {
   const { draftClassIds } = useDraftSelectionAwareness(
     viewStatus === "committed" ? target : undefined
   );
+
+  // Fourth independent data-flow: staff-authored one-off lessons for the
+  // currently displayed child. Fully isolated from classes/schedule_selections
+  // -- never merged into the catalog/selection hooks above. `overrideChildId`
+  // (from resolveScheduleView above) is undefined whenever the current view
+  // is draft, since overrides only ever belong in a committed view.
+  const { overrides, createOverride, updateOverride, deleteOverride } =
+    useScheduleOverrides(overrideChildId);
 
   // A parent/child viewer's own selections come from an unfiltered join, so
   // they already carry full data for a committed staff-only class (e.g.
@@ -503,11 +526,28 @@ const SchedulePageContent: React.FC = () => {
     }
 
     try {
+      // Overrides print exactly like any other lesson: mapped onto the
+      // same ClassWithTimeSlot shape (ScheduleService.overrideToClass) and
+      // merged into the same weeklySchedule/selectedClasses the rest of
+      // the print pipeline already renders. `overrides` is already scoped
+      // to the current committed/draft view (see resolveScheduleView), so
+      // this needs no extra gating here.
+      const overrideClasses = overrides.map(o =>
+        ScheduleService.overrideToClass(o, currentChild.grade)
+      );
+      const mergedWeeklySchedule = ScheduleService.mergeWeeklySchedules(
+        weeklySchedule,
+        ScheduleService.buildWeeklySchedule(overrideClasses)
+      );
+
       await printSchedule({
         child: currentChild,
         timeSlots,
-        weeklySchedule,
-        selectedClasses: selectedSchedule.map(selection => selection.classId),
+        weeklySchedule: mergedWeeklySchedule,
+        selectedClasses: [
+          ...selectedSchedule.map(selection => selection.classId),
+          ...overrideClasses.map(cls => cls.id),
+        ],
         showDraftMarker: viewStatus === "draft",
       });
     } catch (error) {
@@ -519,18 +559,22 @@ const SchedulePageContent: React.FC = () => {
     }
   };
 
+  // Shared by both the class-creation and override-creation entry points --
+  // `allTimeSlots` only needs to be fetched once per page visit.
+  const ensureAllTimeSlotsLoaded = async (): Promise<TimeSlot[]> => {
+    if (allTimeSlots.length > 0) return allTimeSlots;
+    const allSlots = await timeSlotsApi.getTimeSlots();
+    setAllTimeSlots(allSlots);
+    return allSlots;
+  };
+
   const handleCreateClass = async (timeSlotId: string, dayOfWeek: number) => {
-    // Load all time slots for the form if not already loaded
-    let slotsToUse = allTimeSlots;
-    if (allTimeSlots.length === 0) {
-      try {
-        const allSlots = await timeSlotsApi.getTimeSlots();
-        setAllTimeSlots(allSlots);
-        slotsToUse = allSlots;
-      } catch (err) {
-        message.error(t("schedule.page.error.loadTimeSlots"));
-        return;
-      }
+    let slotsToUse: TimeSlot[];
+    try {
+      slotsToUse = await ensureAllTimeSlotsLoaded();
+    } catch (err) {
+      message.error(t("schedule.page.error.loadTimeSlots"));
+      return;
     }
 
     // Verify the timeSlot exists before setting state
@@ -544,6 +588,106 @@ const SchedulePageContent: React.FC = () => {
     setCreateClassTimeSlotId(timeSlotId);
     setCreateClassDayOfWeek(dayOfWeek);
     setCreateClassModalOpen(true);
+  };
+
+  const handleCreateOverride = async (
+    timeSlotId: string,
+    dayOfWeek: number
+  ) => {
+    try {
+      await ensureAllTimeSlotsLoaded();
+    } catch (err) {
+      message.error(t("schedule.page.error.loadTimeSlots"));
+      return;
+    }
+
+    setEditingOverride(null);
+    setOverrideTimeSlotId(timeSlotId);
+    setOverrideDay(dayOfWeek);
+    setOverrideModalOpen(true);
+  };
+
+  const handleOverrideCardClick = async (
+    override: ScheduleOverrideWithTimeSlot
+  ) => {
+    try {
+      await ensureAllTimeSlotsLoaded();
+    } catch (err) {
+      message.error(t("schedule.page.error.loadTimeSlots"));
+      return;
+    }
+
+    setEditingOverride(override);
+    setOverrideTimeSlotId(override.timeSlotId);
+    setOverrideDay(override.dayOfWeek);
+    setOverrideModalOpen(true);
+  };
+
+  const handleCloseOverrideModal = () => {
+    setOverrideModalOpen(false);
+    setOverrideTimeSlotId(null);
+    setOverrideDay(null);
+    setEditingOverride(null);
+  };
+
+  const handleOverrideSubmit = async (values: ScheduleOverrideFormValues) => {
+    if (!staffSelectedChild) return;
+    setOverrideModalLoading(true);
+    try {
+      if (editingOverride) {
+        await updateOverride(editingOverride.id, values);
+        message.success(t("schedule.override.updateSuccess"));
+      } else {
+        await createOverride({
+          ...values,
+          childId: staffSelectedChild.id,
+        });
+        message.success(t("schedule.override.createSuccess"));
+      }
+      handleCloseOverrideModal();
+    } catch (err) {
+      message.error(
+        err instanceof Error
+          ? err.message
+          : t(
+              editingOverride
+                ? "schedule.override.updateError"
+                : "schedule.override.createError"
+            )
+      );
+    } finally {
+      setOverrideModalLoading(false);
+    }
+  };
+
+  // Shared by both delete entry points below. The confirm dialog itself is
+  // wired in the caller (ScheduleOverrideForm for the edit-modal path,
+  // matching ClassManagementPage.tsx's confirmDeleteClass pattern; the
+  // drawer's own OverrideSelectionCard for the other) -- this only runs
+  // after the staff member has already confirmed. Only removes the
+  // schedule_overrides row -- the underlying schedule_selections pick (if
+  // any) was never touched, so it becomes visible again once this resolves.
+  const deleteOverrideById = async (id: string) => {
+    try {
+      await deleteOverride(id);
+      message.success(t("schedule.override.deleteSuccess"));
+    } catch (err) {
+      message.error(
+        err instanceof Error ? err.message : t("schedule.override.deleteError")
+      );
+    }
+  };
+
+  const handleOverrideDelete = async () => {
+    if (!editingOverride) return;
+    await deleteOverrideById(editingOverride.id);
+    handleCloseOverrideModal();
+  };
+
+  const handleDrawerOverrideDelete = async (
+    override: ScheduleOverrideWithTimeSlot
+  ) => {
+    await deleteOverrideById(override.id);
   };
 
   const handleCloseCreateModal = () => {
@@ -870,6 +1014,11 @@ const SchedulePageContent: React.FC = () => {
             searchTerm={searchTerm}
             childGroupNumber={currentTrackChild?.groupNumber}
             lockedClassIds={Array.from(lockedClassIds)}
+            overrides={overrides}
+            canCreateOverride={canCreateOverride}
+            onCreateOverride={handleCreateOverride}
+            onOverrideClick={isStaff ? handleOverrideCardClick : undefined}
+            onOverrideDelete={isStaff ? handleDrawerOverrideDelete : undefined}
           />
         </Card>
 
@@ -915,59 +1064,28 @@ const SchedulePageContent: React.FC = () => {
         )}
       </Spin>
 
-      <Modal
-        title={t("schedule.page.createNewClassModal")}
+      <CreateClassModal
         open={createClassModalOpen}
+        timeSlotId={createClassTimeSlotId}
+        dayOfWeek={createClassDayOfWeek}
+        timeSlots={allTimeSlots}
+        loading={modalLoading}
+        onSubmit={handleFormSubmit}
         onCancel={handleCloseCreateModal}
-        footer={null}
-        width={600}
-        destroyOnHidden>
-        {createClassTimeSlotId &&
-          createClassDayOfWeek !== null &&
-          allTimeSlots.length > 0 &&
-          (() => {
-            const selectedTimeSlot = allTimeSlots.find(
-              slot => slot.id === createClassTimeSlotId
-            );
-            if (!selectedTimeSlot) {
-              return null; // Don't render if timeSlot not found
-            }
+      />
 
-            const initialValues = {
-              slots: [
-                {
-                  dayOfWeek: createClassDayOfWeek,
-                  timeSlotId: createClassTimeSlotId,
-                  timeSlot: selectedTimeSlot,
-                },
-              ],
-              title: "",
-              description: "",
-              teacher: "",
-              grades: [],
-              isMandatory: false,
-              isDouble: false,
-              groupNumber: null,
-              trackNumber: null,
-              room: "",
-              scope: "test" as const,
-              id: createClassTimeSlotId,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            };
-
-            return (
-              <ClassForm
-                initialValues={initialValues}
-                timeSlots={allTimeSlots}
-                onSubmit={handleFormSubmit}
-                onCancel={handleCloseCreateModal}
-                loading={modalLoading}
-                isNewLesson={true}
-              />
-            );
-          })()}
-      </Modal>
+      <ScheduleOverrideModal
+        open={overrideModalOpen}
+        editingOverride={editingOverride}
+        overrideDay={overrideDay}
+        overrideTimeSlotId={overrideTimeSlotId}
+        childId={staffSelectedChild?.id}
+        timeSlots={allTimeSlots}
+        loading={overrideModalLoading}
+        onSubmit={handleOverrideSubmit}
+        onCancel={handleCloseOverrideModal}
+        onDelete={handleOverrideDelete}
+      />
     </div>
   );
 };

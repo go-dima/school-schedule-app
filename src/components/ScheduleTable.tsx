@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Table, Card, Button, Empty } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { PlusOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { DAYS_OF_WEEK } from "../types";
 import { ScheduleService } from "../services/scheduleService";
@@ -13,13 +14,16 @@ import {
 import type {
   TimeSlot,
   ClassWithTimeSlot,
+  ScheduleOverrideWithTimeSlot,
   ScheduleSelectionWithClass,
   WeeklySchedule,
 } from "../types";
 import ClassSelectionDrawer from "./ClassSelectionDrawer";
 import ClassCard from "./ClassCard";
+import OverrideCard from "./OverrideCard";
 import "./ScheduleTable.css";
 import { EnrollmentService } from "../services/enrollmentService";
+import { OverrideSuffixButton } from "@/elements/OverrideSuffixButton";
 
 interface ScheduleTableProps {
   timeSlots: TimeSlot[];
@@ -39,6 +43,11 @@ interface ScheduleTableProps {
   searchTerm?: string;
   childGroupNumber?: number | null;
   lockedClassIds?: string[];
+  overrides?: ScheduleOverrideWithTimeSlot[];
+  canCreateOverride?: boolean;
+  onCreateOverride?: (timeSlotId: string, dayOfWeek: number) => void;
+  onOverrideClick?: (override: ScheduleOverrideWithTimeSlot) => void;
+  onOverrideDelete?: (override: ScheduleOverrideWithTimeSlot) => void;
 }
 
 interface ScheduleRow {
@@ -65,6 +74,11 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   searchTerm = "",
   childGroupNumber,
   lockedClassIds = [],
+  overrides = [],
+  canCreateOverride = false,
+  onCreateOverride,
+  onOverrideClick,
+  onOverrideDelete,
 }) => {
   const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -152,18 +166,59 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   const classHasConflict = (cls: ClassWithTimeSlot): boolean =>
     ScheduleService.hasTimeConflict(userSelections, cls);
 
+  const renderOverrideCard = (o: ScheduleOverrideWithTimeSlot) => (
+    <OverrideCard key={o.id} override={o} onEdit={onOverrideClick} />
+  );
+
+  const renderCreateOverrideFooterButton = (
+    timeSlot: TimeSlot,
+    dayOfWeek: number
+  ) =>
+    canCreateOverride &&
+    onCreateOverride && (
+      <OverrideSuffixButton
+        icon={<PlusOutlined />}
+        tooltip={t("schedule.override.buttonLabel")}
+        onClick={() => onCreateOverride(timeSlot.id, dayOfWeek)}
+      />
+    );
+
   const renderClassCell = (timeSlot: TimeSlot, dayOfWeek: number) => {
     const dayClasses = weeklySchedule[dayOfWeek]?.[timeSlot.id] || [];
-
-    let filteredClasses = userGrade
-      ? dayClasses.filter(cls => cls.grades?.includes(userGrade))
-      : dayClasses;
-    filteredClasses = filterByGroup(filteredClasses);
+    const cellOverrides = overrides.filter(
+      o => o.dayOfWeek === dayOfWeek && o.timeSlotId === timeSlot.id
+    );
 
     const displayInfo = getTimeSlotDisplayInfo(timeSlot);
     const isSelectableSlot = displayInfo.isSelectable && canViewClasses;
     const isHighlighted = shouldHighlightTimeSlot(timeSlot, dayOfWeek);
     const highlightClass = isHighlighted ? "search-highlighted" : "";
+
+    // A staff override takes precedence over whatever catalog class(es)
+    // would otherwise render here -- mandatory or not, selected or not --
+    // it's a deliberate by-design conflict, so it's shown INSTEAD OF, not
+    // alongside, the underlying class(es). The underlying
+    // schedule_selections row is never touched by this: deleting the
+    // override (via the drawer or its own edit modal) simply un-hides
+    // whatever was already selected here. Still clickable for lesson slots
+    // so staff/parents can open the drawer and see the override alongside
+    // the (temporarily hidden) selection -- see ClassSelectionDrawer.
+    if (cellOverrides.length > 0) {
+      return (
+        <div
+          className={`schedule-cell selected-classes ${
+            isSelectableSlot ? "clickable" : ""
+          } ${highlightClass}`}
+          onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
+          {cellOverrides.map(renderOverrideCard)}
+        </div>
+      );
+    }
+
+    let filteredClasses = userGrade
+      ? dayClasses.filter(cls => cls.grades?.includes(userGrade))
+      : dayClasses;
+    filteredClasses = filterByGroup(filteredClasses);
 
     // A "continuation" cell is specifically a Double Lesson's second slot —
     // any other non-primary slot of a multi-slot class (e.g. a class meeting
@@ -210,7 +265,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       );
     }
 
-    // Handle non-lesson time slots (breaks, meetings)
+    // Handle non-lesson time slots (breaks, meetings). (Any override here
+    // was already handled by the cellOverrides short-circuit above.)
     if (!isLessonTimeSlot(timeSlot)) {
       return (
         <div
@@ -226,6 +282,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               )}
             </div>
           </Card>
+          {renderCreateOverrideFooterButton(timeSlot, dayOfWeek)}
         </div>
       );
     }
@@ -450,6 +507,11 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               weeklySchedule[selectedDayOfWeek]?.[selectedTimeSlot.id] || []
             ).filter(cls => !userGrade || cls.grades?.includes(userGrade))
           );
+          const overridesForSlot = overrides.filter(
+            o =>
+              o.dayOfWeek === selectedDayOfWeek &&
+              o.timeSlotId === selectedTimeSlot.id
+          );
 
           return (
             <ClassSelectionDrawer
@@ -474,6 +536,11 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               canSelectClasses={canSelectClasses}
               isAdmin={isAdmin}
               onCreateClass={onCreateClass}
+              canCreateOverride={canCreateOverride}
+              onCreateOverride={onCreateOverride}
+              overridesForSlot={overridesForSlot}
+              onOverrideEdit={onOverrideClick}
+              onDeleteOverride={onOverrideDelete}
             />
           );
         })()}

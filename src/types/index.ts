@@ -158,3 +158,24 @@ export interface ScheduleSelectionWithChild
   childId: string;
   child: Child;
 }
+
+// Staff-authored one-off lesson injected directly into a child's schedule.
+// Fully isolated from `classes`/`schedule_selections` - never subject to
+// catalog conflict detection or group/mandatory/track auto-lock.
+export interface ScheduleOverride {
+  id: string;
+  childId: string;
+  title: string;
+  teacher: string;
+  room: string;
+  dayOfWeek: number;
+  timeSlotId: string;
+  scope: Scope;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScheduleOverrideWithTimeSlot extends ScheduleOverride {
+  timeSlot: TimeSlot;
+}
