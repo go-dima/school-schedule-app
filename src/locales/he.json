@@ -187,7 +187,6 @@
     },
     "override": {
       "buttonLabel": "הכנס שיעור חורג",
-      "createTooltip": "צור שיעור חורג",
       "warningAlert": "השיעור יתווסף כחריגה מהמערכת - מותאם להחלטת חונכ/ת",
       "createModalTitle": "הוספת שיעור חורג",
       "editModalTitle": "עריכת שיעור חורג",

@@ -195,7 +195,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     canCreateOverride &&
     onCreateOverride && (
       <div className="override-footer">
-        <Tooltip title={t("schedule.override.createTooltip")}>
+        <Tooltip title={t("schedule.override.buttonLabel")}>
           <Button
             type="primary"
             shape="circle"
