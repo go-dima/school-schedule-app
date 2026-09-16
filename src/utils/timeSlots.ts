@@ -8,7 +8,7 @@ import type { TimeSlot } from "../types";
 // Time slot categories based on PRD requirements
 export const TIME_SLOT_CATEGORIES = {
   MEETINGS: ["מפגש בוקר", "מפגש צהריים"],
-  BREAKS: ["הפסקת אוכל", "הפסקה", "הפסקה קטנה", "ארוחת צהריים"],
+  BREAKS: ["ארוחת בוקר", "הפסקה גדולה", "הפסקה קטנה", "ארוחת צהריים"],
   LESSONS: [
     "שיעור ראשון",
     "שיעור שני",
@@ -91,12 +91,12 @@ export function getDefaultTimeSlots(): Omit<
 >[] {
   return [
     { name: "מפגש בוקר", startTime: "08:30", endTime: "09:00" },
-    { name: "הפסקת אוכל", startTime: "09:00", endTime: "09:15" },
-    { name: "שיעור ראשון", startTime: "09:15", endTime: "09:55" },
-    { name: "שיעור שני", startTime: "09:55", endTime: "10:30" },
-    { name: "הפסקה", startTime: "10:30", endTime: "11:00" },
-    { name: "שיעור שלישי", startTime: "11:00", endTime: "11:45" },
-    { name: "שיעור רביעי", startTime: "11:45", endTime: "12:20" },
+    { name: "ארוחת בוקר", startTime: "09:00", endTime: "09:10" },
+    { name: "שיעור ראשון", startTime: "09:10", endTime: "09:50" },
+    { name: "שיעור שני", startTime: "09:50", endTime: "10:30" },
+    { name: "הפסקה גדולה", startTime: "10:30", endTime: "11:00" },
+    { name: "שיעור שלישי", startTime: "11:00", endTime: "11:40" },
+    { name: "שיעור רביעי", startTime: "11:40", endTime: "12:20" },
     { name: "הפסקה קטנה", startTime: "12:20", endTime: "12:30" },
     { name: "מפגש צהריים", startTime: "12:30", endTime: "12:45" },
     { name: "ארוחת צהריים", startTime: "12:45", endTime: "13:30" },
