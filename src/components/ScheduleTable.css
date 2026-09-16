@@ -27,6 +27,9 @@
   background: var(--schedule-time-col-bg) !important;
   min-width: 120px;
   text-align: center;
+  /* See .day-column's comment: needed for percentage heights to resolve
+     against this <td>'s real (row-driven) height. */
+  height: 1px;
 }
 
 .time-cell {
@@ -66,6 +69,17 @@
   width: 160px !important;
   min-width: 160px;
   max-width: 160px;
+  /* The classic table-cell height trick: a <td>'s own computed height is
+     never "specified" per spec even once table layout has stretched it to
+     match its row, so percentage heights on its descendants (our
+     .schedule-cell -> .class-card chain) silently fall back to `auto`
+     instead of tracking the row's actual rendered height. Any explicit
+     height value here -- 1px is overridden by the row's real content-driven
+     height anyway -- is enough to make percentage heights below resolve
+     correctly. Without this, a short-content cell (an unselected "click to
+     select" card, a 2-line override) stays its own intrinsic height even
+     while sitting next to a much taller sibling in the same row. */
+  height: 1px;
 }
 
 .schedule-cell {
