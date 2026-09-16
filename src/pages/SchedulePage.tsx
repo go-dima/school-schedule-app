@@ -27,9 +27,12 @@ import {
 } from "../contexts/ScheduleCatalogContext";
 import { useSelectedSchedule } from "../hooks/useSelectedSchedule";
 import { useDraftSelectionAwareness } from "../hooks/useDraftSelectionAwareness";
+import { useScheduleOverrides } from "../hooks/useScheduleOverrides";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import ScheduleTable from "../components/ScheduleTable";
 import ClassForm from "../components/ClassForm";
+import ScheduleOverrideForm from "../components/ScheduleOverrideForm";
+import type { ScheduleOverrideFormValues } from "../components/ScheduleOverrideForm";
 import { FiltersBar } from "../components/FiltersBar";
 import { FilterField } from "../components/FilterField";
 import { ChildSelector } from "../components/ChildSelector";
@@ -48,6 +51,7 @@ import type {
   Class,
   TimeSlot,
   Child,
+  ScheduleOverrideWithTimeSlot,
   ScheduleTarget,
   SelectionStatus,
 } from "../types";
@@ -106,6 +110,15 @@ const SchedulePageContent: React.FC = () => {
   const [modalLoading, setModalLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [viewCommitted, setViewCommitted] = useState(false);
+
+  const [overrideModalOpen, setOverrideModalOpen] = useState(false);
+  const [overrideDay, setOverrideDay] = useState<number | null>(null);
+  const [overrideTimeSlotId, setOverrideTimeSlotId] = useState<string | null>(
+    null
+  );
+  const [editingOverride, setEditingOverride] =
+    useState<ScheduleOverrideWithTimeSlot | null>(null);
+  const [overrideModalLoading, setOverrideModalLoading] = useState(false);
 
   const isParent = hasRole("parent");
   const viewStatus: SelectionStatus =
@@ -185,6 +198,13 @@ const SchedulePageContent: React.FC = () => {
   const { draftClassIds } = useDraftSelectionAwareness(
     viewStatus === "committed" ? target : undefined
   );
+
+  // Fourth independent data-flow: staff-authored one-off lessons for the
+  // currently selected child. Fully isolated from classes/schedule_selections
+  // -- never merged into the catalog/selection hooks above.
+  const overrideChildId = isStaff ? staffSelectedChild?.id : undefined;
+  const { overrides, createOverride, updateOverride, deleteOverride } =
+    useScheduleOverrides(overrideChildId);
 
   // A parent/child viewer's own selections come from an unfiltered join, so
   // they already carry full data for a committed staff-only class (e.g.
@@ -519,18 +539,22 @@ const SchedulePageContent: React.FC = () => {
     }
   };
 
+  // Shared by both the class-creation and override-creation entry points --
+  // `allTimeSlots` only needs to be fetched once per page visit.
+  const ensureAllTimeSlotsLoaded = async (): Promise<TimeSlot[]> => {
+    if (allTimeSlots.length > 0) return allTimeSlots;
+    const allSlots = await timeSlotsApi.getTimeSlots();
+    setAllTimeSlots(allSlots);
+    return allSlots;
+  };
+
   const handleCreateClass = async (timeSlotId: string, dayOfWeek: number) => {
-    // Load all time slots for the form if not already loaded
-    let slotsToUse = allTimeSlots;
-    if (allTimeSlots.length === 0) {
-      try {
-        const allSlots = await timeSlotsApi.getTimeSlots();
-        setAllTimeSlots(allSlots);
-        slotsToUse = allSlots;
-      } catch (err) {
-        message.error(t("schedule.page.error.loadTimeSlots"));
-        return;
-      }
+    let slotsToUse: TimeSlot[];
+    try {
+      slotsToUse = await ensureAllTimeSlotsLoaded();
+    } catch (err) {
+      message.error(t("schedule.page.error.loadTimeSlots"));
+      return;
     }
 
     // Verify the timeSlot exists before setting state
@@ -544,6 +568,83 @@ const SchedulePageContent: React.FC = () => {
     setCreateClassTimeSlotId(timeSlotId);
     setCreateClassDayOfWeek(dayOfWeek);
     setCreateClassModalOpen(true);
+  };
+
+  const handleCreateOverride = async (
+    timeSlotId: string,
+    dayOfWeek: number
+  ) => {
+    try {
+      await ensureAllTimeSlotsLoaded();
+    } catch (err) {
+      message.error(t("schedule.page.error.loadTimeSlots"));
+      return;
+    }
+
+    setEditingOverride(null);
+    setOverrideTimeSlotId(timeSlotId);
+    setOverrideDay(dayOfWeek);
+    setOverrideModalOpen(true);
+  };
+
+  const handleOverrideCardClick = (override: ScheduleOverrideWithTimeSlot) => {
+    setEditingOverride(override);
+    setOverrideTimeSlotId(override.timeSlotId);
+    setOverrideDay(override.dayOfWeek);
+    setOverrideModalOpen(true);
+  };
+
+  const handleCloseOverrideModal = () => {
+    setOverrideModalOpen(false);
+    setOverrideTimeSlotId(null);
+    setOverrideDay(null);
+    setEditingOverride(null);
+  };
+
+  const handleOverrideSubmit = async (values: ScheduleOverrideFormValues) => {
+    if (!staffSelectedChild) return;
+    setOverrideModalLoading(true);
+    try {
+      if (editingOverride) {
+        await updateOverride(editingOverride.id, values);
+        message.success(t("schedule.override.updateSuccess"));
+      } else {
+        await createOverride({
+          ...values,
+          childId: staffSelectedChild.id,
+        });
+        message.success(t("schedule.override.createSuccess"));
+      }
+      handleCloseOverrideModal();
+    } catch (err) {
+      message.error(
+        err instanceof Error
+          ? err.message
+          : t(
+              editingOverride
+                ? "schedule.override.updateError"
+                : "schedule.override.createError"
+            )
+      );
+    } finally {
+      setOverrideModalLoading(false);
+    }
+  };
+
+  // The confirm dialog itself is wired inside ScheduleOverrideForm (matching
+  // ClassManagementPage.tsx's confirmDeleteClass pattern) -- this only runs
+  // after the staff member has already confirmed.
+  const handleOverrideDelete = async () => {
+    if (!editingOverride) return;
+    try {
+      await deleteOverride(editingOverride.id);
+      message.success(t("schedule.override.deleteSuccess"));
+      handleCloseOverrideModal();
+    } catch (err) {
+      message.error(
+        err instanceof Error ? err.message : t("schedule.override.deleteError")
+      );
+    }
   };
 
   const handleCloseCreateModal = () => {
@@ -870,6 +971,10 @@ const SchedulePageContent: React.FC = () => {
             searchTerm={searchTerm}
             childGroupNumber={currentTrackChild?.groupNumber}
             lockedClassIds={Array.from(lockedClassIds)}
+            overrides={overrides}
+            canCreateOverride={isStaff && !!staffSelectedChild}
+            onCreateOverride={handleCreateOverride}
+            onOverrideClick={handleOverrideCardClick}
           />
         </Card>
 
@@ -964,6 +1069,53 @@ const SchedulePageContent: React.FC = () => {
                 onCancel={handleCloseCreateModal}
                 loading={modalLoading}
                 isNewLesson={true}
+              />
+            );
+          })()}
+      </Modal>
+
+      <Modal
+        title={
+          editingOverride
+            ? t("schedule.override.editModalTitle")
+            : t("schedule.override.createModalTitle")
+        }
+        open={overrideModalOpen}
+        onCancel={handleCloseOverrideModal}
+        footer={null}
+        width={480}
+        destroyOnHidden>
+        {overrideTimeSlotId &&
+          overrideDay !== null &&
+          allTimeSlots.length > 0 &&
+          (() => {
+            const initialValues: ScheduleOverrideWithTimeSlot | null =
+              editingOverride ?? {
+                id: "",
+                childId: staffSelectedChild?.id || "",
+                title: "",
+                teacher: "",
+                room: "",
+                dayOfWeek: overrideDay,
+                timeSlotId: overrideTimeSlotId,
+                scope: "prod",
+                createdBy: "",
+                createdAt: "",
+                updatedAt: "",
+                timeSlot: allTimeSlots.find(
+                  slot => slot.id === overrideTimeSlotId
+                ) as TimeSlot,
+              };
+
+            return (
+              <ScheduleOverrideForm
+                initialValues={initialValues}
+                timeSlots={allTimeSlots}
+                onSubmit={handleOverrideSubmit}
+                onCancel={handleCloseOverrideModal}
+                onDelete={editingOverride ? handleOverrideDelete : undefined}
+                loading={overrideModalLoading}
+                isEdit={!!editingOverride}
               />
             );
           })()}

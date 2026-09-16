@@ -13,6 +13,7 @@ import {
 import type {
   TimeSlot,
   ClassWithTimeSlot,
+  ScheduleOverrideWithTimeSlot,
   ScheduleSelectionWithClass,
   WeeklySchedule,
 } from "../types";
@@ -42,6 +43,10 @@ interface ScheduleTableProps {
   searchTerm?: string;
   childGroupNumber?: number | null;
   lockedClassIds?: string[];
+  overrides?: ScheduleOverrideWithTimeSlot[];
+  canCreateOverride?: boolean;
+  onCreateOverride?: (timeSlotId: string, dayOfWeek: number) => void;
+  onOverrideClick?: (override: ScheduleOverrideWithTimeSlot) => void;
 }
 
 interface ScheduleRow {
@@ -68,6 +73,10 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   searchTerm = "",
   childGroupNumber,
   lockedClassIds = [],
+  overrides = [],
+  canCreateOverride = false,
+  onCreateOverride,
+  onOverrideClick,
 }) => {
   const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -167,8 +176,32 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     />
   );
 
+  // Renders a staff override identically to a committed/selected class card
+  // (same class names as the catalog "selected" branch) but from the
+  // separate `overrides` prop -- never merged into weeklySchedule/classes.
+  const renderOverrideCard = (o: ScheduleOverrideWithTimeSlot) => (
+    <Card
+      key={o.id}
+      size="small"
+      className="class-card selected-card"
+      onClick={e => {
+        e.stopPropagation();
+        onOverrideClick?.(o);
+      }}>
+      <ClassCardHeader
+        title={o.title}
+        isContinuation={false}
+        teacher={o.teacher}
+        room={o.room}
+      />
+    </Card>
+  );
+
   const renderClassCell = (timeSlot: TimeSlot, dayOfWeek: number) => {
     const dayClasses = weeklySchedule[dayOfWeek]?.[timeSlot.id] || [];
+    const cellOverrides = overrides.filter(
+      o => o.dayOfWeek === dayOfWeek && o.timeSlotId === timeSlot.id
+    );
 
     let filteredClasses = userGrade
       ? dayClasses.filter(cls => cls.grades?.includes(userGrade))
@@ -235,6 +268,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               )}
             </div>
           </Card>
+          {cellOverrides.map(renderOverrideCard)}
         </div>
       );
     }
@@ -259,7 +293,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       );
     }
 
-    if (primaryClasses.length === 0) {
+    if (primaryClasses.length === 0 && cellOverrides.length === 0) {
       return (
         <div
           className={`schedule-cell empty ${
@@ -280,8 +314,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       selectedClasses.includes(cls.id)
     );
 
-    // If there are selected classes, show them individually
-    if (selectedPrimaryClasses.length > 0) {
+    // If there are selected classes or overrides, show them individually
+    if (selectedPrimaryClasses.length > 0 || cellOverrides.length > 0) {
       const hasMandatoryClass = selectedPrimaryClasses.some(
         cls => cls.isMandatory
       );
@@ -327,6 +361,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               </Card>
             );
           })}
+          {cellOverrides.map(renderOverrideCard)}
         </div>
       );
     }
@@ -381,6 +416,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               </Button>
             </div>
           </Card>
+          {cellOverrides.map(renderOverrideCard)}
         </div>
       );
     }
@@ -524,6 +560,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               canSelectClasses={canSelectClasses}
               isAdmin={isAdmin}
               onCreateClass={onCreateClass}
+              canCreateOverride={canCreateOverride}
+              onCreateOverride={onCreateOverride}
             />
           );
         })()}

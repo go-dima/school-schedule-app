@@ -1,5 +1,5 @@
 import React from "react";
-import { Drawer, Tag, Empty, Alert, Space, Typography } from "antd";
+import { Drawer, Tag, Empty, Alert, Button, Space, Typography } from "antd";
 import { useTranslation } from "react-i18next";
 import { ScheduleService } from "../services/scheduleService";
 import type { TimeSlot, ClassWithTimeSlot } from "../types";
@@ -26,6 +26,8 @@ interface ClassSelectionDrawerProps {
   isAdmin?: boolean;
   onCreateClass?: (timeSlotId: string, dayOfWeek: number) => void;
   timeSlots?: TimeSlot[]; // Add timeSlots for calculating double lesson ranges
+  canCreateOverride?: boolean;
+  onCreateOverride?: (timeSlotId: string, dayOfWeek: number) => void;
 }
 
 const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
@@ -44,6 +46,8 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
   isAdmin = false,
   onCreateClass,
   timeSlots = [],
+  canCreateOverride = false,
+  onCreateOverride,
 }) => {
   const { t } = useTranslation();
   const timeRange = ScheduleService.formatTimeRange(
@@ -173,6 +177,16 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
                   )}
                 </Space>
               </div>
+            )}
+
+            {canCreateOverride && onCreateOverride && (
+              <Button
+                type="primary"
+                style={{ backgroundColor: "#fa8c16", borderColor: "#fa8c16" }}
+                onClick={() => onCreateOverride(timeSlot.id, dayOfWeek)}
+                block>
+                {t("schedule.override.buttonLabel")}
+              </Button>
             )}
 
             {isAdmin && onCreateClass && (
