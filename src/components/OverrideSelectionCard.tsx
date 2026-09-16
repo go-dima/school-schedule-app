@@ -4,6 +4,7 @@ import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import type { ScheduleOverrideWithTimeSlot } from "../types";
 import "./ClassSelectionDrawer.css";
+import "./OverrideSelectionCard.css";
 
 const { Title, Text } = Typography;
 

@@ -1,0 +1,11 @@
+.override-selection-card {
+  border: 2px solid rgba(250, 140, 22, 0.5);
+  background: transparent;
+}
+
+.override-selection-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
