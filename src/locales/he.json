@@ -528,7 +528,7 @@
       "placeholder": "בחר סביבה",
       "label": "סביבה:"
     },
-    "testNotAllowedInProduction": "לא ניתן ליצור נתוני בדיקה בסביבת הייצור"
+    "testNotAllowedInProduction": "לא ניתן ליצור נתוני בדיקה בסביבה זו"
   },
   "errors": {
     "timeout": {
