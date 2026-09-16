@@ -601,6 +601,7 @@ const ClassManagementPage: React.FC = () => {
                       label: t("classManagement.page.trackFilterOptionNone"),
                     },
                   ]}
+                  disabled={loading}
                 />
 
                 <FilterSelect
@@ -612,6 +613,7 @@ const ClassManagementPage: React.FC = () => {
                     value: day.key,
                     label: day.name,
                   }))}
+                  disabled={loading}
                 />
 
                 <FilterSelect
@@ -623,6 +625,7 @@ const ClassManagementPage: React.FC = () => {
                     value: grade,
                     label: GetGradeName(grade),
                   }))}
+                  disabled={loading}
                 />
 
                 <Space size={4} align="center">
@@ -656,6 +659,7 @@ const ClassManagementPage: React.FC = () => {
                     style={{ width: 200 }}
                     allowClear
                     filterOption={false}
+                    disabled={loading}
                   />
                   <label>{t("classManagement.page.searchTeacherLabel")}</label>
                 </Space>
@@ -684,6 +688,7 @@ const ClassManagementPage: React.FC = () => {
                     style={{ width: 200 }}
                     allowClear
                     filterOption={false}
+                    disabled={loading}
                   />
                   <label>{t("classManagement.page.searchLabel")}</label>
                 </Space>
@@ -703,7 +708,6 @@ const ClassManagementPage: React.FC = () => {
           </Card>
         </fieldset>
       </div>
-
       {error && (
         <Alert
           message={t("classManagement.page.dataLoadingError")}
