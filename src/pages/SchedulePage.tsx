@@ -31,7 +31,7 @@ import { useScheduleOverrides } from "../hooks/useScheduleOverrides";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import ScheduleTable from "../components/ScheduleTable";
 import ClassForm from "../components/ClassForm";
-import ScheduleOverrideForm from "../components/ScheduleOverrideForm";
+import { ScheduleOverrideModal } from "../components/ScheduleOverrideModal";
 import type { ScheduleOverrideFormValues } from "../components/ScheduleOverrideForm";
 import { FiltersBar } from "../components/FiltersBar";
 import { FilterField } from "../components/FilterField";
@@ -1074,52 +1074,18 @@ const SchedulePageContent: React.FC = () => {
           })()}
       </Modal>
 
-      <Modal
-        title={
-          editingOverride
-            ? t("schedule.override.editModalTitle")
-            : t("schedule.override.createModalTitle")
-        }
+      <ScheduleOverrideModal
         open={overrideModalOpen}
+        editingOverride={editingOverride}
+        overrideDay={overrideDay}
+        overrideTimeSlotId={overrideTimeSlotId}
+        childId={staffSelectedChild?.id}
+        timeSlots={allTimeSlots}
+        loading={overrideModalLoading}
+        onSubmit={handleOverrideSubmit}
         onCancel={handleCloseOverrideModal}
-        footer={null}
-        width={480}
-        destroyOnHidden>
-        {overrideTimeSlotId &&
-          overrideDay !== null &&
-          allTimeSlots.length > 0 &&
-          (() => {
-            const initialValues: ScheduleOverrideWithTimeSlot | null =
-              editingOverride ?? {
-                id: "",
-                childId: staffSelectedChild?.id || "",
-                title: "",
-                teacher: "",
-                room: "",
-                dayOfWeek: overrideDay,
-                timeSlotId: overrideTimeSlotId,
-                scope: "prod",
-                createdBy: "",
-                createdAt: "",
-                updatedAt: "",
-                timeSlot: allTimeSlots.find(
-                  slot => slot.id === overrideTimeSlotId
-                ) as TimeSlot,
-              };
-
-            return (
-              <ScheduleOverrideForm
-                initialValues={initialValues}
-                timeSlots={allTimeSlots}
-                onSubmit={handleOverrideSubmit}
-                onCancel={handleCloseOverrideModal}
-                onDelete={editingOverride ? handleOverrideDelete : undefined}
-                loading={overrideModalLoading}
-                isEdit={!!editingOverride}
-              />
-            );
-          })()}
-      </Modal>
+        onDelete={handleOverrideDelete}
+      />
     </div>
   );
 };

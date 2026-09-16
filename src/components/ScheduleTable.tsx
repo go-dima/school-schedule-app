@@ -19,10 +19,10 @@ import type {
 } from "../types";
 import ClassSelectionDrawer from "./ClassSelectionDrawer";
 import ClassCard from "./ClassCard";
-import ClassCardHeader from "./ClassCardHeader";
+import OverrideCard from "./OverrideCard";
 import "./ScheduleTable.css";
 import { EnrollmentService } from "../services/enrollmentService";
-import { OverrideCornerButton } from "@/elements/OverrideCornerButton";
+import { OverrideSuffixButton } from "@/elements/OverrideSuffixButton";
 
 interface ScheduleTableProps {
   timeSlots: TimeSlot[];
@@ -163,25 +163,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   const classHasConflict = (cls: ClassWithTimeSlot): boolean =>
     ScheduleService.hasTimeConflict(userSelections, cls);
 
-  // Renders a staff override identically to a committed/selected class card
-  // (same class names as the catalog "selected" branch) but from the
-  // separate `overrides` prop -- never merged into weeklySchedule/classes.
   const renderOverrideCard = (o: ScheduleOverrideWithTimeSlot) => (
-    <Card
-      key={o.id}
-      size="small"
-      className="class-card selected-card"
-      onClick={e => {
-        e.stopPropagation();
-        onOverrideClick?.(o);
-      }}>
-      <ClassCardHeader
-        title={o.title}
-        isContinuation={false}
-        teacher={o.teacher}
-        room={o.room}
-      />
-    </Card>
+    <OverrideCard key={o.id} override={o} onClick={onOverrideClick} />
   );
 
   const renderCreateOverrideFooterButton = (
@@ -190,7 +173,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   ) =>
     canCreateOverride &&
     onCreateOverride && (
-      <OverrideCornerButton
+      <OverrideSuffixButton
         onClick={() => onCreateOverride(timeSlot.id, dayOfWeek)}
       />
     );
