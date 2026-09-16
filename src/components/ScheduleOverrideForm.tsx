@@ -1,7 +1,6 @@
 import React from "react";
 import { Alert, Button, Form, Input, Modal, Select, Space } from "antd";
 import { useTranslation } from "react-i18next";
-import { getLessonTimeSlots } from "../utils/timeSlots";
 import { ScheduleService } from "../services/scheduleService";
 import type {
   ScheduleOverride,
@@ -44,13 +43,19 @@ const ScheduleOverrideForm: React.FC<ScheduleOverrideFormProps> = ({
   const { t } = useTranslation();
   const [form] = Form.useForm();
 
-  const availableTimeSlots = getLessonTimeSlots(timeSlots);
+  // Unlike ClassForm, an override can target any slot -- including
+  // breaks/meetings (staff can override those too) -- so this must not
+  // filter down to getLessonTimeSlots. Doing so would drop a pre-filled
+  // fixed-slot id from the option list entirely, and antd's Select falls
+  // back to rendering the raw id as text when it can't find a matching
+  // option to source a label from.
+  const availableTimeSlots = timeSlots;
 
   const handleSubmit = async (values: ScheduleOverrideFormValues) => {
     await onSubmit({
       title: values.title,
       teacher: values.teacher,
-      room: values.room,
+      room: values.room || "",
       dayOfWeek: values.dayOfWeek,
       timeSlotId: values.timeSlotId,
       scope: values.scope || "prod",
@@ -113,12 +118,7 @@ const ScheduleOverrideForm: React.FC<ScheduleOverrideFormProps> = ({
         <Input placeholder={t("schedule.override.teacherPlaceholder")} />
       </Form.Item>
 
-      <Form.Item
-        name="room"
-        label={t("schedule.override.roomLabel")}
-        rules={[
-          { required: true, message: t("schedule.override.roomRequired") },
-        ]}>
+      <Form.Item name="room" label={t("schedule.override.roomLabel")}>
         <Input placeholder={t("schedule.override.roomPlaceholder")} />
       </Form.Item>
 
@@ -152,7 +152,7 @@ const ScheduleOverrideForm: React.FC<ScheduleOverrideFormProps> = ({
               ?.toLowerCase()
               .includes(input.toLowerCase())
           }>
-          {availableTimeSlots
+          {[...availableTimeSlots]
             .sort((a, b) => a.startTime.localeCompare(b.startTime))
             .map(slot => (
               <Option key={slot.id} value={slot.id}>
