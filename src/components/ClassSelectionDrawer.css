@@ -244,8 +244,8 @@
 }
 
 .override-selection-card {
-  border-color: #fa8c16;
-  background-color: rgba(250, 140, 22, 0.06);
+  border: 2px solid #fa8c16;
+  background: transparent;
 }
 
 .override-selection-footer {

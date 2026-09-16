@@ -393,6 +393,14 @@
   background: var(--schedule-double-bg);
 }
 
+/* Staff overrides: orange border, no fill -- deliberately distinct from
+   every other card style (mandatory's tinted fill, selected's plain
+   white), so an override is unmistakable at a glance on the grid. */
+.class-card.override-card {
+  background: transparent;
+  border: 2px solid var(--schedule-accent-orange);
+}
+
 .schedule-cell.mandatory-cell {
   background: var(--schedule-double-bg);
 }

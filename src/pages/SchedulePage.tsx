@@ -120,10 +120,13 @@ const SchedulePageContent: React.FC = () => {
   const [overrideModalLoading, setOverrideModalLoading] = useState(false);
 
   const isParent = hasRole("parent");
-  const viewStatus: SelectionStatus =
-    isParent && viewCommitted
-      ? "committed"
-      : ScheduleService.resolveSelectionStatus(currentRole?.role);
+  const { viewStatus, overrideChildId, canCreateOverride } =
+    ScheduleService.resolveScheduleView({
+      role: currentRole?.role,
+      viewCommitted,
+      parentSelectedChildId: selectedChild?.id,
+      staffSelectedChildId: staffSelectedChild?.id,
+    });
 
   // Read-only whenever a parent has toggled to the committed view. Auto-sync
   // writes (track/group/mandatory changes) must always target the role's
@@ -200,17 +203,9 @@ const SchedulePageContent: React.FC = () => {
 
   // Fourth independent data-flow: staff-authored one-off lessons for the
   // currently displayed child. Fully isolated from classes/schedule_selections
-  // -- never merged into the catalog/selection hooks above. Overrides carry
-  // no draft/committed status of their own (RLS lets a parent read, never
-  // write, their own children's rows) -- read for both parent and staff,
-  // regardless of the draft/committed toggle, mirroring currentTrackChild
-  // below rather than `target` (which also covers the "child" role's own
-  // login, which has no Child record for overrides to key off).
-  const overrideChildId = isStaff
-    ? staffSelectedChild?.id
-    : isParent
-      ? selectedChild?.id
-      : undefined;
+  // -- never merged into the catalog/selection hooks above. `overrideChildId`
+  // (from resolveScheduleView above) is undefined whenever the current view
+  // is draft, since overrides only ever belong in a committed view.
   const { overrides, createOverride, updateOverride, deleteOverride } =
     useScheduleOverrides(overrideChildId);
 
@@ -1003,7 +998,7 @@ const SchedulePageContent: React.FC = () => {
             childGroupNumber={currentTrackChild?.groupNumber}
             lockedClassIds={Array.from(lockedClassIds)}
             overrides={overrides}
-            canCreateOverride={isStaff && !!staffSelectedChild}
+            canCreateOverride={canCreateOverride}
             onCreateOverride={handleCreateOverride}
             onOverrideClick={isStaff ? handleOverrideCardClick : undefined}
             onOverrideDelete={isStaff ? handleDrawerOverrideDelete : undefined}

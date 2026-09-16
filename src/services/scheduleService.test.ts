@@ -410,6 +410,136 @@ describe("ScheduleService.resolveSelectionStatus", () => {
   });
 });
 
+describe("ScheduleService.resolveScheduleView", () => {
+  // Explicit matrix so a future change to this decision point shows up as a
+  // failing row here rather than a silent behavior change on the page.
+  // Overrides only ever belong in a committed view (see the method's own
+  // comment) -- this is the single place that decides "committed" per role/
+  // toggle and which child's overrides (if any) that implies.
+  const cases: Array<{
+    name: string;
+    input: Parameters<typeof ScheduleService.resolveScheduleView>[0];
+    expected: ReturnType<typeof ScheduleService.resolveScheduleView>;
+  }> = [
+    {
+      name: "parent, draft (not toggled): no overrides",
+      input: {
+        role: "parent",
+        viewCommitted: false,
+        parentSelectedChildId: "child-1",
+        staffSelectedChildId: undefined,
+      },
+      expected: {
+        viewStatus: "draft",
+        overrideChildId: undefined,
+        canCreateOverride: false,
+      },
+    },
+    {
+      name: "parent, toggled to committed: overrides for that child",
+      input: {
+        role: "parent",
+        viewCommitted: true,
+        parentSelectedChildId: "child-1",
+        staffSelectedChildId: undefined,
+      },
+      expected: {
+        viewStatus: "committed",
+        overrideChildId: "child-1",
+        canCreateOverride: false,
+      },
+    },
+    {
+      name: "parent, toggled to committed, no child selected yet: no overrides",
+      input: {
+        role: "parent",
+        viewCommitted: true,
+        parentSelectedChildId: undefined,
+        staffSelectedChildId: undefined,
+      },
+      expected: {
+        viewStatus: "committed",
+        overrideChildId: undefined,
+        canCreateOverride: false,
+      },
+    },
+    {
+      name: "staff, child selected: always committed, overrides for that child, can create",
+      input: {
+        role: "staff",
+        viewCommitted: false,
+        parentSelectedChildId: undefined,
+        staffSelectedChildId: "child-2",
+      },
+      expected: {
+        viewStatus: "committed",
+        overrideChildId: "child-2",
+        canCreateOverride: true,
+      },
+    },
+    {
+      name: "staff, no child selected: committed, no overrides, cannot create",
+      input: {
+        role: "staff",
+        viewCommitted: false,
+        parentSelectedChildId: undefined,
+        staffSelectedChildId: undefined,
+      },
+      expected: {
+        viewStatus: "committed",
+        overrideChildId: undefined,
+        canCreateOverride: false,
+      },
+    },
+    {
+      name: "admin: committed, but no override read/write (staff-only feature)",
+      input: {
+        role: "admin",
+        viewCommitted: false,
+        parentSelectedChildId: undefined,
+        staffSelectedChildId: "child-2",
+      },
+      expected: {
+        viewStatus: "committed",
+        overrideChildId: undefined,
+        canCreateOverride: false,
+      },
+    },
+    {
+      name: "child role: draft, no overrides (no Child record to key off)",
+      input: {
+        role: "child",
+        viewCommitted: false,
+        parentSelectedChildId: undefined,
+        staffSelectedChildId: undefined,
+      },
+      expected: {
+        viewStatus: "draft",
+        overrideChildId: undefined,
+        canCreateOverride: false,
+      },
+    },
+    {
+      name: "no role yet: draft, no overrides",
+      input: {
+        role: undefined,
+        viewCommitted: false,
+        parentSelectedChildId: undefined,
+        staffSelectedChildId: undefined,
+      },
+      expected: {
+        viewStatus: "draft",
+        overrideChildId: undefined,
+        canCreateOverride: false,
+      },
+    },
+  ];
+
+  it.each(cases)("$name", ({ input, expected }) => {
+    expect(ScheduleService.resolveScheduleView(input)).toEqual(expected);
+  });
+});
+
 describe("ScheduleService.orderClassesByPickStatus", () => {
   it("leaves order unchanged when there are no draft classes", () => {
     const classes = [

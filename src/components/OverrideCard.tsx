@@ -14,7 +14,7 @@ interface OverrideCardProps {
 // click on it bubbles up to the enclosing cell's onClick and opens the
 // normal drawer, where the override is shown first with edit/delete.
 const OverrideCard: React.FC<OverrideCardProps> = ({ override }) => (
-  <Card size="small" className="class-card selected-card">
+  <Card size="small" className="class-card selected-card override-card">
     <ClassCardHeader
       title={override.title}
       isContinuation={false}

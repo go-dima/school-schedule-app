@@ -239,6 +239,48 @@ export class ScheduleService {
   }
 
   /**
+   * The single decision point for schedule_overrides visibility/edit rights,
+   * collapsing what used to be three separately-reasoned-about inputs
+   * (role, the parent's draft/committed toggle, which child is selected)
+   * into one small, unit-testable state. An override has no draft/committed
+   * status of its own in the DB, but it represents committed reality (a
+   * staff decision) -- mixing it into a parent's draft would look like
+   * something the parent picked themselves, so it only ever appears
+   * alongside a *committed* view: a parent's own draft, a parent's
+   * committed view (+ overrides), or staff's view (always committed, so
+   * always + overrides). See scheduleService.test.ts for the full matrix.
+   */
+  static resolveScheduleView(input: {
+    role: UserRole | undefined;
+    viewCommitted: boolean;
+    parentSelectedChildId: string | undefined;
+    staffSelectedChildId: string | undefined;
+  }): {
+    viewStatus: SelectionStatus;
+    overrideChildId: string | undefined;
+    canCreateOverride: boolean;
+  } {
+    const isStaff = input.role === "staff";
+    const isParent = input.role === "parent";
+
+    const viewStatus: SelectionStatus =
+      isParent && input.viewCommitted
+        ? "committed"
+        : ScheduleService.resolveSelectionStatus(input.role);
+
+    const overrideChildId: string | undefined =
+      viewStatus === "committed"
+        ? isStaff
+          ? input.staffSelectedChildId
+          : input.parentSelectedChildId
+        : undefined;
+
+    const canCreateOverride = isStaff && !!input.staffSelectedChildId;
+
+    return { viewStatus, overrideChildId, canCreateOverride };
+  }
+
+  /**
    * Stable-sorts classes so draft-marked ones come first (preserving
    * relative order within each group), with staff-only placeholder classes
    * (e.g. "חונכות", "שילוב") pushed after all non-staff-only classes within
