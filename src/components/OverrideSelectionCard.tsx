@@ -1,6 +1,6 @@
 import React from "react";
 import { Button, Card, Modal, Typography } from "antd";
-import { DeleteOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import type { ScheduleOverrideWithTimeSlot } from "../types";
 import "./ClassSelectionDrawer.css";
@@ -19,9 +19,8 @@ interface OverrideSelectionCardProps {
 // short-circuit), so it's presented first here too. Deleting it here does
 // not touch the underlying schedule_selections row: whatever was selected
 // in this slot before the override existed becomes visible again once it's
-// gone. The card body opens the same edit modal the grid card used to open
-// directly; the delete button stops that click from bubbling so it can
-// remove the override without leaving the drawer.
+// gone. Edit/delete are explicit buttons, not a whole-card click -- clicking
+// the card to edit wasn't discoverable.
 export const OverrideSelectionCard: React.FC<OverrideSelectionCardProps> = ({
   override,
   onEdit,
@@ -29,8 +28,7 @@ export const OverrideSelectionCard: React.FC<OverrideSelectionCardProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const handleDeleteClick: React.MouseEventHandler = e => {
-    e.stopPropagation();
+  const handleDeleteClick = () => {
     if (!onDelete) return;
     Modal.confirm({
       title: t("schedule.override.deleteConfirmTitle"),
@@ -43,11 +41,7 @@ export const OverrideSelectionCard: React.FC<OverrideSelectionCardProps> = ({
   };
 
   return (
-    <Card
-      size="small"
-      className="class-selection-card override-selection-card"
-      hoverable={!!onEdit}
-      onClick={onEdit ? () => onEdit(override) : undefined}>
+    <Card size="small" className="class-selection-card override-selection-card">
       <div className="class-card-content">
         <div className="class-card-body">
           <div className="class-main">
@@ -65,15 +59,25 @@ export const OverrideSelectionCard: React.FC<OverrideSelectionCardProps> = ({
             )}
           </div>
         </div>
-        {onDelete && (
+        {(onEdit || onDelete) && (
           <div className="override-selection-footer">
-            <Button
-              danger
-              size="small"
-              icon={<DeleteOutlined />}
-              onClick={handleDeleteClick}>
-              {t("schedule.override.deleteButton")}
-            </Button>
+            {onEdit && (
+              <Button
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => onEdit(override)}>
+                {t("schedule.override.editButton")}
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                danger
+                size="small"
+                icon={<DeleteOutlined />}
+                onClick={handleDeleteClick}>
+                {t("schedule.override.deleteButton")}
+              </Button>
+            )}
           </div>
         )}
       </div>

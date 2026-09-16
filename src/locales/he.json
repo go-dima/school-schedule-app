@@ -206,6 +206,7 @@
       "timePlaceholder": "בחר שעה",
       "createButton": "צור שיעור חורג",
       "updateButton": "עדכן שיעור חורג",
+      "editButton": "ערוך",
       "deleteButton": "מחק שיעור חורג",
       "deleteConfirmTitle": "האם אתה בטוח שברצונך למחוק את השיעור החורג?",
       "deleteConfirmDescription": "פעולה זו תמחק את השיעור החורג לצמיתות.",
