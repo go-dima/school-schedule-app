@@ -361,7 +361,14 @@ const StudentsPage: React.FC = () => {
       </div>
 
       {/* Search and Filter Controls */}
-      <div style={{ marginBottom: 16 }}>
+      <div
+        style={{
+          marginBottom: 16,
+          display: "flex",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 16,
+        }}>
         <Space wrap>
           <StudentSearchSelector
             children={filteredChildren}
@@ -387,17 +394,17 @@ const StudentsPage: React.FC = () => {
               </Select.Option>
             ))}
           </Select>
-          {isAdmin() && (
-            <ToggleFilterGroup<Scope>
-              value={selectedScopes}
-              onChange={setSelectedScopes}
-              options={ALL_SCOPES.map(scope => ({
-                value: scope,
-                label: t(`scope.${scope}`),
-              }))}
-            />
-          )}
         </Space>
+        {isAdmin() && (
+          <ToggleFilterGroup<Scope>
+            value={selectedScopes}
+            onChange={setSelectedScopes}
+            options={ALL_SCOPES.map(scope => ({
+              value: scope,
+              label: t(`scope.${scope}`),
+            }))}
+          />
+        )}
       </div>
 
       {error && (
