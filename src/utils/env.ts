@@ -3,11 +3,14 @@
  * Provides type-safe access to environment variables
  */
 
+import type { Scope } from "../types";
+
 interface EnvironmentConfig {
   supabaseUrl: string;
   supabaseAnonKey: string;
   appTitle: string;
   isDev: boolean;
+  isProduction: boolean;
 }
 
 const requiredEnvVars = [
@@ -46,17 +49,35 @@ function validateEnvVars(): void {
 export function getEnvironmentConfig(): EnvironmentConfig {
   validateEnvVars();
 
+  const isDev =
+    runtimeEnv.VITE_DEV_MODE === "true" || runtimeEnv.MODE === "development";
+
   return {
     supabaseUrl: runtimeEnv.VITE_SUPABASE_URL!,
     supabaseAnonKey: runtimeEnv.VITE_SUPABASE_ANON_KEY!,
     appTitle: runtimeEnv.VITE_APP_TITLE || "School Schedule Management System",
-    isDev:
-      runtimeEnv.VITE_DEV_MODE === "true" || runtimeEnv.MODE === "development",
+    isDev,
+    isProduction: !isDev,
   };
 }
 
 // Export individual values for convenience
 export const env = getEnvironmentConfig();
+
+// Shared scope provider -- single source of truth for which `Scope` values
+// ("test" | "prod") are readable/writable in the current environment,
+// derived from the same isDev/isProduction signal above rather than
+// process.env.NODE_ENV (see #134: that check happens to work today only
+// because Vite's client shim substitutes import.meta.env.MODE for it at
+// build time, an undocumented signal parallel to -- and able to disagree
+// with -- isDev).
+export function getAllowedScopes(): Scope[] {
+  return env.isProduction ? ["prod"] : ["prod", "test"];
+}
+
+export function isTestScopeWriteAllowed(): boolean {
+  return !env.isProduction;
+}
 
 // Type declarations for import.meta.env (merges onto vite/client's
 // ImportMetaEnv/ImportMeta, declared via the vite-env.d.ts reference)

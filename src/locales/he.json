@@ -527,7 +527,8 @@
     "selector": {
       "placeholder": "בחר סביבה",
       "label": "סביבה:"
-    }
+    },
+    "testNotAllowedInProduction": "לא ניתן ליצור נתוני בדיקה בסביבת הייצור"
   },
   "errors": {
     "timeout": {

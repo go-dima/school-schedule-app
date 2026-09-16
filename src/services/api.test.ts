@@ -1,5 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+// Shared mutable state for the mocked env module below, set per-test to
+// simulate production vs non-production. `vi.hoisted` makes it available
+// both inside the (hoisted) `vi.mock` factory and in test bodies.
+const envState = vi.hoisted(() => ({ isProduction: false }));
+
+vi.mock("../utils/env", () => ({
+  env: new Proxy(
+    {},
+    {
+      get: (_target, prop) =>
+        prop === "isProduction" ? envState.isProduction : undefined,
+    }
+  ),
+  getAllowedScopes: () => (envState.isProduction ? ["prod"] : ["prod", "test"]),
+  isTestScopeWriteAllowed: () => !envState.isProduction,
+}));
+
 type AuthChangeHandler = (event: string, session: any) => any;
 
 const authCallbacks: AuthChangeHandler[] = [];
@@ -52,9 +69,12 @@ vi.mock("./supabase", () => {
         chain.select = vi.fn(() => chain);
         chain.eq = vi.fn(() => chain);
         chain.neq = vi.fn(() => chain);
+        chain.in = vi.fn(() => chain);
         chain.ilike = vi.fn(() => chain);
         chain.not = vi.fn(() => chain);
         chain.insert = vi.fn(() => chain);
+        chain.update = vi.fn(() => chain);
+        chain.order = vi.fn(() => chain);
         chain.single = vi.fn(() => Promise.resolve(mockSingleResult));
         // Makes the chain awaitable: `await supabase.from(...).select(...)...`
         // resolves to whatever `mockFromResult` currently holds.
@@ -73,9 +93,12 @@ function defaultFromImpl() {
   chain.select = vi.fn(() => chain);
   chain.eq = vi.fn(() => chain);
   chain.neq = vi.fn(() => chain);
+  chain.in = vi.fn(() => chain);
   chain.ilike = vi.fn(() => chain);
   chain.not = vi.fn(() => chain);
   chain.insert = vi.fn(() => chain);
+  chain.update = vi.fn(() => chain);
+  chain.order = vi.fn(() => chain);
   chain.single = vi.fn(() => Promise.resolve(mockSingleResult));
   chain.then = (resolve: any, reject: any) =>
     Promise.resolve(mockFromResult).then(resolve, reject);
@@ -83,7 +106,7 @@ function defaultFromImpl() {
 }
 
 // Import after the mock so `api.ts` picks up the mocked `./supabase` module.
-const { authApi, scheduleApi, childrenApi } = await import("./api");
+const { authApi, scheduleApi, childrenApi, classesApi } = await import("./api");
 const { supabase } = await import("./supabase");
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -246,6 +269,7 @@ describe("scheduleApi.selectSchedule (childId target)", () => {
 describe("scheduleApi.getClassEnrolledChildren", () => {
   afterEach(() => {
     mockRpcResult = { data: [], error: null };
+    envState.isProduction = false;
   });
 
   it("maps snake_case rows to camelCase children and sorts by grade then Hebrew name", async () => {
@@ -304,6 +328,7 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
 
     expect(supabase.rpc).toHaveBeenCalledWith("get_class_enrolled_children", {
       p_class_id: "class-1",
+      target_scope: ["prod", "test"],
     });
 
     expect(result).toEqual([
@@ -359,6 +384,18 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
         addedByAt: "2024-02-03T00:00:00.000Z",
       },
     ]);
+  });
+
+  it("passes only the prod scope when running in production", async () => {
+    envState.isProduction = true;
+    mockRpcResult = { data: [], error: null };
+
+    await scheduleApi.getClassEnrolledChildren("class-1");
+
+    expect(supabase.rpc).toHaveBeenCalledWith("get_class_enrolled_children", {
+      p_class_id: "class-1",
+      target_scope: ["prod"],
+    });
   });
 
   it("returns an empty array without throwing when the RPC resolves with null data", async () => {
@@ -517,5 +554,225 @@ describe("childrenApi.claimChild", () => {
     await expect(childrenApi.claimChild("child-1")).rejects.toThrow(
       "This child already has a linked parent and cannot be claimed"
     );
+  });
+});
+
+// Correlates a `supabase.from(table)` call with the chain object it
+// returned, since the shared mock returns a fresh chain per call.
+function fromChainFor(table: string) {
+  const calls = (supabase.from as any).mock.calls;
+  const idx = calls.findIndex((call: any[]) => call[0] === table);
+  return (supabase.from as any).mock.results[idx].value;
+}
+
+describe("classesApi.getClasses", () => {
+  beforeEach(() => {
+    (supabase.from as any).mockClear();
+    mockFromResult = { data: [], error: null };
+  });
+
+  afterEach(() => {
+    envState.isProduction = false;
+  });
+
+  it("queries only the prod scope in production", async () => {
+    envState.isProduction = true;
+
+    await classesApi.getClasses();
+
+    expect(fromChainFor("classes").in).toHaveBeenCalledWith("scope", ["prod"]);
+  });
+
+  it("queries both scopes outside production", async () => {
+    envState.isProduction = false;
+
+    await classesApi.getClasses();
+
+    expect(fromChainFor("classes").in).toHaveBeenCalledWith("scope", [
+      "prod",
+      "test",
+    ]);
+  });
+});
+
+describe("childrenApi.getChildById", () => {
+  beforeEach(() => {
+    (supabase.from as any).mockClear();
+    mockSingleResult = {
+      data: {
+        id: "child-1",
+        first_name: "אבי",
+        last_name: "כהן",
+        grade: 3,
+        group_number: 1,
+        track_number_draft: null,
+        track_number_committed: null,
+        scope: "prod",
+        created_by: null,
+        created_at: "2026-01-01T00:00:00Z",
+        updated_at: "2026-01-01T00:00:00Z",
+      },
+      error: null,
+    };
+  });
+
+  afterEach(() => {
+    envState.isProduction = false;
+    mockSingleResult = { data: null, error: { message: "no rows found" } };
+  });
+
+  it("restricts the query to allowed scopes outside production", async () => {
+    envState.isProduction = false;
+
+    await childrenApi.getChildById("child-1");
+
+    expect(fromChainFor("children").in).toHaveBeenCalledWith("scope", [
+      "prod",
+      "test",
+    ]);
+  });
+
+  it("restricts the query to prod-only scope in production", async () => {
+    envState.isProduction = true;
+
+    await childrenApi.getChildById("child-1");
+
+    expect(fromChainFor("children").in).toHaveBeenCalledWith("scope", ["prod"]);
+  });
+
+  it("surfaces a not-found ApiError when the underlying query excludes the row", async () => {
+    envState.isProduction = true;
+    mockSingleResult = {
+      data: null,
+      error: {
+        message: "JSON object requested, multiple (or no) rows returned",
+      },
+    };
+
+    await expect(childrenApi.getChildById("child-1")).rejects.toThrow();
+  });
+});
+
+describe("childrenApi.getChildWithParents", () => {
+  beforeEach(() => {
+    (supabase.from as any).mockClear();
+    mockSingleResult = {
+      data: {
+        id: "child-1",
+        first_name: "אבי",
+        last_name: "כהן",
+        grade: 3,
+        group_number: 1,
+        track_number_draft: null,
+        track_number_committed: null,
+        scope: "prod",
+        created_by: null,
+        created_at: "2026-01-01T00:00:00Z",
+        updated_at: "2026-01-01T00:00:00Z",
+        parents: [],
+      },
+      error: null,
+    };
+  });
+
+  afterEach(() => {
+    envState.isProduction = false;
+    mockSingleResult = { data: null, error: { message: "no rows found" } };
+  });
+
+  it("restricts the query to allowed scopes", async () => {
+    envState.isProduction = true;
+
+    await childrenApi.getChildWithParents("child-1");
+
+    expect(fromChainFor("children_with_parents").in).toHaveBeenCalledWith(
+      "scope",
+      ["prod"]
+    );
+  });
+});
+
+describe("write-path scope guard", () => {
+  afterEach(() => {
+    envState.isProduction = false;
+    mockFromResult = { data: [], error: null };
+    mockRpcResult = { data: [], error: null };
+  });
+
+  const baseClass = {
+    title: "Math",
+    description: "",
+    teacher: "Mrs. Cohen",
+    slots: [],
+    grades: [1],
+    isMandatory: false,
+    isDouble: false,
+    groupNumber: null,
+    trackNumber: null,
+    room: "101",
+  };
+
+  it("classesApi.createClass rejects scope: test in production", async () => {
+    envState.isProduction = true;
+
+    await expect(
+      classesApi.createClass({ ...baseClass, scope: "test" })
+    ).rejects.toThrow();
+  });
+
+  it("classesApi.createClass allows scope: test outside production", async () => {
+    envState.isProduction = false;
+    mockFromResult = { data: [{ id: "class-1" }], error: null };
+
+    await expect(
+      classesApi.createClass({ ...baseClass, scope: "test" })
+    ).resolves.toBeDefined();
+  });
+
+  it("classesApi.updateClass rejects scope: test in production", async () => {
+    envState.isProduction = true;
+
+    await expect(
+      classesApi.updateClass("class-1", { scope: "test" })
+    ).rejects.toThrow();
+  });
+
+  it("childrenApi.createChild rejects scope: test in production", async () => {
+    envState.isProduction = true;
+
+    await expect(
+      childrenApi.createChild("אבי", "כהן", 3, 1, "test")
+    ).rejects.toThrow();
+  });
+
+  it("childrenApi.createChild allows scope: test outside production", async () => {
+    envState.isProduction = false;
+    mockRpcResult = {
+      data: {
+        id: "child-1",
+        first_name: "אבי",
+        last_name: "כהן",
+        grade: 3,
+        group_number: 1,
+        track_number_draft: null,
+        scope: "test",
+        created_by: null,
+        created_at: "2026-01-01T00:00:00Z",
+        updated_at: "2026-01-01T00:00:00Z",
+      },
+      error: null,
+    };
+
+    await expect(
+      childrenApi.createChild("אבי", "כהן", 3, 1, "test")
+    ).resolves.toBeDefined();
+  });
+
+  it("childrenApi.updateChild rejects scope: test in production", async () => {
+    envState.isProduction = true;
+
+    await expect(
+      childrenApi.updateChild("child-1", { scope: "test" })
+    ).rejects.toThrow();
   });
 });

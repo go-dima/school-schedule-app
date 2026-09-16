@@ -18,6 +18,8 @@ import type {
   UserRoleData,
 } from "../types";
 import { withTimeout } from "../utils/asyncUtils";
+import { env, getAllowedScopes, isTestScopeWriteAllowed } from "../utils/env";
+import i18n from "../utils/i18n";
 import log from "../utils/logger";
 import { NotificationService } from "./notificationService";
 import { ScheduleService } from "./scheduleService";
@@ -40,6 +42,15 @@ export class ApiError extends Error {
   ) {
     super(message);
     this.name = "ApiError";
+  }
+}
+
+// Defense-in-depth only: a direct Supabase call could still bypass this.
+// Guards every write site that can persist scope: "test", so test data can
+// only be created/moved into existence while not running in production.
+function assertTestScopeAllowed(scope: Scope | undefined) {
+  if (scope === "test" && !isTestScopeWriteAllowed()) {
+    throw new ApiError(i18n.t("scope.testNotAllowedInProduction"));
   }
 }
 
@@ -517,13 +528,10 @@ function mapClassRow(
 // Classes API
 export const classesApi = {
   async getClasses(): Promise<ClassWithTimeSlot[]> {
-    const isProduction = process.env.NODE_ENV === "production";
-    let query = supabase.from("classes").select("*");
-
-    // Filter out test classes in production
-    if (isProduction) {
-      query = query.neq("scope", "test");
-    }
+    const query = supabase
+      .from("classes")
+      .select("*")
+      .in("scope", getAllowedScopes());
 
     const [{ data, error }, timeSlotsById] = await Promise.all([
       query.order("title", { ascending: true }),
@@ -535,6 +543,8 @@ export const classesApi = {
   },
 
   async createClass(classData: Omit<Class, "id" | "createdAt" | "updatedAt">) {
+    assertTestScopeAllowed(classData.scope);
+
     const { data, error } = await supabase
       .from("classes")
       .insert([
@@ -562,6 +572,8 @@ export const classesApi = {
     id: string,
     updates: Partial<Omit<Class, "id" | "createdAt" | "updatedAt">>
   ) {
+    assertTestScopeAllowed(updates.scope);
+
     const updateData: any = {};
     if (updates.title !== undefined) updateData.title = updates.title;
     if (updates.description !== undefined)
@@ -611,7 +623,6 @@ export const scheduleApi = {
     target: ScheduleTarget,
     status: SelectionStatus
   ): Promise<ScheduleSelectionWithClass[]> {
-    const isProduction = process.env.NODE_ENV === "production";
     let query = supabase
       .from("schedule_selections")
       .select(
@@ -633,11 +644,11 @@ export const scheduleApi = {
 
     if (error) throw new ApiError(error.message);
 
-    // Filter out schedule selections with test classes in production
-    let filteredData = data;
-    if (isProduction) {
-      filteredData = data.filter(selection => selection.class.scope !== "test");
-    }
+    // Filter out schedule selections whose class scope isn't allowed here
+    const allowedScopes = getAllowedScopes();
+    const filteredData = data.filter(selection =>
+      allowedScopes.includes(selection.class.scope)
+    );
     return filteredData.map(selection => ({
       id: selection.id,
       userId: selection.user_id,
@@ -710,6 +721,7 @@ export const scheduleApi = {
   async getClassEnrolledChildren(classId: string): Promise<EnrolledChild[]> {
     const { data, error } = await supabase.rpc("get_class_enrolled_children", {
       p_class_id: classId,
+      target_scope: getAllowedScopes(),
     });
 
     if (error) throw new ApiError(error.message);
@@ -746,8 +758,7 @@ export const scheduleApi = {
 // Children API
 export const childrenApi = {
   async getParentChildren(parentId: string): Promise<Child[]> {
-    const isProduction = process.env.NODE_ENV === "production";
-    let query = supabase
+    const query = supabase
       .from("parent_child_relationships")
       .select(
         `
@@ -760,14 +771,11 @@ export const childrenApi = {
 
     if (error) throw new ApiError(error.message);
 
-    // Filter out test children in production
-    let filteredData = data;
-    if (isProduction) {
-      filteredData = data.filter((rel: any) => {
-        const scope = rel?.child?.scope;
-        return scope !== "test";
-      });
-    }
+    // Filter out children whose scope isn't allowed here
+    const allowedScopes = getAllowedScopes();
+    const filteredData = data.filter((rel: any) =>
+      allowedScopes.includes(rel?.child?.scope)
+    );
 
     return filteredData.map((rel: any) => ({
       id: rel?.child?.id,
@@ -793,6 +801,8 @@ export const childrenApi = {
     trackNumber: number | null = null,
     status: SelectionStatus = "draft"
   ): Promise<Child> {
+    assertTestScopeAllowed(scope);
+
     const { data, error } = await supabase.rpc(
       "create_child_with_relationship",
       {
@@ -837,6 +847,8 @@ export const childrenApi = {
       scope?: Scope;
     }
   ): Promise<Child> {
+    assertTestScopeAllowed(updates.scope);
+
     const updateData: any = {};
     if (updates.firstName !== undefined)
       updateData.first_name = updates.firstName;
@@ -909,13 +921,11 @@ export const childrenApi = {
   },
 
   async getAllChildren(): Promise<(Child & { assignedParent: boolean })[]> {
-    const isProduction = process.env.NODE_ENV === "production";
-
     // Use the database function to get children with parent status.
     const { data, error } = await supabase.rpc(
       "get_children_with_parent_status",
       {
-        production_only: isProduction,
+        production_only: env.isProduction,
       }
     );
 
@@ -954,6 +964,7 @@ export const childrenApi = {
       .from("children")
       .select("*")
       .eq("id", childId)
+      .in("scope", getAllowedScopes())
       .single();
 
     if (error) throw new ApiError(error.message);
@@ -984,6 +995,7 @@ export const childrenApi = {
       .from("children_with_parents")
       .select("*")
       .eq("id", childId)
+      .in("scope", getAllowedScopes())
       .single();
 
     if (error) throw new ApiError(error.message);
@@ -1091,9 +1103,8 @@ export const childrenApi = {
 // Enrollment API
 export const enrollmentApi = {
   async getClassEnrollmentCounts(): Promise<Map<string, number>> {
-    const isProduction = process.env.NODE_ENV === "production";
     // In production, only show prod classes. In development, show all classes (pass null for all)
-    const targetScope: "prod" | null = isProduction ? "prod" : null;
+    const targetScope: "prod" | null = env.isProduction ? "prod" : null;
 
     const { data, error } = await supabase.rpc("get_class_enrollment_counts", {
       target_scope: targetScope,
@@ -1110,9 +1121,8 @@ export const enrollmentApi = {
   },
 
   async getClassEnrollmentCount(classId: string): Promise<number> {
-    const isProduction = process.env.NODE_ENV === "production";
     // In production, only show prod classes. In development, show all classes (pass null for all)
-    const targetScope: "prod" | null = isProduction ? "prod" : null;
+    const targetScope: "prod" | null = env.isProduction ? "prod" : null;
 
     const { data, error } = await supabase.rpc("get_class_enrollment_count", {
       p_class_id: classId,

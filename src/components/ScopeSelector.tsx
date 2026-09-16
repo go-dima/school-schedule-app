@@ -2,6 +2,7 @@ import React from "react";
 import { Form, Select, Typography } from "antd";
 import { useTranslation } from "react-i18next";
 import type { Scope } from "../types";
+import { isTestScopeWriteAllowed } from "../utils/env";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -22,10 +23,7 @@ export function ScopeSelector({
 }: ScopeSelectorProps) {
   const { t } = useTranslation();
 
-  // Only show in development environment
-  const isDevelopment = process.env.NODE_ENV === "development";
-
-  if (!isDevelopment) {
+  if (!isTestScopeWriteAllowed()) {
     return null;
   }
 
