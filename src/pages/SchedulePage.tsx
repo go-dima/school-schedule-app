@@ -7,7 +7,6 @@ import {
   Space,
   Alert,
   Spin,
-  Modal,
   message,
   AutoComplete,
   Tooltip,
@@ -30,7 +29,7 @@ import { useDraftSelectionAwareness } from "../hooks/useDraftSelectionAwareness"
 import { useScheduleOverrides } from "../hooks/useScheduleOverrides";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import ScheduleTable from "../components/ScheduleTable";
-import ClassForm from "../components/ClassForm";
+import { CreateClassModal } from "../components/CreateClassModal";
 import { ScheduleOverrideModal } from "../components/ScheduleOverrideModal";
 import type { ScheduleOverrideFormValues } from "../components/ScheduleOverrideForm";
 import { FiltersBar } from "../components/FiltersBar";
@@ -1020,59 +1019,15 @@ const SchedulePageContent: React.FC = () => {
         )}
       </Spin>
 
-      <Modal
-        title={t("schedule.page.createNewClassModal")}
+      <CreateClassModal
         open={createClassModalOpen}
+        timeSlotId={createClassTimeSlotId}
+        dayOfWeek={createClassDayOfWeek}
+        timeSlots={allTimeSlots}
+        loading={modalLoading}
+        onSubmit={handleFormSubmit}
         onCancel={handleCloseCreateModal}
-        footer={null}
-        width={600}
-        destroyOnHidden>
-        {createClassTimeSlotId &&
-          createClassDayOfWeek !== null &&
-          allTimeSlots.length > 0 &&
-          (() => {
-            const selectedTimeSlot = allTimeSlots.find(
-              slot => slot.id === createClassTimeSlotId
-            );
-            if (!selectedTimeSlot) {
-              return null; // Don't render if timeSlot not found
-            }
-
-            const initialValues = {
-              slots: [
-                {
-                  dayOfWeek: createClassDayOfWeek,
-                  timeSlotId: createClassTimeSlotId,
-                  timeSlot: selectedTimeSlot,
-                },
-              ],
-              title: "",
-              description: "",
-              teacher: "",
-              grades: [],
-              isMandatory: false,
-              isDouble: false,
-              groupNumber: null,
-              trackNumber: null,
-              room: "",
-              scope: "test" as const,
-              id: createClassTimeSlotId,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            };
-
-            return (
-              <ClassForm
-                initialValues={initialValues}
-                timeSlots={allTimeSlots}
-                onSubmit={handleFormSubmit}
-                onCancel={handleCloseCreateModal}
-                loading={modalLoading}
-                isNewLesson={true}
-              />
-            );
-          })()}
-      </Modal>
+      />
 
       <ScheduleOverrideModal
         open={overrideModalOpen}
