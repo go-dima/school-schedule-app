@@ -526,11 +526,28 @@ const SchedulePageContent: React.FC = () => {
     }
 
     try {
+      // Overrides print exactly like any other lesson: mapped onto the
+      // same ClassWithTimeSlot shape (ScheduleService.overrideToClass) and
+      // merged into the same weeklySchedule/selectedClasses the rest of
+      // the print pipeline already renders. `overrides` is already scoped
+      // to the current committed/draft view (see resolveScheduleView), so
+      // this needs no extra gating here.
+      const overrideClasses = overrides.map(o =>
+        ScheduleService.overrideToClass(o, currentChild.grade)
+      );
+      const mergedWeeklySchedule = ScheduleService.mergeWeeklySchedules(
+        weeklySchedule,
+        ScheduleService.buildWeeklySchedule(overrideClasses)
+      );
+
       await printSchedule({
         child: currentChild,
         timeSlots,
-        weeklySchedule,
-        selectedClasses: selectedSchedule.map(selection => selection.classId),
+        weeklySchedule: mergedWeeklySchedule,
+        selectedClasses: [
+          ...selectedSchedule.map(selection => selection.classId),
+          ...overrideClasses.map(cls => cls.id),
+        ],
         showDraftMarker: viewStatus === "draft",
       });
     } catch (error) {

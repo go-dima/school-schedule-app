@@ -7,6 +7,12 @@ interface ClassCardHeaderProps {
   teacher?: string;
   room?: string;
   tags?: React.ReactNode;
+  // The enrollment count badge is a fixed bottom-right overlay (see
+  // .class-enrollment-badge), not part of this 3-line flow -- but the tags
+  // row is the last line, so without reserved space the badge sits right on
+  // top of whichever tag ends up in that corner. Only ClassCard (which
+  // renders the badge) ever passes this.
+  reserveBadgeSpace?: boolean;
 }
 
 // Fixed 3-line layout: title / teacher+room / tags, each its own row --
@@ -18,6 +24,7 @@ const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
   teacher,
   room,
   tags,
+  reserveBadgeSpace = false,
 }) => {
   const { t } = useTranslation();
 
@@ -44,7 +51,14 @@ const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
           )}
         </div>
       )}
-      {tags && <div className="class-tags-row">{tags}</div>}
+      {tags && (
+        <div
+          className={`class-tags-row ${
+            reserveBadgeSpace ? "class-tags-row--with-badge" : ""
+          }`}>
+          {tags}
+        </div>
+      )}
     </>
   );
 };

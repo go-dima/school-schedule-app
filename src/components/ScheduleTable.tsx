@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Table, Card, Button, Empty } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { PlusOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { DAYS_OF_WEEK } from "../types";
 import { ScheduleService } from "../services/scheduleService";
@@ -166,7 +167,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     ScheduleService.hasTimeConflict(userSelections, cls);
 
   const renderOverrideCard = (o: ScheduleOverrideWithTimeSlot) => (
-    <OverrideCard key={o.id} override={o} />
+    <OverrideCard key={o.id} override={o} onEdit={onOverrideClick} />
   );
 
   const renderCreateOverrideFooterButton = (
@@ -176,6 +177,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     canCreateOverride &&
     onCreateOverride && (
       <OverrideSuffixButton
+        icon={<PlusOutlined />}
+        tooltip={t("schedule.override.buttonLabel")}
         onClick={() => onCreateOverride(timeSlot.id, dayOfWeek)}
       />
     );

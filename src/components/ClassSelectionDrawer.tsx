@@ -205,16 +205,6 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
               </div>
             )}
 
-            {canCreateOverride && onCreateOverride && (
-              <Button
-                type="primary"
-                style={{ backgroundColor: "#fa8c16", borderColor: "#fa8c16" }}
-                onClick={() => onCreateOverride(timeSlot.id, dayOfWeek)}
-                block>
-                {t("schedule.override.buttonLabel")}
-              </Button>
-            )}
-
             {isAdmin && onCreateClass && (
               <CreateClassButton
                 onCreateClass={onCreateClass}
@@ -224,6 +214,28 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
             )}
           </Space>
         )}
+
+        {/* Independent of the classes.length branch above -- a slot with no
+            catalog classes at all is exactly one of the cases staff need to
+            drop an override into, so this must not live only in the
+            has-classes branch. Hidden once an override already exists here
+            (see overridesForSlot section above): replacing a slot with a
+            second override isn't a supported flow. */}
+        {overridesForSlot.length === 0 &&
+          canCreateOverride &&
+          onCreateOverride && (
+            <Button
+              type="primary"
+              style={{
+                backgroundColor: "#fa8c16",
+                borderColor: "#fa8c16",
+                marginTop: 16,
+              }}
+              onClick={() => onCreateOverride(timeSlot.id, dayOfWeek)}
+              block>
+              {t("schedule.override.buttonLabel")}
+            </Button>
+          )}
       </div>
     </Drawer>
   );

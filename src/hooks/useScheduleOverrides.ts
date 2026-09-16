@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { scheduleOverridesApi } from "../services/api";
 import type { ScheduleOverride, ScheduleOverrideWithTimeSlot } from "../types";
 
@@ -13,7 +13,16 @@ export function useScheduleOverrides(childId: string | undefined) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Tracks the childId a refetch was issued for, so a mutation's refetch
+  // that resolves after the caller has already switched to a different
+  // child (e.g. delete override for child A, then immediately select
+  // child B before the delete's refetch(A) settles) can't clobber the
+  // now-current child's state with stale data.
+  const activeChildIdRef = useRef<string | undefined>(childId);
+
   useEffect(() => {
+    activeChildIdRef.current = childId;
+
     if (!childId) {
       setOverrides([]);
       setLoading(false);
@@ -52,8 +61,11 @@ export function useScheduleOverrides(childId: string | undefined) {
 
   const refetch = async (): Promise<void> => {
     if (!childId) return;
+    const requestedFor = childId;
     const data = await scheduleOverridesApi.getOverrides(childId);
-    setOverrides(data);
+    if (activeChildIdRef.current === requestedFor) {
+      setOverrides(data);
+    }
   };
 
   const createOverride = async (

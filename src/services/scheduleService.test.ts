@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type {
   ClassWithTimeSlot,
+  ScheduleOverrideWithTimeSlot,
   ScheduleSelectionWithClass,
   TimeSlot,
 } from "../types";
@@ -40,6 +41,24 @@ const makeClass = (
   scope: "prod",
   createdAt: "",
   updatedAt: "",
+  ...overrides,
+});
+
+const makeOverride = (
+  overrides: Partial<ScheduleOverrideWithTimeSlot> = {}
+): ScheduleOverrideWithTimeSlot => ({
+  id: "override-1",
+  childId: "child-1",
+  title: "Personal support",
+  teacher: "Ms. Cohen",
+  room: "Room 7",
+  dayOfWeek: 1,
+  timeSlotId: tsFirst.id,
+  scope: "prod",
+  createdBy: "staff-1",
+  createdAt: "2024-01-01T00:00:00Z",
+  updatedAt: "2024-01-02T00:00:00Z",
+  timeSlot: tsFirst,
   ...overrides,
 });
 
@@ -679,5 +698,49 @@ describe("ScheduleService.mergeWeeklySchedules", () => {
 
     expect(merged[0][tsFirst.id]).toEqual([baseCls]);
     expect(merged[2][tsThird.id]).toEqual([overlayCls]);
+  });
+});
+
+describe("ScheduleService.overrideToClass", () => {
+  it("maps override fields onto a single-slot ClassWithTimeSlot with the given grade", () => {
+    const override = makeOverride();
+
+    const result = ScheduleService.overrideToClass(override, 4);
+
+    expect(result).toEqual({
+      id: override.id,
+      title: override.title,
+      description: "",
+      teacher: override.teacher,
+      slots: [
+        {
+          dayOfWeek: override.dayOfWeek,
+          timeSlotId: override.timeSlotId,
+          timeSlot: override.timeSlot,
+        },
+      ],
+      grades: [4],
+      isMandatory: false,
+      isDouble: false,
+      groupNumber: null,
+      trackNumber: null,
+      room: override.room,
+      scope: override.scope,
+      createdAt: override.createdAt,
+      updatedAt: override.updatedAt,
+    });
+  });
+
+  it("is renderable by the same weeklySchedule pipeline catalog classes use", () => {
+    const override = makeOverride({
+      dayOfWeek: 2,
+      timeSlotId: tsThird.id,
+      timeSlot: tsThird,
+    });
+    const overrideClass = ScheduleService.overrideToClass(override, 3);
+
+    const schedule = ScheduleService.buildWeeklySchedule([overrideClass]);
+
+    expect(schedule[2][tsThird.id]).toEqual([overrideClass]);
   });
 });

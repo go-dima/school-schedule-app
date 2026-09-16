@@ -160,6 +160,13 @@
   gap: 4px;
 }
 
+/* Reserves physical-right space matching .class-enrollment-badge's corner,
+   so a centered tag never ends up sitting directly under/against the
+   badge. */
+.class-tags-row--with-badge {
+  padding-right: 28px;
+}
+
 .schedule-cell.clickable .class-card {
   cursor: pointer;
 }

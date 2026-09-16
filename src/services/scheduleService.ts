@@ -2,6 +2,7 @@ import type {
   ClassSlot,
   ClassSlotWithTimeSlot,
   ClassWithTimeSlot,
+  ScheduleOverrideWithTimeSlot,
   ScheduleSelectionWithClass,
   SelectionStatus,
   TimeSlot,
@@ -361,5 +362,45 @@ export class ScheduleService {
     });
 
     return merged;
+  }
+
+  /**
+   * Maps a staff override onto the same ClassWithTimeSlot shape the rest of
+   * the schedule pipeline (buildWeeklySchedule, print) already knows how to
+   * render, so an override shows up "like any other lesson" wherever that
+   * pipeline is reused (currently: print/export) instead of needing a
+   * parallel rendering path. `grades: [grade]` (the target child's own
+   * grade) is a deliberate stand-in for the catalog's real grades array,
+   * which has no equivalent on schedule_overrides -- an override is always
+   * for exactly one child, so gating it on "does this include the child's
+   * grade" (as print/grid grade filters do for catalog classes) is always
+   * true by construction.
+   */
+  static overrideToClass(
+    override: ScheduleOverrideWithTimeSlot,
+    grade: number
+  ): ClassWithTimeSlot {
+    return {
+      id: override.id,
+      title: override.title,
+      description: "",
+      teacher: override.teacher,
+      slots: [
+        {
+          dayOfWeek: override.dayOfWeek,
+          timeSlotId: override.timeSlotId,
+          timeSlot: override.timeSlot,
+        },
+      ],
+      grades: [grade],
+      isMandatory: false,
+      isDouble: false,
+      groupNumber: null,
+      trackNumber: null,
+      room: override.room,
+      scope: override.scope,
+      createdAt: override.createdAt,
+      updatedAt: override.updatedAt,
+    };
   }
 }
