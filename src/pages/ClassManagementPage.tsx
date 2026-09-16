@@ -31,6 +31,7 @@ import { DAYS_OF_WEEK, GRADES } from "../types";
 import ClassForm from "../components/ClassForm";
 import { GroupTrackTags } from "../components/GroupTrackTags";
 import { FilterSelect } from "../components/FilterSelect";
+import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
 import "./ClassManagementPage.css";
 import { GetGradeName } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
@@ -44,6 +45,8 @@ const { Title } = Typography;
 // Sentinel track filter value meaning "classes with no track", distinct from
 // `null` which means the track filter is not applied.
 const NO_TRACK_FILTER = 0;
+
+const ALL_SCOPES: Scope[] = ["prod", "test"];
 
 const ClassManagementPage: React.FC = () => {
   const { t } = useTranslation();
@@ -77,6 +80,9 @@ const ClassManagementPage: React.FC = () => {
   // 1 | 2 select an actual track; NO_TRACK_FILTER selects classes with no
   // track set; null means the filter is not applied at all.
   const [selectedTrack, setSelectedTrack] = useState<number | null>(null);
+  // Admin-only (see the ToggleFilterGroup below) -- staff never see this
+  // filter. Both scopes start ON, equivalent to "no filter".
+  const [selectedScopes, setSelectedScopes] = useState<Scope[]>(ALL_SCOPES);
 
   useEffect(() => {
     loadData();
@@ -118,6 +124,8 @@ const ClassManagementPage: React.FC = () => {
       );
     }
 
+    filtered = filtered.filter(cls => selectedScopes.includes(cls.scope));
+
     return filtered;
   }, [
     classes,
@@ -126,6 +134,7 @@ const ClassManagementPage: React.FC = () => {
     selectedDay,
     selectedGrade,
     selectedTrack,
+    selectedScopes,
   ]);
 
   const loadData = async () => {
@@ -562,9 +571,24 @@ const ClassManagementPage: React.FC = () => {
                   setSelectedDay(null);
                   setSelectedGrade(null);
                   setSelectedTrack(null);
+                  setSelectedScopes(ALL_SCOPES);
                 }}>
                 {t("classManagement.page.clearFiltersButton")}
               </Button>
+
+              {canCreateClasses() && (
+                <Space size={4} align="center">
+                  <ToggleFilterGroup<Scope>
+                    value={selectedScopes}
+                    onChange={setSelectedScopes}
+                    options={ALL_SCOPES.map(scope => ({
+                      value: scope,
+                      label: t(`scope.${scope}`),
+                    }))}
+                  />
+                  <label>{t("classManagement.page.scopeFilterLabel")}</label>
+                </Space>
+              )}
 
               <FilterSelect
                 label={t("classManagement.page.trackFilterLabel")}
