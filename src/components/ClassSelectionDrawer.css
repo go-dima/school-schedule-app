@@ -238,3 +238,18 @@
     justify-content: flex-start;
   }
 }
+
+.override-selection-section {
+  margin-bottom: 16px;
+}
+
+.override-selection-card {
+  border-color: #fa8c16;
+  background-color: rgba(250, 140, 22, 0.06);
+}
+
+.override-selection-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}

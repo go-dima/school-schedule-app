@@ -5,21 +5,16 @@ import ClassCardHeader from "./ClassCardHeader";
 
 interface OverrideCardProps {
   override: ScheduleOverrideWithTimeSlot;
-  onClick?: (override: ScheduleOverrideWithTimeSlot) => void;
 }
 
 // Renders a staff override identically to a committed/selected class card
 // (same class names as ClassCard's "selected" state) -- but sourced from
 // the separate `overrides` prop, never merged into weeklySchedule/classes.
-// Clicking it opens the edit modal instead of the cell's normal drawer.
-const OverrideCard: React.FC<OverrideCardProps> = ({ override, onClick }) => (
-  <Card
-    size="small"
-    className="class-card selected-card"
-    onClick={e => {
-      e.stopPropagation();
-      onClick?.(override);
-    }}>
+// Purely presentational, like ClassCard: no click handler of its own, so a
+// click on it bubbles up to the enclosing cell's onClick and opens the
+// normal drawer, where the override is shown first with edit/delete.
+const OverrideCard: React.FC<OverrideCardProps> = ({ override }) => (
+  <Card size="small" className="class-card selected-card">
     <ClassCardHeader
       title={override.title}
       isContinuation={false}

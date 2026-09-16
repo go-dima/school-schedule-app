@@ -258,6 +258,15 @@ const overrideBreakSlot = mockTimeSlots.find(
   slot => !isLessonTimeSlot(slot)
 ) as TimeSlot;
 
+// A double-lesson (mandatory) class already occupies its first slot -- this
+// override lands on the exact same day/slot to demonstrate that an override
+// replaces a mandatory/selected catalog class in the grid entirely, rather
+// than stacking alongside it.
+const mandatoryDoubleClass = mockClasses.find(
+  cls => cls.id === `class-${doubleDayKey}-double`
+)!;
+const mandatorySlot = mandatoryDoubleClass.slots[0].timeSlot;
+
 export const mockOverrides: ScheduleOverrideWithTimeSlot[] = [
   {
     id: "override-lesson",
@@ -286,5 +295,19 @@ export const mockOverrides: ScheduleOverrideWithTimeSlot[] = [
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z",
     timeSlot: overrideBreakSlot,
+  },
+  {
+    id: "override-over-mandatory",
+    childId: "child-1",
+    title: "ציור",
+    teacher: "אין",
+    room: "",
+    dayOfWeek: doubleDayKey,
+    timeSlotId: mandatorySlot.id,
+    scope: "test",
+    createdBy: "staff-1",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z",
+    timeSlot: mandatorySlot,
   },
 ];

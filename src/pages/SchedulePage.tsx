@@ -648,20 +648,34 @@ const SchedulePageContent: React.FC = () => {
     }
   };
 
-  // The confirm dialog itself is wired inside ScheduleOverrideForm (matching
-  // ClassManagementPage.tsx's confirmDeleteClass pattern) -- this only runs
-  // after the staff member has already confirmed.
-  const handleOverrideDelete = async () => {
-    if (!editingOverride) return;
+  // Shared by both delete entry points below. The confirm dialog itself is
+  // wired in the caller (ScheduleOverrideForm for the edit-modal path,
+  // matching ClassManagementPage.tsx's confirmDeleteClass pattern; the
+  // drawer's own OverrideSelectionCard for the other) -- this only runs
+  // after the staff member has already confirmed. Only removes the
+  // schedule_overrides row -- the underlying schedule_selections pick (if
+  // any) was never touched, so it becomes visible again once this resolves.
+  const deleteOverrideById = async (id: string) => {
     try {
-      await deleteOverride(editingOverride.id);
+      await deleteOverride(id);
       message.success(t("schedule.override.deleteSuccess"));
-      handleCloseOverrideModal();
     } catch (err) {
       message.error(
         err instanceof Error ? err.message : t("schedule.override.deleteError")
       );
     }
+  };
+
+  const handleOverrideDelete = async () => {
+    if (!editingOverride) return;
+    await deleteOverrideById(editingOverride.id);
+    handleCloseOverrideModal();
+  };
+
+  const handleDrawerOverrideDelete = async (
+    override: ScheduleOverrideWithTimeSlot
+  ) => {
+    await deleteOverrideById(override.id);
   };
 
   const handleCloseCreateModal = () => {
@@ -992,6 +1006,7 @@ const SchedulePageContent: React.FC = () => {
             canCreateOverride={isStaff && !!staffSelectedChild}
             onCreateOverride={handleCreateOverride}
             onOverrideClick={isStaff ? handleOverrideCardClick : undefined}
+            onOverrideDelete={isStaff ? handleDrawerOverrideDelete : undefined}
           />
         </Card>
 

@@ -46,6 +46,7 @@ interface ScheduleTableProps {
   canCreateOverride?: boolean;
   onCreateOverride?: (timeSlotId: string, dayOfWeek: number) => void;
   onOverrideClick?: (override: ScheduleOverrideWithTimeSlot) => void;
+  onOverrideDelete?: (override: ScheduleOverrideWithTimeSlot) => void;
 }
 
 interface ScheduleRow {
@@ -76,6 +77,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   canCreateOverride = false,
   onCreateOverride,
   onOverrideClick,
+  onOverrideDelete,
 }) => {
   const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -164,7 +166,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     ScheduleService.hasTimeConflict(userSelections, cls);
 
   const renderOverrideCard = (o: ScheduleOverrideWithTimeSlot) => (
-    <OverrideCard key={o.id} override={o} onClick={onOverrideClick} />
+    <OverrideCard key={o.id} override={o} />
   );
 
   const renderCreateOverrideFooterButton = (
@@ -184,15 +186,36 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       o => o.dayOfWeek === dayOfWeek && o.timeSlotId === timeSlot.id
     );
 
-    let filteredClasses = userGrade
-      ? dayClasses.filter(cls => cls.grades?.includes(userGrade))
-      : dayClasses;
-    filteredClasses = filterByGroup(filteredClasses);
-
     const displayInfo = getTimeSlotDisplayInfo(timeSlot);
     const isSelectableSlot = displayInfo.isSelectable && canViewClasses;
     const isHighlighted = shouldHighlightTimeSlot(timeSlot, dayOfWeek);
     const highlightClass = isHighlighted ? "search-highlighted" : "";
+
+    // A staff override takes precedence over whatever catalog class(es)
+    // would otherwise render here -- mandatory or not, selected or not --
+    // it's a deliberate by-design conflict, so it's shown INSTEAD OF, not
+    // alongside, the underlying class(es). The underlying
+    // schedule_selections row is never touched by this: deleting the
+    // override (via the drawer or its own edit modal) simply un-hides
+    // whatever was already selected here. Still clickable for lesson slots
+    // so staff/parents can open the drawer and see the override alongside
+    // the (temporarily hidden) selection -- see ClassSelectionDrawer.
+    if (cellOverrides.length > 0) {
+      return (
+        <div
+          className={`schedule-cell selected-classes ${
+            isSelectableSlot ? "clickable" : ""
+          } ${highlightClass}`}
+          onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
+          {cellOverrides.map(renderOverrideCard)}
+        </div>
+      );
+    }
+
+    let filteredClasses = userGrade
+      ? dayClasses.filter(cls => cls.grades?.includes(userGrade))
+      : dayClasses;
+    filteredClasses = filterByGroup(filteredClasses);
 
     // A "continuation" cell is specifically a Double Lesson's second slot —
     // any other non-primary slot of a multi-slot class (e.g. a class meeting
@@ -235,24 +258,13 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
             showEnrollmentCount={showEnrollmentCount}
             enrollmentCount={enrollmentCounts.get(doubleClass.id) || 0}
           />
-          {cellOverrides.map(renderOverrideCard)}
         </div>
       );
     }
 
-    // Handle non-lesson time slots (breaks, meetings). An override on a
-    // fixed slot completely replaces it -- staff overrode it deliberately,
-    // so it's shown exactly like a regular lesson's committed class, not
-    // layered on top of the break/meeting card underneath.
+    // Handle non-lesson time slots (breaks, meetings). (Any override here
+    // was already handled by the cellOverrides short-circuit above.)
     if (!isLessonTimeSlot(timeSlot)) {
-      if (cellOverrides.length > 0) {
-        return (
-          <div className={`schedule-cell selected-classes ${highlightClass}`}>
-            {cellOverrides.map(renderOverrideCard)}
-          </div>
-        );
-      }
-
       return (
         <div
           className={`schedule-cell ${displayInfo.cssClass} ${highlightClass}`}
@@ -272,7 +284,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       );
     }
 
-    if (primaryClasses.length === 0 && cellOverrides.length === 0) {
+    if (primaryClasses.length === 0) {
       return (
         <div
           className={`schedule-cell empty ${
@@ -293,8 +305,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       selectedClasses.includes(cls.id)
     );
 
-    // If there are selected classes or overrides, show them individually
-    if (selectedPrimaryClasses.length > 0 || cellOverrides.length > 0) {
+    // If there are selected classes, show them individually
+    if (selectedPrimaryClasses.length > 0) {
       const hasMandatoryClass = selectedPrimaryClasses.some(
         cls => cls.isMandatory
       );
@@ -319,7 +331,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               }}
             />
           ))}
-          {cellOverrides.map(renderOverrideCard)}
         </div>
       );
     }
@@ -374,7 +385,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               </Button>
             </div>
           </Card>
-          {cellOverrides.map(renderOverrideCard)}
         </div>
       );
     }
@@ -494,6 +504,11 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               weeklySchedule[selectedDayOfWeek]?.[selectedTimeSlot.id] || []
             ).filter(cls => !userGrade || cls.grades?.includes(userGrade))
           );
+          const overridesForSlot = overrides.filter(
+            o =>
+              o.dayOfWeek === selectedDayOfWeek &&
+              o.timeSlotId === selectedTimeSlot.id
+          );
 
           return (
             <ClassSelectionDrawer
@@ -520,6 +535,9 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               onCreateClass={onCreateClass}
               canCreateOverride={canCreateOverride}
               onCreateOverride={onCreateOverride}
+              overridesForSlot={overridesForSlot}
+              onOverrideEdit={onOverrideClick}
+              onDeleteOverride={onOverrideDelete}
             />
           );
         })()}
