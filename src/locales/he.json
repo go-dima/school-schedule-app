@@ -182,13 +182,12 @@
       "selectedClassesSection": "שיעורים שנבחרו:",
       "otherAvailableClasses": "שיעורים אחרים זמינים:",
       "availableClasses": "שיעורים זמינים:",
-      "conflictWarningTitle": "שים לב לחפיפות",
-      "conflictDescription": "ישנם {{count}} שיעורים עם חפיפה בזמן. בחירת שיעור חדש תבטל אוטומטית את השיעורים החופפים.",
       "dayNamePrefix": "יום {{dayName}}",
       "draftPickTooltip": "נבחר בטיוטה"
     },
     "override": {
       "buttonLabel": "הכנס שיעור חורג",
+      "createTooltip": "צור שיעור חורג",
       "warningAlert": "השיעור יתווסף כחריגה מהמערכת - מותאם להחלטת חונכ/ת",
       "createModalTitle": "הוספת שיעור חורג",
       "editModalTitle": "עריכת שיעור חורג",

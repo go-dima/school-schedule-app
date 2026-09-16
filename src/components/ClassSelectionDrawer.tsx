@@ -1,5 +1,5 @@
 import React from "react";
-import { Drawer, Tag, Empty, Alert, Button, Space, Typography } from "antd";
+import { Drawer, Tag, Empty, Button, Space, Typography } from "antd";
 import { useTranslation } from "react-i18next";
 import { ScheduleService } from "../services/scheduleService";
 import type { TimeSlot, ClassWithTimeSlot } from "../types";
@@ -195,20 +195,6 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
                 timeSlotId={timeSlot.id}
                 dayOfWeek={dayOfWeek}
               />
-            )}
-
-            {conflictingClasses.length > 0 && (
-              <div className="conflict-warning">
-                <Alert
-                  message={t("schedule.drawer.conflictWarningTitle")}
-                  description={t("schedule.drawer.conflictDescription", {
-                    count: conflictingClasses.length,
-                  })}
-                  type="info"
-                  showIcon
-                  closable
-                />
-              </div>
             )}
           </Space>
         )}

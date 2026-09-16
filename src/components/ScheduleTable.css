@@ -282,6 +282,12 @@
   text-align: center;
 }
 
+.override-footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
 .non-lesson-content .slot-name {
   font-weight: 600;
   font-size: 13px;

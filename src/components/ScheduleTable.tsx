@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Table, Card, Button, Empty } from "antd";
+import { Table, Card, Button, Empty, Tooltip } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { PlusOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { DAYS_OF_WEEK } from "../types";
 import { ScheduleService } from "../services/scheduleService";
@@ -183,6 +184,33 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     </Card>
   );
 
+  // A small orange "+" affordance offered wherever a staff member should be
+  // able to drop an override -- notably on fixed slots (breaks/meetings),
+  // which never open the normal selection drawer, so this is their only
+  // entry point into override creation.
+  const renderCreateOverrideFooterButton = (
+    timeSlot: TimeSlot,
+    dayOfWeek: number
+  ) =>
+    canCreateOverride &&
+    onCreateOverride && (
+      <div className="override-footer">
+        <Tooltip title={t("schedule.override.createTooltip")}>
+          <Button
+            type="primary"
+            shape="circle"
+            size="small"
+            icon={<PlusOutlined />}
+            style={{ backgroundColor: "#fa8c16", borderColor: "#fa8c16" }}
+            onClick={e => {
+              e.stopPropagation();
+              onCreateOverride(timeSlot.id, dayOfWeek);
+            }}
+          />
+        </Tooltip>
+      </div>
+    );
+
   const renderClassCell = (timeSlot: TimeSlot, dayOfWeek: number) => {
     const dayClasses = weeklySchedule[dayOfWeek]?.[timeSlot.id] || [];
     const cellOverrides = overrides.filter(
@@ -261,6 +289,8 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               )}
             </div>
           </Card>
+          {cellOverrides.map(renderOverrideCard)}
+          {renderCreateOverrideFooterButton(timeSlot, dayOfWeek)}
         </div>
       );
     }
