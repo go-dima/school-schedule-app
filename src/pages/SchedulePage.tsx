@@ -595,7 +595,16 @@ const SchedulePageContent: React.FC = () => {
     setOverrideModalOpen(true);
   };
 
-  const handleOverrideCardClick = (override: ScheduleOverrideWithTimeSlot) => {
+  const handleOverrideCardClick = async (
+    override: ScheduleOverrideWithTimeSlot
+  ) => {
+    try {
+      await ensureAllTimeSlotsLoaded();
+    } catch (err) {
+      message.error(t("schedule.page.error.loadTimeSlots"));
+      return;
+    }
+
     setEditingOverride(override);
     setOverrideTimeSlotId(override.timeSlotId);
     setOverrideDay(override.dayOfWeek);
