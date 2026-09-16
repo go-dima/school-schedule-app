@@ -1,6 +1,6 @@
 -- Migration: 036_update_time_slots_schedule
 -- Description: Update the school's daily time slots to match the new
---   published schedule (לוח זמנים בבית החינוך): rename הפסקת אוכל ->
+--   published schedule: rename הפסקת אוכל ->
 --   ארוחת בוקר (09:00-09:10, was 09:00-09:15) and הפסקה -> הפסקה גדולה
 --   (unchanged 10:30-11:00), and retime the four surrounding lesson slots
 --   (שיעור ראשון/שני/שלישי/רביעי) that shift by 5-10 minutes to make room.
