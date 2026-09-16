@@ -158,12 +158,13 @@
 }
 
 /* A fixed overlay, not part of the 3-line flow -- stays put in the
-   card's bottom-right corner regardless of content length, and never
-   affects the card's layout height. */
+   card's bottom-left corner regardless of content length, and never
+   affects the card's layout height. Left (not right) so it reads after
+   the tags in RTL reading order, rather than before them. */
 .class-enrollment-badge {
   position: absolute;
   bottom: 6px;
-  right: 8px;
+  left: 8px;
   z-index: 1;
   pointer-events: none;
 }
@@ -176,11 +177,11 @@
   gap: 4px;
 }
 
-/* Reserves physical-right space matching .class-enrollment-badge's corner,
+/* Reserves physical-left space matching .class-enrollment-badge's corner,
    so a centered tag never ends up sitting directly under/against the
    badge. */
 .class-tags-row--with-badge {
-  padding-right: 28px;
+  padding-left: 28px;
 }
 
 .schedule-cell.clickable .class-card {
