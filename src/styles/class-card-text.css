@@ -13,7 +13,8 @@
 .class-teacher-room {
   display: flex;
   justify-content: center;
-  align-items: baseline;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 4px;
   margin-bottom: 6px;
 }

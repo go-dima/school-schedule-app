@@ -17,11 +17,8 @@ import type {
   WeeklySchedule,
 } from "../types";
 import ClassSelectionDrawer from "./ClassSelectionDrawer";
-import ClassCardHeader from "./ClassCardHeader";
+import ClassCard from "./ClassCard";
 import "./ScheduleTable.css";
-import { GradesRangeTag } from "@/elements/GradesRangeTag";
-import { DoubleLessonTag } from "@/elements/DoubleLessonTag";
-import { EnrollmentCount } from "@/elements/EnrollmentCount";
 import { EnrollmentService } from "../services/enrollmentService";
 
 interface ScheduleTableProps {
@@ -155,18 +152,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   const classHasConflict = (cls: ClassWithTimeSlot): boolean =>
     ScheduleService.hasTimeConflict(userSelections, cls);
 
-  const renderClassCardHeader = (
-    cls: ClassWithTimeSlot,
-    isContinuation: boolean
-  ) => (
-    <ClassCardHeader
-      title={cls.title}
-      isContinuation={isContinuation}
-      teacher={cls.teacher}
-      room={cls.room}
-    />
-  );
-
   const renderClassCell = (timeSlot: TimeSlot, dayOfWeek: number) => {
     const dayClasses = weeklySchedule[dayOfWeek]?.[timeSlot.id] || [];
 
@@ -215,26 +200,12 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           } ${hasConflict ? "conflict" : ""} ${isSelectableSlot ? "clickable" : ""} ${highlightClass}`}
           title={hasConflict ? t("schedule.table.conflictTooltip") : undefined}
           onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
-          <Card
-            size="small"
-            className={`class-card selected-card double-card ${isMandatory ? "mandatory-card" : ""}`}>
-            {renderClassCardHeader(doubleClass, true)}
-            <div className="class-labels-row">
-              <div className="class-enrollment-labels">
-                <div className="class-tags">
-                  <GradesRangeTag grades={doubleClass.grades} color="green" />
-                  <DoubleLessonTag />
-                </div>
-              </div>
-              {showEnrollmentCount && (
-                <div className="class-enrollment-icon">
-                  <EnrollmentCount
-                    count={enrollmentCounts.get(doubleClass.id) || 0}
-                  />
-                </div>
-              )}
-            </div>
-          </Card>
+          <ClassCard
+            cls={doubleClass}
+            isContinuation={true}
+            showEnrollmentCount={showEnrollmentCount}
+            enrollmentCount={enrollmentCounts.get(doubleClass.id) || 0}
+          />
         </div>
       );
     }
@@ -294,39 +265,18 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           } ${hasConflict ? "conflict" : ""} ${isSelectableSlot ? "clickable" : ""} ${highlightClass}`}
           title={hasConflict ? t("schedule.table.conflictTooltip") : undefined}
           onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
-          {selectedPrimaryClasses.map(cls => {
-            const isDoubleLesson = cls.isDouble;
-            const isMandatory = cls.isMandatory;
-            const displayState = "selected";
-            const tagColor = "green";
-
-            return (
-              <Card
-                key={cls.id}
-                size="small"
-                className={`class-card ${displayState}-card ${isDoubleLesson ? "double-card" : ""} ${isMandatory ? "mandatory-card" : ""}`}
-                style={{
-                  marginBottom: selectedPrimaryClasses.length > 1 ? 4 : 0,
-                }}>
-                {renderClassCardHeader(cls, false)}
-                <div className="class-labels-row">
-                  <div className="class-enrollment-labels">
-                    <div className="class-tags">
-                      <GradesRangeTag grades={cls.grades} color={tagColor} />
-                      {isDoubleLesson && <DoubleLessonTag />}
-                    </div>
-                  </div>
-                  {showEnrollmentCount && (
-                    <div className="class-enrollment-icon">
-                      <EnrollmentCount
-                        count={enrollmentCounts.get(cls.id) || 0}
-                      />
-                    </div>
-                  )}
-                </div>
-              </Card>
-            );
-          })}
+          {selectedPrimaryClasses.map(cls => (
+            <ClassCard
+              key={cls.id}
+              cls={cls}
+              isContinuation={false}
+              showEnrollmentCount={showEnrollmentCount}
+              enrollmentCount={enrollmentCounts.get(cls.id) || 0}
+              style={{
+                marginBottom: selectedPrimaryClasses.length > 1 ? 4 : 0,
+              }}
+            />
+          ))}
         </div>
       );
     }

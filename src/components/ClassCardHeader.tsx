@@ -6,6 +6,7 @@ interface ClassCardHeaderProps {
   isContinuation?: boolean;
   teacher?: string;
   room?: string;
+  tags?: React.ReactNode;
 }
 
 const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
@@ -13,6 +14,7 @@ const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
   isContinuation = false,
   teacher,
   room,
+  tags,
 }) => {
   const { t } = useTranslation();
 
@@ -26,7 +28,7 @@ const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
           </span>
         )}
       </div>
-      {(teacher || room) && (
+      {(teacher || room || tags) && (
         <div className="class-teacher-room">
           {teacher && <span className="class-teacher">{teacher}</span>}
           {teacher && room && (
@@ -37,6 +39,7 @@ const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
               {t("schedule.table.room", { room })}
             </span>
           )}
+          {tags && <span className="class-header-tags-inline">{tags}</span>}
         </div>
       )}
     </>
