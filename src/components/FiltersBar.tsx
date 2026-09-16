@@ -17,6 +17,13 @@ interface FiltersBarProps {
   refreshing?: boolean;
   /** Defaults to the shared "רענן" translation. */
   refreshLabel?: string;
+  /**
+   * Locks the whole bar (filters and actions alike) against interaction --
+   * for a data refetch in flight, where every control reads stale state
+   * until it resolves. Individual controls can still carry their own
+   * `disabled` for narrower, state-driven cases; this is the blanket one.
+   */
+  disabled?: boolean;
 }
 
 // Shared filters-section/filters-row wrapper (see FiltersBar.css) so every
@@ -31,11 +38,16 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
   onRefresh,
   refreshing,
   refreshLabel,
+  disabled = false,
 }) => {
   const { t } = useTranslation();
 
   return (
-    <div className={`filters-section filters-section--${variant}`}>
+    <div
+      className={`filters-section filters-section--${variant}${
+        disabled ? " filters-section--disabled" : ""
+      }`}
+      aria-disabled={disabled}>
       <div className="filters-row">
         <Space wrap>{children}</Space>
         {(actions || canRefresh) && (
@@ -45,6 +57,7 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
               <Button
                 icon={<ReloadOutlined />}
                 onClick={onRefresh}
+                disabled={disabled}
                 loading={refreshing}>
                 {refreshLabel ?? t("common.buttons.refresh")}
               </Button>

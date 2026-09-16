@@ -323,7 +323,11 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         style={{ marginBottom: 24 }}
       />
 
-      <FiltersBar canRefresh onRefresh={loadUsers} refreshing={loading}>
+      <FiltersBar
+        canRefresh
+        onRefresh={loadUsers}
+        refreshing={loading}
+        disabled={loading}>
         <FilterField label="סנן לפי תפקיד">
           <Select<UserRole[]>
             mode="multiple"

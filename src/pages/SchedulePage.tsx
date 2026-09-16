@@ -261,10 +261,20 @@ const SchedulePageContent: React.FC = () => {
     }
   }, [selectedChild, isParent, isAdmin]);
 
-  const loading =
+  // Page-level loading: catalog (classes/time slots) and the child roster
+  // only load once (or on an explicit refresh), so gating the full-page
+  // spinner on these is fine. `selectedScheduleLoading` is deliberately
+  // excluded -- it re-fires on every child selection and draft/committed
+  // toggle, and including it here would unmount and remount the whole page
+  // (filters, selectors, everything) on each of those, instead of just
+  // refreshing the schedule grid. See `scheduleGridLoading` below.
+  const pageLoading =
     scheduleLoading ||
-    selectedScheduleLoading ||
     (isParent ? childrenLoading : isStaff ? allChildrenLoading : false);
+  // Scoped to the schedule grid + selected-classes summary, so switching
+  // child/toggle only shows a local loading state over that section.
+  const scheduleGridLoading = selectedScheduleLoading;
+  const loading = pageLoading || scheduleGridLoading;
   const error = scheduleError || selectedScheduleError || childrenError;
 
   const handleRoleSwitch = (roleId: string) => {
@@ -546,7 +556,7 @@ const SchedulePageContent: React.FC = () => {
     currentRole?.role === "admin" ||
     currentRole?.role === "staff";
 
-  if (loading) {
+  if (pageLoading) {
     return (
       <div className="page-loading">
         <Spin size="large" />
@@ -567,6 +577,7 @@ const SchedulePageContent: React.FC = () => {
           refetchSelectedSchedule();
         }}
         refreshing={loading}
+        disabled={loading}
         actions={
           <>
             {userRoles.length > 1 && (
@@ -807,68 +818,70 @@ const SchedulePageContent: React.FC = () => {
       {viewStatus === "draft" && <DraftBanner />}
       {isParent && viewCommitted && <CommittedReadOnlyBanner />}
 
-      <Card className="schedule-card">
-        <ScheduleTable
-          timeSlots={timeSlots}
-          classes={classes}
-          weeklySchedule={weeklySchedule}
-          userGrade={selectedGrade}
-          selectedClasses={selectedClasses}
-          draftPickedClassIds={Array.from(draftClassIds)}
-          userSelections={selectedSchedule}
-          onClassSelect={handleClassSelect}
-          onClassUnselect={handleClassSelect}
-          canSelectClasses={canSelectClasses}
-          canViewClasses={canViewClasses}
-          isAdmin={canCreateClasses()}
-          showEnrollmentCount={isStaff || isAdmin()}
-          onCreateClass={handleCreateClass}
-          searchTerm={searchTerm}
-          childGroupNumber={currentTrackChild?.groupNumber}
-          lockedClassIds={Array.from(lockedClassIds)}
-        />
-      </Card>
-
-      {canSelectClasses && selectedSchedule.length > 0 && (
-        <Card
-          title={
-            (isParent && selectedChild) || (isStaff && staffSelectedChild)
-              ? t("schedule.page.selectedClassesForChild", {
-                  firstName: (isParent ? selectedChild : staffSelectedChild)
-                    ?.firstName,
-                  lastName: (isParent ? selectedChild : staffSelectedChild)
-                    ?.lastName,
-                })
-              : t("schedule.page.selectedClassesTitle")
-          }
-          className="selected-classes-summary">
-          <Space wrap>
-            {selectedSchedule.map(selection => {
-              const isLocked = lockedClassIds.has(selection.classId);
-              const button = (
-                <Button
-                  key={selection.id}
-                  type="primary"
-                  size="small"
-                  disabled={isLocked}
-                  icon={isLocked ? <LockOutlined /> : undefined}
-                  onClick={() => handleClassSelect(selection.classId)}>
-                  {selection.class.title} - {selection.class.teacher}
-                </Button>
-              );
-              return isLocked ? (
-                <Tooltip
-                  key={selection.id}
-                  title={t("schedule.drawer.lockedClassTooltip")}>
-                  <span style={{ display: "inline-block" }}>{button}</span>
-                </Tooltip>
-              ) : (
-                button
-              );
-            })}
-          </Space>
+      <Spin spinning={scheduleGridLoading}>
+        <Card className="schedule-card">
+          <ScheduleTable
+            timeSlots={timeSlots}
+            classes={classes}
+            weeklySchedule={weeklySchedule}
+            userGrade={selectedGrade}
+            selectedClasses={selectedClasses}
+            draftPickedClassIds={Array.from(draftClassIds)}
+            userSelections={selectedSchedule}
+            onClassSelect={handleClassSelect}
+            onClassUnselect={handleClassSelect}
+            canSelectClasses={canSelectClasses}
+            canViewClasses={canViewClasses}
+            isAdmin={canCreateClasses()}
+            showEnrollmentCount={isStaff || isAdmin()}
+            onCreateClass={handleCreateClass}
+            searchTerm={searchTerm}
+            childGroupNumber={currentTrackChild?.groupNumber}
+            lockedClassIds={Array.from(lockedClassIds)}
+          />
         </Card>
-      )}
+
+        {canSelectClasses && selectedSchedule.length > 0 && (
+          <Card
+            title={
+              (isParent && selectedChild) || (isStaff && staffSelectedChild)
+                ? t("schedule.page.selectedClassesForChild", {
+                    firstName: (isParent ? selectedChild : staffSelectedChild)
+                      ?.firstName,
+                    lastName: (isParent ? selectedChild : staffSelectedChild)
+                      ?.lastName,
+                  })
+                : t("schedule.page.selectedClassesTitle")
+            }
+            className="selected-classes-summary">
+            <Space wrap>
+              {selectedSchedule.map(selection => {
+                const isLocked = lockedClassIds.has(selection.classId);
+                const button = (
+                  <Button
+                    key={selection.id}
+                    type="primary"
+                    size="small"
+                    disabled={isLocked}
+                    icon={isLocked ? <LockOutlined /> : undefined}
+                    onClick={() => handleClassSelect(selection.classId)}>
+                    {selection.class.title} - {selection.class.teacher}
+                  </Button>
+                );
+                return isLocked ? (
+                  <Tooltip
+                    key={selection.id}
+                    title={t("schedule.drawer.lockedClassTooltip")}>
+                    <span style={{ display: "inline-block" }}>{button}</span>
+                  </Tooltip>
+                ) : (
+                  button
+                );
+              })}
+            </Space>
+          </Card>
+        )}
+      </Spin>
 
       <Modal
         title={t("schedule.page.createNewClassModal")}

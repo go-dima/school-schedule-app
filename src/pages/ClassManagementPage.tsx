@@ -51,6 +51,11 @@ const ClassManagementPage: React.FC = () => {
   const [classes, setClasses] = useState<ClassWithTimeSlot[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
+  // True only until the first load resolves. Gates the full-page spinner;
+  // subsequent reloads (refresh button, after add/edit/delete) use `loading`
+  // to show a local Table overlay and lock the header/filters instead of
+  // unmounting the whole page.
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingClass, setEditingClass] = useState<ClassWithTimeSlot | null>(
@@ -145,6 +150,7 @@ const ClassManagementPage: React.FC = () => {
       );
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   };
 
@@ -496,7 +502,7 @@ const ClassManagementPage: React.FC = () => {
     );
   }
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="page-content">
         <div className="page-loading">
@@ -512,25 +518,6 @@ const ClassManagementPage: React.FC = () => {
   return (
     <div className="page-content">
       <div className="class-management-header">
-        <div className="header-main">
-          <Title level={2}>{t("classManagement.page.title")}</Title>
-          <Space>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              disabled={!canCreateClasses()}
-              onClick={handleAddClass}>
-              {t("classManagement.page.addNewClass")}
-            </Button>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={loadData}
-              disabled={loading}>
-              {t("common.buttons.refresh")}
-            </Button>
-          </Space>
-        </div>
-
         <Alert
           message={t("classManagement.page.managementAlertTitle")}
           description={t("classManagement.page.managementDescription")}
@@ -539,124 +526,152 @@ const ClassManagementPage: React.FC = () => {
           style={{ marginBottom: 24 }}
         />
 
-        {/* Filters */}
-        <Card
-          title={t("classManagement.page.filtersTitle")}
-          style={{ marginBottom: 24 }}>
-          <Space size={16} align="end" wrap>
-            <Button
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedDay(null);
-                setSelectedGrade(null);
-                setSelectedTrack(null);
-              }}>
-              {t("classManagement.page.clearFiltersButton")}
-            </Button>
-
-            <FilterSelect
-              label={t("classManagement.page.trackFilterLabel")}
-              placeholder={t("classManagement.page.trackFilterPlaceholder")}
-              value={selectedTrack}
-              onChange={setSelectedTrack}
-              options={[
-                ...[1, 2].map(track => ({
-                  value: track,
-                  label: t("classManagement.page.trackFilterOption", {
-                    track,
-                  }),
-                })),
-                {
-                  value: NO_TRACK_FILTER,
-                  label: t("classManagement.page.trackFilterOptionNone"),
-                },
-              ]}
-            />
-
-            <FilterSelect
-              label={t("classManagement.page.dayFilterLabel")}
-              placeholder={t("classManagement.page.dayFilterPlaceholder")}
-              value={selectedDay}
-              onChange={setSelectedDay}
-              options={DAYS_OF_WEEK.map(day => ({
-                value: day.key,
-                label: day.name,
-              }))}
-            />
-
-            <FilterSelect
-              label={t("classManagement.page.gradeFilterLabel")}
-              placeholder={t("classManagement.page.gradeFilterPlaceholder")}
-              value={selectedGrade}
-              onChange={setSelectedGrade}
-              options={GRADES.map(grade => ({
-                value: grade,
-                label: GetGradeName(grade),
-              }))}
-            />
-
-            <Space size={4} align="center">
-              <AutoComplete
-                value={teacherSearchTerm}
-                onChange={setTeacherSearchTerm}
-                options={(() => {
-                  if (!teacherSearchTerm) return [];
-
-                  const lowerTeacherSearchTerm =
-                    teacherSearchTerm.toLowerCase();
-                  const uniqueTeacherNames = Array.from(
-                    new Set(
-                      classes
-                        .filter(cls =>
-                          cls.teacher
-                            .toLowerCase()
-                            .includes(lowerTeacherSearchTerm)
-                        )
-                        .map(cls => cls.teacher)
-                    )
-                  ).sort();
-
-                  return uniqueTeacherNames.map(teacher => ({
-                    value: teacher,
-                  }));
-                })()}
-                placeholder={t("classManagement.page.searchTeacherPlaceholder")}
-                style={{ width: 200 }}
-                allowClear
-                filterOption={false}
-              />
-              <label>{t("classManagement.page.searchTeacherLabel")}</label>
+        <div
+          className={`class-management-controls${
+            loading ? " class-management-controls--disabled" : ""
+          }`}
+          aria-disabled={loading}>
+          <div className="header-main">
+            <Title level={2}>{t("classManagement.page.title")}</Title>
+            <Space>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                disabled={!canCreateClasses() || loading}
+                onClick={handleAddClass}>
+                {t("classManagement.page.addNewClass")}
+              </Button>
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={loadData}
+                loading={loading}
+                disabled={loading}>
+                {t("common.buttons.refresh")}
+              </Button>
             </Space>
+          </div>
 
-            <Space size={4} align="center">
-              <AutoComplete
-                value={searchTerm}
-                onChange={setSearchTerm}
-                options={(() => {
-                  if (!searchTerm) return [];
+          {/* Filters */}
+          <Card
+            title={t("classManagement.page.filtersTitle")}
+            style={{ marginBottom: 24 }}>
+            <Space size={16} align="end" wrap>
+              <Button
+                onClick={() => {
+                  setSearchTerm("");
+                  setSelectedDay(null);
+                  setSelectedGrade(null);
+                  setSelectedTrack(null);
+                }}>
+                {t("classManagement.page.clearFiltersButton")}
+              </Button>
 
-                  const lowerSearchTerm = searchTerm.toLowerCase();
-                  const uniqueClassNames = Array.from(
-                    new Set(
-                      classes
-                        .filter(cls =>
-                          cls.title.toLowerCase().includes(lowerSearchTerm)
-                        )
-                        .map(cls => cls.title)
-                    )
-                  ).sort();
-
-                  return uniqueClassNames.map(title => ({ value: title }));
-                })()}
-                placeholder={t("classManagement.page.searchPlaceholder")}
-                style={{ width: 200 }}
-                allowClear
-                filterOption={false}
+              <FilterSelect
+                label={t("classManagement.page.trackFilterLabel")}
+                placeholder={t("classManagement.page.trackFilterPlaceholder")}
+                value={selectedTrack}
+                onChange={setSelectedTrack}
+                options={[
+                  ...[1, 2].map(track => ({
+                    value: track,
+                    label: t("classManagement.page.trackFilterOption", {
+                      track,
+                    }),
+                  })),
+                  {
+                    value: NO_TRACK_FILTER,
+                    label: t("classManagement.page.trackFilterOptionNone"),
+                  },
+                ]}
               />
-              <label>{t("classManagement.page.searchLabel")}</label>
+
+              <FilterSelect
+                label={t("classManagement.page.dayFilterLabel")}
+                placeholder={t("classManagement.page.dayFilterPlaceholder")}
+                value={selectedDay}
+                onChange={setSelectedDay}
+                options={DAYS_OF_WEEK.map(day => ({
+                  value: day.key,
+                  label: day.name,
+                }))}
+              />
+
+              <FilterSelect
+                label={t("classManagement.page.gradeFilterLabel")}
+                placeholder={t("classManagement.page.gradeFilterPlaceholder")}
+                value={selectedGrade}
+                onChange={setSelectedGrade}
+                options={GRADES.map(grade => ({
+                  value: grade,
+                  label: GetGradeName(grade),
+                }))}
+              />
+
+              <Space size={4} align="center">
+                <AutoComplete
+                  value={teacherSearchTerm}
+                  onChange={setTeacherSearchTerm}
+                  options={(() => {
+                    if (!teacherSearchTerm) return [];
+
+                    const lowerTeacherSearchTerm =
+                      teacherSearchTerm.toLowerCase();
+                    const uniqueTeacherNames = Array.from(
+                      new Set(
+                        classes
+                          .filter(cls =>
+                            cls.teacher
+                              .toLowerCase()
+                              .includes(lowerTeacherSearchTerm)
+                          )
+                          .map(cls => cls.teacher)
+                      )
+                    ).sort();
+
+                    return uniqueTeacherNames.map(teacher => ({
+                      value: teacher,
+                    }));
+                  })()}
+                  placeholder={t(
+                    "classManagement.page.searchTeacherPlaceholder"
+                  )}
+                  style={{ width: 200 }}
+                  allowClear
+                  filterOption={false}
+                />
+                <label>{t("classManagement.page.searchTeacherLabel")}</label>
+              </Space>
+
+              <Space size={4} align="center">
+                <AutoComplete
+                  value={searchTerm}
+                  onChange={setSearchTerm}
+                  options={(() => {
+                    if (!searchTerm) return [];
+
+                    const lowerSearchTerm = searchTerm.toLowerCase();
+                    const uniqueClassNames = Array.from(
+                      new Set(
+                        classes
+                          .filter(cls =>
+                            cls.title.toLowerCase().includes(lowerSearchTerm)
+                          )
+                          .map(cls => cls.title)
+                      )
+                    ).sort();
+
+                    return uniqueClassNames.map(title => ({ value: title }));
+                  })()}
+                  placeholder={t("classManagement.page.searchPlaceholder")}
+                  style={{ width: 200 }}
+                  allowClear
+                  filterOption={false}
+                />
+                <label>{t("classManagement.page.searchLabel")}</label>
+              </Space>
             </Space>
-          </Space>
-        </Card>
+          </Card>
+        </div>
       </div>
 
       {error && (
@@ -675,6 +690,7 @@ const ClassManagementPage: React.FC = () => {
           columns={columns}
           dataSource={filteredClasses}
           rowKey="id"
+          loading={loading}
           pagination={{
             pageSize: 20,
             showSizeChanger: true,
