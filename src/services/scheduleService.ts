@@ -273,4 +273,51 @@ export class ScheduleService {
     if (isStaffOrAdmin) return classes;
     return classes.filter(cls => !STAFF_ONLY_CLASS_TITLES.has(cls.title));
   }
+
+  /** True for staff-only placeholder classes (e.g. "חונכות", "שילוב"). */
+  static isStaffOnlyClass(cls: ClassWithTimeSlot): boolean {
+    return STAFF_ONLY_CLASS_TITLES.has(cls.title);
+  }
+
+  /**
+   * Combines a catalog's weekly schedule with a second schedule (e.g. a
+   * user's actual selections, built via `buildWeeklySchedule` from
+   * unfiltered class data) so classes present in either show up once per
+   * day/slot. Used to let an already-committed pick stay visible even when
+   * the catalog feed has filtered it out (e.g. a staff-only class selected
+   * for a child, hidden from the parent's pickable catalog) -- the caller
+   * is responsible for ensuring `overlay` only ever contains classes the
+   * viewer is actually allowed to see (e.g. their own/child's selections),
+   * since this merge applies no permission filtering itself.
+   */
+  static mergeWeeklySchedules(
+    base: WeeklySchedule,
+    overlay: WeeklySchedule
+  ): WeeklySchedule {
+    const merged: WeeklySchedule = {};
+    const days = new Set([
+      ...Object.keys(base).map(Number),
+      ...Object.keys(overlay).map(Number),
+    ]);
+
+    days.forEach(day => {
+      merged[day] = {};
+      const slotIds = new Set([
+        ...Object.keys(base[day] || {}),
+        ...Object.keys(overlay[day] || {}),
+      ]);
+
+      slotIds.forEach(slotId => {
+        const baseClasses = base[day]?.[slotId] || [];
+        const overlayClasses = overlay[day]?.[slotId] || [];
+        const seenIds = new Set(baseClasses.map(cls => cls.id));
+        merged[day][slotId] = [
+          ...baseClasses,
+          ...overlayClasses.filter(cls => !seenIds.has(cls.id)),
+        ];
+      });
+    });
+
+    return merged;
+  }
 }

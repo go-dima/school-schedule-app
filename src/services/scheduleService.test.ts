@@ -485,3 +485,69 @@ describe("ScheduleService.orderClassesByPickStatus", () => {
     expect(result.map(c => c.id)).toEqual(["class-2", "class-1"]);
   });
 });
+
+describe("ScheduleService.isStaffOnlyClass", () => {
+  it("is true for חונכות", () => {
+    expect(
+      ScheduleService.isStaffOnlyClass(makeClass({ title: "חונכות" }))
+    ).toBe(true);
+  });
+
+  it("is true for שילוב", () => {
+    expect(
+      ScheduleService.isStaffOnlyClass(makeClass({ title: "שילוב" }))
+    ).toBe(true);
+  });
+
+  it("is false for a regular class", () => {
+    expect(
+      ScheduleService.isStaffOnlyClass(makeClass({ title: "מתמטיקה" }))
+    ).toBe(false);
+  });
+});
+
+describe("ScheduleService.mergeWeeklySchedules", () => {
+  it("returns base unchanged when overlay is empty", () => {
+    const cls = makeClass();
+    const base = ScheduleService.buildWeeklySchedule([cls]);
+
+    expect(ScheduleService.mergeWeeklySchedules(base, {})).toEqual(base);
+  });
+
+  it("adds an overlay-only day/slot entry missing from base", () => {
+    const cls = makeClass({ id: "overlay-only" });
+    const overlay = ScheduleService.buildWeeklySchedule([cls]);
+
+    const merged = ScheduleService.mergeWeeklySchedules({}, overlay);
+
+    expect(merged[0][tsFirst.id]).toEqual([cls]);
+  });
+
+  it("dedups by class id when the same class exists in both for the same day/slot", () => {
+    const cls = makeClass();
+    const base = ScheduleService.buildWeeklySchedule([cls]);
+    const overlay = ScheduleService.buildWeeklySchedule([cls]);
+
+    const merged = ScheduleService.mergeWeeklySchedules(base, overlay);
+
+    expect(merged[0][tsFirst.id]).toEqual([cls]);
+  });
+
+  it("keeps distinct entries for different days/slots without cross-contamination", () => {
+    const baseCls = makeClass({
+      id: "base-class",
+      slots: [{ dayOfWeek: 0, timeSlotId: tsFirst.id, timeSlot: tsFirst }],
+    });
+    const overlayCls = makeClass({
+      id: "overlay-class",
+      slots: [{ dayOfWeek: 2, timeSlotId: tsThird.id, timeSlot: tsThird }],
+    });
+    const base = ScheduleService.buildWeeklySchedule([baseCls]);
+    const overlay = ScheduleService.buildWeeklySchedule([overlayCls]);
+
+    const merged = ScheduleService.mergeWeeklySchedules(base, overlay);
+
+    expect(merged[0][tsFirst.id]).toEqual([baseCls]);
+    expect(merged[2][tsThird.id]).toEqual([overlayCls]);
+  });
+});

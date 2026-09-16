@@ -125,7 +125,10 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   ): ClassWithTimeSlot[] => {
     if (childGroupNumber === undefined) return classesToFilter;
     return classesToFilter.filter(
-      cls => cls.groupNumber === null || cls.groupNumber === childGroupNumber
+      cls =>
+        selectedClasses.includes(cls.id) ||
+        cls.groupNumber === null ||
+        cls.groupNumber === childGroupNumber
     );
   };
 
@@ -493,17 +496,9 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
         selectedDayOfWeek !== null &&
         (() => {
           const classesForSlot = filterByGroup(
-            classes.filter(cls => {
-              if (userGrade && !cls.grades?.includes(userGrade)) {
-                return false;
-              }
-
-              return cls.slots.some(
-                slot =>
-                  slot.dayOfWeek === selectedDayOfWeek &&
-                  slot.timeSlotId === selectedTimeSlot.id
-              );
-            })
+            (
+              weeklySchedule[selectedDayOfWeek]?.[selectedTimeSlot.id] || []
+            ).filter(cls => !userGrade || cls.grades?.includes(userGrade))
           );
 
           return (
