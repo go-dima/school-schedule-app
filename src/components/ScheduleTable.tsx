@@ -185,8 +185,10 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 
   const renderClassCell = (timeSlot: TimeSlot, dayOfWeek: number) => {
     const dayClasses = weeklySchedule[dayOfWeek]?.[timeSlot.id] || [];
-    const cellOverrides = overrides.filter(
-      o => o.dayOfWeek === dayOfWeek && o.timeSlotId === timeSlot.id
+    const cellOverrides = ScheduleService.getOverridesForCell(
+      overrides,
+      dayOfWeek,
+      timeSlot.id
     );
 
     const displayInfo = getTimeSlotDisplayInfo(timeSlot);
@@ -507,10 +509,10 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               weeklySchedule[selectedDayOfWeek]?.[selectedTimeSlot.id] || []
             ).filter(cls => !userGrade || cls.grades?.includes(userGrade))
           );
-          const overridesForSlot = overrides.filter(
-            o =>
-              o.dayOfWeek === selectedDayOfWeek &&
-              o.timeSlotId === selectedTimeSlot.id
+          const overridesForSlot = ScheduleService.getOverridesForCell(
+            overrides,
+            selectedDayOfWeek,
+            selectedTimeSlot.id
           );
 
           return (

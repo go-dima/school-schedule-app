@@ -701,46 +701,40 @@ describe("ScheduleService.mergeWeeklySchedules", () => {
   });
 });
 
-describe("ScheduleService.overrideToClass", () => {
-  it("maps override fields onto a single-slot ClassWithTimeSlot with the given grade", () => {
-    const override = makeOverride();
+describe("ScheduleService.getOverridesForCell", () => {
+  it("returns overrides matching both dayOfWeek and timeSlotId", () => {
+    const override = makeOverride({ dayOfWeek: 1, timeSlotId: tsFirst.id });
 
-    const result = ScheduleService.overrideToClass(override, 4);
+    const result = ScheduleService.getOverridesForCell(
+      [override],
+      1,
+      tsFirst.id
+    );
 
-    expect(result).toEqual({
-      id: override.id,
-      title: override.title,
-      description: "",
-      teacher: override.teacher,
-      slots: [
-        {
-          dayOfWeek: override.dayOfWeek,
-          timeSlotId: override.timeSlotId,
-          timeSlot: override.timeSlot,
-        },
-      ],
-      grades: [4],
-      isMandatory: false,
-      isDouble: false,
-      groupNumber: null,
-      trackNumber: null,
-      room: override.room,
-      scope: override.scope,
-      createdAt: override.createdAt,
-      updatedAt: override.updatedAt,
-    });
+    expect(result).toEqual([override]);
   });
 
-  it("is renderable by the same weeklySchedule pipeline catalog classes use", () => {
-    const override = makeOverride({
-      dayOfWeek: 2,
-      timeSlotId: tsThird.id,
-      timeSlot: tsThird,
-    });
-    const overrideClass = ScheduleService.overrideToClass(override, 3);
+  it("returns [] when no override matches the cell", () => {
+    const override = makeOverride({ dayOfWeek: 1, timeSlotId: tsFirst.id });
 
-    const schedule = ScheduleService.buildWeeklySchedule([overrideClass]);
+    expect(
+      ScheduleService.getOverridesForCell([override], 2, tsThird.id)
+    ).toEqual([]);
+  });
 
-    expect(schedule[2][tsThird.id]).toEqual([overrideClass]);
+  it("does not match on day-only equality", () => {
+    const override = makeOverride({ dayOfWeek: 1, timeSlotId: tsFirst.id });
+
+    expect(
+      ScheduleService.getOverridesForCell([override], 1, tsThird.id)
+    ).toEqual([]);
+  });
+
+  it("does not match on slot-only equality", () => {
+    const override = makeOverride({ dayOfWeek: 1, timeSlotId: tsFirst.id });
+
+    expect(
+      ScheduleService.getOverridesForCell([override], 2, tsFirst.id)
+    ).toEqual([]);
   });
 });

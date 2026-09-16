@@ -1,7 +1,12 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import PrintableSchedule from "../components/PrintableSchedule";
-import type { Child, TimeSlot, WeeklySchedule } from "../types";
+import type {
+  Child,
+  TimeSlot,
+  WeeklySchedule,
+  ScheduleOverrideWithTimeSlot,
+} from "../types";
 import { getPrintStyles } from "./loadPrintStyles";
 import {
   PRINT_PAGE_CONTENT_WIDTH_PX,
@@ -14,6 +19,7 @@ interface PrintScheduleData {
   timeSlots: TimeSlot[];
   weeklySchedule: WeeklySchedule;
   selectedClasses: string[];
+  overrides: ScheduleOverrideWithTimeSlot[];
   showDraftMarker: boolean;
 }
 
@@ -84,6 +90,7 @@ export const printSchedule = async (data: PrintScheduleData): Promise<void> => {
             timeSlots: data.timeSlots,
             weeklySchedule: data.weeklySchedule,
             selectedClasses: data.selectedClasses,
+            overrides: data.overrides,
             showDraftMarker: data.showDraftMarker,
           }
         );
