@@ -354,7 +354,6 @@
       "trackFilterPlaceholder": "בחר מסלול",
       "trackFilterOption": "מסלול {{track}}",
       "trackFilterOptionNone": "ללא מסלול",
-      "scopeFilterLabel": "סביבה:",
       "clearFiltersButton": "נקה מסננים",
       "dataLoadingError": "שגיאה בטעינת הנתונים",
       "classDeletedSuccess": "השיעור נמחק בהצלחה",

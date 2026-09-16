@@ -12,7 +12,6 @@ import {
 import { UserOutlined, CrownOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { FiltersBar } from "../components/FiltersBar";
-import { FilterField } from "../components/FilterField";
 import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
 import { usersApi } from "../services/api";
 import type { UserRoleData, UserRole } from "../types";
@@ -332,16 +331,14 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         onRefresh={loadUsers}
         refreshing={loading}
         disabled={loading}>
-        <FilterField label="סנן לפי תפקיד">
-          <ToggleFilterGroup<UserRole>
-            value={roleFilter}
-            onChange={setRoleFilter}
-            options={ALL_ROLES.map(role => ({
-              value: role,
-              label: getRoleDisplayName(role),
-            }))}
-          />
-        </FilterField>
+        <ToggleFilterGroup<UserRole>
+          value={roleFilter}
+          onChange={setRoleFilter}
+          options={ALL_ROLES.map(role => ({
+            value: role,
+            label: getRoleDisplayName(role),
+          }))}
+        />
       </FiltersBar>
 
       <Table<UserWithRoles>

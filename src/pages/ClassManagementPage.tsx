@@ -689,17 +689,14 @@ const ClassManagementPage: React.FC = () => {
               </Space>
 
               {canCreateClasses() && (
-                <Space size={4} align="center">
-                  <ToggleFilterGroup<Scope>
-                    value={selectedScopes}
-                    onChange={setSelectedScopes}
-                    options={ALL_SCOPES.map(scope => ({
-                      value: scope,
-                      label: t(`scope.${scope}`),
-                    }))}
-                  />
-                  <label>{t("classManagement.page.scopeFilterLabel")}</label>
-                </Space>
+                <ToggleFilterGroup<Scope>
+                  value={selectedScopes}
+                  onChange={setSelectedScopes}
+                  options={ALL_SCOPES.map(scope => ({
+                    value: scope,
+                    label: t(`scope.${scope}`),
+                  }))}
+                />
               )}
             </div>
           </Card>
