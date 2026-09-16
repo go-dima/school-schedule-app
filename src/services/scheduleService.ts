@@ -2,6 +2,7 @@ import type {
   ClassSlot,
   ClassSlotWithTimeSlot,
   ClassWithTimeSlot,
+  ScheduleOverrideWithTimeSlot,
   ScheduleSelectionWithClass,
   SelectionStatus,
   TimeSlot,
@@ -239,6 +240,48 @@ export class ScheduleService {
   }
 
   /**
+   * The single decision point for schedule_overrides visibility/edit rights,
+   * collapsing what used to be three separately-reasoned-about inputs
+   * (role, the parent's draft/committed toggle, which child is selected)
+   * into one small, unit-testable state. An override has no draft/committed
+   * status of its own in the DB, but it represents committed reality (a
+   * staff decision) -- mixing it into a parent's draft would look like
+   * something the parent picked themselves, so it only ever appears
+   * alongside a *committed* view: a parent's own draft, a parent's
+   * committed view (+ overrides), or staff's view (always committed, so
+   * always + overrides). See scheduleService.test.ts for the full matrix.
+   */
+  static resolveScheduleView(input: {
+    role: UserRole | undefined;
+    viewCommitted: boolean;
+    parentSelectedChildId: string | undefined;
+    staffSelectedChildId: string | undefined;
+  }): {
+    viewStatus: SelectionStatus;
+    overrideChildId: string | undefined;
+    canCreateOverride: boolean;
+  } {
+    const isStaff = input.role === "staff";
+    const isParent = input.role === "parent";
+
+    const viewStatus: SelectionStatus =
+      isParent && input.viewCommitted
+        ? "committed"
+        : ScheduleService.resolveSelectionStatus(input.role);
+
+    const overrideChildId: string | undefined =
+      viewStatus === "committed"
+        ? isStaff
+          ? input.staffSelectedChildId
+          : input.parentSelectedChildId
+        : undefined;
+
+    const canCreateOverride = isStaff && !!input.staffSelectedChildId;
+
+    return { viewStatus, overrideChildId, canCreateOverride };
+  }
+
+  /**
    * Stable-sorts classes so draft-marked ones come first (preserving
    * relative order within each group), with staff-only placeholder classes
    * (e.g. "חונכות", "שילוב") pushed after all non-staff-only classes within
@@ -319,5 +362,45 @@ export class ScheduleService {
     });
 
     return merged;
+  }
+
+  /**
+   * Maps a staff override onto the same ClassWithTimeSlot shape the rest of
+   * the schedule pipeline (buildWeeklySchedule, print) already knows how to
+   * render, so an override shows up "like any other lesson" wherever that
+   * pipeline is reused (currently: print/export) instead of needing a
+   * parallel rendering path. `grades: [grade]` (the target child's own
+   * grade) is a deliberate stand-in for the catalog's real grades array,
+   * which has no equivalent on schedule_overrides -- an override is always
+   * for exactly one child, so gating it on "does this include the child's
+   * grade" (as print/grid grade filters do for catalog classes) is always
+   * true by construction.
+   */
+  static overrideToClass(
+    override: ScheduleOverrideWithTimeSlot,
+    grade: number
+  ): ClassWithTimeSlot {
+    return {
+      id: override.id,
+      title: override.title,
+      description: "",
+      teacher: override.teacher,
+      slots: [
+        {
+          dayOfWeek: override.dayOfWeek,
+          timeSlotId: override.timeSlotId,
+          timeSlot: override.timeSlot,
+        },
+      ],
+      grades: [grade],
+      isMandatory: false,
+      isDouble: false,
+      groupNumber: null,
+      trackNumber: null,
+      room: override.room,
+      scope: override.scope,
+      createdAt: override.createdAt,
+      updatedAt: override.updatedAt,
+    };
   }
 }

@@ -83,7 +83,8 @@ function defaultFromImpl() {
 }
 
 // Import after the mock so `api.ts` picks up the mocked `./supabase` module.
-const { authApi, scheduleApi, childrenApi } = await import("./api");
+const { authApi, scheduleApi, scheduleOverridesApi, childrenApi } =
+  await import("./api");
 const { supabase } = await import("./supabase");
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -517,5 +518,260 @@ describe("childrenApi.claimChild", () => {
     await expect(childrenApi.claimChild("child-1")).rejects.toThrow(
       "This child already has a linked parent and cannot be claimed"
     );
+  });
+});
+
+describe("scheduleOverridesApi", () => {
+  const originalFrom = supabase.from;
+  const originalGetUser = supabase.auth.getUser;
+
+  const rawTimeSlot = {
+    id: "slot-1",
+    name: "שיעור ראשון",
+    start_time: "08:00",
+    end_time: "08:45",
+    created_at: "2024-01-01T00:00:00.000Z",
+    updated_at: "2024-01-01T00:00:00.000Z",
+  };
+
+  const mockTimeSlotsFrom = (table: string) => {
+    if (table === "time_slots") {
+      return {
+        select: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({ data: [rawTimeSlot], error: null }),
+      };
+    }
+    return undefined;
+  };
+
+  afterEach(() => {
+    supabase.from = originalFrom;
+    supabase.auth.getUser = originalGetUser;
+  });
+
+  it("getOverrides: fetches a child's overrides filtered by child_id and hydrates timeSlot", async () => {
+    const rawOverride = {
+      id: "override-1",
+      child_id: "child-1",
+      title: "חונכות אישית",
+      teacher: "דנה כהן",
+      room: "חדר 5",
+      day_of_week: 2,
+      time_slot_id: "slot-1",
+      scope: "prod",
+      created_by: "user-9",
+      created_at: "2024-02-01T00:00:00.000Z",
+      updated_at: "2024-02-02T00:00:00.000Z",
+    };
+
+    const eqMock = vi.fn().mockResolvedValue({
+      data: [rawOverride],
+      error: null,
+    });
+    supabase.from = vi.fn((table: string) => {
+      const timeSlotsChain = mockTimeSlotsFrom(table);
+      if (timeSlotsChain) return timeSlotsChain;
+      if (table === "schedule_overrides") {
+        return { select: vi.fn().mockReturnThis(), eq: eqMock };
+      }
+      throw new Error(`unexpected table ${table}`);
+    }) as any;
+
+    const result = await scheduleOverridesApi.getOverrides("child-1");
+
+    expect(eqMock).toHaveBeenCalledWith("child_id", "child-1");
+    expect(result).toEqual([
+      {
+        id: "override-1",
+        childId: "child-1",
+        title: "חונכות אישית",
+        teacher: "דנה כהן",
+        room: "חדר 5",
+        dayOfWeek: 2,
+        timeSlotId: "slot-1",
+        scope: "prod",
+        createdBy: "user-9",
+        createdAt: "2024-02-01T00:00:00.000Z",
+        updatedAt: "2024-02-02T00:00:00.000Z",
+        timeSlot: {
+          id: "slot-1",
+          name: "שיעור ראשון",
+          startTime: "08:00",
+          endTime: "08:45",
+          createdAt: "2024-01-01T00:00:00.000Z",
+          updatedAt: "2024-01-01T00:00:00.000Z",
+        },
+      },
+    ]);
+  });
+
+  it("createOverride: resolves created_by from auth.getUser and inserts a snake_case payload", async () => {
+    supabase.auth.getUser = vi.fn().mockResolvedValue({
+      data: { user: { id: "user-9" } },
+      error: null,
+    }) as any;
+
+    const insertedRow = {
+      id: "override-2",
+      child_id: "child-1",
+      title: "שיעור חורג",
+      teacher: "יעל לוי",
+      room: "חדר 3",
+      day_of_week: 1,
+      time_slot_id: "slot-1",
+      scope: "test",
+      created_by: "user-9",
+      created_at: "2024-03-01T00:00:00.000Z",
+      updated_at: "2024-03-01T00:00:00.000Z",
+    };
+
+    const insertMock = vi.fn().mockReturnThis();
+    const selectMock = vi.fn().mockReturnThis();
+    const singleMock = vi
+      .fn()
+      .mockResolvedValue({ data: insertedRow, error: null });
+
+    supabase.from = vi.fn((table: string) => {
+      const timeSlotsChain = mockTimeSlotsFrom(table);
+      if (timeSlotsChain) return timeSlotsChain;
+      if (table === "schedule_overrides") {
+        return {
+          insert: insertMock,
+          select: selectMock,
+          single: singleMock,
+        };
+      }
+      throw new Error(`unexpected table ${table}`);
+    }) as any;
+
+    const result = await scheduleOverridesApi.createOverride({
+      childId: "child-1",
+      title: "שיעור חורג",
+      teacher: "יעל לוי",
+      room: "חדר 3",
+      dayOfWeek: 1,
+      timeSlotId: "slot-1",
+      scope: "test",
+    });
+
+    expect(insertMock).toHaveBeenCalledWith([
+      {
+        child_id: "child-1",
+        title: "שיעור חורג",
+        teacher: "יעל לוי",
+        room: "חדר 3",
+        day_of_week: 1,
+        time_slot_id: "slot-1",
+        scope: "test",
+        created_by: "user-9",
+      },
+    ]);
+    expect(result.id).toBe("override-2");
+    expect(result.createdBy).toBe("user-9");
+    expect(result.timeSlot.id).toBe("slot-1");
+  });
+
+  it("createOverride: throws when the user is not authenticated", async () => {
+    supabase.auth.getUser = vi.fn().mockResolvedValue({
+      data: { user: null },
+      error: null,
+    }) as any;
+
+    await expect(
+      scheduleOverridesApi.createOverride({
+        childId: "child-1",
+        title: "שיעור חורג",
+        teacher: "יעל לוי",
+        room: "חדר 3",
+        dayOfWeek: 1,
+        timeSlotId: "slot-1",
+        scope: "test",
+      })
+    ).rejects.toThrow("User not authenticated");
+  });
+
+  it("updateOverride: sends only the changed fields in snake_case", async () => {
+    const updatedRow = {
+      id: "override-1",
+      child_id: "child-1",
+      title: "כותרת חדשה",
+      teacher: "דנה כהן",
+      room: "חדר 5",
+      day_of_week: 3,
+      time_slot_id: "slot-1",
+      scope: "prod",
+      created_by: "user-9",
+      created_at: "2024-02-01T00:00:00.000Z",
+      updated_at: "2024-02-03T00:00:00.000Z",
+    };
+
+    const updateMock = vi.fn().mockReturnThis();
+    const eqMock = vi.fn().mockReturnThis();
+    const selectMock = vi.fn().mockReturnThis();
+    const singleMock = vi
+      .fn()
+      .mockResolvedValue({ data: updatedRow, error: null });
+
+    supabase.from = vi.fn((table: string) => {
+      const timeSlotsChain = mockTimeSlotsFrom(table);
+      if (timeSlotsChain) return timeSlotsChain;
+      if (table === "schedule_overrides") {
+        return {
+          update: updateMock,
+          eq: eqMock,
+          select: selectMock,
+          single: singleMock,
+        };
+      }
+      throw new Error(`unexpected table ${table}`);
+    }) as any;
+
+    const result = await scheduleOverridesApi.updateOverride("override-1", {
+      title: "כותרת חדשה",
+      dayOfWeek: 3,
+    });
+
+    expect(updateMock).toHaveBeenCalledWith({
+      title: "כותרת חדשה",
+      day_of_week: 3,
+    });
+    expect(eqMock).toHaveBeenCalledWith("id", "override-1");
+    expect(result.title).toBe("כותרת חדשה");
+    expect(result.dayOfWeek).toBe(3);
+  });
+
+  it("deleteOverride: deletes by id", async () => {
+    const eqMock = vi.fn().mockResolvedValue({ error: null });
+    const deleteMock = vi.fn().mockReturnValue({ eq: eqMock });
+
+    supabase.from = vi.fn((table: string) => {
+      if (table === "schedule_overrides") {
+        return { delete: deleteMock };
+      }
+      throw new Error(`unexpected table ${table}`);
+    }) as any;
+
+    await expect(
+      scheduleOverridesApi.deleteOverride("override-1")
+    ).resolves.toBeUndefined();
+
+    expect(deleteMock).toHaveBeenCalled();
+    expect(eqMock).toHaveBeenCalledWith("id", "override-1");
+  });
+
+  it("deleteOverride: throws an ApiError when the delete fails", async () => {
+    const eqMock = vi.fn().mockResolvedValue({ error: { message: "boom" } });
+    const deleteMock = vi.fn().mockReturnValue({ eq: eqMock });
+
+    supabase.from = vi.fn((table: string) => {
+      if (table === "schedule_overrides") {
+        return { delete: deleteMock };
+      }
+      throw new Error(`unexpected table ${table}`);
+    }) as any;
+
+    await expect(
+      scheduleOverridesApi.deleteOverride("override-1")
+    ).rejects.toThrow("boom");
   });
 });

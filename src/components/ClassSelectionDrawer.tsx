@@ -1,10 +1,15 @@
 import React from "react";
-import { Drawer, Tag, Empty, Alert, Space, Typography } from "antd";
+import { Drawer, Tag, Empty, Button, Space, Typography } from "antd";
 import { useTranslation } from "react-i18next";
 import { ScheduleService } from "../services/scheduleService";
-import type { TimeSlot, ClassWithTimeSlot } from "../types";
+import type {
+  TimeSlot,
+  ClassWithTimeSlot,
+  ScheduleOverrideWithTimeSlot,
+} from "../types";
 import CreateClassButton from "./CreateClassButton";
 import ClassSelectionCard from "./ClassSelectionCard";
+import { OverrideSelectionCard } from "./OverrideSelectionCard";
 import "./ClassSelectionDrawer.css";
 import { GetDayName } from "@/utils/days";
 
@@ -26,6 +31,11 @@ interface ClassSelectionDrawerProps {
   isAdmin?: boolean;
   onCreateClass?: (timeSlotId: string, dayOfWeek: number) => void;
   timeSlots?: TimeSlot[]; // Add timeSlots for calculating double lesson ranges
+  canCreateOverride?: boolean;
+  onCreateOverride?: (timeSlotId: string, dayOfWeek: number) => void;
+  overridesForSlot?: ScheduleOverrideWithTimeSlot[];
+  onOverrideEdit?: (override: ScheduleOverrideWithTimeSlot) => void;
+  onDeleteOverride?: (override: ScheduleOverrideWithTimeSlot) => void;
 }
 
 const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
@@ -44,6 +54,11 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
   isAdmin = false,
   onCreateClass,
   timeSlots = [],
+  canCreateOverride = false,
+  onCreateOverride,
+  overridesForSlot = [],
+  onOverrideEdit,
+  onDeleteOverride,
 }) => {
   const { t } = useTranslation();
   const timeRange = ScheduleService.formatTimeRange(
@@ -126,6 +141,21 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
       className="class-selection-drawer rtl-drawer"
       styles={{ body: { padding: "16px" } }}>
       <div className="drawer-content">
+        {overridesForSlot.length > 0 && (
+          <div className="override-selection-section">
+            <Space direction="vertical" size="small" style={{ width: "100%" }}>
+              {overridesForSlot.map(o => (
+                <OverrideSelectionCard
+                  key={o.id}
+                  override={o}
+                  onEdit={onOverrideEdit}
+                  onDelete={onDeleteOverride}
+                />
+              ))}
+            </Space>
+          </div>
+        )}
+
         {classes.length === 0 ? (
           <Empty
             description={t("schedule.drawer.noClassesAvailable")}
@@ -182,22 +212,30 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
                 dayOfWeek={dayOfWeek}
               />
             )}
-
-            {conflictingClasses.length > 0 && (
-              <div className="conflict-warning">
-                <Alert
-                  message={t("schedule.drawer.conflictWarningTitle")}
-                  description={t("schedule.drawer.conflictDescription", {
-                    count: conflictingClasses.length,
-                  })}
-                  type="info"
-                  showIcon
-                  closable
-                />
-              </div>
-            )}
           </Space>
         )}
+
+        {/* Independent of the classes.length branch above -- a slot with no
+            catalog classes at all is exactly one of the cases staff need to
+            drop an override into, so this must not live only in the
+            has-classes branch. Hidden once an override already exists here
+            (see overridesForSlot section above): replacing a slot with a
+            second override isn't a supported flow. */}
+        {overridesForSlot.length === 0 &&
+          canCreateOverride &&
+          onCreateOverride && (
+            <Button
+              type="primary"
+              style={{
+                backgroundColor: "#fa8c16",
+                borderColor: "#fa8c16",
+                marginTop: 16,
+              }}
+              onClick={() => onCreateOverride(timeSlot.id, dayOfWeek)}
+              block>
+              {t("schedule.override.buttonLabel")}
+            </Button>
+          )}
       </div>
     </Drawer>
   );

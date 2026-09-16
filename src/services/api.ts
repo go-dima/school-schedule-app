@@ -8,6 +8,8 @@ import type {
   EnrolledChild,
   ParentChildRelationship,
   PendingApproval,
+  ScheduleOverride,
+  ScheduleOverrideWithTimeSlot,
   ScheduleSelectionWithClass,
   ScheduleTarget,
   Scope,
@@ -740,6 +742,126 @@ export const scheduleApi = {
               "he"
             )
       );
+  },
+};
+
+// Schedule Overrides API
+//
+// Fully isolated from `classes`/`schedule_selections`: a staff-authored
+// one-off lesson injected directly into a child's schedule. No FK to
+// classes, no catalog conflict detection, no group/mandatory/track lock
+// logic -- those systems only ever read `classes`/`schedule_selections`.
+function mapOverrideRow(
+  row: any,
+  timeSlotsById: Map<string, TimeSlot>
+): ScheduleOverrideWithTimeSlot {
+  const timeSlot = timeSlotsById.get(row.time_slot_id);
+  if (!timeSlot) {
+    throw new ApiError(
+      `Schedule override "${row.title}" (${row.id}) references a missing time slot`
+    );
+  }
+
+  return {
+    id: row.id,
+    childId: row.child_id,
+    title: row.title,
+    teacher: row.teacher,
+    room: row.room,
+    dayOfWeek: row.day_of_week,
+    timeSlotId: row.time_slot_id,
+    scope: row.scope,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    timeSlot,
+  };
+}
+
+export const scheduleOverridesApi = {
+  async getOverrides(childId: string): Promise<ScheduleOverrideWithTimeSlot[]> {
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      supabase.from("schedule_overrides").select("*").eq("child_id", childId),
+      fetchTimeSlotsById(),
+    ]);
+
+    if (error) throw new ApiError(error.message);
+    return data.map(row => mapOverrideRow(row, timeSlotsById));
+  },
+
+  async createOverride(
+    override: Omit<
+      ScheduleOverride,
+      "id" | "createdBy" | "createdAt" | "updatedAt"
+    >
+  ): Promise<ScheduleOverrideWithTimeSlot> {
+    const {
+      data: { user },
+    } = await withTimeout(supabase.auth.getUser(), AUTH_LOCKED_CALL_TIMEOUT_MS);
+    if (!user) throw new ApiError("User not authenticated");
+
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      supabase
+        .from("schedule_overrides")
+        .insert([
+          {
+            child_id: override.childId,
+            title: override.title,
+            teacher: override.teacher,
+            room: override.room,
+            day_of_week: override.dayOfWeek,
+            time_slot_id: override.timeSlotId,
+            scope: override.scope,
+            created_by: user.id,
+          },
+        ])
+        .select()
+        .single(),
+      fetchTimeSlotsById(),
+    ]);
+
+    if (error) throw new ApiError(error.message);
+    return mapOverrideRow(data, timeSlotsById);
+  },
+
+  async updateOverride(
+    id: string,
+    updates: Partial<
+      Omit<ScheduleOverride, "id" | "createdBy" | "createdAt" | "updatedAt">
+    >
+  ): Promise<ScheduleOverrideWithTimeSlot> {
+    const updateData: any = {};
+    if (updates.childId !== undefined) updateData.child_id = updates.childId;
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.teacher !== undefined) updateData.teacher = updates.teacher;
+    if (updates.room !== undefined) updateData.room = updates.room;
+    if (updates.dayOfWeek !== undefined)
+      updateData.day_of_week = updates.dayOfWeek;
+    if (updates.timeSlotId !== undefined)
+      updateData.time_slot_id = updates.timeSlotId;
+    if (updates.scope !== undefined) updateData.scope = updates.scope;
+
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      supabase
+        .from("schedule_overrides")
+        .update(updateData)
+        .eq("id", id)
+        .select()
+        .single(),
+      fetchTimeSlotsById(),
+    ]);
+
+    if (error) throw new ApiError(error.message);
+    return mapOverrideRow(data, timeSlotsById);
+  },
+
+  async deleteOverride(id: string): Promise<void> {
+    const { error } = await supabase
+      .from("schedule_overrides")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw new ApiError(error.message);
   },
 };
 

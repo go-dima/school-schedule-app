@@ -41,6 +41,7 @@ const ClassCard: React.FC<ClassCardProps> = ({
         isContinuation={isContinuation}
         teacher={cls.teacher}
         room={cls.room}
+        reserveBadgeSpace={showEnrollmentCount}
         tags={
           <>
             <GradesRangeTag grades={cls.grades} color="green" />

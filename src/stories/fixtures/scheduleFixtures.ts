@@ -4,6 +4,7 @@ import { DAYS_OF_WEEK } from "../../types";
 import type {
   TimeSlot,
   ClassWithTimeSlot,
+  ScheduleOverrideWithTimeSlot,
   ScheduleSelectionWithClass,
 } from "../../types";
 
@@ -247,3 +248,66 @@ export const conflictingClassIds = [
 ];
 export const conflictingUserSelections =
   buildUserSelections(conflictingClassIds);
+
+// Staff-authored one-off lessons for the StaffOverrides story: one dropped
+// onto an ordinary lesson slot (coexisting with the day's other, unselected
+// options) and one onto a fixed slot (a break), which never opens the normal
+// selection drawer and so relies entirely on the hover footer button.
+const overrideLessonSlot = lessonSlots[0];
+const overrideBreakSlot = mockTimeSlots.find(
+  slot => !isLessonTimeSlot(slot)
+) as TimeSlot;
+
+// A double-lesson (mandatory) class already occupies its first slot -- this
+// override lands on the exact same day/slot to demonstrate that an override
+// replaces a mandatory/selected catalog class in the grid entirely, rather
+// than stacking alongside it.
+const mandatoryDoubleClass = mockClasses.find(
+  cls => cls.id === `class-${doubleDayKey}-double`
+)!;
+const mandatorySlot = mandatoryDoubleClass.slots[0].timeSlot;
+
+export const mockOverrides: ScheduleOverrideWithTimeSlot[] = [
+  {
+    id: "override-lesson",
+    childId: "child-1",
+    title: "חונכות אישית",
+    teacher: "מורה טל",
+    room: "חדר 7",
+    dayOfWeek: 1,
+    timeSlotId: overrideLessonSlot.id,
+    scope: "test",
+    createdBy: "staff-1",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z",
+    timeSlot: overrideLessonSlot,
+  },
+  {
+    id: "override-break",
+    childId: "child-1",
+    title: "שיחה אישית",
+    teacher: "יועצת בית הספר",
+    room: "חדר יעוץ",
+    dayOfWeek: 0,
+    timeSlotId: overrideBreakSlot.id,
+    scope: "test",
+    createdBy: "staff-1",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z",
+    timeSlot: overrideBreakSlot,
+  },
+  {
+    id: "override-over-mandatory",
+    childId: "child-1",
+    title: "ציור",
+    teacher: "אין",
+    room: "",
+    dayOfWeek: doubleDayKey,
+    timeSlotId: mandatorySlot.id,
+    scope: "test",
+    createdBy: "staff-1",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z",
+    timeSlot: mandatorySlot,
+  },
+];
