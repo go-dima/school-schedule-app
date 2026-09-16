@@ -199,9 +199,18 @@ const SchedulePageContent: React.FC = () => {
   );
 
   // Fourth independent data-flow: staff-authored one-off lessons for the
-  // currently selected child. Fully isolated from classes/schedule_selections
-  // -- never merged into the catalog/selection hooks above.
-  const overrideChildId = isStaff ? staffSelectedChild?.id : undefined;
+  // currently displayed child. Fully isolated from classes/schedule_selections
+  // -- never merged into the catalog/selection hooks above. Overrides carry
+  // no draft/committed status of their own (RLS lets a parent read, never
+  // write, their own children's rows) -- read for both parent and staff,
+  // regardless of the draft/committed toggle, mirroring currentTrackChild
+  // below rather than `target` (which also covers the "child" role's own
+  // login, which has no Child record for overrides to key off).
+  const overrideChildId = isStaff
+    ? staffSelectedChild?.id
+    : isParent
+      ? selectedChild?.id
+      : undefined;
   const { overrides, createOverride, updateOverride, deleteOverride } =
     useScheduleOverrides(overrideChildId);
 
@@ -973,7 +982,7 @@ const SchedulePageContent: React.FC = () => {
             overrides={overrides}
             canCreateOverride={isStaff && !!staffSelectedChild}
             onCreateOverride={handleCreateOverride}
-            onOverrideClick={handleOverrideCardClick}
+            onOverrideClick={isStaff ? handleOverrideCardClick : undefined}
           />
         </Card>
 
