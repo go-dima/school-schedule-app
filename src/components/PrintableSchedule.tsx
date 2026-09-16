@@ -10,7 +10,12 @@ import {
   isBreakTimeSlot,
   isMeetingTimeSlot,
 } from "../utils/timeSlots";
-import type { TimeSlot, WeeklySchedule, Child } from "../types";
+import type {
+  TimeSlot,
+  WeeklySchedule,
+  Child,
+  ScheduleOverrideWithTimeSlot,
+} from "../types";
 import { GetGradeName } from "../utils/grades";
 import "./PrintableSchedule.css";
 
@@ -19,6 +24,7 @@ interface PrintableScheduleProps {
   timeSlots: TimeSlot[];
   weeklySchedule: WeeklySchedule;
   selectedClasses: string[];
+  overrides: ScheduleOverrideWithTimeSlot[];
   showDraftMarker?: boolean;
 }
 
@@ -33,10 +39,32 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
   timeSlots,
   weeklySchedule,
   selectedClasses,
+  overrides,
   showDraftMarker,
 }) => {
   const { t } = useTranslation();
   const renderClassCell = (timeSlot: TimeSlot, dayOfWeek: number) => {
+    const cellOverrides = ScheduleService.getOverridesForCell(
+      overrides,
+      dayOfWeek,
+      timeSlot.id
+    );
+
+    // A staff override takes precedence over whatever catalog class(es)
+    // would otherwise render here, mirroring ScheduleTable's live-grid rule
+    // -- shown INSTEAD OF, not alongside, the underlying class(es).
+    if (cellOverrides.length > 0) {
+      return (
+        <div className="print-schedule-cell">
+          {cellOverrides.map(o => (
+            <div key={o.id} className="print-class-title">
+              {o.title}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
     const dayClasses = weeklySchedule[dayOfWeek]?.[timeSlot.id] || [];
 
     // Filter by child's grade
