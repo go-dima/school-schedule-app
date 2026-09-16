@@ -738,6 +738,7 @@ const ClassManagementPage: React.FC = () => {
           onCancel={handleModalCancel}
           loading={submitting}
           isNewLesson={!editingClass}
+          showScope={canCreateClasses()}
         />
       </Modal>
 
