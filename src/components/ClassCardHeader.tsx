@@ -9,6 +9,9 @@ interface ClassCardHeaderProps {
   tags?: React.ReactNode;
 }
 
+// Fixed 3-line layout: title / teacher+room / tags, each its own row --
+// never inlined together, so every card reads the same regardless of how
+// long the title or teacher name is.
 const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
   title,
   isContinuation = false,
@@ -28,7 +31,7 @@ const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
           </span>
         )}
       </div>
-      {(teacher || room || tags) && (
+      {(teacher || room) && (
         <div className="class-teacher-room">
           {teacher && <span className="class-teacher">{teacher}</span>}
           {teacher && room && (
@@ -39,9 +42,9 @@ const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
               {t("schedule.table.room", { room })}
             </span>
           )}
-          {tags && <span className="class-header-tags-inline">{tags}</span>}
         </div>
       )}
+      {tags && <div className="class-tags-row">{tags}</div>}
     </>
   );
 };

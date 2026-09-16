@@ -127,19 +127,23 @@
   transition: all 0.2s ease;
 }
 
+/* A fixed overlay, not part of the 3-line flow -- stays put in the
+   card's bottom-right corner regardless of content length, and never
+   affects the card's layout height. */
 .class-enrollment-badge {
   position: absolute;
-  top: 6px;
-  left: 8px;
+  bottom: 6px;
+  right: 8px;
   z-index: 1;
   pointer-events: none;
 }
 
-.class-header-tags-inline {
-  display: inline-flex;
+.class-tags-row {
+  display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 4px;
   flex-wrap: wrap;
+  gap: 4px;
 }
 
 .schedule-cell.clickable .class-card {
@@ -398,7 +402,7 @@
    white), so an override is unmistakable at a glance on the grid. */
 .class-card.override-card {
   background: transparent;
-  border: 2px solid var(--schedule-accent-orange);
+  border: 2px solid rgba(250, 140, 22, 0.5);
 }
 
 .schedule-cell.mandatory-cell {
@@ -436,6 +440,23 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+/* The "N classes, click to select" card fills its cell exactly like a
+   selected card does -- a row stretched taller by a sibling cell
+   shouldn't leave this one looking short. */
+.schedule-cell.multiple {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 60px;
+}
+
+.schedule-cell.multiple .class-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .schedule-cell.selected-classes .class-card .ant-card-body {
