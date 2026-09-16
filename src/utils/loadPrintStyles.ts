@@ -1,5 +1,4 @@
 import scheduleColorsCss from "../styles/schedule-colors.css?raw";
-import classCardTextCss from "../styles/class-card-text.css?raw";
 import printTableBaseCss from "../styles/print-table-base.css?raw";
 import printableScheduleCss from "../components/PrintableSchedule.css?raw";
 import printableClassRosterCss from "../components/PrintableClassRoster.css?raw";
@@ -8,13 +7,11 @@ import printableClassRosterCss from "../components/PrintableClassRoster.css?raw"
 // its styles are assembled from the same source files the app itself uses
 // (raw-imported as text) rather than a hand-maintained duplicate. Any change
 // to the shared palette or to PrintableSchedule.css is picked up here too.
+// PrintableSchedule.css is black & white by design and no longer uses
+// class-card-text.css (that's the shared on-screen class card, not the
+// print one), so it isn't included here.
 export const getPrintStyles = (): string =>
-  [
-    scheduleColorsCss,
-    classCardTextCss,
-    printTableBaseCss,
-    printableScheduleCss,
-  ].join("\n");
+  [scheduleColorsCss, printTableBaseCss, printableScheduleCss].join("\n");
 
 export const getClassRosterPrintStyles = (): string =>
   [scheduleColorsCss, printableClassRosterCss].join("\n");
