@@ -41,6 +41,7 @@ export const WithSelection: Story = {
     userSelections: mockUserSelections,
     canSelectClasses: true,
     canViewClasses: true,
+    showEnrollmentCount: true,
     onClassSelect: (classId: string) => console.log("Select class:", classId),
     onClassUnselect: (classId: string) =>
       console.log("Unselect class:", classId),
