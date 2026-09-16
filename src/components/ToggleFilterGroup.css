@@ -1,0 +1,37 @@
+.toggle-filter-group {
+  display: inline-flex;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.toggle-filter-group__option {
+  border: none;
+  border-inline-start: 1px solid #d9d9d9;
+  background: #fff;
+  padding: 4px 14px;
+  font-size: 14px;
+  line-height: 22px;
+  color: rgba(0, 0, 0, 0.88);
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.toggle-filter-group__option:first-child {
+  border-inline-start: none;
+}
+
+.toggle-filter-group__option:hover {
+  background: #f5f5f5;
+}
+
+.toggle-filter-group__option--active {
+  background: rgba(22, 119, 255, 0.15);
+  color: #1677ff;
+}
+
+.toggle-filter-group__option--active:hover {
+  background: rgba(22, 119, 255, 0.22);
+}

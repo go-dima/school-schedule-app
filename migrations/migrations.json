@@ -295,8 +295,16 @@
       "file": "037_add_schedule_overrides.sql",
       "created_at": "2026-09-16T00:01:00Z",
       "dependencies": ["036_update_time_slots_schedule"]
+    },
+    {
+      "id": "038_add_scope_to_get_class_enrolled_children",
+      "name": "Add Scope To Get Class Enrolled Children",
+      "description": "Issue #134: add a target_scope text[] parameter to get_class_enrolled_children, filtering the joined children rows by scope so a test-scope child enrolled in a prod class no longer leaks into that class's production roster",
+      "file": "038_add_scope_to_get_class_enrolled_children.sql",
+      "created_at": "2026-09-16T00:02:00Z",
+      "dependencies": ["037_add_schedule_overrides"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 37
+  "schema_version": 38
 }

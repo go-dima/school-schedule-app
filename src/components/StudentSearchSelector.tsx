@@ -4,6 +4,7 @@ import { PlusOutlined, UserOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { ChildForm } from "./ChildForm";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
+import { useAuth } from "../contexts/AuthContext";
 import { GetGradeName } from "@/utils/grades";
 import type { Child } from "../types";
 
@@ -39,6 +40,7 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
   value,
 }) => {
   const { t } = useTranslation();
+  const { isAdmin } = useAuth();
   const { createChild } = useAllChildrenContext();
   const [internalSearchTerm, setInternalSearchTerm] = useState<string>("");
 
@@ -272,6 +274,7 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
           onSubmit={handleCreateStudent}
           onCancel={closeModal}
           loading={addLoading}
+          showScope={isAdmin()}
           onDuplicateRedirect={() => {
             closeModal();
             message.info(t("child.duplicateWarning.sameCreatorMessage"));

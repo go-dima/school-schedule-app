@@ -44,6 +44,17 @@
   border: 1px solid #e2e8f0;
 }
 
+/* The first Space's own internal packing ignores the page's RTL direction
+   (antd renders Space with an internal direction: ltr regardless of
+   ambient dir, unless the app wraps everything in
+   <ConfigProvider direction="rtl">, which this one doesn't) -- so its
+   content hugs the *left* of its flex:1 box, right next to the actions
+   group, instead of the box's own far edge. Pull it to the far edge
+   explicitly so filters and actions land at opposite ends of the bar. */
+.filters-section--boxed .filters-row > .ant-space:first-child {
+  justify-content: flex-end;
+}
+
 /* Locks the whole bar against interaction (see FiltersBarProps.disabled) --
    children are arbitrary nodes from the consuming page, so this blocks
    pointer interaction at the container level rather than threading a

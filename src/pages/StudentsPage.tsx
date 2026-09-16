@@ -27,13 +27,16 @@ import type { ColumnsType } from "antd/es/table";
 import { ChildForm } from "../components/ChildForm";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { GroupTrackTags } from "../components/GroupTrackTags";
+import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
 import { useAuth } from "../contexts/AuthContext";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import { childrenApi } from "../services/api";
-import type { Child } from "../types";
+import type { Child, Scope } from "../types";
 import { GRADES } from "../types";
 
 type ChildWithParent = Child & { assignedParent: boolean };
+
+const ALL_SCOPES: Scope[] = ["prod", "test"];
 import { GetGradeName } from "@/utils/grades";
 
 const { Title, Text } = Typography;
@@ -73,6 +76,9 @@ const StudentsPage: React.FC = () => {
   const [selectedGrade, setSelectedGrade] = useState<number | undefined>(
     undefined
   );
+  // Admin-only (see the ToggleFilterGroup below) -- staff never see this
+  // filter. Both scopes start ON, equivalent to "no filter".
+  const [selectedScopes, setSelectedScopes] = useState<Scope[]>(ALL_SCOPES);
 
   const handleCreateChild = async (data: {
     firstName: string;
@@ -174,8 +180,12 @@ const StudentsPage: React.FC = () => {
       filtered = filtered.filter(child => child.grade === selectedGrade);
     }
 
+    // Apply scope filter (admin-only UI, but harmless to keep unconditional --
+    // non-admins never change selectedScopes away from its all-on default)
+    filtered = filtered.filter(child => selectedScopes.includes(child.scope));
+
     return filtered;
-  }, [children, searchTerm, selectedGrade]);
+  }, [children, searchTerm, selectedGrade, selectedScopes]);
 
   const handleChildAdded = (_newChild: Child) => {
     // No action needed: AllChildrenContext already appends the new child,
@@ -351,7 +361,14 @@ const StudentsPage: React.FC = () => {
       </div>
 
       {/* Search and Filter Controls */}
-      <div style={{ marginBottom: 16 }}>
+      <div
+        style={{
+          marginBottom: 16,
+          display: "flex",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 16,
+        }}>
         <Space wrap>
           <StudentSearchSelector
             children={filteredChildren}
@@ -378,6 +395,16 @@ const StudentsPage: React.FC = () => {
             ))}
           </Select>
         </Space>
+        {isAdmin() && (
+          <ToggleFilterGroup<Scope>
+            value={selectedScopes}
+            onChange={setSelectedScopes}
+            options={ALL_SCOPES.map(scope => ({
+              value: scope,
+              label: t(`scope.${scope}`),
+            }))}
+          />
+        )}
       </div>
 
       {error && (

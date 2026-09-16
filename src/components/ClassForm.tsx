@@ -22,6 +22,7 @@ interface ClassFormProps {
   onCancel: () => void;
   loading?: boolean;
   isNewLesson?: boolean;
+  showScope?: boolean;
 }
 
 const ClassForm: React.FC<ClassFormProps> = ({
@@ -31,6 +32,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
   onCancel,
   loading = false,
   isNewLesson = true,
+  showScope = true,
 }) => {
   const { t } = useTranslation();
   const [form] = Form.useForm();
@@ -267,12 +269,14 @@ const ClassForm: React.FC<ClassFormProps> = ({
           </Form.Item>
         </Col>
 
-        <Col span={6}>
-          <ScopeSelector
-            value={form.getFieldValue("scope")}
-            onChange={value => form.setFieldValue("scope", value)}
-          />
-        </Col>
+        {showScope && (
+          <Col span={6}>
+            <ScopeSelector
+              value={form.getFieldValue("scope")}
+              onChange={value => form.setFieldValue("scope", value)}
+            />
+          </Col>
+        )}
       </Row>
 
       <Row gutter={16}>

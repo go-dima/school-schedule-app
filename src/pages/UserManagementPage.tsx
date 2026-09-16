@@ -8,15 +8,16 @@ import {
   message,
   Modal,
   Alert,
-  Select,
 } from "antd";
 import { UserOutlined, CrownOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { FiltersBar } from "../components/FiltersBar";
-import { FilterField } from "../components/FilterField";
+import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
 import { usersApi } from "../services/api";
 import type { UserRoleData, UserRole } from "../types";
 import "./UserManagementPage.css";
+
+const ALL_ROLES: UserRole[] = ["admin", "staff", "parent"];
 
 const { Title, Text } = Typography;
 
@@ -38,7 +39,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-  const [roleFilter, setRoleFilter] = useState<UserRole[]>([]);
+  // Every role starts ON (toggled via ToggleFilterGroup below) -- semantically
+  // equivalent to the old empty-array "no filter" default, but the UI always
+  // shows each role's on/off state instead of hiding it behind a dropdown.
+  const [roleFilter, setRoleFilter] = useState<UserRole[]>(ALL_ROLES);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -129,7 +133,6 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
   };
 
   const filteredUsers = useMemo(() => {
-    if (roleFilter.length === 0) return users;
     return users.filter(user =>
       user.roles.some(role => roleFilter.includes(role.role))
     );
@@ -328,21 +331,14 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         onRefresh={loadUsers}
         refreshing={loading}
         disabled={loading}>
-        <FilterField label="סנן לפי תפקיד">
-          <Select<UserRole[]>
-            mode="multiple"
-            value={roleFilter}
-            onChange={setRoleFilter}
-            placeholder="הצג הכל"
-            allowClear
-            style={{ minWidth: 220 }}
-            options={[
-              { label: getRoleDisplayName("admin"), value: "admin" },
-              { label: getRoleDisplayName("staff"), value: "staff" },
-              { label: getRoleDisplayName("parent"), value: "parent" },
-            ]}
-          />
-        </FilterField>
+        <ToggleFilterGroup<UserRole>
+          value={roleFilter}
+          onChange={setRoleFilter}
+          options={ALL_ROLES.map(role => ({
+            value: role,
+            label: getRoleDisplayName(role),
+          }))}
+        />
       </FiltersBar>
 
       <Table<UserWithRoles>
