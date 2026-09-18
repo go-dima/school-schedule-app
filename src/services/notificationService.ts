@@ -1,4 +1,5 @@
 import log from "../utils/logger";
+import i18n from "../utils/i18n";
 
 export class NotificationService {
   /**
@@ -9,14 +10,7 @@ export class NotificationService {
     requestedRole: string
   ): Promise<void> {
     try {
-      const roleDisplayNames: Record<string, string> = {
-        admin: "מנהל",
-        staff: "צוות",
-        parent: "הורה",
-        child: "תלמיד",
-      };
-
-      const roleDisplay = roleDisplayNames[requestedRole] || requestedRole;
+      const roleDisplay = i18n.t(`roles.${requestedRole}`, requestedRole);
 
       log.info(
         `New approval request - ${userEmail} requesting role: ${roleDisplay}`

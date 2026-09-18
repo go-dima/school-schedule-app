@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Card,
   Typography,
@@ -37,6 +38,7 @@ const { Title, Text } = Typography;
 interface PendingApprovalsPageProps {}
 
 const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
+  const { t } = useTranslation();
   const { permissions } = useAuth();
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>(
     []
@@ -90,7 +92,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
     try {
       await usersApi.approveUserWithRole(selectedApproval.userId, values.role);
       message.success(
-        `המשתמש ${selectedApproval.user.email} אושר בהצלחה לתפקיד ${getRoleDisplayName(values.role)}`
+        `המשתמש ${selectedApproval.user.email} אושר בהצלחה לתפקיד ${t(`roles.${values.role}`, values.role)}`
       );
       await loadData();
       setRoleModalVisible(false);
@@ -111,24 +113,13 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
     setActionLoading(approvalId);
     try {
       await usersApi.rejectRole(approvalId);
-      message.success(`בקשת ${getRoleDisplayName(role)} של ${userEmail} נדחתה`);
+      message.success(`בקשת ${t(`roles.${role}`, role)} של ${userEmail} נדחתה`);
       await loadData();
     } catch (err) {
       message.error(err instanceof Error ? err.message : "שגיאה בדחיית הבקשה");
     } finally {
       setActionLoading(null);
     }
-  };
-
-  const getRoleDisplayName = (role: UserRole): string => {
-    const roleNames: Record<UserRole, string> = {
-      admin: "מנהל",
-      staff: "צוות",
-      parent: "הורה",
-      child: "תלמיד",
-      moderator: "אחראי/ת מערכת",
-    };
-    return roleNames[role] || role;
   };
 
   const getRoleOptions = () => [
@@ -165,6 +156,15 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
         <Space>
           <CrownOutlined />
           מנהל
+        </Space>
+      ),
+    },
+    {
+      value: "moderator" as UserRole,
+      label: (
+        <Space>
+          <CrownOutlined />
+          {t("roles.moderator")}
         </Space>
       ),
     },
@@ -217,7 +217,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       key: "role",
       width: 120,
       render: (role: UserRole) => (
-        <Tag color={ROLE_TAG_COLORS[role]}>{getRoleDisplayName(role)}</Tag>
+        <Tag color={ROLE_TAG_COLORS[role]}>{t(`roles.${role}`, role)}</Tag>
       ),
     },
     {
@@ -418,7 +418,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
                   </p>
                   <p>
                     <strong>תפקיד מבוקש במקור:</strong>{" "}
-                    {getRoleDisplayName(selectedApproval.role)}
+                    {t(`roles.${selectedApproval.role}`, selectedApproval.role)}
                   </p>
                   <p>אנא בחר את התפקיד הסופי למשתמש זה במערכת:</p>
                 </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Table,
   Button,
@@ -41,6 +42,7 @@ interface UserWithRoles {
 }
 
 const UserManagementPage: React.FC<UserManagementPageProps> = () => {
+  const { t } = useTranslation();
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [loading, setLoading] = useState(true);
@@ -190,17 +192,6 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
     loadUsers();
   }, []);
 
-  const getRoleDisplayName = (role: UserRole): string => {
-    const roleNames: Record<UserRole, string> = {
-      admin: "מנהל",
-      parent: "הורה",
-      child: "תלמיד",
-      staff: "צוות",
-      moderator: "אחראי/ת מערכת",
-    };
-    return roleNames[role] || role;
-  };
-
   const filteredUsers = useMemo(() => {
     return users.filter(user =>
       user.roles.some(role => roleFilter.includes(role.role))
@@ -309,12 +300,12 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       width: 50,
       sorter: (a, b) =>
         a.roles
-          .map(role => getRoleDisplayName(role.role))
+          .map(role => t(`roles.${role.role}`, role.role))
           .sort()
           .join(",")
           .localeCompare(
             b.roles
-              .map(role => getRoleDisplayName(role.role))
+              .map(role => t(`roles.${role.role}`, role.role))
               .sort()
               .join(",")
           ),
@@ -329,7 +320,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
                 margin: "2px",
                 fontSize: "12px",
               }}>
-              {getRoleDisplayName(role.role)}
+              {t(`roles.${role.role}`, role.role)}
               {!role.approved && " (ממתין)"}
             </Tag>
           ))}
@@ -388,7 +379,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
           onChange={setRoleFilter}
           options={ALL_ROLES.map(role => ({
             value: role,
-            label: getRoleDisplayName(role),
+            label: t(`roles.${role}`, role),
           }))}
         />
       </FiltersBar>
@@ -438,7 +429,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
                 fontSize: "13px",
                 padding: "4px 12px",
               }}>
-              {getRoleDisplayName(role)}
+              {t(`roles.${role}`, role)}
             </Tag.CheckableTag>
           ))}
         </Space>
