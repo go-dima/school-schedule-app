@@ -125,6 +125,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       staff: "צוות",
       parent: "הורה",
       child: "תלמיד",
+      moderator: "מנחה",
     };
     return roleNames[role] || role;
   };
@@ -135,6 +136,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       staff: "orange",
       parent: "blue",
       child: "green",
+      moderator: "purple",
     };
     return roleColors[role] || "default";
   };

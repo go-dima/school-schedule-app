@@ -118,6 +118,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       parent: "הורה",
       child: "תלמיד",
       staff: "צוות",
+      moderator: "מנחה",
     };
     return roleNames[role] || role;
   };
@@ -128,6 +129,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       parent: "blue",
       child: "green",
       staff: "orange",
+      moderator: "purple",
     };
     return roleColors[role] || "default";
   };
