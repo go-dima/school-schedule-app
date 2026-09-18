@@ -1,4 +1,5 @@
 import type { UserRoleData } from "../types";
+import { getRoleFlags } from "./roleFlags";
 
 export interface PermissionsState {
   canManageClasses: boolean; // admin || staff || moderator — gates ClassManagementPage/catalog editing
@@ -10,17 +11,10 @@ export interface PermissionsState {
   canAdjustRoles: boolean; // admin only
 }
 
-// Pure permission computation from a user's role rows. Only approved roles
-// are considered, matching the approval-status check in useAuth's
-// loadUserRoles (roles.filter(role => role.approved)).
+// Pure permission computation from a user's role rows, derived from the same
+// approved-role identity flags as getRoleFlags (see roleFlags.ts).
 export function getPermissions(roles: UserRoleData[]): PermissionsState {
-  const approvedRoles = roles.filter(role => role.approved);
-  const hasRole = (role: string): boolean =>
-    approvedRoles.some(r => r.role === role);
-
-  const isAdmin = hasRole("admin");
-  const isStaff = hasRole("staff");
-  const isModerator = hasRole("moderator");
+  const { isAdmin, isStaff, isModerator } = getRoleFlags(roles);
 
   return {
     canManageClasses: isAdmin || isStaff || isModerator,

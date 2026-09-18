@@ -25,6 +25,13 @@ const mockAuthValue: AuthContextType = {
     canApproveSignups: false,
     canAdjustRoles: false,
   },
+  roleFlags: {
+    isAdmin: false,
+    isStaff: false,
+    isModerator: false,
+    isParent: false,
+    isChild: false,
+  },
   clearApplicationState: () => {},
 };
 

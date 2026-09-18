@@ -58,7 +58,7 @@ const ParentIcon: React.FC<{ assignedParent: boolean }> = ({
 
 const StudentsPage: React.FC = () => {
   const { t } = useTranslation();
-  const { permissions, hasRole } = useAuth();
+  const { permissions, roleFlags } = useAuth();
   const {
     children,
     loading,
@@ -68,7 +68,7 @@ const StudentsPage: React.FC = () => {
     removeChild,
     refetch,
   } = useAllChildrenContext();
-  const isCurrentUserParent = hasRole("parent");
+  const isCurrentUserParent = roleFlags.isParent;
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | undefined>();
   const [formLoading, setFormLoading] = useState(false);
@@ -395,7 +395,7 @@ const StudentsPage: React.FC = () => {
             ))}
           </Select>
         </Space>
-        {hasRole("admin") && (
+        {roleFlags.isAdmin && (
           <ToggleFilterGroup<Scope>
             value={selectedScopes}
             onChange={setSelectedScopes}
@@ -461,7 +461,7 @@ const StudentsPage: React.FC = () => {
           onSubmit={editingChild ? handleUpdateChild : handleCreateChild}
           onCancel={closeModal}
           loading={formLoading}
-          showScope={hasRole("admin")}
+          showScope={roleFlags.isAdmin}
           onDuplicateRedirect={childId => {
             const match = children.find(c => c.id === childId);
             if (match) openEditModal(match);

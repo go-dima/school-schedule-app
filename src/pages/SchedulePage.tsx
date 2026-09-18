@@ -68,7 +68,7 @@ const SchedulePageContent: React.FC = () => {
     const roleKey = `roles.${role}`;
     return t(roleKey, role); // fallback to role if translation not found
   };
-  const { user, currentRole, userRoles, switchRole, hasRole, permissions } =
+  const { user, currentRole, userRoles, switchRole, roleFlags, permissions } =
     useAuth();
   const {
     selectedChild,
@@ -87,7 +87,7 @@ const SchedulePageContent: React.FC = () => {
     setSelectedChild: setStaffSelectedChild,
     updateChild: updateChildForStaff,
   } = useAllChildrenContext();
-  const isStaff = hasRole("staff");
+  const isStaff = roleFlags.isStaff;
 
   const [selectedGrade, setSelectedGrade] = useState<number | undefined>(1);
   const [createClassModalOpen, setCreateClassModalOpen] = useState(false);
@@ -111,7 +111,7 @@ const SchedulePageContent: React.FC = () => {
     useState<ScheduleOverrideWithTimeSlot | null>(null);
   const [overrideModalLoading, setOverrideModalLoading] = useState(false);
 
-  const isParent = hasRole("parent");
+  const isParent = roleFlags.isParent;
   const { viewStatus, overrideChildId, canCreateOverride } =
     ScheduleService.resolveScheduleView({
       role: currentRole?.role,
@@ -287,17 +287,17 @@ const SchedulePageContent: React.FC = () => {
   // Handler for when a parent adds a new child via AddChildButton
   const handleParentChildAdded = (newChild: Child) => {
     setSelectedChild(newChild);
-    if (!hasRole("admin")) {
+    if (!roleFlags.isAdmin) {
       setSelectedGrade(newChild.grade);
     }
   };
 
   // Auto-update grade filter when selected child changes (only for non-admin parents)
   React.useEffect(() => {
-    if (selectedChild && isParent && !hasRole("admin")) {
+    if (selectedChild && isParent && !roleFlags.isAdmin) {
       setSelectedGrade(selectedChild.grade);
     }
-  }, [selectedChild, isParent, hasRole]);
+  }, [selectedChild, isParent, roleFlags]);
 
   // Page-level loading: catalog (classes/time slots) and the child roster
   // only load once (or on an explicit refresh), so gating the full-page
@@ -837,7 +837,7 @@ const SchedulePageContent: React.FC = () => {
                   const child = userChildren.find(c => c.id === childId);
                   setSelectedChild(child || undefined);
                   // Auto-update grade filter based on selected child (only for non-admin parents)
-                  if (child && !hasRole("admin")) {
+                  if (child && !roleFlags.isAdmin) {
                     setSelectedGrade(child.grade);
                   }
                 }}
@@ -873,7 +873,7 @@ const SchedulePageContent: React.FC = () => {
             </FilterField>
           </>
         )}
-        {(isStaff || hasRole("admin")) && (
+        {(isStaff || roleFlags.isAdmin) && (
           <FilterField label={t("schedule.page.labels.filterByGrade")}>
             <Select
               value={selectedGrade}
@@ -988,7 +988,7 @@ const SchedulePageContent: React.FC = () => {
             canSelectClasses={canSelectClasses}
             canViewClasses={canViewClasses}
             isAdmin={permissions.canCreateClasses}
-            showEnrollmentCount={isStaff || hasRole("admin")}
+            showEnrollmentCount={isStaff || roleFlags.isAdmin}
             onCreateClass={handleCreateClass}
             searchTerm={searchTerm}
             childGroupNumber={currentTrackChild?.groupNumber}

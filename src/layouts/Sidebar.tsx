@@ -29,7 +29,7 @@ const USER_MANAGEMENT_SUBMENU_KEY = "user-management-submenu";
 
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
   const { t } = useTranslation();
-  const { hasRole, permissions } = useAuth();
+  const { roleFlags, permissions } = useAuth();
   const { pendingApprovalsCount } = usePendingApprovals();
   const location = useLocation();
   const navigate = useNavigate();
@@ -72,7 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
       label: t("navigation.students"),
       style: permissions.canManageRoster ? {} : { display: "none" },
     },
-    hasRole("admin")
+    roleFlags.isAdmin
       ? {
           key: USER_MANAGEMENT_SUBMENU_KEY,
           icon: <TeamOutlined />,

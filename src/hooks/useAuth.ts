@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { authApi, usersApi } from "../services/api";
 import { getPermissions } from "../services/permissions";
-import type { User, UserRoleData } from "../types";
+import { getRoleFlags } from "../services/roleFlags";
+import type { User, UserRole, UserRoleData } from "../types";
 import { withTimeout } from "../utils/asyncUtils";
 
 // Keep below App.tsx's 5s loading-timeout screen so a stuck query resolves to
@@ -222,11 +223,12 @@ export function useAuth() {
     }
   };
 
-  const hasRole = (role: string): boolean => {
+  const hasRole = (role: UserRole): boolean => {
     return userRoles.some(r => r.role === role);
   };
 
   const permissions = useMemo(() => getPermissions(userRoles), [userRoles]);
+  const roleFlags = useMemo(() => getRoleFlags(userRoles), [userRoles]);
 
   const refreshProfile = async () => {
     if (!user?.id) return;
@@ -289,6 +291,7 @@ export function useAuth() {
     switchRole,
     hasRole,
     permissions,
+    roleFlags,
     clearApplicationState,
   };
 }
