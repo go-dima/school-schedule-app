@@ -9,15 +9,21 @@ import {
   Modal,
   Alert,
 } from "antd";
-import { UserOutlined, CrownOutlined } from "@ant-design/icons";
+import { UserOutlined, SettingOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { FiltersBar } from "../components/FiltersBar";
 import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
+import { useAuth } from "../contexts/AuthContext";
 import { usersApi } from "../services/api";
 import type { UserRoleData, UserRole } from "../types";
 import "./UserManagementPage.css";
 
-const ALL_ROLES: UserRole[] = ["admin", "staff", "parent"];
+const ALL_ROLES: UserRole[] = ["admin", "moderator", "staff", "parent"];
+
+// admin/moderator are elevated roles that require a base role (staff or
+// parent) to remain meaningful -- they don't carry their own identity.
+const BASE_ROLES: UserRole[] = ["staff", "parent"];
+const ELEVATED_ROLES: UserRole[] = ["admin", "moderator"];
 
 const { Title, Text } = Typography;
 
@@ -34,11 +40,14 @@ interface UserWithRoles {
 }
 
 const UserManagementPage: React.FC<UserManagementPageProps> = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [selectedRoles, setSelectedRoles] = useState<UserRole[]>([]);
+  const [validationError, setValidationError] = useState<string | null>(null);
   // Every role starts ON (toggled via ToggleFilterGroup below) -- semantically
   // equivalent to the old empty-array "no filter" default, but the UI always
   // shows each role's on/off state instead of hiding it behind a dropdown.
@@ -74,38 +83,103 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
     }
   };
 
-  const handlePromoteToAdmin = async (user: UserWithRoles) => {
+  const handleManageRoles = (user: UserWithRoles) => {
     setSelectedUser(user);
+    setSelectedRoles(
+      user.roles.filter(role => role.approved).map(role => role.role)
+    );
+    setValidationError(null);
     setModalVisible(true);
   };
 
-  const confirmPromoteToAdmin = async () => {
+  const toggleRole = (role: UserRole, checked: boolean) => {
+    setValidationError(null);
+    setSelectedRoles(prev =>
+      checked ? [...prev, role] : prev.filter(r => r !== role)
+    );
+  };
+
+  // Elevated roles (admin/moderator) carry no identity of their own -- they
+  // must be paired with a base role (staff or parent).
+  const validateRoleSet = (roles: UserRole[]): string | null => {
+    const hasElevated = roles.some(role => ELEVATED_ROLES.includes(role));
+    const hasBase = roles.some(role => BASE_ROLES.includes(role));
+    if (hasElevated && !hasBase) {
+      return "תפקיד מנהל או אחראי/ת מערכת דורש תפקיד בסיס נוסף (הורה או צוות)";
+    }
+    return null;
+  };
+
+  const applyRoleChanges = async (user: UserWithRoles, desired: UserRole[]) => {
+    const current = user.roles
+      .filter(role => role.approved)
+      .map(role => role.role);
+
+    const toAdd = desired.filter(role => !current.includes(role));
+    const toRemove = user.roles.filter(
+      role => role.approved && !desired.includes(role.role)
+    );
+
+    for (const role of toAdd) {
+      await usersApi.requestRole(user.id, role);
+      const userRoles = await usersApi.getUserRoles(user.id);
+      const newRole = userRoles.find(r => r.role === role && !r.approved);
+      if (newRole) {
+        await usersApi.approveRole(newRole.id);
+      }
+    }
+
+    for (const role of toRemove) {
+      await usersApi.revokeApprovedRole(role.id);
+    }
+  };
+
+  const saveRoles = async () => {
     if (!selectedUser) return;
 
-    setActionLoading(true);
-    try {
-      // Add admin role to user
-      await usersApi.requestRole(selectedUser.id, "admin");
-
-      // Get the newly created role and approve it immediately
-      const userRoles = await usersApi.getUserRoles(selectedUser.id);
-      const adminRole = userRoles.find(
-        role => role.role === "admin" && !role.approved
-      );
-
-      if (adminRole) {
-        await usersApi.approveRole(adminRole.id);
-      }
-
-      message.success(`המשתמש ${selectedUser.email} קודם למנהל בהצלחה`);
-      loadUsers(); // Reload the users list
-    } catch (error) {
-      message.error("שגיאה בקידום המשתמש למנהל");
-    } finally {
-      setActionLoading(false);
-      setModalVisible(false);
-      setSelectedUser(null);
+    const validationMessage = validateRoleSet(selectedRoles);
+    if (validationMessage) {
+      setValidationError(validationMessage);
+      return;
     }
+    setValidationError(null);
+
+    const isSelfDemotion =
+      selectedUser.id === currentUser?.id &&
+      selectedUser.roles.some(role => role.role === "admin" && role.approved) &&
+      !selectedRoles.includes("admin");
+
+    const performSave = async () => {
+      setActionLoading(true);
+      try {
+        await applyRoleChanges(selectedUser, selectedRoles);
+        message.success(`תפקידי המשתמש ${selectedUser.email} עודכנו בהצלחה`);
+        loadUsers(); // Reload the users list
+        setModalVisible(false);
+        setSelectedUser(null);
+      } catch (error) {
+        message.error(
+          error instanceof Error ? error.message : "שגיאה בעדכון תפקידי המשתמש"
+        );
+      } finally {
+        setActionLoading(false);
+      }
+    };
+
+    if (isSelfDemotion) {
+      Modal.confirm({
+        title: "הסרת הרשאות מנהל מעצמך",
+        content:
+          "אתה עומד להסיר מעצמך את תפקיד המנהל. לאחר השמירה לא תוכל עוד לגשת לדף זה. להמשיך?",
+        okText: "כן, הסר",
+        cancelText: "ביטול",
+        okButtonProps: { danger: true },
+        onOk: performSave,
+      });
+      return;
+    }
+
+    await performSave();
   };
 
   useEffect(() => {
@@ -279,33 +353,16 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       key: "actions",
       width: 90,
       align: "center",
-      render: (_, record) => {
-        const isAdmin = record.roles.some(
-          role => role.role === "admin" && role.approved
-        );
-
-        return (
-          <Space>
-            {!isAdmin && (
-              <Button
-                type="primary"
-                size="small"
-                icon={<CrownOutlined />}
-                onClick={() => handlePromoteToAdmin(record)}>
-                קדם למנהל
-              </Button>
-            )}
-            {isAdmin && (
-              <Tag
-                color="red"
-                icon={<CrownOutlined />}
-                style={{ fontSize: "12px" }}>
-                מנהל
-              </Tag>
-            )}
-          </Space>
-        );
-      },
+      render: (_, record) => (
+        <Space>
+          <Button
+            size="small"
+            icon={<SettingOutlined />}
+            onClick={() => handleManageRoles(record)}>
+            ניהול תפקידים
+          </Button>
+        </Space>
+      ),
     },
   ];
 
@@ -322,7 +379,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
 
       <Alert
         message="ניהול תפקידי משתמשים"
-        description="כאן תוכל לקדם משתמשים לתפקיד מנהל. משתמשים חדשים נרשמים אוטומטית כהורים."
+        description="כאן תוכל להוסיף ולהסיר תפקידים למשתמשים. משתמשים חדשים נרשמים אוטומטית כהורים."
         type="info"
         showIcon
         style={{ marginBottom: 24 }}
@@ -363,20 +420,46 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       />
 
       <Modal
-        title="קידום למנהל"
+        title="ניהול תפקידים"
         open={modalVisible}
-        onOk={confirmPromoteToAdmin}
-        onCancel={() => setModalVisible(false)}
+        onOk={saveRoles}
+        onCancel={() => {
+          setModalVisible(false);
+          setSelectedUser(null);
+          setValidationError(null);
+        }}
         confirmLoading={actionLoading}
-        okText="אשר קידום"
+        okText="שמור"
         cancelText="ביטול">
         <p>
-          האם אתה בטוח שברצונך לקדם את המשתמש{" "}
-          <strong>{selectedUser?.email}</strong> לתפקיד מנהל?
+          בחר את התפקידים המאושרים עבור המשתמש{" "}
+          <strong>{selectedUser?.email}</strong>:
         </p>
+        <Space wrap style={{ marginBottom: 16 }}>
+          {ALL_ROLES.map(role => (
+            <Tag.CheckableTag
+              key={role}
+              checked={selectedRoles.includes(role)}
+              onChange={checked => toggleRole(role, checked)}
+              style={{
+                fontSize: "13px",
+                padding: "4px 12px",
+              }}>
+              {getRoleDisplayName(role)}
+            </Tag.CheckableTag>
+          ))}
+        </Space>
+        {validationError && (
+          <Alert
+            message={validationError}
+            type="error"
+            showIcon
+            style={{ marginTop: 8 }}
+          />
+        )}
         <Alert
           message="שים לב"
-          description="מנהלים יכולים לגשת לכל הפונקציות במערכת, כולל ניהול משתמשים ושיעורים."
+          description="מנהלים ואחראי/ת מערכת יכולים לגשת לפונקציות ניהול נרחבות. הסרת תפקיד מאושר תבוטל מיידית."
           type="warning"
           showIcon
           style={{ marginTop: 16 }}
