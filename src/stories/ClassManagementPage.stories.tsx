@@ -30,11 +30,15 @@ const mockAuthValue: AuthContextType = {
   refreshProfile: async () => {},
   switchRole: () => {},
   hasRole: () => true,
-  isAdmin: () => true,
-  canManageClasses: () => true,
-  canCreateClasses: () => true,
-  canDeleteClasses: () => true,
-  canViewAllSchedules: () => true,
+  permissions: {
+    canManageClasses: true,
+    canCreateClasses: true,
+    canDeleteClasses: true,
+    canViewAllSchedules: true,
+    canManageRoster: true,
+    canApproveSignups: true,
+    canAdjustRoles: true,
+  },
   clearApplicationState: () => {},
 };
 

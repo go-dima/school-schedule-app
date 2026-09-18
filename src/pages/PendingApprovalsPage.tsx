@@ -36,7 +36,7 @@ const { Title, Text } = Typography;
 interface PendingApprovalsPageProps {}
 
 const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
-  const { isAdmin } = useAuth();
+  const { permissions } = useAuth();
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>(
     []
   );
@@ -280,7 +280,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
     },
   ];
 
-  if (!isAdmin()) {
+  if (!permissions.canApproveSignups) {
     return (
       <div className="page-content">
         <Alert

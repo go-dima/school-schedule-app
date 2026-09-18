@@ -58,7 +58,7 @@ const ParentIcon: React.FC<{ assignedParent: boolean }> = ({
 
 const StudentsPage: React.FC = () => {
   const { t } = useTranslation();
-  const { canManageClasses, isAdmin, hasRole } = useAuth();
+  const { permissions, hasRole } = useAuth();
   const {
     children,
     loading,
@@ -317,7 +317,7 @@ const StudentsPage: React.FC = () => {
   ];
 
   // Check permissions
-  if (!canManageClasses()) {
+  if (!permissions.canManageRoster) {
     return (
       <div className="page-content">
         <Card>
@@ -380,7 +380,7 @@ const StudentsPage: React.FC = () => {
             mode="search"
             value={searchTerm}
             defaultGrade={selectedGrade || 1}
-            isCreateAllowed={canManageClasses()}
+            isCreateAllowed={permissions.canManageRoster}
           />
           <Select
             value={selectedGrade}
@@ -395,7 +395,7 @@ const StudentsPage: React.FC = () => {
             ))}
           </Select>
         </Space>
-        {isAdmin() && (
+        {hasRole("admin") && (
           <ToggleFilterGroup<Scope>
             value={selectedScopes}
             onChange={setSelectedScopes}
@@ -461,7 +461,7 @@ const StudentsPage: React.FC = () => {
           onSubmit={editingChild ? handleUpdateChild : handleCreateChild}
           onCancel={closeModal}
           loading={formLoading}
-          showScope={isAdmin()}
+          showScope={hasRole("admin")}
           onDuplicateRedirect={childId => {
             const match = children.find(c => c.id === childId);
             if (match) openEditModal(match);

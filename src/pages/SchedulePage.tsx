@@ -68,16 +68,8 @@ const SchedulePageContent: React.FC = () => {
     const roleKey = `roles.${role}`;
     return t(roleKey, role); // fallback to role if translation not found
   };
-  const {
-    user,
-    currentRole,
-    userRoles,
-    switchRole,
-    isAdmin,
-    hasRole,
-    canCreateClasses,
-    canManageClasses,
-  } = useAuth();
+  const { user, currentRole, userRoles, switchRole, hasRole, permissions } =
+    useAuth();
   const {
     selectedChild,
     setSelectedChild,
@@ -295,17 +287,17 @@ const SchedulePageContent: React.FC = () => {
   // Handler for when a parent adds a new child via AddChildButton
   const handleParentChildAdded = (newChild: Child) => {
     setSelectedChild(newChild);
-    if (!isAdmin()) {
+    if (!hasRole("admin")) {
       setSelectedGrade(newChild.grade);
     }
   };
 
   // Auto-update grade filter when selected child changes (only for non-admin parents)
   React.useEffect(() => {
-    if (selectedChild && isParent && !isAdmin()) {
+    if (selectedChild && isParent && !hasRole("admin")) {
       setSelectedGrade(selectedChild.grade);
     }
-  }, [selectedChild, isParent, isAdmin]);
+  }, [selectedChild, isParent, hasRole]);
 
   // Page-level loading: catalog (classes/time slots) and the child roster
   // only load once (or on an explicit refresh), so gating the full-page
@@ -357,7 +349,7 @@ const SchedulePageContent: React.FC = () => {
     // Staff-only placeholder classes (e.g. "חונכות", "שילוב") already chosen
     // for this child can only be managed by staff/admin -- lock them here so
     // non-staff/admin viewers can see but never unselect them.
-    ...(!canManageClasses()
+    ...(!permissions.canManageClasses
       ? selectedSchedule
           .map(selection => selection.class)
           .filter(cls => ScheduleService.isStaffOnlyClass(cls))
@@ -845,7 +837,7 @@ const SchedulePageContent: React.FC = () => {
                   const child = userChildren.find(c => c.id === childId);
                   setSelectedChild(child || undefined);
                   // Auto-update grade filter based on selected child (only for non-admin parents)
-                  if (child && !isAdmin()) {
+                  if (child && !hasRole("admin")) {
                     setSelectedGrade(child.grade);
                   }
                 }}
@@ -881,7 +873,7 @@ const SchedulePageContent: React.FC = () => {
             </FilterField>
           </>
         )}
-        {(isStaff || isAdmin()) && (
+        {(isStaff || hasRole("admin")) && (
           <FilterField label={t("schedule.page.labels.filterByGrade")}>
             <Select
               value={selectedGrade}
@@ -995,8 +987,8 @@ const SchedulePageContent: React.FC = () => {
             onClassUnselect={handleClassSelect}
             canSelectClasses={canSelectClasses}
             canViewClasses={canViewClasses}
-            isAdmin={canCreateClasses()}
-            showEnrollmentCount={isStaff || isAdmin()}
+            isAdmin={permissions.canCreateClasses}
+            showEnrollmentCount={isStaff || hasRole("admin")}
             onCreateClass={handleCreateClass}
             searchTerm={searchTerm}
             childGroupNumber={currentTrackChild?.groupNumber}

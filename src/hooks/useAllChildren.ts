@@ -10,13 +10,13 @@ export function useAllChildren() {
   const [children, setChildren] = useState<ChildWithParent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user, canViewAllSchedules } = useAuth();
+  const { user, permissions } = useAuth();
   // get_children_with_parent_status is admin/staff-only at the DB level
   // (see migration 020) and has anon access revoked entirely -- calling it
   // for anyone else (including pre-login/anon, since this hook backs a
   // context mounted at the app root) fails with a Postgres permission
   // error instead of the RPC's own friendlier role check.
-  const canListAllChildren = !!user?.id && canViewAllSchedules();
+  const canListAllChildren = !!user?.id && permissions.canViewAllSchedules;
 
   useEffect(() => {
     if (!canListAllChildren) {

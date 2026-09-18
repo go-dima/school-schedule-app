@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { authApi, usersApi } from "../services/api";
+import { getPermissions } from "../services/permissions";
 import type { User, UserRoleData } from "../types";
 import { withTimeout } from "../utils/asyncUtils";
 
@@ -225,25 +226,7 @@ export function useAuth() {
     return userRoles.some(r => r.role === role);
   };
 
-  const isAdmin = (): boolean => {
-    return hasRole("admin");
-  };
-
-  const canManageClasses = (): boolean => {
-    return hasRole("admin") || hasRole("staff");
-  };
-
-  const canCreateClasses = (): boolean => {
-    return isAdmin();
-  };
-
-  const canDeleteClasses = (): boolean => {
-    return isAdmin();
-  };
-
-  const canViewAllSchedules = (): boolean => {
-    return hasRole("admin") || hasRole("staff");
-  };
+  const permissions = useMemo(() => getPermissions(userRoles), [userRoles]);
 
   const refreshProfile = async () => {
     if (!user?.id) return;
@@ -305,11 +288,7 @@ export function useAuth() {
     refreshProfile,
     switchRole,
     hasRole,
-    isAdmin,
-    canManageClasses,
-    canCreateClasses,
-    canDeleteClasses,
-    canViewAllSchedules,
+    permissions,
     clearApplicationState,
   };
 }
