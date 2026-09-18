@@ -161,6 +161,9 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         message.error(
           error instanceof Error ? error.message : "שגיאה בעדכון תפקידי המשתמש"
         );
+        // A partial apply may have already committed some grants/revokes to
+        // the DB before the failure -- resync the table to actual DB state.
+        loadUsers();
       } finally {
         setActionLoading(false);
       }

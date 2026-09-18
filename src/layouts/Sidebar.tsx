@@ -70,7 +70,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
       key: ROUTES.STUDENTS,
       icon: <UsergroupAddOutlined />,
       label: t("navigation.students"),
-      style: permissions.canManageClasses ? {} : { display: "none" },
+      style: permissions.canManageRoster ? {} : { display: "none" },
     },
     hasRole("admin")
       ? {
