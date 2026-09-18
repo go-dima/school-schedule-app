@@ -305,19 +305,27 @@
       "dependencies": ["037_add_schedule_overrides"]
     },
     {
+      "id": "039_restore_added_by_with_scope",
+      "name": "Restore Added By With Scope",
+      "description": "Issue #147: restore get_class_enrolled_children's added_by_user_id/added_by_first_name/added_by_last_name/added_by_at columns and the public.users join (dropped as an unintended side effect of 038's target_scope change, which re-declared the function from 024's shape instead of 030's) on top of 038's target_scope parameter/filter",
+      "file": "039_restore_added_by_with_scope.sql",
+      "created_at": "2026-09-18T00:00:00Z",
+      "dependencies": ["038_add_scope_to_get_class_enrolled_children"]
+    },
+    {
       "id": "040_add_moderator_role",
       "name": "Add Moderator Role",
       "description": "Issue #144: add 'moderator' to the user_role enum. Must be applied and committed on its own before migrations 041/042, since Postgres forbids using a newly added enum value in the same transaction that adds it.",
       "file": "040_add_moderator_role.sql",
-      "created_at": "2026-09-18T00:00:00Z",
-      "dependencies": ["038_add_scope_to_get_class_enrolled_children"]
+      "created_at": "2026-09-18T00:01:00Z",
+      "dependencies": ["039_restore_added_by_with_scope"]
     },
     {
       "id": "041_moderator_can_create_delete_classes",
       "name": "Moderator Can Create/Delete Classes",
       "description": "Issue #144: grant moderator the same class create/delete rights as admin (canCreateClasses/canDeleteClasses), via a new is_admin_or_moderator() helper. Staff stays excluded from create/delete.",
       "file": "041_moderator_can_create_delete_classes.sql",
-      "created_at": "2026-09-18T00:01:00Z",
+      "created_at": "2026-09-18T00:02:00Z",
       "dependencies": ["040_add_moderator_role"]
     },
     {
@@ -325,7 +333,7 @@
       "name": "Moderator Can Update Classes",
       "description": "Issue #144: grant moderator the same class-catalog update rights as staff/admin (canManageClasses), extending the classes UPDATE policy's role list.",
       "file": "042_moderator_can_update_classes.sql",
-      "created_at": "2026-09-18T00:02:00Z",
+      "created_at": "2026-09-18T00:03:00Z",
       "dependencies": ["041_moderator_can_create_delete_classes"]
     }
   ],
