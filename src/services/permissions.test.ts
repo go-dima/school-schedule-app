@@ -73,6 +73,57 @@ describe("getPermissions", () => {
     });
   });
 
+  it("stacks staff + moderator into class management, roster/schedules, and create/delete, but not approval", () => {
+    const permissions = getPermissions([
+      roleData("staff"),
+      roleData("moderator"),
+    ]);
+
+    expect(permissions).toEqual({
+      canManageClasses: true,
+      canCreateClasses: true,
+      canDeleteClasses: true,
+      canViewAllSchedules: true,
+      canManageRoster: true,
+      canApproveSignups: false,
+      canAdjustRoles: false,
+    });
+  });
+
+  it("grants full permissions for admin + moderator", () => {
+    const permissions = getPermissions([
+      roleData("admin"),
+      roleData("moderator"),
+    ]);
+
+    expect(permissions).toEqual({
+      canManageClasses: true,
+      canCreateClasses: true,
+      canDeleteClasses: true,
+      canViewAllSchedules: true,
+      canManageRoster: true,
+      canApproveSignups: true,
+      canAdjustRoles: true,
+    });
+  });
+
+  it("applies the approval filter per-role within a multi-role user (approved staff + unapproved moderator)", () => {
+    const permissions = getPermissions([
+      roleData("staff", true),
+      roleData("moderator", false),
+    ]);
+
+    expect(permissions).toEqual({
+      canManageClasses: true,
+      canCreateClasses: false,
+      canDeleteClasses: false,
+      canViewAllSchedules: true,
+      canManageRoster: true,
+      canApproveSignups: false,
+      canAdjustRoles: false,
+    });
+  });
+
   it("ignores unapproved roles", () => {
     const permissions = getPermissions([roleData("admin", false)]);
 
