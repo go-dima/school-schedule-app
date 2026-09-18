@@ -303,8 +303,16 @@
       "file": "038_add_scope_to_get_class_enrolled_children.sql",
       "created_at": "2026-09-16T00:02:00Z",
       "dependencies": ["037_add_schedule_overrides"]
+    },
+    {
+      "id": "039_restore_added_by_with_scope",
+      "name": "Restore Added By With Scope",
+      "description": "Issue #147: restore get_class_enrolled_children's added_by_user_id/added_by_first_name/added_by_last_name/added_by_at columns and the public.users join (dropped as an unintended side effect of 038's target_scope change, which re-declared the function from 024's shape instead of 030's) on top of 038's target_scope parameter/filter",
+      "file": "039_restore_added_by_with_scope.sql",
+      "created_at": "2026-09-18T00:00:00Z",
+      "dependencies": ["038_add_scope_to_get_class_enrolled_children"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 38
+  "schema_version": 39
 }
