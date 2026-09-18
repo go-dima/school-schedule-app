@@ -87,8 +87,7 @@ const SchedulePageContent: React.FC = () => {
     setSelectedChild: setStaffSelectedChild,
     updateChild: updateChildForStaff,
   } = useAllChildrenContext();
-  const isStaff = roleFlags.isStaff;
-  const isAdmin = roleFlags.isAdmin;
+  const { isStaff, isAdmin, isParent } = roleFlags;
 
   const [selectedGrade, setSelectedGrade] = useState<number | undefined>(1);
   const [createClassModalOpen, setCreateClassModalOpen] = useState(false);
@@ -112,7 +111,6 @@ const SchedulePageContent: React.FC = () => {
     useState<ScheduleOverrideWithTimeSlot | null>(null);
   const [overrideModalLoading, setOverrideModalLoading] = useState(false);
 
-  const isParent = roleFlags.isParent;
   const { viewStatus, overrideChildId, canCreateOverride } =
     ScheduleService.resolveScheduleView({
       role: currentRole?.role,
