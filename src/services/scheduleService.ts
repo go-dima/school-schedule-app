@@ -13,7 +13,7 @@ import { isLessonTimeSlot } from "../utils/timeSlots";
 
 // Placeholder "all option" classes that only staff/admin may select; hidden
 // entirely from the schedule catalog for everyone else.
-const STAFF_ONLY_CLASS_TITLES = new Set(["חונכות", "שילוב"]);
+const STAFF_ONLY_CLASS_TITLES = new Set(["חונכות", "שילוב", "מחויבות אישית"]);
 
 export class ScheduleService {
   static slotKey(slot: ClassSlot): string {
