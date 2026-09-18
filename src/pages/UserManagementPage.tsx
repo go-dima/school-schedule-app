@@ -80,7 +80,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
 
       setUsers(transformedUsers);
     } catch (error) {
-      message.error("שגיאה בטעינת המשתמשים");
+      message.error(t("userManagement.page.loadError"));
     } finally {
       setLoading(false);
     }
@@ -108,7 +108,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
     const hasElevated = roles.some(role => ELEVATED_ROLES.includes(role));
     const hasBase = roles.some(role => BASE_ROLES.includes(role));
     if (hasElevated && !hasBase) {
-      return "תפקיד מנהל או אחראי/ת מערכת דורש תפקיד בסיס נוסף (הורה או צוות)";
+      return t("userManagement.page.baseRoleValidationError");
     }
     return null;
   };
@@ -156,13 +156,17 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       setActionLoading(true);
       try {
         await applyRoleChanges(selectedUser, selectedRoles);
-        message.success(`תפקידי המשתמש ${selectedUser.email} עודכנו בהצלחה`);
+        message.success(
+          t("userManagement.page.updateSuccess", { email: selectedUser.email })
+        );
         loadUsers(); // Reload the users list
         setModalVisible(false);
         setSelectedUser(null);
       } catch (error) {
         message.error(
-          error instanceof Error ? error.message : "שגיאה בעדכון תפקידי המשתמש"
+          error instanceof Error
+            ? error.message
+            : t("userManagement.page.updateError")
         );
         // A partial apply may have already committed some grants/revokes to
         // the DB before the failure -- resync the table to actual DB state.
@@ -174,11 +178,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
 
     if (isSelfDemotion) {
       Modal.confirm({
-        title: "הסרת הרשאות מנהל מעצמך",
-        content:
-          "אתה עומד להסיר מעצמך את תפקיד המנהל. לאחר השמירה לא תוכל עוד לגשת לדף זה. להמשיך?",
-        okText: "כן, הסר",
-        cancelText: "ביטול",
+        title: t("userManagement.page.selfDemotion.title"),
+        content: t("userManagement.page.selfDemotion.description"),
+        okText: t("userManagement.page.selfDemotion.confirmButton"),
+        cancelText: t("common.buttons.cancel"),
         okButtonProps: { danger: true },
         onOk: performSave,
       });
@@ -200,7 +203,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
 
   const columns: ColumnsType<UserWithRoles> = [
     {
-      title: "שם משתמש",
+      title: t("userManagement.table.nameColumn"),
       key: "name",
       width: 110,
       sorter: (a, b) =>
@@ -218,14 +221,14 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
             {fullName ? (
               <Text strong>{fullName}</Text>
             ) : (
-              <Text type="secondary">לא הוזן שם</Text>
+              <Text type="secondary">{t("userManagement.table.noName")}</Text>
             )}
           </Space>
         );
       },
     },
     {
-      title: "דוא״ל",
+      title: t("userManagement.table.emailColumn"),
       key: "email",
       width: 140,
       dataIndex: "email",
@@ -235,7 +238,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       ),
     },
     {
-      title: "תאריך הרשמה",
+      title: t("userManagement.table.createdAtColumn"),
       key: "createdAt",
       width: 60,
       dataIndex: "createdAt",
@@ -249,7 +252,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       ),
     },
     {
-      title: "כניסה אחרונה",
+      title: t("userManagement.table.lastSignInColumn"),
       key: "lastSignInAt",
       width: 60,
       dataIndex: "lastSignInAt",
@@ -260,7 +263,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         if (!date) {
           return (
             <Text type="secondary" style={{ fontSize: "12px" }}>
-              לא התחבר עדיין
+              {t("userManagement.table.neverSignedIn")}
             </Text>
           );
         }
@@ -276,13 +279,19 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         if (diffDays > 7) {
           displayText = signInDate.toLocaleDateString("he-IL");
         } else if (diffDays > 0) {
-          displayText = `לפני ${diffDays} ימים`;
+          displayText = t("userManagement.table.daysAgo", {
+            count: diffDays,
+          });
         } else if (diffHours > 0) {
-          displayText = `לפני ${diffHours} שעות`;
+          displayText = t("userManagement.table.hoursAgo", {
+            count: diffHours,
+          });
         } else if (diffMinutes > 0) {
-          displayText = `לפני ${diffMinutes} דקות`;
+          displayText = t("userManagement.table.minutesAgo", {
+            count: diffMinutes,
+          });
         } else {
-          displayText = "עכשיו";
+          displayText = t("userManagement.table.now");
         }
 
         return (
@@ -295,7 +304,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       },
     },
     {
-      title: "תפקידים",
+      title: t("userManagement.table.rolesColumn"),
       key: "roles",
       width: 50,
       sorter: (a, b) =>
@@ -321,19 +330,19 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
                 fontSize: "12px",
               }}>
               {t(`roles.${role.role}`, role.role)}
-              {!role.approved && " (ממתין)"}
+              {!role.approved && t("userManagement.table.pendingSuffix")}
             </Tag>
           ))}
           {record.roles.length === 0 && (
             <Text type="secondary" style={{ fontSize: "12px" }}>
-              אין תפקידים
+              {t("userManagement.table.noRoles")}
             </Text>
           )}
         </Space>
       ),
     },
     {
-      title: "פעולות",
+      title: t("userManagement.table.actionsColumn"),
       key: "actions",
       width: 90,
       align: "center",
@@ -343,7 +352,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
             size="small"
             icon={<SettingOutlined />}
             onClick={() => handleManageRoles(record)}>
-            ניהול תפקידים
+            {t("userManagement.table.manageRolesButton")}
           </Button>
         </Space>
       ),
@@ -356,14 +365,14 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         <Space>
           <UserOutlined style={{ fontSize: "24px", color: "#1890ff" }} />
           <Title level={2} style={{ margin: 0 }}>
-            ניהול משתמשים
+            {t("common.buttons.userManagement")}
           </Title>
         </Space>
       </div>
 
       <Alert
-        message="ניהול תפקידי משתמשים"
-        description="כאן תוכל להוסיף ולהסיר תפקידים למשתמשים. משתמשים חדשים נרשמים אוטומטית כהורים."
+        message={t("userManagement.page.alertMessage")}
+        description={t("userManagement.page.alertDescription")}
         type="info"
         showIcon
         style={{ marginBottom: 24 }}
@@ -395,16 +404,20 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
           showSizeChanger: true,
           showQuickJumper: true,
           showTotal: (total, range) =>
-            `${range[0]}-${range[1]} מתוך ${total} משתמשים`,
+            t("userManagement.table.pagination", {
+              start: range[0],
+              end: range[1],
+              total,
+            }),
         }}
         locale={{
-          emptyText: "לא נמצאו משתמשים",
+          emptyText: t("userManagement.table.emptyText"),
         }}
         scroll={{ x: 1040 }}
       />
 
       <Modal
-        title="ניהול תפקידים"
+        title={t("userManagement.modal.title")}
         open={modalVisible}
         onOk={saveRoles}
         onCancel={() => {
@@ -413,10 +426,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
           setValidationError(null);
         }}
         confirmLoading={actionLoading}
-        okText="שמור"
-        cancelText="ביטול">
+        okText={t("common.buttons.save")}
+        cancelText={t("common.buttons.cancel")}>
         <p>
-          בחר את התפקידים המאושרים עבור המשתמש{" "}
+          {t("userManagement.modal.description")}{" "}
           <strong>{selectedUser?.email}</strong>:
         </p>
         <Space wrap style={{ marginBottom: 16 }}>
@@ -442,8 +455,8 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
           />
         )}
         <Alert
-          message="שים לב"
-          description="מנהלים ואחראי/ת מערכת יכולים לגשת לפונקציות ניהול נרחבות. הסרת תפקיד מאושר תבוטל מיידית."
+          message={t("userManagement.modal.warningAlertMessage")}
+          description={t("userManagement.modal.warningAlertDescription")}
           type="warning"
           showIcon
           style={{ marginTop: 16 }}
