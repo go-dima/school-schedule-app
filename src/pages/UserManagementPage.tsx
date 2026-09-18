@@ -118,7 +118,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       parent: "הורה",
       child: "תלמיד",
       staff: "צוות",
-      moderator: "מנחה",
+      moderator: "אחראי/ת מערכת",
     };
     return roleNames[role] || role;
   };

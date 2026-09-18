@@ -120,12 +120,12 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
   };
 
   const getRoleDisplayName = (role: UserRole): string => {
-    const roleNames = {
+    const roleNames: Record<UserRole, string> = {
       admin: "מנהל",
       staff: "צוות",
       parent: "הורה",
       child: "תלמיד",
-      moderator: "מנחה",
+      moderator: "אחראי/ת מערכת",
     };
     return roleNames[role] || role;
   };
