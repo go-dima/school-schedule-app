@@ -538,14 +538,9 @@
       "alertDescription": "כאן תוכל לאשר או לדחות בקשות של משתמשים חדשים להצטרף למערכת. לאחר אישור, המשתמש יוכל להיכנס למערכת ולהשתמש בתפקיד המבוקש.",
       "lastRefreshLabel": "עדכון אחרון: ",
       "loadErrorAlertMessage": "שגיאה בטעינת הנתונים",
+      "loadErrorFallback": "טעינת הבקשות הממתינות נכשלה",
       "emptyTitle": "אין בקשות ממתינות לאישור",
-      "emptyDescription": "כל הבקשות אושרו או שלא הוגשו בקשות חדשות",
-      "roleOptions": {
-        "parent": "הורה",
-        "staff": "צוות",
-        "child": "תלמיד",
-        "admin": "מנהל"
-      }
+      "emptyDescription": "כל הבקשות אושרו או שלא הוגשו בקשות חדשות"
     },
     "table": {
       "fullNameColumn": "שם מלא",

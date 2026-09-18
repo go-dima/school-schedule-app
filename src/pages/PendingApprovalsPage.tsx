@@ -25,6 +25,7 @@ import {
   TeamOutlined,
   HomeOutlined,
   CrownOutlined,
+  SafetyCertificateOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useAuth } from "../contexts/AuthContext";
@@ -71,7 +72,9 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       setLastRefresh(new Date());
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to load pending approvals"
+        err instanceof Error
+          ? err.message
+          : t("pendingApprovals.page.loadErrorFallback")
       );
     } finally {
       setLoading(false);
@@ -144,7 +147,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       label: (
         <Space>
           <HomeOutlined />
-          {t("pendingApprovals.page.roleOptions.parent")}
+          {t("roles.parent")}
         </Space>
       ),
     },
@@ -153,7 +156,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       label: (
         <Space>
           <TeamOutlined />
-          {t("pendingApprovals.page.roleOptions.staff")}
+          {t("roles.staff")}
         </Space>
       ),
     },
@@ -162,7 +165,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       label: (
         <Space>
           <UserOutlined />
-          {t("pendingApprovals.page.roleOptions.child")}
+          {t("roles.child")}
         </Space>
       ),
     },
@@ -171,7 +174,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       label: (
         <Space>
           <CrownOutlined />
-          {t("pendingApprovals.page.roleOptions.admin")}
+          {t("roles.admin")}
         </Space>
       ),
     },
@@ -179,7 +182,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       value: "moderator" as UserRole,
       label: (
         <Space>
-          <CrownOutlined />
+          <SafetyCertificateOutlined />
           {t("roles.moderator")}
         </Space>
       ),
