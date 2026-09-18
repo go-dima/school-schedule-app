@@ -83,7 +83,8 @@ export function RequireRosterManager() {
 /** Guards the /user-management/* branch. */
 export function RequireAdmin() {
   const { roleFlags } = useAuth();
-  if (!roleFlags.isAdmin) return <Navigate to={ROUTES.SCHEDULE} replace />;
+  const isAdmin = roleFlags.isAdmin;
+  if (!isAdmin) return <Navigate to={ROUTES.SCHEDULE} replace />;
   return <Outlet />;
 }
 

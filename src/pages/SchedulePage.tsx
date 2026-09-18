@@ -88,6 +88,7 @@ const SchedulePageContent: React.FC = () => {
     updateChild: updateChildForStaff,
   } = useAllChildrenContext();
   const isStaff = roleFlags.isStaff;
+  const isAdmin = roleFlags.isAdmin;
 
   const [selectedGrade, setSelectedGrade] = useState<number | undefined>(1);
   const [createClassModalOpen, setCreateClassModalOpen] = useState(false);
@@ -287,17 +288,17 @@ const SchedulePageContent: React.FC = () => {
   // Handler for when a parent adds a new child via AddChildButton
   const handleParentChildAdded = (newChild: Child) => {
     setSelectedChild(newChild);
-    if (!roleFlags.isAdmin) {
+    if (!isAdmin) {
       setSelectedGrade(newChild.grade);
     }
   };
 
   // Auto-update grade filter when selected child changes (only for non-admin parents)
   React.useEffect(() => {
-    if (selectedChild && isParent && !roleFlags.isAdmin) {
+    if (selectedChild && isParent && !isAdmin) {
       setSelectedGrade(selectedChild.grade);
     }
-  }, [selectedChild, isParent, roleFlags]);
+  }, [selectedChild, isParent, isAdmin]);
 
   // Page-level loading: catalog (classes/time slots) and the child roster
   // only load once (or on an explicit refresh), so gating the full-page
@@ -837,7 +838,7 @@ const SchedulePageContent: React.FC = () => {
                   const child = userChildren.find(c => c.id === childId);
                   setSelectedChild(child || undefined);
                   // Auto-update grade filter based on selected child (only for non-admin parents)
-                  if (child && !roleFlags.isAdmin) {
+                  if (child && !isAdmin) {
                     setSelectedGrade(child.grade);
                   }
                 }}
@@ -873,7 +874,7 @@ const SchedulePageContent: React.FC = () => {
             </FilterField>
           </>
         )}
-        {(isStaff || roleFlags.isAdmin) && (
+        {(isStaff || isAdmin) && (
           <FilterField label={t("schedule.page.labels.filterByGrade")}>
             <Select
               value={selectedGrade}
@@ -988,7 +989,7 @@ const SchedulePageContent: React.FC = () => {
             canSelectClasses={canSelectClasses}
             canViewClasses={canViewClasses}
             isAdmin={permissions.canCreateClasses}
-            showEnrollmentCount={isStaff || roleFlags.isAdmin}
+            showEnrollmentCount={isStaff || isAdmin}
             onCreateClass={handleCreateClass}
             searchTerm={searchTerm}
             childGroupNumber={currentTrackChild?.groupNumber}

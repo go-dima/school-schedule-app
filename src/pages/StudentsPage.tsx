@@ -69,6 +69,7 @@ const StudentsPage: React.FC = () => {
     refetch,
   } = useAllChildrenContext();
   const isCurrentUserParent = roleFlags.isParent;
+  const isAdmin = roleFlags.isAdmin;
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | undefined>();
   const [formLoading, setFormLoading] = useState(false);
@@ -395,7 +396,7 @@ const StudentsPage: React.FC = () => {
             ))}
           </Select>
         </Space>
-        {roleFlags.isAdmin && (
+        {isAdmin && (
           <ToggleFilterGroup<Scope>
             value={selectedScopes}
             onChange={setSelectedScopes}
@@ -461,7 +462,7 @@ const StudentsPage: React.FC = () => {
           onSubmit={editingChild ? handleUpdateChild : handleCreateChild}
           onCancel={closeModal}
           loading={formLoading}
-          showScope={roleFlags.isAdmin}
+          showScope={isAdmin}
           onDuplicateRedirect={childId => {
             const match = children.find(c => c.id === childId);
             if (match) openEditModal(match);
