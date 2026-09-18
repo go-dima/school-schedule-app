@@ -46,6 +46,7 @@ const ProfileDropdown: React.FC = () => {
       staff: "#1890ff", // blue
       parent: "#52c41a", // green
       child: "#faad14", // yellow
+      moderator: "#722ed1", // purple
     };
     return colorMap[role] || "#8c8c8c";
   };
