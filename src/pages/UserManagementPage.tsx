@@ -16,6 +16,7 @@ import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
 import { useAuth } from "../contexts/AuthContext";
 import { usersApi } from "../services/api";
 import type { UserRoleData, UserRole } from "../types";
+import { ROLE_TAG_COLORS } from "../constants/roleColors";
 import "./UserManagementPage.css";
 
 const ALL_ROLES: UserRole[] = ["admin", "moderator", "staff", "parent"];
@@ -200,17 +201,6 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
     return roleNames[role] || role;
   };
 
-  const getRoleColor = (role: UserRole): string => {
-    const roleColors: Record<UserRole, string> = {
-      admin: "red",
-      parent: "blue",
-      child: "green",
-      staff: "orange",
-      moderator: "purple",
-    };
-    return roleColors[role] || "default";
-  };
-
   const filteredUsers = useMemo(() => {
     return users.filter(user =>
       user.roles.some(role => roleFilter.includes(role.role))
@@ -333,7 +323,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
           {record.roles.map(role => (
             <Tag
               key={role.id}
-              color={getRoleColor(role.role)}
+              color={ROLE_TAG_COLORS[role.role]}
               style={{
                 opacity: role.approved ? 1 : 0.6,
                 margin: "2px",

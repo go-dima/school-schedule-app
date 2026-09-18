@@ -29,6 +29,7 @@ import type { ColumnsType } from "antd/es/table";
 import { useAuth } from "../contexts/AuthContext";
 import { usersApi } from "../services/api";
 import type { PendingApproval, UserRole } from "../types";
+import { ROLE_TAG_COLORS } from "../constants/roleColors";
 import "./PendingApprovalsPage.css";
 
 const { Title, Text } = Typography;
@@ -130,17 +131,6 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
     return roleNames[role] || role;
   };
 
-  const getRoleColor = (role: UserRole): string => {
-    const roleColors = {
-      admin: "red",
-      staff: "orange",
-      parent: "blue",
-      child: "green",
-      moderator: "purple",
-    };
-    return roleColors[role] || "default";
-  };
-
   const getRoleOptions = () => [
     {
       value: "parent" as UserRole,
@@ -227,7 +217,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       key: "role",
       width: 120,
       render: (role: UserRole) => (
-        <Tag color={getRoleColor(role)}>{getRoleDisplayName(role)}</Tag>
+        <Tag color={ROLE_TAG_COLORS[role]}>{getRoleDisplayName(role)}</Tag>
       ),
     },
     {

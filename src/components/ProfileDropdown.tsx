@@ -42,7 +42,6 @@ const ProfileDropdown: React.FC = () => {
   const getRoleColor = (role: string): string => {
     const colorMap: Record<string, string> = {
       admin: "#ff4d4f", // red
-      teacher: "#1890ff", // blue
       staff: "#1890ff", // blue
       parent: "#52c41a", // green
       child: "#faad14", // yellow
