@@ -32,7 +32,7 @@ import ClassForm from "../components/ClassForm";
 import { GroupTrackTags } from "../components/GroupTrackTags";
 import { FilterSelect } from "../components/FilterSelect";
 import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
-import { isTestScopeWriteAllowed } from "../utils/env";
+import { isTestScopeEnabled } from "../utils/env";
 import "./ClassManagementPage.css";
 import { GetGradeName } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
@@ -689,7 +689,7 @@ const ClassManagementPage: React.FC = () => {
                 </Space>
               </Space>
 
-              {roleFlags.isAdmin && isTestScopeWriteAllowed() && (
+              {roleFlags.isAdmin && isTestScopeEnabled() && (
                 <ToggleFilterGroup<Scope>
                   value={selectedScopes}
                   onChange={setSelectedScopes}
