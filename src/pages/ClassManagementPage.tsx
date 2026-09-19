@@ -696,6 +696,7 @@ const ClassManagementPage: React.FC = () => {
                     value: scope,
                     label: t(`scope.${scope}`),
                   }))}
+                  doubleClickToIsolate={false}
                 />
               )}
             </div>

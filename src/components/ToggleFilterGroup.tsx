@@ -1,5 +1,12 @@
+import { useEffect, useRef } from "react";
 import type { RoleTagColor } from "../constants/roleColors";
 import "./ToggleFilterGroup.css";
+
+// Native dblclick fires after two click events close together, so a naive
+// onClick would apply-then-immediately-undo the toggle on every double
+// click. Delaying the toggle by this long lets a following dblclick cancel
+// it outright instead of visibly flashing through the toggled state.
+const DOUBLE_CLICK_GRACE_MS = 250;
 
 interface ToggleFilterGroupOption<T extends string> {
   value: T;
@@ -31,6 +38,14 @@ export function ToggleFilterGroup<T extends string>({
   onChange,
   doubleClickToIsolate = true,
 }: ToggleFilterGroupProps<T>) {
+  const pendingToggle = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pendingToggle.current) clearTimeout(pendingToggle.current);
+    };
+  }, []);
+
   const toggle = (optionValue: T) => {
     onChange(
       value.includes(optionValue)
@@ -41,6 +56,25 @@ export function ToggleFilterGroup<T extends string>({
 
   const isolate = (optionValue: T) => {
     onChange([optionValue]);
+  };
+
+  const handleClick = (optionValue: T) => {
+    if (!doubleClickToIsolate) {
+      toggle(optionValue);
+      return;
+    }
+    pendingToggle.current = setTimeout(() => {
+      pendingToggle.current = null;
+      toggle(optionValue);
+    }, DOUBLE_CLICK_GRACE_MS);
+  };
+
+  const handleDoubleClick = (optionValue: T) => {
+    if (pendingToggle.current) {
+      clearTimeout(pendingToggle.current);
+      pendingToggle.current = null;
+    }
+    isolate(optionValue);
   };
 
   return (
@@ -58,9 +92,11 @@ export function ToggleFilterGroup<T extends string>({
               "toggle-filter-group__option" + (active ? ` ${activeClass}` : "")
             }
             aria-pressed={active}
-            onClick={() => toggle(option.value)}
+            onClick={() => handleClick(option.value)}
             onDoubleClick={
-              doubleClickToIsolate ? () => isolate(option.value) : undefined
+              doubleClickToIsolate
+                ? () => handleDoubleClick(option.value)
+                : undefined
             }>
             {option.label}
           </button>
