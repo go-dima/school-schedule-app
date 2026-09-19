@@ -15,6 +15,9 @@ interface ToggleFilterGroupProps<T extends string> {
    * option list as the default so "nothing filtered" reads as "all on". */
   value: T[];
   onChange: (value: T[]) => void;
+  /** Double-click an option to select only it, deselecting the rest.
+   * Defaults to true; pass false to disable. */
+  doubleClickToIsolate?: boolean;
 }
 
 // Segmented-look button row where every option is independently toggled
@@ -26,6 +29,7 @@ export function ToggleFilterGroup<T extends string>({
   options,
   value,
   onChange,
+  doubleClickToIsolate = true,
 }: ToggleFilterGroupProps<T>) {
   const toggle = (optionValue: T) => {
     onChange(
@@ -33,6 +37,10 @@ export function ToggleFilterGroup<T extends string>({
         ? value.filter(v => v !== optionValue)
         : [...value, optionValue]
     );
+  };
+
+  const isolate = (optionValue: T) => {
+    onChange([optionValue]);
   };
 
   return (
@@ -50,7 +58,10 @@ export function ToggleFilterGroup<T extends string>({
               "toggle-filter-group__option" + (active ? ` ${activeClass}` : "")
             }
             aria-pressed={active}
-            onClick={() => toggle(option.value)}>
+            onClick={() => toggle(option.value)}
+            onDoubleClick={
+              doubleClickToIsolate ? () => isolate(option.value) : undefined
+            }>
             {option.label}
           </button>
         );
