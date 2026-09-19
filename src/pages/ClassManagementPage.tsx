@@ -32,7 +32,7 @@ import ClassForm from "../components/ClassForm";
 import { GroupTrackTags } from "../components/GroupTrackTags";
 import { FilterSelect } from "../components/FilterSelect";
 import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
-import { env } from "../utils/env";
+import { isTestScopeWriteAllowed } from "../utils/env";
 import "./ClassManagementPage.css";
 import { GetGradeName } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
@@ -689,7 +689,7 @@ const ClassManagementPage: React.FC = () => {
                 </Space>
               </Space>
 
-              {permissions.canCreateClasses && !env.isProduction && (
+              {permissions.canCreateClasses && isTestScopeWriteAllowed() && (
                 <ToggleFilterGroup<Scope>
                   value={selectedScopes}
                   onChange={setSelectedScopes}
