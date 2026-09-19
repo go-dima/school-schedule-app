@@ -95,7 +95,12 @@ export const authApi = {
 
   async signOut() {
     const { error } = await supabase.auth.signOut();
-    if (error) throw new ApiError(error.message);
+    // A session that's already missing/invalid (expired, cleared elsewhere,
+    // a second sign-out attempt) means we're effectively already signed out
+    // -- treat it as success instead of blocking the user from logging out.
+    if (error && error.name !== "AuthSessionMissingError") {
+      throw new ApiError(error.message);
+    }
   },
 
   async getCurrentUser() {
