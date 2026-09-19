@@ -35,3 +35,50 @@
 .toggle-filter-group__option--active:hover {
   background: rgba(22, 119, 255, 0.22);
 }
+
+/* Active-state colors mirroring antd's preset Tag palette, so an option can
+   match the color of its Tag elsewhere in the UI (e.g. role tags). */
+.toggle-filter-group__option--active-red {
+  background: #fff1f0;
+  color: #cf1322;
+}
+
+.toggle-filter-group__option--active-red:hover {
+  background: #ffd8d5;
+}
+
+.toggle-filter-group__option--active-orange {
+  background: #fff7e6;
+  color: #d46b08;
+}
+
+.toggle-filter-group__option--active-orange:hover {
+  background: #ffedbf;
+}
+
+.toggle-filter-group__option--active-blue {
+  background: #e6f4ff;
+  color: #0958d9;
+}
+
+.toggle-filter-group__option--active-blue:hover {
+  background: #bfe3ff;
+}
+
+.toggle-filter-group__option--active-green {
+  background: #f6ffed;
+  color: #389e0d;
+}
+
+.toggle-filter-group__option--active-green:hover {
+  background: #d9f7be;
+}
+
+.toggle-filter-group__option--active-purple {
+  background: #f9f0ff;
+  color: #531dab;
+}
+
+.toggle-filter-group__option--active-purple:hover {
+  background: #efdbff;
+}

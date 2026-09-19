@@ -29,7 +29,8 @@ const USER_MANAGEMENT_SUBMENU_KEY = "user-management-submenu";
 
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
   const { t } = useTranslation();
-  const { isAdmin, canManageClasses } = useAuth();
+  const { roleFlags, permissions } = useAuth();
+  const isAdmin = roleFlags.isAdmin;
   const { pendingApprovalsCount } = usePendingApprovals();
   const location = useLocation();
   const navigate = useNavigate();
@@ -64,15 +65,15 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
       key: ROUTES.CLASS_MANAGEMENT,
       icon: <BookOutlined />,
       label: t("navigation.classManagement"),
-      style: canManageClasses() ? {} : { display: "none" },
+      style: permissions.canManageClasses ? {} : { display: "none" },
     },
     {
       key: ROUTES.STUDENTS,
       icon: <UsergroupAddOutlined />,
       label: t("navigation.students"),
-      style: canManageClasses() ? {} : { display: "none" },
+      style: permissions.canManageRoster ? {} : { display: "none" },
     },
-    isAdmin()
+    isAdmin
       ? {
           key: USER_MANAGEMENT_SUBMENU_KEY,
           icon: <TeamOutlined />,

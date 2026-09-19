@@ -19,6 +19,7 @@ import {
   SignupVerifyEmailGate,
   RequireAdmin,
   RequireClassManager,
+  RequireRosterManager,
   NotFoundGate,
 } from "./guards";
 import { ROUTES } from "./paths";
@@ -75,6 +76,11 @@ export const router = createBrowserRouter([
                     path: ROUTES.CLASS_MANAGEMENT,
                     element: <ClassManagementPage />,
                   },
+                ],
+              },
+              {
+                element: <RequireRosterManager />,
+                children: [
                   { path: ROUTES.STUDENTS, element: <StudentsPage /> },
                 ],
               },

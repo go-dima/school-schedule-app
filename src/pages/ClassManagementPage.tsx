@@ -50,7 +50,7 @@ const ALL_SCOPES: Scope[] = ["prod", "test"];
 
 const ClassManagementPage: React.FC = () => {
   const { t } = useTranslation();
-  const { canManageClasses, canCreateClasses, canDeleteClasses } = useAuth();
+  const { permissions } = useAuth();
   const [classes, setClasses] = useState<ClassWithTimeSlot[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -472,7 +472,7 @@ const ClassManagementPage: React.FC = () => {
             label: t("classManagement.table.deleteButton"),
             icon: <DeleteOutlined />,
             danger: true,
-            disabled: !canDeleteClasses(),
+            disabled: !permissions.canDeleteClasses,
             onClick: ({ domEvent }) => {
               domEvent.stopPropagation();
               confirmDeleteClass(record.id);
@@ -498,7 +498,7 @@ const ClassManagementPage: React.FC = () => {
     },
   ];
 
-  if (!canManageClasses()) {
+  if (!permissions.canManageClasses) {
     return (
       <div className="page-content">
         <Alert
@@ -546,7 +546,7 @@ const ClassManagementPage: React.FC = () => {
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
-                disabled={!canCreateClasses() || loading}
+                disabled={!permissions.canCreateClasses || loading}
                 onClick={handleAddClass}>
                 {t("classManagement.page.addNewClass")}
               </Button>
@@ -688,7 +688,7 @@ const ClassManagementPage: React.FC = () => {
                 </Space>
               </Space>
 
-              {canCreateClasses() && (
+              {permissions.canCreateClasses && (
                 <ToggleFilterGroup<Scope>
                   value={selectedScopes}
                   onChange={setSelectedScopes}
@@ -767,7 +767,7 @@ const ClassManagementPage: React.FC = () => {
           onCancel={handleModalCancel}
           loading={submitting}
           isNewLesson={!editingClass}
-          showScope={canCreateClasses()}
+          showScope={permissions.canCreateClasses}
         />
       </Modal>
 
@@ -777,7 +777,7 @@ const ClassManagementPage: React.FC = () => {
         classInfo={enrollmentDrawerClass}
         onEdit={handleEditFromDrawer}
         onDelete={handleDeleteFromDrawer}
-        canDelete={canDeleteClasses()}
+        canDelete={permissions.canDeleteClasses}
         onUpdated={handleClassUpdatedFromDrawer}
       />
     </div>
