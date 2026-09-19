@@ -31,7 +31,10 @@ import { DAYS_OF_WEEK, GRADES } from "../types";
 import ClassForm from "../components/ClassForm";
 import { GroupTrackTags } from "../components/GroupTrackTags";
 import { FilterSelect } from "../components/FilterSelect";
-import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
+import {
+  ToggleFilterGroup,
+  SingleClickToggle,
+} from "../components/ToggleFilterGroup";
 import "./ClassManagementPage.css";
 import { GetGradeName } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
@@ -689,15 +692,16 @@ const ClassManagementPage: React.FC = () => {
               </Space>
 
               {permissions.canCreateClasses && (
-                <ToggleFilterGroup<Scope>
-                  value={selectedScopes}
-                  onChange={setSelectedScopes}
-                  options={ALL_SCOPES.map(scope => ({
-                    value: scope,
-                    label: t(`scope.${scope}`),
-                  }))}
-                  doubleClickToIsolate={false}
-                />
+                <SingleClickToggle>
+                  <ToggleFilterGroup<Scope>
+                    value={selectedScopes}
+                    onChange={setSelectedScopes}
+                    options={ALL_SCOPES.map(scope => ({
+                      value: scope,
+                      label: t(`scope.${scope}`),
+                    }))}
+                  />
+                </SingleClickToggle>
               )}
             </div>
           </Card>

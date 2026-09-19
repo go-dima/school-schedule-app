@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { createContext, useContext, useEffect, useRef } from "react";
+import type { ReactNode } from "react";
 import type { RoleTagColor } from "../constants/roleColors";
 import "./ToggleFilterGroup.css";
 
@@ -7,6 +8,22 @@ import "./ToggleFilterGroup.css";
 // click. Delaying the toggle by this long lets a following dblclick cancel
 // it outright instead of visibly flashing through the toggled state.
 const DOUBLE_CLICK_GRACE_MS = 250;
+
+// ToggleFilterGroup double-clicks an option to isolate it (deselect the
+// rest) by default. Wrap a group in <SingleClickToggle> to opt back out to
+// plain single-click toggling -- e.g. for a 2-option group, where isolating
+// one option is no different from just toggling the other one off, so the
+// double-click affordance is pure overhead. Expressed by wrapping the
+// element rather than a boolean prop so it reads at the call site.
+const DoubleClickDisabledContext = createContext(false);
+
+export function SingleClickToggle({ children }: { children: ReactNode }) {
+  return (
+    <DoubleClickDisabledContext.Provider value={true}>
+      {children}
+    </DoubleClickDisabledContext.Provider>
+  );
+}
 
 interface ToggleFilterGroupOption<T extends string> {
   value: T;
@@ -22,9 +39,6 @@ interface ToggleFilterGroupProps<T extends string> {
    * option list as the default so "nothing filtered" reads as "all on". */
   value: T[];
   onChange: (value: T[]) => void;
-  /** Double-click an option to select only it, deselecting the rest.
-   * Defaults to true; pass false to disable. */
-  doubleClickToIsolate?: boolean;
 }
 
 // Segmented-look button row where every option is independently toggled
@@ -36,8 +50,8 @@ export function ToggleFilterGroup<T extends string>({
   options,
   value,
   onChange,
-  doubleClickToIsolate = true,
 }: ToggleFilterGroupProps<T>) {
+  const doubleClickToIsolate = !useContext(DoubleClickDisabledContext);
   const pendingToggle = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -63,6 +77,7 @@ export function ToggleFilterGroup<T extends string>({
       toggle(optionValue);
       return;
     }
+    if (pendingToggle.current) clearTimeout(pendingToggle.current);
     pendingToggle.current = setTimeout(() => {
       pendingToggle.current = null;
       toggle(optionValue);
