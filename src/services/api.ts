@@ -390,10 +390,14 @@ export const usersApi = {
   },
 
   async revokeApprovedRole(roleId: string) {
-    const { error } = await supabase.rpc("revoke_user_role", {
-      p_role_id: roleId,
-    });
+    const { data, error } = await supabase
+      .from("user_roles")
+      .delete()
+      .eq("id", roleId)
+      .select();
+
     if (error) throw new ApiError(error.message);
+    return data[0];
   },
 
   async getAllUsersWithRoles(): Promise<any[]> {

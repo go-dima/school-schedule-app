@@ -470,13 +470,6 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
             style={{ marginTop: 8 }}
           />
         )}
-        <Alert
-          message={t("userManagement.modal.warningAlertMessage")}
-          description={t("userManagement.modal.warningAlertDescription")}
-          type="warning"
-          showIcon
-          style={{ marginTop: 16 }}
-        />
       </Modal>
     </div>
   );
