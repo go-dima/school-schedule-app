@@ -51,7 +51,7 @@ const ALL_SCOPES: Scope[] = ["prod", "test"];
 
 const ClassManagementPage: React.FC = () => {
   const { t } = useTranslation();
-  const { permissions } = useAuth();
+  const { permissions, roleFlags } = useAuth();
   const [classes, setClasses] = useState<ClassWithTimeSlot[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -689,7 +689,7 @@ const ClassManagementPage: React.FC = () => {
                 </Space>
               </Space>
 
-              {permissions.canCreateClasses && isTestScopeWriteAllowed() && (
+              {roleFlags.isAdmin && isTestScopeWriteAllowed() && (
                 <ToggleFilterGroup<Scope>
                   value={selectedScopes}
                   onChange={setSelectedScopes}
