@@ -24,8 +24,12 @@ const ProfileDropdown: React.FC = () => {
     navigate(ROUTES.PROFILE_SETTINGS);
   };
 
-  const handleLogout = () => {
-    signOut();
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (err) {
+      console.error("Sign out error:", err);
+    }
   };
 
   const getInitials = (firstName?: string, lastName?: string) => {

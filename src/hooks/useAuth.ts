@@ -214,6 +214,12 @@ export function useAuth() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign out failed");
       throw err;
+    } finally {
+      // Don't rely solely on the onAuthStateChange listener to reach a
+      // signed-out UI state -- clear local state directly as a safety net.
+      setUser(null);
+      setUserRoles([]);
+      setCurrentRole(null);
     }
   };
 
