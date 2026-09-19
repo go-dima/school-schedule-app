@@ -27,10 +27,7 @@ import type { ColumnsType } from "antd/es/table";
 import { ChildForm } from "../components/ChildForm";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { GroupTrackTags } from "../components/GroupTrackTags";
-import {
-  ToggleFilterGroup,
-  SingleClickToggle,
-} from "../components/ToggleFilterGroup";
+import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
 import { useAuth } from "../contexts/AuthContext";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import { childrenApi } from "../services/api";
@@ -400,16 +397,15 @@ const StudentsPage: React.FC = () => {
           </Select>
         </Space>
         {isAdmin && (
-          <SingleClickToggle>
-            <ToggleFilterGroup<Scope>
-              value={selectedScopes}
-              onChange={setSelectedScopes}
-              options={ALL_SCOPES.map(scope => ({
-                value: scope,
-                label: t(`scope.${scope}`),
-              }))}
-            />
-          </SingleClickToggle>
+          <ToggleFilterGroup<Scope>
+            value={selectedScopes}
+            onChange={setSelectedScopes}
+            options={ALL_SCOPES.map(scope => ({
+              value: scope,
+              label: t(`scope.${scope}`),
+            }))}
+            doubleClickToIsolate={false}
+          />
         )}
       </div>
 
