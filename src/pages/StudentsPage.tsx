@@ -33,6 +33,7 @@ import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import { childrenApi } from "../services/api";
 import type { Child, Scope } from "../types";
 import { GRADES } from "../types";
+import { isTestScopeEnabled } from "../utils/env";
 
 type ChildWithParent = Child & { assignedParent: boolean };
 
@@ -396,7 +397,7 @@ const StudentsPage: React.FC = () => {
             ))}
           </Select>
         </Space>
-        {isAdmin && (
+        {isAdmin && isTestScopeEnabled() && (
           <ToggleFilterGroup<Scope>
             value={selectedScopes}
             onChange={setSelectedScopes}
@@ -404,6 +405,7 @@ const StudentsPage: React.FC = () => {
               value: scope,
               label: t(`scope.${scope}`),
             }))}
+            doubleClickToIsolate={false}
           />
         )}
       </div>

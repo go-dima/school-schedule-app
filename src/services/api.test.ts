@@ -14,7 +14,7 @@ vi.mock("../utils/env", () => ({
     }
   ),
   getAllowedScopes: () => (envState.isProduction ? ["prod"] : ["prod", "test"]),
-  isTestScopeWriteAllowed: () => !envState.isProduction,
+  isTestScopeEnabled: () => !envState.isProduction,
 }));
 
 type AuthChangeHandler = (event: string, session: any) => any;

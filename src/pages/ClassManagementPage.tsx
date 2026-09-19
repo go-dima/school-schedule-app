@@ -32,6 +32,7 @@ import ClassForm from "../components/ClassForm";
 import { GroupTrackTags } from "../components/GroupTrackTags";
 import { FilterSelect } from "../components/FilterSelect";
 import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
+import { isTestScopeEnabled } from "../utils/env";
 import "./ClassManagementPage.css";
 import { GetGradeName } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
@@ -50,7 +51,7 @@ const ALL_SCOPES: Scope[] = ["prod", "test"];
 
 const ClassManagementPage: React.FC = () => {
   const { t } = useTranslation();
-  const { permissions } = useAuth();
+  const { permissions, roleFlags } = useAuth();
   const [classes, setClasses] = useState<ClassWithTimeSlot[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -688,7 +689,7 @@ const ClassManagementPage: React.FC = () => {
                 </Space>
               </Space>
 
-              {permissions.canCreateClasses && (
+              {roleFlags.isAdmin && isTestScopeEnabled() && (
                 <ToggleFilterGroup<Scope>
                   value={selectedScopes}
                   onChange={setSelectedScopes}
@@ -696,6 +697,7 @@ const ClassManagementPage: React.FC = () => {
                     value: scope,
                     label: t(`scope.${scope}`),
                   }))}
+                  doubleClickToIsolate={false}
                 />
               )}
             </div>

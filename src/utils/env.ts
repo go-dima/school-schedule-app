@@ -75,7 +75,9 @@ export function getAllowedScopes(): Scope[] {
   return env.isProduction ? ["prod"] : ["prod", "test"];
 }
 
-export function isTestScopeWriteAllowed(): boolean {
+/** Whether the "test" scope is usable in this environment -- creating or
+ * writing to it, or filtering/browsing by it. False in production. */
+export function isTestScopeEnabled(): boolean {
   return !env.isProduction;
 }
 

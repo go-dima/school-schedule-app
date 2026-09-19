@@ -20,7 +20,7 @@ import type {
   UserRoleData,
 } from "../types";
 import { withTimeout } from "../utils/asyncUtils";
-import { env, getAllowedScopes, isTestScopeWriteAllowed } from "../utils/env";
+import { env, getAllowedScopes, isTestScopeEnabled } from "../utils/env";
 import i18n from "../utils/i18n";
 import log from "../utils/logger";
 import { NotificationService } from "./notificationService";
@@ -51,7 +51,7 @@ export class ApiError extends Error {
 // Guards every write site that can persist scope: "test", so test data can
 // only be created/moved into existence while not running in production.
 function assertTestScopeAllowed(scope: Scope | undefined) {
-  if (scope === "test" && !isTestScopeWriteAllowed()) {
+  if (scope === "test" && !isTestScopeEnabled()) {
     throw new ApiError(i18n.t("scope.testNotAllowedInProduction"));
   }
 }
