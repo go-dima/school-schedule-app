@@ -1,8 +1,20 @@
 import "./ToggleFilterGroup.css";
 
+// Matches the antd preset Tag colors used in ROLE_TAG_COLORS, so an option's
+// active state can reuse the same color scheme as its Tag elsewhere in the UI.
+export type ToggleFilterGroupColor =
+  | "red"
+  | "orange"
+  | "blue"
+  | "green"
+  | "purple";
+
 interface ToggleFilterGroupOption<T extends string> {
   value: T;
   label: string;
+  /** Active-state color, matching antd's preset Tag colors. Defaults to the
+   * component's neutral blue when omitted. */
+  color?: ToggleFilterGroupColor;
 }
 
 interface ToggleFilterGroupProps<T extends string> {
@@ -35,13 +47,15 @@ export function ToggleFilterGroup<T extends string>({
     <div className="toggle-filter-group" role="group">
       {options.map(option => {
         const active = value.includes(option.value);
+        const activeClass = option.color
+          ? `toggle-filter-group__option--active-${option.color}`
+          : "toggle-filter-group__option--active";
         return (
           <button
             key={option.value}
             type="button"
             className={
-              "toggle-filter-group__option" +
-              (active ? " toggle-filter-group__option--active" : "")
+              "toggle-filter-group__option" + (active ? ` ${activeClass}` : "")
             }
             aria-pressed={active}
             onClick={() => toggle(option.value)}>

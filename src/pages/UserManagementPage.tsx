@@ -14,6 +14,7 @@ import { UserOutlined, SettingOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { FiltersBar } from "../components/FiltersBar";
 import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
+import { RoleTagPicker } from "../components/RoleTagPicker";
 import { useAuth } from "../contexts/AuthContext";
 import { usersApi } from "../services/api";
 import type { UserRoleData, UserRole } from "../types";
@@ -105,6 +106,9 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
   // Elevated roles (admin/moderator) carry no identity of their own -- they
   // must be paired with a base role (staff or parent).
   const validateRoleSet = (roles: UserRole[]): string | null => {
+    if (roles.length === 0) {
+      return t("userManagement.page.noRolesValidationError");
+    }
     const hasElevated = roles.some(role => ELEVATED_ROLES.includes(role));
     const hasBase = roles.some(role => BASE_ROLES.includes(role));
     if (hasElevated && !hasBase) {
@@ -389,6 +393,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
           options={ALL_ROLES.map(role => ({
             value: role,
             label: t(`roles.${role}`, role),
+            color: ROLE_TAG_COLORS[role],
           }))}
         />
       </FiltersBar>
@@ -427,25 +432,36 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         }}
         confirmLoading={actionLoading}
         okText={t("common.buttons.save")}
-        cancelText={t("common.buttons.cancel")}>
+        cancelText={t("common.buttons.cancel")}
+        okButtonProps={{ disabled: selectedRoles.length === 0 }}
+        footer={(_, { OkBtn, CancelBtn }) => (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: 12,
+            }}>
+            {selectedRoles.length === 0 && (
+              <Text type="danger" style={{ fontSize: 13 }}>
+                {t("userManagement.page.noRolesValidationError")}
+              </Text>
+            )}
+            <CancelBtn />
+            <OkBtn />
+          </div>
+        )}>
         <p>
           {t("userManagement.modal.description")}{" "}
           <strong>{selectedUser?.email}</strong>:
         </p>
-        <Space wrap style={{ marginBottom: 16 }}>
-          {ALL_ROLES.map(role => (
-            <Tag.CheckableTag
-              key={role}
-              checked={selectedRoles.includes(role)}
-              onChange={checked => toggleRole(role, checked)}
-              style={{
-                fontSize: "13px",
-                padding: "4px 12px",
-              }}>
-              {t(`roles.${role}`, role)}
-            </Tag.CheckableTag>
-          ))}
-        </Space>
+        <div style={{ marginBottom: 16 }}>
+          <RoleTagPicker
+            roles={ALL_ROLES}
+            selected={selectedRoles}
+            onToggle={toggleRole}
+          />
+        </div>
         {validationError && (
           <Alert
             message={validationError}
