@@ -1,20 +1,12 @@
+import type { RoleTagColor } from "../constants/roleColors";
 import "./ToggleFilterGroup.css";
-
-// Matches the antd preset Tag colors used in ROLE_TAG_COLORS, so an option's
-// active state can reuse the same color scheme as its Tag elsewhere in the UI.
-export type ToggleFilterGroupColor =
-  | "red"
-  | "orange"
-  | "blue"
-  | "green"
-  | "purple";
 
 interface ToggleFilterGroupOption<T extends string> {
   value: T;
   label: string;
-  /** Active-state color, matching antd's preset Tag colors. Defaults to the
-   * component's neutral blue when omitted. */
-  color?: ToggleFilterGroupColor;
+  /** Active-state color, matching antd's preset Tag colors (e.g. from
+   * ROLE_TAG_COLORS). Defaults to the component's neutral blue when omitted. */
+  color?: RoleTagColor;
 }
 
 interface ToggleFilterGroupProps<T extends string> {
