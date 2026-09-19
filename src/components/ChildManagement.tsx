@@ -27,7 +27,8 @@ export function ChildManagement() {
   const { t } = useTranslation();
   const { children, loading, error, createChild, updateChild, removeChild } =
     useChildContext();
-  const { isAdmin } = useAuth();
+  const { roleFlags } = useAuth();
+  const isAdmin = roleFlags.isAdmin;
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | undefined>();
@@ -229,7 +230,7 @@ export function ChildManagement() {
           onSubmit={editingChild ? handleUpdateChild : handleCreateChild}
           onCancel={closeModals}
           loading={formLoading}
-          showScope={isAdmin()}
+          showScope={isAdmin}
           onDuplicateRedirect={childId => {
             const match = children.find(c => c.id === childId);
             if (match) openEditModal(match);

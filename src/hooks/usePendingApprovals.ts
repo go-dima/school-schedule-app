@@ -5,10 +5,10 @@ import { useAuth } from "../contexts/AuthContext";
 export function usePendingApprovals() {
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const { isAdmin } = useAuth();
+  const { permissions } = useAuth();
 
   const fetchPendingApprovalsCount = async () => {
-    if (!isAdmin()) {
+    if (!permissions.canApproveSignups) {
       setPendingApprovalsCount(0);
       return;
     }
@@ -32,7 +32,7 @@ export function usePendingApprovals() {
     const interval = setInterval(fetchPendingApprovalsCount, 30000);
 
     return () => clearInterval(interval);
-  }, [isAdmin()]);
+  }, [permissions.canApproveSignups]);
 
   const refreshCount = () => {
     fetchPendingApprovalsCount();

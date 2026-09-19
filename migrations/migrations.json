@@ -311,8 +311,24 @@
       "file": "039_restore_added_by_with_scope.sql",
       "created_at": "2026-09-18T00:00:00Z",
       "dependencies": ["038_add_scope_to_get_class_enrolled_children"]
+    },
+    {
+      "id": "040_add_moderator_role",
+      "name": "Add Moderator Role",
+      "description": "Issue #144: add 'moderator' to the user_role enum. Must be applied and committed on its own before migration 041, since Postgres forbids using a newly added enum value in the same transaction that adds it.",
+      "file": "040_add_moderator_role.sql",
+      "created_at": "2026-09-18T00:01:00Z",
+      "dependencies": ["039_restore_added_by_with_scope"]
+    },
+    {
+      "id": "041_moderator_can_manage_classes",
+      "name": "Moderator Can Manage Classes",
+      "description": "Issue #144: grant moderator the same class create/delete rights as admin (canCreateClasses/canDeleteClasses, via a new is_admin_or_moderator() helper, staff still excluded) and the same class update rights as staff/admin (canManageClasses).",
+      "file": "041_moderator_can_manage_classes.sql",
+      "created_at": "2026-09-18T00:02:00Z",
+      "dependencies": ["040_add_moderator_role"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 39
+  "schema_version": 41
 }

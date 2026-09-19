@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Table,
   Button,
@@ -9,15 +10,23 @@ import {
   Modal,
   Alert,
 } from "antd";
-import { UserOutlined, CrownOutlined } from "@ant-design/icons";
+import { UserOutlined, SettingOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { FiltersBar } from "../components/FiltersBar";
 import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
+import { RoleTagPicker } from "../components/RoleTagPicker";
+import { useAuth } from "../contexts/AuthContext";
 import { usersApi } from "../services/api";
 import type { UserRoleData, UserRole } from "../types";
+import { ROLE_TAG_COLORS } from "../constants/roleColors";
 import "./UserManagementPage.css";
 
-const ALL_ROLES: UserRole[] = ["admin", "staff", "parent"];
+const ALL_ROLES: UserRole[] = ["admin", "moderator", "staff", "parent"];
+
+// admin/moderator are elevated roles that require a base role (staff or
+// parent) to remain meaningful -- they don't carry their own identity.
+const BASE_ROLES: UserRole[] = ["staff", "parent"];
+const ELEVATED_ROLES: UserRole[] = ["admin", "moderator"];
 
 const { Title, Text } = Typography;
 
@@ -34,11 +43,15 @@ interface UserWithRoles {
 }
 
 const UserManagementPage: React.FC<UserManagementPageProps> = () => {
+  const { t } = useTranslation();
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [selectedRoles, setSelectedRoles] = useState<UserRole[]>([]);
+  const [validationError, setValidationError] = useState<string | null>(null);
   // Every role starts ON (toggled via ToggleFilterGroup below) -- semantically
   // equivalent to the old empty-array "no filter" default, but the UI always
   // shows each role's on/off state instead of hiding it behind a dropdown.
@@ -68,69 +81,123 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
 
       setUsers(transformedUsers);
     } catch (error) {
-      message.error("שגיאה בטעינת המשתמשים");
+      message.error(t("userManagement.page.loadError"));
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePromoteToAdmin = async (user: UserWithRoles) => {
+  const handleManageRoles = (user: UserWithRoles) => {
     setSelectedUser(user);
+    setSelectedRoles(
+      user.roles.filter(role => role.approved).map(role => role.role)
+    );
+    setValidationError(null);
     setModalVisible(true);
   };
 
-  const confirmPromoteToAdmin = async () => {
+  const toggleRole = (role: UserRole, checked: boolean) => {
+    setValidationError(null);
+    setSelectedRoles(prev =>
+      checked ? [...prev, role] : prev.filter(r => r !== role)
+    );
+  };
+
+  // Elevated roles (admin/moderator) carry no identity of their own -- they
+  // must be paired with a base role (staff or parent).
+  const validateRoleSet = (roles: UserRole[]): string | null => {
+    if (roles.length === 0) {
+      return t("userManagement.page.noRolesValidationError");
+    }
+    const hasElevated = roles.some(role => ELEVATED_ROLES.includes(role));
+    const hasBase = roles.some(role => BASE_ROLES.includes(role));
+    if (hasElevated && !hasBase) {
+      return t("userManagement.page.baseRoleValidationError");
+    }
+    return null;
+  };
+
+  const applyRoleChanges = async (user: UserWithRoles, desired: UserRole[]) => {
+    const current = user.roles
+      .filter(role => role.approved)
+      .map(role => role.role);
+
+    const toAdd = desired.filter(role => !current.includes(role));
+    const toRemove = user.roles.filter(
+      role => role.approved && !desired.includes(role.role)
+    );
+
+    for (const role of toAdd) {
+      await usersApi.requestRole(user.id, role);
+      const userRoles = await usersApi.getUserRoles(user.id);
+      const newRole = userRoles.find(r => r.role === role && !r.approved);
+      if (newRole) {
+        await usersApi.approveRole(newRole.id);
+      }
+    }
+
+    for (const role of toRemove) {
+      await usersApi.revokeApprovedRole(role.id);
+    }
+  };
+
+  const saveRoles = async () => {
     if (!selectedUser) return;
 
-    setActionLoading(true);
-    try {
-      // Add admin role to user
-      await usersApi.requestRole(selectedUser.id, "admin");
-
-      // Get the newly created role and approve it immediately
-      const userRoles = await usersApi.getUserRoles(selectedUser.id);
-      const adminRole = userRoles.find(
-        role => role.role === "admin" && !role.approved
-      );
-
-      if (adminRole) {
-        await usersApi.approveRole(adminRole.id);
-      }
-
-      message.success(`המשתמש ${selectedUser.email} קודם למנהל בהצלחה`);
-      loadUsers(); // Reload the users list
-    } catch (error) {
-      message.error("שגיאה בקידום המשתמש למנהל");
-    } finally {
-      setActionLoading(false);
-      setModalVisible(false);
-      setSelectedUser(null);
+    const validationMessage = validateRoleSet(selectedRoles);
+    if (validationMessage) {
+      setValidationError(validationMessage);
+      return;
     }
+    setValidationError(null);
+
+    const isSelfDemotion =
+      selectedUser.id === currentUser?.id &&
+      selectedUser.roles.some(role => role.role === "admin" && role.approved) &&
+      !selectedRoles.includes("admin");
+
+    const performSave = async () => {
+      setActionLoading(true);
+      try {
+        await applyRoleChanges(selectedUser, selectedRoles);
+        message.success(
+          t("userManagement.page.updateSuccess", { email: selectedUser.email })
+        );
+        loadUsers(); // Reload the users list
+        setModalVisible(false);
+        setSelectedUser(null);
+      } catch (error) {
+        message.error(
+          error instanceof Error
+            ? error.message
+            : t("userManagement.page.updateError")
+        );
+        // A partial apply may have already committed some grants/revokes to
+        // the DB before the failure -- resync the table to actual DB state.
+        loadUsers();
+      } finally {
+        setActionLoading(false);
+      }
+    };
+
+    if (isSelfDemotion) {
+      Modal.confirm({
+        title: t("userManagement.page.selfDemotion.title"),
+        content: t("userManagement.page.selfDemotion.description"),
+        okText: t("userManagement.page.selfDemotion.confirmButton"),
+        cancelText: t("common.buttons.cancel"),
+        okButtonProps: { danger: true },
+        onOk: performSave,
+      });
+      return;
+    }
+
+    await performSave();
   };
 
   useEffect(() => {
     loadUsers();
   }, []);
-
-  const getRoleDisplayName = (role: UserRole): string => {
-    const roleNames: Record<UserRole, string> = {
-      admin: "מנהל",
-      parent: "הורה",
-      child: "תלמיד",
-      staff: "צוות",
-    };
-    return roleNames[role] || role;
-  };
-
-  const getRoleColor = (role: UserRole): string => {
-    const roleColors: Record<UserRole, string> = {
-      admin: "red",
-      parent: "blue",
-      child: "green",
-      staff: "orange",
-    };
-    return roleColors[role] || "default";
-  };
 
   const filteredUsers = useMemo(() => {
     return users.filter(user =>
@@ -140,7 +207,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
 
   const columns: ColumnsType<UserWithRoles> = [
     {
-      title: "שם משתמש",
+      title: t("userManagement.table.nameColumn"),
       key: "name",
       width: 110,
       sorter: (a, b) =>
@@ -158,14 +225,14 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
             {fullName ? (
               <Text strong>{fullName}</Text>
             ) : (
-              <Text type="secondary">לא הוזן שם</Text>
+              <Text type="secondary">{t("userManagement.table.noName")}</Text>
             )}
           </Space>
         );
       },
     },
     {
-      title: "דוא״ל",
+      title: t("userManagement.table.emailColumn"),
       key: "email",
       width: 140,
       dataIndex: "email",
@@ -175,7 +242,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       ),
     },
     {
-      title: "תאריך הרשמה",
+      title: t("userManagement.table.createdAtColumn"),
       key: "createdAt",
       width: 60,
       dataIndex: "createdAt",
@@ -189,7 +256,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       ),
     },
     {
-      title: "כניסה אחרונה",
+      title: t("userManagement.table.lastSignInColumn"),
       key: "lastSignInAt",
       width: 60,
       dataIndex: "lastSignInAt",
@@ -200,7 +267,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         if (!date) {
           return (
             <Text type="secondary" style={{ fontSize: "12px" }}>
-              לא התחבר עדיין
+              {t("userManagement.table.neverSignedIn")}
             </Text>
           );
         }
@@ -216,13 +283,19 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         if (diffDays > 7) {
           displayText = signInDate.toLocaleDateString("he-IL");
         } else if (diffDays > 0) {
-          displayText = `לפני ${diffDays} ימים`;
+          displayText = t("userManagement.table.daysAgo", {
+            count: diffDays,
+          });
         } else if (diffHours > 0) {
-          displayText = `לפני ${diffHours} שעות`;
+          displayText = t("userManagement.table.hoursAgo", {
+            count: diffHours,
+          });
         } else if (diffMinutes > 0) {
-          displayText = `לפני ${diffMinutes} דקות`;
+          displayText = t("userManagement.table.minutesAgo", {
+            count: diffMinutes,
+          });
         } else {
-          displayText = "עכשיו";
+          displayText = t("userManagement.table.now");
         }
 
         return (
@@ -235,17 +308,17 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       },
     },
     {
-      title: "תפקידים",
+      title: t("userManagement.table.rolesColumn"),
       key: "roles",
       width: 50,
       sorter: (a, b) =>
         a.roles
-          .map(role => getRoleDisplayName(role.role))
+          .map(role => t(`roles.${role.role}`, role.role))
           .sort()
           .join(",")
           .localeCompare(
             b.roles
-              .map(role => getRoleDisplayName(role.role))
+              .map(role => t(`roles.${role.role}`, role.role))
               .sort()
               .join(",")
           ),
@@ -254,56 +327,39 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
           {record.roles.map(role => (
             <Tag
               key={role.id}
-              color={getRoleColor(role.role)}
+              color={ROLE_TAG_COLORS[role.role]}
               style={{
                 opacity: role.approved ? 1 : 0.6,
                 margin: "2px",
                 fontSize: "12px",
               }}>
-              {getRoleDisplayName(role.role)}
-              {!role.approved && " (ממתין)"}
+              {t(`roles.${role.role}`, role.role)}
+              {!role.approved && t("userManagement.table.pendingSuffix")}
             </Tag>
           ))}
           {record.roles.length === 0 && (
             <Text type="secondary" style={{ fontSize: "12px" }}>
-              אין תפקידים
+              {t("userManagement.table.noRoles")}
             </Text>
           )}
         </Space>
       ),
     },
     {
-      title: "פעולות",
+      title: t("userManagement.table.actionsColumn"),
       key: "actions",
       width: 90,
       align: "center",
-      render: (_, record) => {
-        const isAdmin = record.roles.some(
-          role => role.role === "admin" && role.approved
-        );
-
-        return (
-          <Space>
-            {!isAdmin && (
-              <Button
-                type="primary"
-                size="small"
-                icon={<CrownOutlined />}
-                onClick={() => handlePromoteToAdmin(record)}>
-                קדם למנהל
-              </Button>
-            )}
-            {isAdmin && (
-              <Tag
-                color="red"
-                icon={<CrownOutlined />}
-                style={{ fontSize: "12px" }}>
-                מנהל
-              </Tag>
-            )}
-          </Space>
-        );
-      },
+      render: (_, record) => (
+        <Space>
+          <Button
+            size="small"
+            icon={<SettingOutlined />}
+            onClick={() => handleManageRoles(record)}>
+            {t("userManagement.table.manageRolesButton")}
+          </Button>
+        </Space>
+      ),
     },
   ];
 
@@ -313,14 +369,14 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         <Space>
           <UserOutlined style={{ fontSize: "24px", color: "#1890ff" }} />
           <Title level={2} style={{ margin: 0 }}>
-            ניהול משתמשים
+            {t("common.buttons.userManagement")}
           </Title>
         </Space>
       </div>
 
       <Alert
-        message="ניהול תפקידי משתמשים"
-        description="כאן תוכל לקדם משתמשים לתפקיד מנהל. משתמשים חדשים נרשמים אוטומטית כהורים."
+        message={t("userManagement.page.alertMessage")}
+        description={t("userManagement.page.alertDescription")}
         type="info"
         showIcon
         style={{ marginBottom: 24 }}
@@ -336,7 +392,8 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
           onChange={setRoleFilter}
           options={ALL_ROLES.map(role => ({
             value: role,
-            label: getRoleDisplayName(role),
+            label: t(`roles.${role}`, role),
+            color: ROLE_TAG_COLORS[role],
           }))}
         />
       </FiltersBar>
@@ -352,29 +409,70 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
           showSizeChanger: true,
           showQuickJumper: true,
           showTotal: (total, range) =>
-            `${range[0]}-${range[1]} מתוך ${total} משתמשים`,
+            t("userManagement.table.pagination", {
+              start: range[0],
+              end: range[1],
+              total,
+            }),
         }}
         locale={{
-          emptyText: "לא נמצאו משתמשים",
+          emptyText: t("userManagement.table.emptyText"),
         }}
         scroll={{ x: 1040 }}
       />
 
       <Modal
-        title="קידום למנהל"
+        title={t("userManagement.modal.title")}
         open={modalVisible}
-        onOk={confirmPromoteToAdmin}
-        onCancel={() => setModalVisible(false)}
+        onOk={saveRoles}
+        onCancel={() => {
+          setModalVisible(false);
+          setSelectedUser(null);
+          setValidationError(null);
+        }}
         confirmLoading={actionLoading}
-        okText="אשר קידום"
-        cancelText="ביטול">
+        okText={t("common.buttons.save")}
+        cancelText={t("common.buttons.cancel")}
+        okButtonProps={{ disabled: selectedRoles.length === 0 }}
+        footer={(_, { OkBtn, CancelBtn }) => (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: 12,
+            }}>
+            {selectedRoles.length === 0 && (
+              <Text type="danger" style={{ fontSize: 13 }}>
+                {t("userManagement.page.noRolesValidationError")}
+              </Text>
+            )}
+            <CancelBtn />
+            <OkBtn />
+          </div>
+        )}>
         <p>
-          האם אתה בטוח שברצונך לקדם את המשתמש{" "}
-          <strong>{selectedUser?.email}</strong> לתפקיד מנהל?
+          {t("userManagement.modal.description")}{" "}
+          <strong>{selectedUser?.email}</strong>:
         </p>
+        <div style={{ marginBottom: 16 }}>
+          <RoleTagPicker
+            roles={ALL_ROLES}
+            selected={selectedRoles}
+            onToggle={toggleRole}
+          />
+        </div>
+        {validationError && (
+          <Alert
+            message={validationError}
+            type="error"
+            showIcon
+            style={{ marginTop: 8 }}
+          />
+        )}
         <Alert
-          message="שים לב"
-          description="מנהלים יכולים לגשת לכל הפונקציות במערכת, כולל ניהול משתמשים ושיעורים."
+          message={t("userManagement.modal.warningAlertMessage")}
+          description={t("userManagement.modal.warningAlertDescription")}
           type="warning"
           showIcon
           style={{ marginTop: 16 }}

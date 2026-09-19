@@ -389,6 +389,13 @@ export const usersApi = {
     return data[0];
   },
 
+  async revokeApprovedRole(roleId: string) {
+    const { error } = await supabase.rpc("revoke_user_role", {
+      p_role_id: roleId,
+    });
+    if (error) throw new ApiError(error.message);
+  },
+
   async getAllUsersWithRoles(): Promise<any[]> {
     const { data, error } = await supabase
       .from("users")
