@@ -1,7 +1,18 @@
 /* FiltersBar */
 
+/* The wrapper is a <fieldset> (see FiltersBarProps.disabled) so the native
+   `disabled` attribute cascades to every real form control inside --
+   Select/AutoComplete/Radio/Button all render actual <input>/<button>
+   elements under the hood -- which blocks keyboard activation, not just
+   pointer interaction, without threading a `disabled` prop through every
+   possible child. <fieldset> has default browser chrome (border, padding,
+   a quirky min-width) that would otherwise distort this flex layout, so
+   reset it back to an invisible, non-participating wrapper. */
 .filters-section {
   margin-bottom: 24px;
+  border: 0;
+  padding: 0;
+  min-width: 0;
 }
 
 .filters-row {
@@ -55,12 +66,7 @@
   justify-content: flex-end;
 }
 
-/* Locks the whole bar against interaction (see FiltersBarProps.disabled) --
-   children are arbitrary nodes from the consuming page, so this blocks
-   pointer interaction at the container level rather than threading a
-   `disabled` prop through every possible control. */
 .filters-section--disabled {
-  pointer-events: none;
   opacity: 0.6;
 }
 
