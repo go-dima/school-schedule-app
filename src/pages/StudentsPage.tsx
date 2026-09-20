@@ -34,6 +34,7 @@ import { childrenApi } from "../services/api";
 import type { Child, Scope } from "../types";
 import { GRADES } from "../types";
 import { isTestScopeEnabled } from "../utils/env";
+import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 
 type ChildWithParent = Child & { assignedParent: boolean };
 
@@ -101,6 +102,7 @@ const StudentsPage: React.FC = () => {
       setIsFormModalOpen(false);
       setEditingChild(undefined);
       message.success(t("students.page.addSuccess"));
+      trackEvent(AnalyticsEvent.StudentSaved, { mode: "create" });
     } catch (err) {
       message.error(
         err instanceof Error ? err.message : t("students.page.addError")
@@ -125,6 +127,7 @@ const StudentsPage: React.FC = () => {
       setIsFormModalOpen(false);
       setEditingChild(undefined);
       message.success(t("students.page.updateSuccess"));
+      trackEvent(AnalyticsEvent.StudentSaved, { mode: "update" });
     } catch (err) {
       message.error(
         err instanceof Error ? err.message : t("students.page.updateError")

@@ -4,6 +4,7 @@ import { getPermissions } from "../services/permissions";
 import { getRoleFlags } from "../services/roleFlags";
 import type { User, UserRole, UserRoleData } from "../types";
 import { withTimeout } from "../utils/asyncUtils";
+import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 
 // Keep below App.tsx's 5s loading-timeout screen so a stuck query resolves to
 // the existing "proceed as signed out" fallback instead of that blunter screen.
@@ -226,6 +227,7 @@ export function useAuth() {
   const switchRole = (role: UserRoleData) => {
     if (userRoles.some(r => r.id === role.id)) {
       setCurrentRole(role);
+      trackEvent(AnalyticsEvent.RoleSwitched, { role: role.role });
     }
   };
 

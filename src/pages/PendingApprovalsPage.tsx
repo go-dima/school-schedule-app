@@ -32,6 +32,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { usersApi } from "../services/api";
 import type { PendingApproval, UserRole } from "../types";
 import { ROLE_TAG_COLORS } from "../constants/roleColors";
+import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 import "./PendingApprovalsPage.css";
 
 const { Title, Text } = Typography;
@@ -100,6 +101,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
           role: t(`roles.${values.role}`, values.role),
         })
       );
+      trackEvent(AnalyticsEvent.SignupApproved, { role: values.role });
       await loadData();
       setRoleModalVisible(false);
       setSelectedApproval(null);
@@ -129,6 +131,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
           email: userEmail,
         })
       );
+      trackEvent(AnalyticsEvent.SignupRejected, { role });
       await loadData();
     } catch (err) {
       message.error(

@@ -24,6 +24,7 @@ import OverrideCard from "./OverrideCard";
 import "./ScheduleTable.css";
 import { EnrollmentService } from "../services/enrollmentService";
 import { OverrideSuffixButton } from "@/elements/OverrideSuffixButton";
+import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 
 interface ScheduleTableProps {
   timeSlots: TimeSlot[];
@@ -118,6 +119,10 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     setSelectedTimeSlot(timeSlot);
     setSelectedDayOfWeek(dayOfWeek);
     setDrawerOpen(true);
+    trackEvent(AnalyticsEvent.ScheduleDrawerOpened, {
+      timeSlotId: timeSlot.id,
+      dayOfWeek,
+    });
   };
 
   const handleCloseDrawer = () => {

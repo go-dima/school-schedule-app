@@ -19,6 +19,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { usersApi } from "../services/api";
 import type { UserRoleData, UserRole } from "../types";
 import { ROLE_TAG_COLORS } from "../constants/roleColors";
+import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 import "./UserManagementPage.css";
 
 const ALL_ROLES: UserRole[] = ["admin", "moderator", "staff", "parent"];
@@ -134,10 +135,20 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       if (newRole) {
         await usersApi.approveRole(newRole.id);
       }
+      if (role === "moderator") {
+        trackEvent(AnalyticsEvent.ModeratorGranted);
+      } else if (role === "admin") {
+        trackEvent(AnalyticsEvent.AdminGranted);
+      }
     }
 
     for (const role of toRemove) {
       await usersApi.revokeApprovedRole(role.id);
+      if (role.role === "moderator") {
+        trackEvent(AnalyticsEvent.ModeratorRevoked);
+      } else if (role.role === "admin") {
+        trackEvent(AnalyticsEvent.AdminRevoked);
+      }
     }
   };
 
@@ -163,6 +174,9 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         message.success(
           t("userManagement.page.updateSuccess", { email: selectedUser.email })
         );
+        trackEvent(AnalyticsEvent.UserRoleChanged, {
+          roleCount: selectedRoles.length,
+        });
         loadUsers(); // Reload the users list
         setModalVisible(false);
         setSelectedUser(null);

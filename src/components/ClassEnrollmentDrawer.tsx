@@ -34,6 +34,7 @@ import { AddedByTooltip } from "@/elements/AddedByTooltip";
 import { GetGradeName } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
 import { printClassRoster } from "@/utils/printClassRoster";
+import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 import { GroupTrackTags } from "./GroupTrackTags";
 import "./ClassEnrollmentDrawer.css";
 
@@ -227,6 +228,9 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
     if (!localClassInfo) return;
     try {
       await printClassRoster({ classInfo: localClassInfo, children });
+      trackEvent(AnalyticsEvent.ClassRosterPrinted, {
+        classId: localClassInfo.id,
+      });
     } catch (err) {
       message.error(
         err instanceof Error
