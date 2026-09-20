@@ -14,6 +14,7 @@ interface FilterSelectProps<T extends string | number> {
   onChange: (value: T | null) => void;
   options: FilterSelectOption<T>[];
   style?: React.CSSProperties;
+  disabled?: boolean;
 }
 
 // Shared narrow Select + trailing label (+ clear button) used by all Class
@@ -26,6 +27,7 @@ export function FilterSelect<T extends string | number>({
   onChange,
   options,
   style,
+  disabled = false,
 }: FilterSelectProps<T>) {
   return (
     <Space size={4} align="center">
@@ -35,6 +37,7 @@ export function FilterSelect<T extends string | number>({
           size="small"
           icon={<CloseOutlined />}
           onClick={() => onChange(null)}
+          disabled={disabled}
           style={{ padding: 0 }}
         />
       )}
@@ -43,7 +46,8 @@ export function FilterSelect<T extends string | number>({
         allowClear
         style={{ width: 80, ...style }}
         value={value ?? undefined}
-        onChange={v => onChange(v ?? null)}>
+        onChange={v => onChange(v ?? null)}
+        disabled={disabled}>
         {options.map(option => (
           <Select.Option key={option.value} value={option.value}>
             {option.label}
