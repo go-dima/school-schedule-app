@@ -6,7 +6,6 @@ import { track } from "@vercel/analytics";
 export const AnalyticsEvent = {
   ScheduleDrawerOpened: "schedule_drawer_opened",
   ClassSelected: "class_selected",
-  SelectionConflictShown: "selection_conflict_shown",
   SchedulePrinted: "schedule_printed",
   StaffOverrideApplied: "staff_override_applied",
   RoleSwitched: "role_switched",
@@ -15,6 +14,10 @@ export const AnalyticsEvent = {
   ClassDeleted: "class_deleted",
   StudentSaved: "student_saved",
   UserRoleChanged: "user_role_changed",
+  ModeratorGranted: "moderator_granted",
+  ModeratorRevoked: "moderator_revoked",
+  AdminGranted: "admin_granted",
+  AdminRevoked: "admin_revoked",
   SignupApproved: "signup_approved",
   SignupRejected: "signup_rejected",
 } as const;

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Drawer, Tag, Empty, Button, Space, Typography } from "antd";
 import { useTranslation } from "react-i18next";
 import { ScheduleService } from "../services/scheduleService";
@@ -78,17 +78,6 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
               self.findIndex(s => s.id === slot.id) === index
           )
           .sort((a, b) => a.startTime.localeCompare(b.startTime));
-
-  const conflictCount = conflictingClasses.length;
-  useEffect(() => {
-    if (open && conflictCount > 0) {
-      trackEvent(AnalyticsEvent.SelectionConflictShown, {
-        timeSlotId: timeSlot.id,
-        dayOfWeek,
-        conflictCount,
-      });
-    }
-  }, [open, timeSlot.id, dayOfWeek, conflictCount]);
 
   const handleClassToggle = (classId: string) => {
     const isSelected = selectedClasses.includes(classId);

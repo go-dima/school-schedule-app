@@ -135,10 +135,20 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       if (newRole) {
         await usersApi.approveRole(newRole.id);
       }
+      if (role === "moderator") {
+        trackEvent(AnalyticsEvent.ModeratorGranted);
+      } else if (role === "admin") {
+        trackEvent(AnalyticsEvent.AdminGranted);
+      }
     }
 
     for (const role of toRemove) {
       await usersApi.revokeApprovedRole(role.id);
+      if (role.role === "moderator") {
+        trackEvent(AnalyticsEvent.ModeratorRevoked);
+      } else if (role.role === "admin") {
+        trackEvent(AnalyticsEvent.AdminRevoked);
+      }
     }
   };
 
