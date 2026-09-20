@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Drawer, Tag, Empty, Button, Space, Typography } from "antd";
 import { useTranslation } from "react-i18next";
 import { ScheduleService } from "../services/scheduleService";
@@ -12,6 +12,7 @@ import ClassSelectionCard from "./ClassSelectionCard";
 import { OverrideSelectionCard } from "./OverrideSelectionCard";
 import "./ClassSelectionDrawer.css";
 import { GetDayName } from "@/utils/days";
+import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 
 const { Title } = Typography;
 
@@ -78,12 +79,28 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
           )
           .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
+  const conflictCount = conflictingClasses.length;
+  useEffect(() => {
+    if (open && conflictCount > 0) {
+      trackEvent(AnalyticsEvent.SelectionConflictShown, {
+        timeSlotId: timeSlot.id,
+        dayOfWeek,
+        conflictCount,
+      });
+    }
+  }, [open, timeSlot.id, dayOfWeek, conflictCount]);
+
   const handleClassToggle = (classId: string) => {
     const isSelected = selectedClasses.includes(classId);
 
     if (isSelected && onClassUnselect) {
       onClassUnselect(classId);
     } else if (!isSelected && onClassSelect) {
+      trackEvent(AnalyticsEvent.ClassSelected, {
+        classId,
+        timeSlotId: timeSlot.id,
+        dayOfWeek,
+      });
       onClassSelect(classId);
     }
   };

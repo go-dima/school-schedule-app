@@ -57,6 +57,7 @@ import type {
 import "./SchedulePage.css";
 import { GetGradeName } from "@/utils/grades";
 import { printSchedule } from "../utils/printSchedule";
+import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -528,6 +529,9 @@ const SchedulePageContent: React.FC = () => {
         overrides,
         showDraftMarker: viewStatus === "draft",
       });
+      trackEvent(AnalyticsEvent.SchedulePrinted, {
+        grade: currentChild.grade,
+      });
     } catch (error) {
       message.error(
         error instanceof Error
@@ -622,6 +626,9 @@ const SchedulePageContent: React.FC = () => {
         });
         message.success(t("schedule.override.createSuccess"));
       }
+      trackEvent(AnalyticsEvent.StaffOverrideApplied, {
+        mode: editingOverride ? "update" : "create",
+      });
       handleCloseOverrideModal();
     } catch (err) {
       message.error(

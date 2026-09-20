@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, Form, Input, Button, Alert, Space, Tabs } from "antd";
 import { UserOutlined, SaveOutlined, UserAddOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
@@ -16,9 +17,21 @@ const ProfileSettingsPage: React.FC = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("profile");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [success, setSuccess] = useState(false);
   const { user, roleFlags, refreshProfile } = useAuth();
+  const isParent = roleFlags.isParent;
+
+  // Reflected in the URL (?tab=profile|children) so this settings section is
+  // a real, bookmarkable page rather than untracked local state -- default
+  // to "profile" for anyone not on the "children" tab, and for non-parents
+  // regardless of what the URL says (they have no children tab to show).
+  const activeTab =
+    searchParams.get("tab") === "children" && isParent ? "children" : "profile";
+
+  const handleTabChange = (key: string) => {
+    setSearchParams(key === "profile" ? {} : { tab: key });
+  };
 
   // Set initial form values when component mounts
   useEffect(() => {
@@ -58,8 +71,6 @@ const ProfileSettingsPage: React.FC = () => {
       setLoading(false);
     }
   };
-
-  const isParent = roleFlags.isParent;
 
   const tabItems = [
     {
@@ -172,7 +183,7 @@ const ProfileSettingsPage: React.FC = () => {
     <div className="page-content">
       <Tabs
         activeKey={activeTab}
-        onChange={setActiveTab}
+        onChange={handleTabChange}
         items={tabItems}
         size="large"
       />
