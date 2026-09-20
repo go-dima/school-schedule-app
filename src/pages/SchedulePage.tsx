@@ -535,7 +535,7 @@ const SchedulePageContent: React.FC = () => {
         overrides,
         showDraftMarker: viewStatus === "draft",
       });
-      trackEvent(AnalyticsEvent.SchedulePrinted, {
+      trackWithActor(AnalyticsEvent.SchedulePrinted, currentRole?.role, {
         grade: currentChild.grade,
       });
     } catch (error) {
