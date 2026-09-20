@@ -33,7 +33,7 @@ import { GroupTrackTags } from "../components/GroupTrackTags";
 import { FilterSelect } from "../components/FilterSelect";
 import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
 import { isTestScopeEnabled } from "../utils/env";
-import { trackWithActor, AnalyticsEvent } from "../utils/analytics";
+import { trackEvent, trackWithActor, AnalyticsEvent } from "../utils/analytics";
 import "./ClassManagementPage.css";
 import { GetGradeName } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
@@ -248,13 +248,9 @@ const ClassManagementPage: React.FC = () => {
   const handleShowEnrollment = (cls: ClassWithTimeSlot) => {
     setEnrollmentDrawerClass(cls);
     setEnrollmentDrawerOpen(true);
-    trackWithActor(
-      AnalyticsEvent.ClassEnrollmentDrawerOpened,
-      currentRole?.role,
-      {
-        classId: cls.id,
-      }
-    );
+    trackEvent(AnalyticsEvent.ClassEnrollmentDrawerOpened, {
+      classId: cls.id,
+    });
   };
 
   const handleCloseEnrollmentDrawer = () => {

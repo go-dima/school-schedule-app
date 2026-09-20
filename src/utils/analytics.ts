@@ -12,6 +12,7 @@ export const AnalyticsEvent = {
   StaffOverrideApplied: "staff_override_applied",
   RoleSwitched: "role_switched",
   ClassEnrollmentDrawerOpened: "class_enrollment_drawer_opened",
+  ClassRosterPrinted: "class_roster_printed",
   ClassSaved: "class_saved",
   ClassDeleted: "class_deleted",
   StudentSaved: "student_saved",
