@@ -57,7 +57,7 @@ import type {
 import "./SchedulePage.css";
 import { GetGradeName } from "@/utils/grades";
 import { printSchedule } from "../utils/printSchedule";
-import { trackEvent, AnalyticsEvent } from "../utils/analytics";
+import { trackEvent, trackWithActor, AnalyticsEvent } from "../utils/analytics";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -497,8 +497,14 @@ const SchedulePageContent: React.FC = () => {
           return;
         }
         await unselectSchedule(classId);
+        trackWithActor(AnalyticsEvent.ClassUnselected, currentRole?.role, {
+          classId,
+        });
       } else {
         await selectSchedule(classId);
+        trackWithActor(AnalyticsEvent.ClassSelected, currentRole?.role, {
+          classId,
+        });
       }
     } catch (err) {
       message.error(

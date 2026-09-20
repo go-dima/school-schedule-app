@@ -1,4 +1,5 @@
 import { track } from "@vercel/analytics";
+import type { UserRole } from "../types";
 
 // Single source of truth for event names -- every call site imports from
 // here rather than calling @vercel/analytics's track() directly, so the
@@ -6,6 +7,7 @@ import { track } from "@vercel/analytics";
 export const AnalyticsEvent = {
   ScheduleDrawerOpened: "schedule_drawer_opened",
   ClassSelected: "class_selected",
+  ClassUnselected: "class_unselected",
   SchedulePrinted: "schedule_printed",
   StaffOverrideApplied: "staff_override_applied",
   RoleSwitched: "role_switched",
@@ -30,4 +32,12 @@ export function trackEvent(
   properties?: Record<string, string | number | boolean>
 ) {
   track(event, properties);
+}
+
+export function trackWithActor(
+  event: AnalyticsEventName,
+  role: UserRole | undefined,
+  properties?: Record<string, string | number | boolean>
+) {
+  trackEvent(event, { ...properties, ...(role ? { actor: role } : {}) });
 }

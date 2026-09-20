@@ -12,7 +12,6 @@ import ClassSelectionCard from "./ClassSelectionCard";
 import { OverrideSelectionCard } from "./OverrideSelectionCard";
 import "./ClassSelectionDrawer.css";
 import { GetDayName } from "@/utils/days";
-import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 
 const { Title } = Typography;
 
@@ -85,11 +84,6 @@ const ClassSelectionDrawer: React.FC<ClassSelectionDrawerProps> = ({
     if (isSelected && onClassUnselect) {
       onClassUnselect(classId);
     } else if (!isSelected && onClassSelect) {
-      trackEvent(AnalyticsEvent.ClassSelected, {
-        classId,
-        timeSlotId: timeSlot.id,
-        dayOfWeek,
-      });
       onClassSelect(classId);
     }
   };

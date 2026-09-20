@@ -33,7 +33,7 @@ import { GroupTrackTags } from "../components/GroupTrackTags";
 import { FilterSelect } from "../components/FilterSelect";
 import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
 import { isTestScopeEnabled } from "../utils/env";
-import { trackEvent, AnalyticsEvent } from "../utils/analytics";
+import { trackEvent, trackWithActor, AnalyticsEvent } from "../utils/analytics";
 import "./ClassManagementPage.css";
 import { GetGradeName } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
@@ -52,7 +52,7 @@ const ALL_SCOPES: Scope[] = ["prod", "test"];
 
 const ClassManagementPage: React.FC = () => {
   const { t } = useTranslation();
-  const { permissions, roleFlags } = useAuth();
+  const { currentRole, permissions, roleFlags } = useAuth();
   const [classes, setClasses] = useState<ClassWithTimeSlot[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -179,7 +179,9 @@ const ClassManagementPage: React.FC = () => {
     try {
       await classesApi.deleteClass(classId);
       message.success(t("classManagement.page.classDeletedSuccess"));
-      trackEvent(AnalyticsEvent.ClassDeleted, { classId });
+      trackWithActor(AnalyticsEvent.ClassDeleted, currentRole?.role, {
+        classId,
+      });
       await loadData();
     } catch (err) {
       message.error(
@@ -213,11 +215,15 @@ const ClassManagementPage: React.FC = () => {
       if (editingClass) {
         await classesApi.updateClass(editingClass.id, classData);
         message.success(t("classManagement.page.classUpdatedSuccess"));
-        trackEvent(AnalyticsEvent.ClassSaved, { mode: "update" });
+        trackWithActor(AnalyticsEvent.ClassSaved, currentRole?.role, {
+          mode: "update",
+        });
       } else {
         await classesApi.createClass(classData);
         message.success(t("classManagement.page.classCreatedSuccess"));
-        trackEvent(AnalyticsEvent.ClassSaved, { mode: "create" });
+        trackWithActor(AnalyticsEvent.ClassSaved, currentRole?.role, {
+          mode: "create",
+        });
       }
 
       setModalVisible(false);
