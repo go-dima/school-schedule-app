@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { ConfigProvider } from "antd";
+import { Analytics } from "@vercel/analytics/react";
 import heIL from "antd/locale/he_IL";
 import { env } from "./utils/env";
 import "./utils/i18n";
@@ -22,6 +23,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         },
       }}>
       <App />
+      <Analytics />
     </ConfigProvider>
   </React.StrictMode>
 );
