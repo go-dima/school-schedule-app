@@ -17,24 +17,22 @@ describe("env / scope provider", () => {
   it("treats VITE_DEV_MODE=true as non-production, allowing both scopes", async () => {
     vi.stubEnv("VITE_DEV_MODE", "true");
 
-    const { env, getAllowedScopes, isTestScopeWriteAllowed } =
-      await loadEnvModule();
+    const { env, getAllowedScopes, isTestScopeEnabled } = await loadEnvModule();
 
     expect(env.isDev).toBe(true);
     expect(env.isProduction).toBe(false);
     expect(getAllowedScopes()).toEqual(["prod", "test"]);
-    expect(isTestScopeWriteAllowed()).toBe(true);
+    expect(isTestScopeEnabled()).toBe(true);
   });
 
   it("treats VITE_DEV_MODE unset/false as production, restricting to prod scope only", async () => {
     vi.stubEnv("VITE_DEV_MODE", "false");
 
-    const { env, getAllowedScopes, isTestScopeWriteAllowed } =
-      await loadEnvModule();
+    const { env, getAllowedScopes, isTestScopeEnabled } = await loadEnvModule();
 
     expect(env.isDev).toBe(false);
     expect(env.isProduction).toBe(true);
     expect(getAllowedScopes()).toEqual(["prod"]);
-    expect(isTestScopeWriteAllowed()).toBe(false);
+    expect(isTestScopeEnabled()).toBe(false);
   });
 });

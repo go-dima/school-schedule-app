@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { authApi, usersApi } from "../services/api";
-import type { User, UserRoleData } from "../types";
+import { getPermissions } from "../services/permissions";
+import { getRoleFlags } from "../services/roleFlags";
+import type { User, UserRole, UserRoleData } from "../types";
 import { withTimeout } from "../utils/asyncUtils";
 
 // Keep below App.tsx's 5s loading-timeout screen so a stuck query resolves to
@@ -212,6 +214,12 @@ export function useAuth() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign out failed");
       throw err;
+    } finally {
+      // Don't rely solely on the onAuthStateChange listener to reach a
+      // signed-out UI state -- clear local state directly as a safety net.
+      setUser(null);
+      setUserRoles([]);
+      setCurrentRole(null);
     }
   };
 
@@ -221,29 +229,12 @@ export function useAuth() {
     }
   };
 
-  const hasRole = (role: string): boolean => {
+  const hasRole = (role: UserRole): boolean => {
     return userRoles.some(r => r.role === role);
   };
 
-  const isAdmin = (): boolean => {
-    return hasRole("admin");
-  };
-
-  const canManageClasses = (): boolean => {
-    return hasRole("admin") || hasRole("staff");
-  };
-
-  const canCreateClasses = (): boolean => {
-    return isAdmin();
-  };
-
-  const canDeleteClasses = (): boolean => {
-    return isAdmin();
-  };
-
-  const canViewAllSchedules = (): boolean => {
-    return hasRole("admin") || hasRole("staff");
-  };
+  const permissions = useMemo(() => getPermissions(userRoles), [userRoles]);
+  const roleFlags = useMemo(() => getRoleFlags(userRoles), [userRoles]);
 
   const refreshProfile = async () => {
     if (!user?.id) return;
@@ -305,11 +296,8 @@ export function useAuth() {
     refreshProfile,
     switchRole,
     hasRole,
-    isAdmin,
-    canManageClasses,
-    canCreateClasses,
-    canDeleteClasses,
-    canViewAllSchedules,
+    permissions,
+    roleFlags,
     clearApplicationState,
   };
 }

@@ -23,7 +23,7 @@ const ScheduleCatalogContext = createContext<
 export const ScheduleCatalogProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
-  const { canManageClasses } = useAuth();
+  const { permissions } = useAuth();
   const [classes, setClasses] = useState<ClassWithTimeSlot[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule>({});
@@ -46,7 +46,7 @@ export const ScheduleCatalogProvider: React.FC<{
 
       const visibleClasses = ScheduleService.excludeStaffOnlyClasses(
         classesData,
-        canManageClasses()
+        permissions.canManageClasses
       );
 
       setClasses(visibleClasses);

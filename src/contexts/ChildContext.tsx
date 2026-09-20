@@ -40,10 +40,10 @@ export function ChildProvider({
   const [selectedChild, setSelectedChild] = useState<Child | undefined>(
     undefined
   );
-  const { hasRole } = useAuth();
+  const { roleFlags } = useAuth();
   const { children, loading, error, createChild, updateChild, removeChild } =
     useChildren();
-  const isParent = hasRole("parent");
+  const isParent = roleFlags.isParent;
 
   // Auto-select first child if user is a parent and no child is selected
   useEffect(() => {

@@ -33,6 +33,7 @@ import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import { childrenApi } from "../services/api";
 import type { Child, Scope } from "../types";
 import { GRADES } from "../types";
+import { isTestScopeEnabled } from "../utils/env";
 
 type ChildWithParent = Child & { assignedParent: boolean };
 
@@ -58,7 +59,7 @@ const ParentIcon: React.FC<{ assignedParent: boolean }> = ({
 
 const StudentsPage: React.FC = () => {
   const { t } = useTranslation();
-  const { canManageClasses, isAdmin, hasRole } = useAuth();
+  const { permissions, roleFlags } = useAuth();
   const {
     children,
     loading,
@@ -68,7 +69,8 @@ const StudentsPage: React.FC = () => {
     removeChild,
     refetch,
   } = useAllChildrenContext();
-  const isCurrentUserParent = hasRole("parent");
+  const isCurrentUserParent = roleFlags.isParent;
+  const isAdmin = roleFlags.isAdmin;
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | undefined>();
   const [formLoading, setFormLoading] = useState(false);
@@ -317,7 +319,7 @@ const StudentsPage: React.FC = () => {
   ];
 
   // Check permissions
-  if (!canManageClasses()) {
+  if (!permissions.canManageRoster) {
     return (
       <div className="page-content">
         <Card>
@@ -380,7 +382,7 @@ const StudentsPage: React.FC = () => {
             mode="search"
             value={searchTerm}
             defaultGrade={selectedGrade || 1}
-            isCreateAllowed={canManageClasses()}
+            isCreateAllowed={permissions.canManageRoster}
           />
           <Select
             value={selectedGrade}
@@ -395,7 +397,7 @@ const StudentsPage: React.FC = () => {
             ))}
           </Select>
         </Space>
-        {isAdmin() && (
+        {isAdmin && isTestScopeEnabled() && (
           <ToggleFilterGroup<Scope>
             value={selectedScopes}
             onChange={setSelectedScopes}
@@ -403,6 +405,7 @@ const StudentsPage: React.FC = () => {
               value: scope,
               label: t(`scope.${scope}`),
             }))}
+            doubleClickToIsolate={false}
           />
         )}
       </div>
@@ -461,7 +464,7 @@ const StudentsPage: React.FC = () => {
           onSubmit={editingChild ? handleUpdateChild : handleCreateChild}
           onCancel={closeModal}
           loading={formLoading}
-          showScope={isAdmin()}
+          showScope={isAdmin}
           onDuplicateRedirect={childId => {
             const match = children.find(c => c.id === childId);
             if (match) openEditModal(match);

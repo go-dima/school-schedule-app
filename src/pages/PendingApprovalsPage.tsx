@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Card,
   Typography,
@@ -24,11 +25,13 @@ import {
   TeamOutlined,
   HomeOutlined,
   CrownOutlined,
+  SafetyCertificateOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useAuth } from "../contexts/AuthContext";
 import { usersApi } from "../services/api";
 import type { PendingApproval, UserRole } from "../types";
+import { ROLE_TAG_COLORS } from "../constants/roleColors";
 import "./PendingApprovalsPage.css";
 
 const { Title, Text } = Typography;
@@ -36,7 +39,8 @@ const { Title, Text } = Typography;
 interface PendingApprovalsPageProps {}
 
 const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
-  const { isAdmin } = useAuth();
+  const { t } = useTranslation();
+  const { permissions } = useAuth();
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>(
     []
   );
@@ -68,7 +72,9 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       setLastRefresh(new Date());
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to load pending approvals"
+        err instanceof Error
+          ? err.message
+          : t("pendingApprovals.page.loadErrorFallback")
       );
     } finally {
       setLoading(false);
@@ -89,14 +95,21 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
     try {
       await usersApi.approveUserWithRole(selectedApproval.userId, values.role);
       message.success(
-        `המשתמש ${selectedApproval.user.email} אושר בהצלחה לתפקיד ${getRoleDisplayName(values.role)}`
+        t("pendingApprovals.page.approveSuccess", {
+          email: selectedApproval.user.email,
+          role: t(`roles.${values.role}`, values.role),
+        })
       );
       await loadData();
       setRoleModalVisible(false);
       setSelectedApproval(null);
       form.resetFields();
     } catch (err) {
-      message.error(err instanceof Error ? err.message : "שגיאה באישור המשתמש");
+      message.error(
+        err instanceof Error
+          ? err.message
+          : t("pendingApprovals.page.approveError")
+      );
     } finally {
       setActionLoading(null);
     }
@@ -110,33 +123,22 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
     setActionLoading(approvalId);
     try {
       await usersApi.rejectRole(approvalId);
-      message.success(`בקשת ${getRoleDisplayName(role)} של ${userEmail} נדחתה`);
+      message.success(
+        t("pendingApprovals.page.rejectSuccess", {
+          role: t(`roles.${role}`, role),
+          email: userEmail,
+        })
+      );
       await loadData();
     } catch (err) {
-      message.error(err instanceof Error ? err.message : "שגיאה בדחיית הבקשה");
+      message.error(
+        err instanceof Error
+          ? err.message
+          : t("pendingApprovals.page.rejectError")
+      );
     } finally {
       setActionLoading(null);
     }
-  };
-
-  const getRoleDisplayName = (role: UserRole): string => {
-    const roleNames = {
-      admin: "מנהל",
-      staff: "צוות",
-      parent: "הורה",
-      child: "תלמיד",
-    };
-    return roleNames[role] || role;
-  };
-
-  const getRoleColor = (role: UserRole): string => {
-    const roleColors = {
-      admin: "red",
-      staff: "orange",
-      parent: "blue",
-      child: "green",
-    };
-    return roleColors[role] || "default";
   };
 
   const getRoleOptions = () => [
@@ -145,7 +147,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       label: (
         <Space>
           <HomeOutlined />
-          הורה
+          {t("roles.parent")}
         </Space>
       ),
     },
@@ -154,7 +156,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       label: (
         <Space>
           <TeamOutlined />
-          צוות
+          {t("roles.staff")}
         </Space>
       ),
     },
@@ -163,7 +165,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       label: (
         <Space>
           <UserOutlined />
-          תלמיד
+          {t("roles.child")}
         </Space>
       ),
     },
@@ -172,7 +174,16 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       label: (
         <Space>
           <CrownOutlined />
-          מנהל
+          {t("roles.admin")}
+        </Space>
+      ),
+    },
+    {
+      value: "moderator" as UserRole,
+      label: (
+        <Space>
+          <SafetyCertificateOutlined />
+          {t("roles.moderator")}
         </Space>
       ),
     },
@@ -190,7 +201,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
 
   const columns: ColumnsType<PendingApproval> = [
     {
-      title: "שם מלא",
+      title: t("pendingApprovals.table.fullNameColumn"),
       key: "fullName",
       width: 200,
       render: (_, record) => {
@@ -205,7 +216,9 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
               {fullName ? (
                 <Text strong>{fullName}</Text>
               ) : (
-                <Text type="secondary">לא הוזן שם</Text>
+                <Text type="secondary">
+                  {t("pendingApprovals.table.noName")}
+                </Text>
               )}
             </div>
           </Space>
@@ -213,23 +226,23 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       },
     },
     {
-      title: "כתובת אימייל",
+      title: t("pendingApprovals.table.emailColumn"),
       dataIndex: ["user", "email"],
       key: "email",
       width: 220,
       render: (email: string) => <Text>{email}</Text>,
     },
     {
-      title: "תפקיד מבוקש",
+      title: t("pendingApprovals.table.roleColumn"),
       dataIndex: "role",
       key: "role",
       width: 120,
       render: (role: UserRole) => (
-        <Tag color={getRoleColor(role)}>{getRoleDisplayName(role)}</Tag>
+        <Tag color={ROLE_TAG_COLORS[role]}>{t(`roles.${role}`, role)}</Tag>
       ),
     },
     {
-      title: "תאריך בקשה",
+      title: t("pendingApprovals.table.createdAtColumn"),
       dataIndex: "createdAt",
       key: "createdAt",
       width: 180,
@@ -241,7 +254,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       ),
     },
     {
-      title: "פעולות",
+      title: t("pendingApprovals.table.actionsColumn"),
       key: "actions",
       width: 200,
       render: (_, record) => (
@@ -252,25 +265,25 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
             loading={actionLoading === record.id}
             size="small"
             onClick={() => handleApproveWithRole(record)}>
-            אשר עם תפקיד
+            {t("pendingApprovals.table.approveButton")}
           </Button>
           <Popconfirm
-            title="דחיית בקשה"
-            description={`האם אתה בטוח שברצונך לדחות את בקשת ${
-              record.user.email
-            }?`}
+            title={t("pendingApprovals.table.rejectConfirmTitle")}
+            description={t("pendingApprovals.table.rejectConfirmDescription", {
+              email: record.user.email,
+            })}
             onConfirm={() =>
               handleReject(record.id, record.user.email, record.role)
             }
-            okText="דחה"
-            cancelText="ביטול"
+            okText={t("pendingApprovals.table.rejectButton")}
+            cancelText={t("common.buttons.cancel")}
             placement="topRight">
             <Button
               danger
               icon={<CloseOutlined />}
               loading={actionLoading === record.id}
               size="small">
-              דחה
+              {t("pendingApprovals.table.rejectButton")}
             </Button>
           </Popconfirm>
         </Space>
@@ -278,12 +291,12 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
     },
   ];
 
-  if (!isAdmin()) {
+  if (!permissions.canApproveSignups) {
     return (
       <div className="page-content">
         <Alert
-          message="אין הרשאה"
-          description="רק מנהלים יכולים לגשת לדף זה"
+          message={t("pendingApprovals.page.noPermissionMessage")}
+          description={t("pendingApprovals.page.noPermissionDescription")}
           type="error"
           showIcon
         />
@@ -297,7 +310,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
         <div className="page-loading">
           <Spin size="large" />
           <Title level={4} style={{ marginTop: 16, color: "#1890ff" }}>
-            טוען בקשות ממתינות...
+            {t("pendingApprovals.page.loadingTitle")}
           </Title>
         </div>
       </div>
@@ -316,7 +329,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
           <div className="header-main">
             <Title level={2}>
               <Space>
-                בקשות ממתינות לאישור
+                {t("pendingApprovals.page.title")}
                 {pendingApprovals.length > 0 && (
                   <Badge count={pendingApprovals.length} color="#ff4d4f" />
                 )}
@@ -328,21 +341,21 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
                 onClick={loadData}
                 loading={loading}
                 disabled={loading}>
-                רענן
+                {t("common.buttons.refresh")}
               </Button>
             </Space>
           </div>
         </fieldset>
 
         <Alert
-          message="ניהול בקשות אישור"
+          message={t("pendingApprovals.page.alertMessage")}
           description={
             <div>
-              כאן תוכל לאשר או לדחות בקשות של משתמשים חדשים להצטרף למערכת. לאחר
-              אישור, המשתמש יוכל להיכנס למערכת ולהשתמש בתפקיד המבוקש.
+              {t("pendingApprovals.page.alertDescription")}
               {lastRefresh && (
                 <div style={{ marginTop: 8, fontSize: "12px", opacity: 0.8 }}>
-                  <ClockCircleOutlined /> עדכון אחרון:{" "}
+                  <ClockCircleOutlined />{" "}
+                  {t("pendingApprovals.page.lastRefreshLabel")}
                   {lastRefresh.toLocaleTimeString("he-IL")}
                 </div>
               )}
@@ -356,7 +369,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
 
       {error && (
         <Alert
-          message="שגיאה בטעינת הנתונים"
+          message={t("pendingApprovals.page.loadErrorAlertMessage")}
           description={error}
           type="error"
           showIcon
@@ -372,10 +385,10 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
               style={{ fontSize: 48, color: "#d9d9d9", marginBottom: 16 }}
             />
             <Title level={4} style={{ color: "#999" }}>
-              אין בקשות ממתינות לאישור
+              {t("pendingApprovals.page.emptyTitle")}
             </Title>
             <Text type="secondary">
-              כל הבקשות אושרו או שלא הוגשו בקשות חדשות
+              {t("pendingApprovals.page.emptyDescription")}
             </Text>
           </div>
         ) : (
@@ -389,7 +402,11 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
               showSizeChanger: true,
               showQuickJumper: true,
               showTotal: (total, range) =>
-                `${range[0]}-${range[1]} מתוך ${total} בקשות`,
+                t("pendingApprovals.table.pagination", {
+                  start: range[0],
+                  end: range[1],
+                  total,
+                }),
             }}
             scroll={{ x: 800 }}
             size="small"
@@ -402,7 +419,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
         title={
           <Space>
             <UserOutlined />
-            בחירת תפקיד למשתמש
+            {t("pendingApprovals.modal.title")}
           </Space>
         }
         open={roleModalVisible}
@@ -416,20 +433,24 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
         {selectedApproval && (
           <>
             <Alert
-              message={`אישור משתמש: ${selectedApproval.user.email}`}
+              message={t("pendingApprovals.modal.userAlertMessage", {
+                email: selectedApproval.user.email,
+              })}
               description={
                 <div>
                   <p>
-                    <strong>שם:</strong>{" "}
+                    <strong>{t("pendingApprovals.modal.nameLabel")}</strong>{" "}
                     {`${selectedApproval.user.firstName || ""} ${
                       selectedApproval.user.lastName || ""
-                    }`.trim() || "לא הוזן"}
+                    }`.trim() || t("pendingApprovals.modal.noNameFallback")}
                   </p>
                   <p>
-                    <strong>תפקיד מבוקש במקור:</strong>{" "}
-                    {getRoleDisplayName(selectedApproval.role)}
+                    <strong>
+                      {t("pendingApprovals.modal.originalRoleLabel")}
+                    </strong>{" "}
+                    {t(`roles.${selectedApproval.role}`, selectedApproval.role)}
                   </p>
-                  <p>אנא בחר את התפקיד הסופי למשתמש זה במערכת:</p>
+                  <p>{t("pendingApprovals.modal.chooseFinalRolePrompt")}</p>
                 </div>
               }
               type="info"
@@ -443,11 +464,16 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
               layout="vertical">
               <Form.Item
                 name="role"
-                label="תפקיד במערכת"
-                rules={[{ required: true, message: "נא לבחור תפקיד" }]}>
+                label={t("pendingApprovals.modal.roleFieldLabel")}
+                rules={[
+                  {
+                    required: true,
+                    message: t("pendingApprovals.modal.roleRequired"),
+                  },
+                ]}>
                 <Select
                   size="large"
-                  placeholder="בחר תפקיד למשתמש"
+                  placeholder={t("pendingApprovals.modal.rolePlaceholder")}
                   options={getRoleOptions()}
                 />
               </Form.Item>
@@ -461,14 +487,14 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
                       form.resetFields();
                     }}
                     disabled={actionLoading === selectedApproval?.id}>
-                    ביטול
+                    {t("common.buttons.cancel")}
                   </Button>
                   <Button
                     type="primary"
                     htmlType="submit"
                     loading={actionLoading === selectedApproval?.id}
                     icon={<CheckOutlined />}>
-                    אשר משתמש
+                    {t("pendingApprovals.modal.submitButton")}
                   </Button>
                 </Space>
               </Form.Item>

@@ -64,17 +64,27 @@ export function SignupVerifyEmailGate() {
   return <Outlet />;
 }
 
-/** Guards class-management and students routes. */
+/** Guards the class-management route. */
 export function RequireClassManager() {
-  const { canManageClasses } = useAuth();
-  if (!canManageClasses()) return <Navigate to={ROUTES.SCHEDULE} replace />;
+  const { permissions } = useAuth();
+  if (!permissions.canManageClasses)
+    return <Navigate to={ROUTES.SCHEDULE} replace />;
+  return <Outlet />;
+}
+
+/** Guards the students (roster) route. */
+export function RequireRosterManager() {
+  const { permissions } = useAuth();
+  if (!permissions.canManageRoster)
+    return <Navigate to={ROUTES.SCHEDULE} replace />;
   return <Outlet />;
 }
 
 /** Guards the /user-management/* branch. */
 export function RequireAdmin() {
-  const { isAdmin } = useAuth();
-  if (!isAdmin()) return <Navigate to={ROUTES.SCHEDULE} replace />;
+  const { roleFlags } = useAuth();
+  const isAdmin = roleFlags.isAdmin;
+  if (!isAdmin) return <Navigate to={ROUTES.SCHEDULE} replace />;
   return <Outlet />;
 }
 
