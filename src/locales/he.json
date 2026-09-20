@@ -224,7 +224,8 @@
     "admin": "מנהל",
     "parent": "הורה",
     "child": "תלמיד",
-    "staff": "צוות"
+    "staff": "צוות",
+    "moderator": "אחראי/ת מערכת"
   },
   "days": {
     "sunday": "יום ראשון",
@@ -481,6 +482,89 @@
       "title": "רשימת משתמשים",
       "noPermissionTitle": "אין הרשאה",
       "adminOnlyAccess": "רק מנהלים יכולים לגשת לדף זה"
+    }
+  },
+  "userManagement": {
+    "page": {
+      "loadError": "שגיאה בטעינת המשתמשים",
+      "noRolesValidationError": "יש לבחור לפחות תפקיד אחד",
+      "baseRoleValidationError": "תפקיד מנהל או אחראי/ת מערכת דורש תפקיד בסיס נוסף (הורה או צוות)",
+      "updateSuccess": "תפקידי המשתמש {{email}} עודכנו בהצלחה",
+      "updateError": "שגיאה בעדכון תפקידי המשתמש",
+      "selfDemotion": {
+        "title": "הסרת הרשאות מנהל מעצמך",
+        "description": "אתה עומד להסיר מעצמך את תפקיד המנהל. לאחר השמירה לא תוכל עוד לגשת לדף זה. להמשיך?",
+        "confirmButton": "כן, הסר"
+      },
+      "alertMessage": "ניהול תפקידי משתמשים",
+      "alertDescription": "כאן תוכל להוסיף ולהסיר תפקידים למשתמשים. משתמשים חדשים נרשמים אוטומטית כהורים."
+    },
+    "table": {
+      "nameColumn": "שם משתמש",
+      "emailColumn": "דוא״ל",
+      "createdAtColumn": "תאריך הרשמה",
+      "lastSignInColumn": "כניסה אחרונה",
+      "rolesColumn": "תפקידים",
+      "actionsColumn": "פעולות",
+      "noName": "לא הוזן שם",
+      "neverSignedIn": "לא התחבר עדיין",
+      "daysAgo": "לפני {{count}} ימים",
+      "hoursAgo": "לפני {{count}} שעות",
+      "minutesAgo": "לפני {{count}} דקות",
+      "now": "עכשיו",
+      "pendingSuffix": " (ממתין)",
+      "noRoles": "אין תפקידים",
+      "manageRolesButton": "ניהול תפקידים",
+      "pagination": "{{start}}-{{end}} מתוך {{total}} משתמשים",
+      "emptyText": "לא נמצאו משתמשים"
+    },
+    "modal": {
+      "title": "ניהול תפקידים",
+      "description": "בחר את התפקידים המאושרים עבור המשתמש"
+    }
+  },
+  "pendingApprovals": {
+    "page": {
+      "approveSuccess": "המשתמש {{email}} אושר בהצלחה לתפקיד {{role}}",
+      "approveError": "שגיאה באישור המשתמש",
+      "rejectSuccess": "בקשת {{role}} של {{email}} נדחתה",
+      "rejectError": "שגיאה בדחיית הבקשה",
+      "noPermissionMessage": "אין הרשאה",
+      "noPermissionDescription": "רק מנהלים יכולים לגשת לדף זה",
+      "loadingTitle": "טוען בקשות ממתינות...",
+      "title": "בקשות ממתינות לאישור",
+      "alertMessage": "ניהול בקשות אישור",
+      "alertDescription": "כאן תוכל לאשר או לדחות בקשות של משתמשים חדשים להצטרף למערכת. לאחר אישור, המשתמש יוכל להיכנס למערכת ולהשתמש בתפקיד המבוקש.",
+      "lastRefreshLabel": "עדכון אחרון: ",
+      "loadErrorAlertMessage": "שגיאה בטעינת הנתונים",
+      "loadErrorFallback": "טעינת הבקשות הממתינות נכשלה",
+      "emptyTitle": "אין בקשות ממתינות לאישור",
+      "emptyDescription": "כל הבקשות אושרו או שלא הוגשו בקשות חדשות"
+    },
+    "table": {
+      "fullNameColumn": "שם מלא",
+      "emailColumn": "כתובת אימייל",
+      "roleColumn": "תפקיד מבוקש",
+      "createdAtColumn": "תאריך בקשה",
+      "actionsColumn": "פעולות",
+      "noName": "לא הוזן שם",
+      "approveButton": "אשר עם תפקיד",
+      "rejectButton": "דחה",
+      "rejectConfirmTitle": "דחיית בקשה",
+      "rejectConfirmDescription": "האם אתה בטוח שברצונך לדחות את בקשת {{email}}?",
+      "pagination": "{{start}}-{{end}} מתוך {{total}} בקשות"
+    },
+    "modal": {
+      "title": "בחירת תפקיד למשתמש",
+      "userAlertMessage": "אישור משתמש: {{email}}",
+      "nameLabel": "שם:",
+      "noNameFallback": "לא הוזן",
+      "originalRoleLabel": "תפקיד מבוקש במקור:",
+      "chooseFinalRolePrompt": "אנא בחר את התפקיד הסופי למשתמש זה במערכת:",
+      "roleFieldLabel": "תפקיד במערכת",
+      "roleRequired": "נא לבחור תפקיד",
+      "rolePlaceholder": "בחר תפקיד למשתמש",
+      "submitButton": "אשר משתמש"
     }
   },
   "common": {

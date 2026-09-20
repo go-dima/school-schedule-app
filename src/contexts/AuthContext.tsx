@@ -1,6 +1,8 @@
 import React, { createContext, useContext } from "react";
 import { useAuth as useAuthHook } from "../hooks/useAuth";
-import type { UserRoleData } from "../types";
+import type { PermissionsState } from "../services/permissions";
+import type { RoleFlags } from "../services/roleFlags";
+import type { UserRole, UserRoleData } from "../types";
 
 export interface AuthContextType {
   user: any;
@@ -14,12 +16,9 @@ export interface AuthContextType {
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   switchRole: (role: UserRoleData) => void;
-  hasRole: (role: string) => boolean;
-  isAdmin: () => boolean;
-  canManageClasses: () => boolean;
-  canCreateClasses: () => boolean;
-  canDeleteClasses: () => boolean;
-  canViewAllSchedules: () => boolean;
+  hasRole: (role: UserRole) => boolean;
+  permissions: PermissionsState;
+  roleFlags: RoleFlags;
   clearApplicationState: () => void;
 }
 

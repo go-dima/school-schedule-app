@@ -40,7 +40,8 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
   value,
 }) => {
   const { t } = useTranslation();
-  const { isAdmin } = useAuth();
+  const { roleFlags } = useAuth();
+  const isAdmin = roleFlags.isAdmin;
   const { createChild } = useAllChildrenContext();
   const [internalSearchTerm, setInternalSearchTerm] = useState<string>("");
 
@@ -274,7 +275,7 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
           onSubmit={handleCreateStudent}
           onCancel={closeModal}
           loading={addLoading}
-          showScope={isAdmin()}
+          showScope={isAdmin}
           onDuplicateRedirect={() => {
             closeModal();
             message.info(t("child.duplicateWarning.sameCreatorMessage"));

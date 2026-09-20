@@ -6,9 +6,9 @@ import UserManagementPage from "./UserManagementPage";
 
 const UserListPage: React.FC = () => {
   const { t } = useTranslation();
-  const { isAdmin } = useAuth();
+  const { permissions } = useAuth();
 
-  if (!isAdmin()) {
+  if (!permissions.canApproveSignups) {
     return (
       <div className="page-content">
         <Alert

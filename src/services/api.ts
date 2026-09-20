@@ -20,7 +20,7 @@ import type {
   UserRoleData,
 } from "../types";
 import { withTimeout } from "../utils/asyncUtils";
-import { env, getAllowedScopes, isTestScopeWriteAllowed } from "../utils/env";
+import { env, getAllowedScopes, isTestScopeEnabled } from "../utils/env";
 import i18n from "../utils/i18n";
 import log from "../utils/logger";
 import { NotificationService } from "./notificationService";
@@ -51,7 +51,7 @@ export class ApiError extends Error {
 // Guards every write site that can persist scope: "test", so test data can
 // only be created/moved into existence while not running in production.
 function assertTestScopeAllowed(scope: Scope | undefined) {
-  if (scope === "test" && !isTestScopeWriteAllowed()) {
+  if (scope === "test" && !isTestScopeEnabled()) {
     throw new ApiError(i18n.t("scope.testNotAllowedInProduction"));
   }
 }
@@ -95,7 +95,12 @@ export const authApi = {
 
   async signOut() {
     const { error } = await supabase.auth.signOut();
-    if (error) throw new ApiError(error.message);
+    // A session that's already missing/invalid (expired, cleared elsewhere,
+    // a second sign-out attempt) means we're effectively already signed out
+    // -- treat it as success instead of blocking the user from logging out.
+    if (error && error.name !== "AuthSessionMissingError") {
+      throw new ApiError(error.message);
+    }
   },
 
   async getCurrentUser() {
@@ -379,6 +384,17 @@ export const usersApi = {
   },
 
   async rejectRole(roleId: string) {
+    const { data, error } = await supabase
+      .from("user_roles")
+      .delete()
+      .eq("id", roleId)
+      .select();
+
+    if (error) throw new ApiError(error.message);
+    return data[0];
+  },
+
+  async revokeApprovedRole(roleId: string) {
     const { data, error } = await supabase
       .from("user_roles")
       .delete()

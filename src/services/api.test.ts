@@ -14,7 +14,7 @@ vi.mock("../utils/env", () => ({
     }
   ),
   getAllowedScopes: () => (envState.isProduction ? ["prod"] : ["prod", "test"]),
-  isTestScopeWriteAllowed: () => !envState.isProduction,
+  isTestScopeEnabled: () => !envState.isProduction,
 }));
 
 type AuthChangeHandler = (event: string, session: any) => any;
@@ -40,6 +40,10 @@ let mockSignUpResult: { data: any; error: any } = {
   error: null,
 };
 
+// Fixture data resolved by the `auth.signOut(...)` mock below when it is
+// awaited. Defaults to a plain success (no error).
+let mockSignOutResult: { error: any } = { error: null };
+
 // Fixture data resolved by the chain's `.single()` mock below when it is
 // awaited. Defaults to a "not found" shape (no existing profile row), since
 // that's the common case exercised by the onAuthStateChange ensure-profile
@@ -62,6 +66,7 @@ vi.mock("./supabase", () => {
         // supabase-js's internal auth lock deadlocks.
         getUser: vi.fn(() => new Promise(() => {})),
         signUp: vi.fn(() => Promise.resolve(mockSignUpResult)),
+        signOut: vi.fn(() => Promise.resolve(mockSignOutResult)),
       },
       rpc: vi.fn(() => Promise.resolve(mockRpcResult)),
       from: vi.fn(() => {
@@ -239,6 +244,35 @@ describe("authApi.signUp", () => {
     await authApi.signUp("a@b.com", "password123");
 
     expect(supabase.from).not.toHaveBeenCalled();
+  });
+});
+
+describe("authApi.signOut", () => {
+  afterEach(() => {
+    mockSignOutResult = { error: null };
+  });
+
+  it("resolves without throwing on a plain success", async () => {
+    await expect(authApi.signOut()).resolves.toBeUndefined();
+  });
+
+  it("resolves without throwing when the session is already missing", async () => {
+    mockSignOutResult = {
+      error: {
+        name: "AuthSessionMissingError",
+        message: "Auth session missing!",
+      },
+    };
+
+    await expect(authApi.signOut()).resolves.toBeUndefined();
+  });
+
+  it("throws an ApiError for any other sign-out failure", async () => {
+    mockSignOutResult = {
+      error: { name: "AuthApiError", message: "network error" },
+    };
+
+    await expect(authApi.signOut()).rejects.toThrow("network error");
   });
 });
 

@@ -18,7 +18,7 @@ const ProfileSettingsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("profile");
   const [success, setSuccess] = useState(false);
-  const { user, hasRole, refreshProfile } = useAuth();
+  const { user, roleFlags, refreshProfile } = useAuth();
 
   // Set initial form values when component mounts
   useEffect(() => {
@@ -59,7 +59,7 @@ const ProfileSettingsPage: React.FC = () => {
     }
   };
 
-  const isParent = hasRole("parent");
+  const isParent = roleFlags.isParent;
 
   const tabItems = [
     {
