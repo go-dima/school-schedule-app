@@ -327,8 +327,16 @@
       "file": "041_moderator_can_manage_classes.sql",
       "created_at": "2026-09-18T00:02:00Z",
       "dependencies": ["040_add_moderator_role"]
+    },
+    {
+      "id": "042_harden_advisor_findings",
+      "name": "Harden Advisor Findings",
+      "description": "Security Advisor cleanup: revoke anon/PUBLIC EXECUTE on seven SECURITY DEFINER functions (re-granting authenticated where the app needs it; sync_last_sign_in_at trigger function revoked from authenticated too), pin search_path on validate_time_slot() and is_admin_or_moderator(), and revoke anon SELECT on schedule_overrides. Permission tightening only, no logic change.",
+      "file": "042_harden_advisor_findings.sql",
+      "created_at": "2026-09-24T00:00:00Z",
+      "dependencies": ["041_moderator_can_manage_classes"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 41
+  "schema_version": 42
 }
