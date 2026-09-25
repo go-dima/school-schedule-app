@@ -41,7 +41,7 @@ type ChildWithParent = Child & { assignedParent: boolean };
 const ALL_SCOPES: Scope[] = ["prod", "test"];
 import { GetGradeName } from "@/utils/grades";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const ParentIcon: React.FC<{ assignedParent: boolean }> = ({
   assignedParent,
@@ -345,29 +345,11 @@ const StudentsPage: React.FC = () => {
 
   return (
     <div className="page-content">
+      {/* One row: search/filters on one side, scope toggle + add on the other
+          (RTL: filters on the right, add button at the far left). */}
       <div
         style={{
-          marginBottom: 16,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}>
-        <Title level={2} style={{ margin: 0 }}>
-          {t("students.page.title")}
-        </Title>
-        <Space>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={openCreateModal}>
-            {t("students.page.addButton")}
-          </Button>
-        </Space>
-      </div>
-
-      {/* Search and Filter Controls */}
-      <div
-        style={{
+          paddingTop: 12,
           marginBottom: 16,
           display: "flex",
           justifyContent: "space-between",
@@ -400,17 +382,25 @@ const StudentsPage: React.FC = () => {
             ))}
           </Select>
         </Space>
-        {isAdmin && isTestScopeEnabled() && (
-          <ToggleFilterGroup<Scope>
-            value={selectedScopes}
-            onChange={setSelectedScopes}
-            options={ALL_SCOPES.map(scope => ({
-              value: scope,
-              label: t(`scope.${scope}`),
-            }))}
-            doubleClickToIsolate={false}
-          />
-        )}
+        <Space wrap>
+          {isAdmin && isTestScopeEnabled() && (
+            <ToggleFilterGroup<Scope>
+              value={selectedScopes}
+              onChange={setSelectedScopes}
+              options={ALL_SCOPES.map(scope => ({
+                value: scope,
+                label: t(`scope.${scope}`),
+              }))}
+              doubleClickToIsolate={false}
+            />
+          )}
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={openCreateModal}>
+            {t("students.page.addButton")}
+          </Button>
+        </Space>
       </div>
 
       {error && (

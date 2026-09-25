@@ -344,7 +344,6 @@
   },
   "classManagement": {
     "page": {
-      "title": "ניהול שיעורים",
       "loading": "טוען נתוני שיעורים...",
       "backToSchedule": "חזרה למערכת השעות",
       "registrationApprovals": "אישורי הרשמה",
@@ -602,13 +601,11 @@
       "cancel": "ביטול",
       "logout": "התנתק",
       "pendingRequests": "בקשות ממתינות",
-      "classManagement": "ניהול שיעורים",
-      "userManagement": "ניהול משתמשים"
+      "classManagement": "ניהול שיעורים"
     }
   },
   "students": {
     "page": {
-      "title": "תלמידים",
       "addButton": "הוסף תלמיד",
       "editButton": "ערוך",
       "removeButton": "הסר",
