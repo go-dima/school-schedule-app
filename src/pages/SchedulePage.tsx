@@ -596,8 +596,14 @@ const SchedulePageContent: React.FC = () => {
     }
   };
 
+  // The child whose schedule the print button exports (and names).
+  const printChild = isParent ? selectedChild : staffSelectedChild;
+  const printChildName = printChild
+    ? `${printChild.firstName} ${printChild.lastName}`
+    : "";
+
   const handleExportSchedule = async () => {
-    const currentChild = isParent ? selectedChild : staffSelectedChild;
+    const currentChild = printChild;
 
     if (!currentChild) {
       message.error(t("schedule.page.error.noChildSelected"));
@@ -871,7 +877,7 @@ const SchedulePageContent: React.FC = () => {
                     icon={<PrinterOutlined />}
                     onClick={handleExportStaffSchedule}
                     disabled={staffViewLoading}>
-                    {t("schedule.page.exportButton")}
+                    {t("schedule.page.exportButtonFor", { name: staffName })}
                   </Button>
                 )
               : ((isParent && selectedChild) ||
@@ -880,7 +886,9 @@ const SchedulePageContent: React.FC = () => {
                     icon={<PrinterOutlined />}
                     onClick={handleExportSchedule}
                     disabled={loading}>
-                    {t("schedule.page.exportButton")}
+                    {t("schedule.page.exportButtonFor", {
+                      name: printChildName,
+                    })}
                   </Button>
                 )}
             {!isStaffView && (

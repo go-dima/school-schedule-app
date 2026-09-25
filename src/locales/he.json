@@ -143,6 +143,7 @@
       "selectedClassesTitle": "השיעורים שנבחרו",
       "createNewClassModal": "צור שיעור חדש",
       "exportButton": "הדפס",
+      "exportButtonFor": "הדפס מערכת של {{name}}",
       "error": {
         "noChildSelected": "נא לבחור ילד תחילה",
         "exportFailed": "שגיאה בהדפסת מערכת השעות",
