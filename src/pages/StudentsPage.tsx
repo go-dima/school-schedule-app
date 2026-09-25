@@ -41,7 +41,7 @@ type ChildWithParent = Child & { assignedParent: boolean };
 const ALL_SCOPES: Scope[] = ["prod", "test"];
 import { GetGradeName } from "@/utils/grades";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const ParentIcon: React.FC<{ assignedParent: boolean }> = ({
   assignedParent,
@@ -349,12 +349,9 @@ const StudentsPage: React.FC = () => {
         style={{
           marginBottom: 16,
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: "flex-end",
           alignItems: "center",
         }}>
-        <Title level={2} style={{ margin: 0 }}>
-          {t("students.page.title")}
-        </Title>
         <Space>
           <Button
             type="primary"
