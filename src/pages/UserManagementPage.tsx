@@ -29,7 +29,7 @@ const ALL_ROLES: UserRole[] = ["admin", "moderator", "staff", "parent"];
 const BASE_ROLES: UserRole[] = ["staff", "parent"];
 const ELEVATED_ROLES: UserRole[] = ["admin", "moderator"];
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 interface UserManagementPageProps {}
 
@@ -379,15 +379,6 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
 
   return (
     <div className="page-content">
-      <div className="page-header">
-        <Space>
-          <UserOutlined style={{ fontSize: "24px", color: "#1890ff" }} />
-          <Title level={2} style={{ margin: 0 }}>
-            {t("common.buttons.userManagement")}
-          </Title>
-        </Space>
-      </div>
-
       <Alert
         message={t("userManagement.page.alertMessage")}
         description={t("userManagement.page.alertDescription")}

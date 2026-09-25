@@ -36,7 +36,10 @@ const Header: React.FC = () => {
           icon: <UsergroupAddOutlined />,
         };
       case ROUTES.USER_MANAGEMENT_LIST:
-        return { title: t("navigation.userList"), icon: <UserOutlined /> };
+        return {
+          title: t("navigation.userManagement"),
+          icon: <UserOutlined />,
+        };
       case ROUTES.USER_MANAGEMENT_PENDING_APPROVALS:
         return {
           title: t("navigation.pendingApprovals"),

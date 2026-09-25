@@ -601,8 +601,7 @@
       "cancel": "ביטול",
       "logout": "התנתק",
       "pendingRequests": "בקשות ממתינות",
-      "classManagement": "ניהול שיעורים",
-      "userManagement": "ניהול משתמשים"
+      "classManagement": "ניהול שיעורים"
     }
   },
   "students": {
