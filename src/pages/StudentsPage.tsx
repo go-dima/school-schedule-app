@@ -345,24 +345,8 @@ const StudentsPage: React.FC = () => {
 
   return (
     <div className="page-content">
-      <div
-        style={{
-          marginBottom: 16,
-          display: "flex",
-          justifyContent: "flex-end",
-          alignItems: "center",
-        }}>
-        <Space>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={openCreateModal}>
-            {t("students.page.addButton")}
-          </Button>
-        </Space>
-      </div>
-
-      {/* Search and Filter Controls */}
+      {/* One row: search/filters on one side, scope toggle + add on the other
+          (RTL: filters on the right, add button at the far left). */}
       <div
         style={{
           marginBottom: 16,
@@ -397,17 +381,25 @@ const StudentsPage: React.FC = () => {
             ))}
           </Select>
         </Space>
-        {isAdmin && isTestScopeEnabled() && (
-          <ToggleFilterGroup<Scope>
-            value={selectedScopes}
-            onChange={setSelectedScopes}
-            options={ALL_SCOPES.map(scope => ({
-              value: scope,
-              label: t(`scope.${scope}`),
-            }))}
-            doubleClickToIsolate={false}
-          />
-        )}
+        <Space wrap>
+          {isAdmin && isTestScopeEnabled() && (
+            <ToggleFilterGroup<Scope>
+              value={selectedScopes}
+              onChange={setSelectedScopes}
+              options={ALL_SCOPES.map(scope => ({
+                value: scope,
+                label: t(`scope.${scope}`),
+              }))}
+              doubleClickToIsolate={false}
+            />
+          )}
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={openCreateModal}>
+            {t("students.page.addButton")}
+          </Button>
+        </Space>
       </div>
 
       {error && (
