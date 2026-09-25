@@ -23,6 +23,8 @@ export const AnalyticsEvent = {
   AdminRevoked: "admin_revoked",
   SignupApproved: "signup_approved",
   SignupRejected: "signup_rejected",
+  StaffViewToggled: "staff_view_toggled",
+  StaffViewStaffSelected: "staff_view_staff_selected",
 } as const;
 
 export type AnalyticsEventName =

@@ -13,14 +13,15 @@ import {
 import type {
   TimeSlot,
   WeeklySchedule,
-  Child,
   ScheduleOverrideWithTimeSlot,
 } from "../types";
-import { GetGradeName } from "../utils/grades";
 import "./PrintableSchedule.css";
 
 interface PrintableScheduleProps {
-  child: Child;
+  title: string;
+  // Only show classes for this grade; omit to show every class in the feed
+  // (e.g. Staff View, whose feed is already one staff member's lessons).
+  grade?: number;
   timeSlots: TimeSlot[];
   weeklySchedule: WeeklySchedule;
   selectedClasses: string[];
@@ -35,7 +36,8 @@ interface ScheduleRow {
 }
 
 const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
-  child,
+  title,
+  grade,
   timeSlots,
   weeklySchedule,
   selectedClasses,
@@ -67,10 +69,10 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
 
     const dayClasses = weeklySchedule[dayOfWeek]?.[timeSlot.id] || [];
 
-    // Filter by child's grade
-    let filteredClasses = dayClasses.filter(cls =>
-      cls.grades?.includes(child.grade)
-    );
+    const filteredClasses =
+      grade === undefined
+        ? dayClasses
+        : dayClasses.filter(cls => cls.grades?.includes(grade));
 
     const displayInfo = getTimeSlotDisplayInfo(timeSlot);
 
@@ -221,10 +223,7 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
   return (
     <div className="printable-schedule">
       <div className="print-header">
-        <h1 className="print-title">
-          מערכת של {child.firstName} {child.lastName} -{" "}
-          {GetGradeName(child.grade)}
-        </h1>
+        <h1 className="print-title">{title}</h1>
         {showDraftMarker && (
           <div className="print-draft-marker">{t("schedule.draftBanner")}</div>
         )}

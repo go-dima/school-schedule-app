@@ -68,6 +68,10 @@
   },
   "schedule": {
     "draftBanner": "הבחירה היא טויטה בלבד",
+    "print": {
+      "childTitle": "מערכת של {{firstName}} {{lastName}} - {{grade}}",
+      "staffTitle": "מערכת של {{name}}"
+    },
     "committedReadOnlyBanner": "מערכת מוצגת לצפייה בלבד",
     "page": {
       "title": "מערכת שעות",
@@ -91,14 +95,18 @@
         "trackPlaceholder": "ללא מסלול",
         "trackOption": "מסלול {{track}}",
         "groupPlaceholder": "ללא קבוצה",
-        "groupOption": "קבוצה {{group}}"
+        "groupOption": "קבוצה {{group}}",
+        "studentView": "תלמיד",
+        "staffView": "צוות",
+        "selectStaff": "בחר איש צוות"
       },
       "placeholders": {
         "allGrades": "כל הכיתות",
         "searchClass": "הקלד שם שיעור לחיפוש...",
         "selectRole": "בחר תפקיד",
         "selectChildForStaff": "בחר תלמיד...",
-        "classFilterDisabled": "חיפוש מבוטל - נבחר תלמיד"
+        "classFilterDisabled": "חיפוש מבוטל - נבחר תלמיד",
+        "selectStaff": "בחר איש צוות..."
       },
       "childSelectorLabel": "בחר ילד:",
       "gradeFilterLabel": "סנן לפי כיתה:",
@@ -108,6 +116,10 @@
         "noChildSelected": {
           "title": "לא נבחר ילד",
           "description": "בחר ילד מהרשימה כדי לצפות ולערוך את מערכת השעות שלו."
+        },
+        "noStaffSelected": {
+          "title": "לא נבחר איש צוות",
+          "description": "בחר איש צוות מהרשימה כדי לצפות במערכת השעות שלו."
         },
         "noPermission": {
           "title": "אין הרשאה לבחירת שיעורים",
@@ -141,7 +153,8 @@
         "loadData": "שגיאה בטעינת הנתונים",
         "loadTimeSlots": "שגיאה בטעינת זמני השיעורים",
         "timeSlotNotFound": "זמן השיעור לא נמצא",
-        "createClass": "שגיאה ביצירת השיעור"
+        "createClass": "שגיאה ביצירת השיעור",
+        "loadStaffSchedule": "שגיאה בטעינת מערכת איש הצוות"
       },
       "success": {
         "classCreated": "השיעור נוצר בהצלחה"

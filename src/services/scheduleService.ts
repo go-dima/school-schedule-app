@@ -15,6 +15,15 @@ import { isLessonTimeSlot } from "../utils/timeSlots";
 // entirely from the schedule catalog for everyone else.
 const STAFF_ONLY_CLASS_TITLES = new Set(["חונכות", "שילוב", "מחויבות אישית"]);
 
+// Special Classes: per-child placeholder classes whose `teacher` is not the
+// person who actually teaches each child (that's decided per selection).
+// Superset of the staff-only titles -- "כישורי חיים" is special but still
+// visible to parents, so it deliberately stays out of the set above.
+const SPECIAL_CLASS_TITLES = new Set([
+  ...STAFF_ONLY_CLASS_TITLES,
+  "כישורי חיים",
+]);
+
 export class ScheduleService {
   static slotKey(slot: ClassSlot): string {
     return `${slot.dayOfWeek}:${slot.timeSlotId}`;
@@ -320,6 +329,15 @@ export class ScheduleService {
   /** True for staff-only placeholder classes (e.g. "חונכות", "שילוב"). */
   static isStaffOnlyClass(cls: ClassWithTimeSlot): boolean {
     return STAFF_ONLY_CLASS_TITLES.has(cls.title);
+  }
+
+  /**
+   * True for Special Classes -- the staff-only placeholders plus
+   * "כישורי חיים". Their catalog `teacher` doesn't say who teaches a given
+   * child, so the Staff View leaves them out of its catalog stream.
+   */
+  static isSpecialClass(cls: Pick<ClassWithTimeSlot, "title">): boolean {
+    return SPECIAL_CLASS_TITLES.has(cls.title.trim());
   }
 
   /**

@@ -2,7 +2,6 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import PrintableSchedule from "../components/PrintableSchedule";
 import type {
-  Child,
   TimeSlot,
   WeeklySchedule,
   ScheduleOverrideWithTimeSlot,
@@ -15,7 +14,10 @@ import {
 import { encodeHTML } from "./htmlEscape";
 
 interface PrintScheduleData {
-  child: Child;
+  // Shown as the page heading and the print window's title.
+  title: string;
+  // Only print classes for this grade; omit to print the whole feed.
+  grade?: number;
   timeSlots: TimeSlot[];
   weeklySchedule: WeeklySchedule;
   selectedClasses: string[];
@@ -38,13 +40,8 @@ export const printSchedule = async (data: PrintScheduleData): Promise<void> => {
         return;
       }
 
-      // Set up the HTML structure for the print window using secure DOM methods
-      // Sanitize child name for title
-      const safeFirstName = encodeHTML(data.child.firstName);
-      const safeLastName = encodeHTML(data.child.lastName);
-
-      // Use a simpler approach by writing HTML directly to the document
-      const titleText = "מערכת של " + safeFirstName + " " + safeLastName;
+      // Sanitize the title before writing it into the document's HTML
+      const titleText = encodeHTML(data.title);
 
       const htmlContent = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -86,7 +83,8 @@ export const printSchedule = async (data: PrintScheduleData): Promise<void> => {
         const printableScheduleElement = React.createElement(
           PrintableSchedule,
           {
-            child: data.child,
+            title: data.title,
+            grade: data.grade,
             timeSlots: data.timeSlots,
             weeklySchedule: data.weeklySchedule,
             selectedClasses: data.selectedClasses,

@@ -179,3 +179,10 @@ export interface ScheduleOverride {
 export interface ScheduleOverrideWithTimeSlot extends ScheduleOverride {
   timeSlot: TimeSlot;
 }
+
+// An override as seen from the teacher's side (Staff View): the same row,
+// plus the display name of the child it was authored for.
+export interface ScheduleOverrideWithChildName
+  extends ScheduleOverrideWithTimeSlot {
+  childName: string;
+}

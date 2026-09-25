@@ -29,3 +29,15 @@ A Selection the Child cannot remove. Produced by Mandatory, a Group match, or a 
 
 **Selection**:
 A Class a Child has chosen for their schedule. Free by default; a Locked Selection is the exception.
+
+**Override**:
+A staff-authored one-off lesson (title, teacher, room, Class Slot) placed directly into a single Child's schedule, outside the Class catalog. In a Child's schedule it takes that Class Slot's place instead of any Selection there. In a Staff View, Overrides that share a title and Class Slot appear as one lesson listing all their Children.
+_Avoid_: Exception, custom class
+
+**Special Class**:
+A placeholder Class whose catalog teacher doesn't say who actually teaches a given Child: חונכות, שילוב, מחויבות אישית (the staff-only ones, hidden from parents) and כישורי חיים. Who teaches it is decided per Child, not by the catalog.
+_Avoid_: Staff-only class, as a synonym (staff-only Special Classes are a subset)
+
+**Staff View**:
+A read-only view of the schedule grid showing one staff member's week. It includes the Classes they teach (excluding Special Classes) and the Overrides that name them, and flags two different lessons in the same Class Slot as a conflict. It is the counterpart to the student view, which shows one Child's Selections.
+_Avoid_: Teacher schedule, staff mode
