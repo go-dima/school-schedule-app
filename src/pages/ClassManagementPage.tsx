@@ -555,7 +555,6 @@ const ClassManagementPage: React.FC = () => {
           }`}
           aria-disabled={loading}>
           <div className="header-main">
-            <Title level={2}>{t("classManagement.page.title")}</Title>
             <Space>
               <Button
                 type="primary"
