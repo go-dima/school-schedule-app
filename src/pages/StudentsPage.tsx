@@ -349,6 +349,7 @@ const StudentsPage: React.FC = () => {
           (RTL: filters on the right, add button at the far left). */}
       <div
         style={{
+          paddingTop: 12,
           marginBottom: 16,
           display: "flex",
           justifyContent: "space-between",
