@@ -174,17 +174,6 @@
   background: #d6ecff;
 }
 
-/* Staff View tabs sit directly above the filters bar; the tabs carry no
-   panes of their own (the page below is the content), so drop the gap antd
-   reserves under the tab bar. */
-.schedule-view-tabs {
-  padding: 4px 0 12px 0;
-}
-
-.schedule-view-tabs > .ant-tabs-nav {
-  margin-bottom: 0;
-}
-
 /* Staff View dropdown: staff with no regular lessons, listed last. */
 .staff-option--no-lessons {
   color: rgba(0, 0, 0, 0.45);
