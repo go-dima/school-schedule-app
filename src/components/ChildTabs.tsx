@@ -20,7 +20,7 @@ interface ChildTabsProps {
 function ChildTabLabel({ child }: { child: Child }) {
   return (
     <Space style={{ direction: "rtl" }}>
-      <span>
+      <span className="child-tab-name">
         {child.firstName} {child.lastName}
       </span>
       <Text type="secondary" style={{ fontSize: 12 }}>
