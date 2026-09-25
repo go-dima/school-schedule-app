@@ -17,7 +17,7 @@ import type {
 } from "../types";
 import "./PrintableSchedule.css";
 
-interface PrintableScheduleProps {
+export interface PrintableScheduleProps {
   title: string;
   // Only show classes for this grade; omit to show every class in the feed
   // (e.g. Staff View, whose feed is already one staff member's lessons).

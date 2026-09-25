@@ -1,11 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import PrintableSchedule from "../components/PrintableSchedule";
-import type {
-  TimeSlot,
-  WeeklySchedule,
-  ScheduleOverrideWithTimeSlot,
-} from "../types";
+import PrintableSchedule, {
+  type PrintableScheduleProps,
+} from "../components/PrintableSchedule";
 import { getPrintStyles } from "./loadPrintStyles";
 import {
   PRINT_PAGE_CONTENT_WIDTH_PX,
@@ -13,19 +10,11 @@ import {
 } from "./printPageSize";
 import { encodeHTML } from "./htmlEscape";
 
-interface PrintScheduleData {
-  // Shown as the page heading and the print window's title.
-  title: string;
-  // Only print classes for this grade; omit to print the whole feed.
-  grade?: number;
-  timeSlots: TimeSlot[];
-  weeklySchedule: WeeklySchedule;
-  selectedClasses: string[];
-  overrides: ScheduleOverrideWithTimeSlot[];
-  showDraftMarker: boolean;
-}
-
-export const printSchedule = async (data: PrintScheduleData): Promise<void> => {
+// Takes exactly the props PrintableSchedule renders -- one definition, so a
+// new print field can't be added to one side and forgotten on the other.
+export const printSchedule = async (
+  data: PrintableScheduleProps
+): Promise<void> => {
   return new Promise((resolve, reject) => {
     try {
       // Create a new window for printing
@@ -82,15 +71,7 @@ export const printSchedule = async (data: PrintScheduleData): Promise<void> => {
         // Create the PrintableSchedule element
         const printableScheduleElement = React.createElement(
           PrintableSchedule,
-          {
-            title: data.title,
-            grade: data.grade,
-            timeSlots: data.timeSlots,
-            weeklySchedule: data.weeklySchedule,
-            selectedClasses: data.selectedClasses,
-            overrides: data.overrides,
-            showDraftMarker: data.showDraftMarker,
-          }
+          data
         );
 
         root.render(printableScheduleElement);
