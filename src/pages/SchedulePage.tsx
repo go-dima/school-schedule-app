@@ -16,7 +16,6 @@ import {
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import {
-  UserSwitchOutlined,
   PrinterOutlined,
   ReloadOutlined,
   LockOutlined,
@@ -69,10 +68,6 @@ const { Option } = Select;
 const SchedulePageContent: React.FC = () => {
   const { t } = useTranslation();
 
-  const getRoleDisplayName = (role: string): string => {
-    const roleKey = `roles.${role}`;
-    return t(roleKey, role); // fallback to role if translation not found
-  };
   const { user, currentRole, userRoles, switchRole, roleFlags, permissions } =
     useAuth();
   const {
@@ -373,13 +368,6 @@ const SchedulePageContent: React.FC = () => {
   const error = isStaffView
     ? scheduleError || staffViewError
     : scheduleError || selectedScheduleError || childrenError;
-
-  const handleRoleSwitch = (roleId: string) => {
-    const role = userRoles.find(r => r.id === roleId);
-    if (role) {
-      switchRole(role);
-    }
-  };
 
   // Classes auto-selected by the active child's track can't be picked apart
   // one at a time -- only changing the track (which re-syncs them) can.
@@ -896,20 +884,6 @@ const SchedulePageContent: React.FC = () => {
         disabled={refreshing}
         actions={
           <>
-            {userRoles.length > 1 && (
-              <Select
-                value={currentRole?.id}
-                onChange={handleRoleSwitch}
-                placeholder={t("schedule.page.placeholders.selectRole")}
-                style={{ minWidth: 120 }}
-                suffixIcon={<UserSwitchOutlined />}>
-                {userRoles.map(role => (
-                  <Option key={role.id} value={role.id}>
-                    {getRoleDisplayName(role.role)}
-                  </Option>
-                ))}
-              </Select>
-            )}
             {!canUseStaffView && printButton}
             {!isStaffView && (
               <FilterField label={t("schedule.page.labels.searchClass")}>

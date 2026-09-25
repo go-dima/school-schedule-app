@@ -83,7 +83,6 @@
       "classSelectionError": "שגיאה בעדכון בחירת השיעור",
       "dataLoadingError": "שגיאה בטעינת הנתונים",
       "profileButton": "פרופיל",
-      "roleSelectorPlaceholder": "בחר תפקיד",
       "labels": {
         "selectChild": "בחר ילד",
         "selectChildForStaff": "בחר תלמיד",
@@ -103,7 +102,6 @@
       "placeholders": {
         "allGrades": "כל הכיתות",
         "searchClass": "הקלד שם שיעור לחיפוש...",
-        "selectRole": "בחר תפקיד",
         "selectChildForStaff": "בחר תלמיד...",
         "classFilterDisabled": "חיפוש מבוטל - נבחר תלמיד",
         "selectStaff": "בחר איש צוות..."

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { authApi, usersApi } from "../services/api";
 import { getPermissions } from "../services/permissions";
-import { getRoleFlags } from "../services/roleFlags";
+import { getRoleFlags, pickDefaultRole } from "../services/roleFlags";
 import type { User, UserRole, UserRoleData } from "../types";
 import { withTimeout } from "../utils/asyncUtils";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
@@ -66,7 +66,7 @@ export function useAuth() {
 
         const approvedRoles = roles.filter(role => role.approved);
         setUserRoles(approvedRoles);
-        setCurrentRole(approvedRoles[0] || null);
+        setCurrentRole(pickDefaultRole(approvedRoles));
       } catch (err) {
         if (controller.signal.aborted || !mounted) return;
 
