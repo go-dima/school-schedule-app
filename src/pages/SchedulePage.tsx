@@ -105,8 +105,8 @@ const SchedulePageContent: React.FC = () => {
     ? searchParams.get("selected") || undefined
     : undefined;
   const {
-    names: staffNames,
-    namesLoading: staffNamesLoading,
+    staff: staffMembers,
+    staffLoading: staffMembersLoading,
     view: staffView,
     loading: staffViewLoading,
     error: staffViewError,
@@ -858,7 +858,7 @@ const SchedulePageContent: React.FC = () => {
   }
 
   return (
-    <div className="page-content">
+    <div className="page-content schedule-page-content">
       {/* Staff View tabs: shown only when there's more than one view to pick
           (class managers). Print/refresh live at the end of the tab bar;
           with no tab bar, they stay in the filters bar as before. */}
@@ -867,13 +867,14 @@ const SchedulePageContent: React.FC = () => {
           className="schedule-view-tabs"
           activeKey={isStaffView ? "staff" : "student"}
           onChange={key => handleViewModeChange(key as "staff" | "student")}
+          // RTL: antd lays these out right-to-left as given, so the first
+          // item renders rightmost. Check the on-screen order when changing.
           items={[
-            { key: "staff", label: t("schedule.page.labels.staffView") },
             { key: "student", label: t("schedule.page.labels.studentView") },
+            { key: "staff", label: t("schedule.page.labels.staffView") },
           ]}
           tabBarExtraContent={
             <Space>
-              {printButton}
               <Button
                 icon={<ReloadOutlined />}
                 onClick={handleRefresh}
@@ -881,6 +882,7 @@ const SchedulePageContent: React.FC = () => {
                 disabled={refreshing}>
                 {t("common.buttons.refresh")}
               </Button>
+              {printButton}
             </Space>
           }
         />
@@ -966,8 +968,14 @@ const SchedulePageContent: React.FC = () => {
               onChange={handleStaffNameSelect}
               placeholder={t("schedule.page.placeholders.selectStaff")}
               style={{ minWidth: 200 }}
-              loading={staffNamesLoading}
-              options={staffNames.map(name => ({ value: name, label: name }))}
+              loading={staffMembersLoading}
+              optionFilterProp="value"
+              options={staffMembers.map(({ name, teaches }) => ({
+                value: name,
+                label: name,
+                // No regular lessons: listed last (service order), grayed.
+                className: teaches ? undefined : "staff-option--no-lessons",
+              }))}
             />
           </FilterField>
         )}

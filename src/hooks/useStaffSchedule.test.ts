@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { StaffView } from "../services/staffScheduleService";
+import type { StaffMember, StaffView } from "../services/staffScheduleService";
 
-const getStaffNames = vi.fn<unknown[], Promise<string[]>>();
+const getStaffMembers = vi.fn<unknown[], Promise<StaffMember[]>>();
 const getStaffView = vi.fn<unknown[], Promise<StaffView>>();
 
 vi.mock("../services/staffScheduleService", () => ({
@@ -15,12 +15,17 @@ vi.mock("../services/staffScheduleService", () => ({
     extraEnrollmentCounts: new Map(),
   },
   StaffScheduleService: {
-    getStaffNames: (...args: unknown[]) => getStaffNames(...args),
+    getStaffMembers: (...args: unknown[]) => getStaffMembers(...args),
     getStaffView: (...args: unknown[]) => getStaffView(...args),
   },
 }));
 
 const { useStaffSchedule } = await import("./useStaffSchedule");
+
+const members: StaffMember[] = [
+  { name: "דנה", teaches: true },
+  { name: "יעל", teaches: false },
+];
 
 const makeView = (ids: string[]): StaffView =>
   ({
@@ -33,24 +38,24 @@ const makeView = (ids: string[]): StaffView =>
 
 describe("useStaffSchedule", () => {
   beforeEach(() => {
-    getStaffNames.mockReset();
+    getStaffMembers.mockReset();
     getStaffView.mockReset();
-    getStaffNames.mockResolvedValue(["דנה", "יעל"]);
+    getStaffMembers.mockResolvedValue(members);
     getStaffView.mockResolvedValue(makeView(["c1"]));
   });
 
   it("makes no requests while disabled", () => {
     const { result } = renderHook(() => useStaffSchedule(false, "דנה"));
 
-    expect(getStaffNames).not.toHaveBeenCalled();
+    expect(getStaffMembers).not.toHaveBeenCalled();
     expect(getStaffView).not.toHaveBeenCalled();
     expect(result.current.view.classes).toEqual([]);
   });
 
-  it("loads names but no view until a staff member is chosen", async () => {
+  it("loads staff members but no view until one is chosen", async () => {
     const { result } = renderHook(() => useStaffSchedule(true, undefined));
 
-    await waitFor(() => expect(result.current.names).toEqual(["דנה", "יעל"]));
+    await waitFor(() => expect(result.current.staff).toEqual(members));
     expect(getStaffView).not.toHaveBeenCalled();
   });
 
@@ -92,13 +97,13 @@ describe("useStaffSchedule", () => {
     expect(result.current.view.classes).toEqual([]);
   });
 
-  it("refetch reloads names and view", async () => {
+  it("refetch reloads staff members and view", async () => {
     const { result } = renderHook(() => useStaffSchedule(true, "דנה"));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     act(() => result.current.refetch());
 
     await waitFor(() => expect(getStaffView).toHaveBeenCalledTimes(2));
-    expect(getStaffNames).toHaveBeenCalledTimes(2);
+    expect(getStaffMembers).toHaveBeenCalledTimes(2);
   });
 });

@@ -217,35 +217,47 @@ describe("StaffScheduleService.buildStaffView", () => {
   });
 });
 
-describe("StaffScheduleService.toStaffNames", () => {
-  it("returns distinct, trimmed, sorted names", () => {
+describe("StaffScheduleService.toStaffMembers", () => {
+  it("returns distinct, trimmed, alphabetical names", () => {
     expect(
-      StaffScheduleService.toStaffNames([
+      StaffScheduleService.toStaffMembers([
         { teacher: " רונית ", title: "מתמטיקה" },
         { teacher: "רונית", title: "אנגלית" },
         { teacher: "אבי", title: "ספורט" },
         { teacher: "", title: "אמנות" },
       ])
-    ).toEqual(["אבי", "רונית"]);
+    ).toEqual([
+      { name: "אבי", teaches: true },
+      { name: "רונית", teaches: true },
+    ]);
   });
 
   it("excludes the generic mentor placeholder", () => {
     expect(
-      StaffScheduleService.toStaffNames([
+      StaffScheduleService.toStaffMembers([
         { teacher: "חונך", title: "מתמטיקה" },
         { teacher: " חונך ", title: "אנגלית" },
       ])
     ).toEqual([]);
   });
 
-  it("excludes names that only appear on Special Classes", () => {
+  it("lists staff with no regular lessons last, alphabetically, not by lesson count", () => {
     expect(
-      StaffScheduleService.toStaffNames([
-        { teacher: "מיכל", title: "כישורי חיים" },
+      StaffScheduleService.toStaffMembers([
+        { teacher: "תמר", title: "כישורי חיים" },
+        { teacher: "אורי", title: "שילוב" },
         { teacher: "יעל", title: "שילוב" },
         { teacher: "יעל", title: "מדעים" },
+        { teacher: "בני", title: "ספורט" },
+        { teacher: "בני", title: "ספורט" },
+        { teacher: "בני", title: "ספורט" },
       ])
-    ).toEqual(["יעל"]);
+    ).toEqual([
+      { name: "בני", teaches: true },
+      { name: "יעל", teaches: true },
+      { name: "אורי", teaches: false },
+      { name: "תמר", teaches: false },
+    ]);
   });
 });
 
@@ -256,14 +268,14 @@ describe("StaffScheduleService fetchers", () => {
     vi.mocked(scheduleOverridesApi.getOverridesByTeacher).mockReset();
   });
 
-  it("getStaffNames derives names from the catalog pairs", async () => {
+  it("getStaffMembers derives members from the catalog pairs", async () => {
     vi.mocked(classesApi.getTeacherTitlePairs).mockResolvedValue([
       { teacher: "חונך", title: "מתמטיקה" },
       { teacher: "דנה ", title: "מתמטיקה" },
     ]);
 
-    await expect(StaffScheduleService.getStaffNames()).resolves.toEqual([
-      "דנה",
+    await expect(StaffScheduleService.getStaffMembers()).resolves.toEqual([
+      { name: "דנה", teaches: true },
     ]);
   });
 

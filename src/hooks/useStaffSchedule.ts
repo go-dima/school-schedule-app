@@ -3,9 +3,9 @@ import {
   EMPTY_STAFF_VIEW,
   StaffScheduleService,
 } from "../services/staffScheduleService";
-import type { StaffView } from "../services/staffScheduleService";
+import type { StaffMember, StaffView } from "../services/staffScheduleService";
 
-// The Staff View's data flow: the pickable staff names, and one staff
+// The Staff View's data flow: the pickable staff members, and one staff
 // member's week. Independent of the student-view hooks (catalog,
 // selections, overrides) -- the page just chooses which feed reaches the
 // table. `enabled` keeps it fully idle (zero requests) outside Staff View.
@@ -13,9 +13,9 @@ export function useStaffSchedule(
   enabled: boolean,
   staffName: string | undefined
 ) {
-  const [names, setNames] = useState<string[]>([]);
+  const [staff, setStaff] = useState<StaffMember[]>([]);
   const [view, setView] = useState<StaffView>(EMPTY_STAFF_VIEW);
-  const [namesLoading, setNamesLoading] = useState(false);
+  const [staffLoading, setStaffLoading] = useState(false);
   const [viewLoading, setViewLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Bumped by refetch() to re-run both effects.
@@ -25,11 +25,11 @@ export function useStaffSchedule(
     if (!enabled) return;
 
     let mounted = true;
-    const loadNames = async () => {
-      setNamesLoading(true);
+    const loadStaff = async () => {
+      setStaffLoading(true);
       try {
-        const data = await StaffScheduleService.getStaffNames();
-        if (mounted) setNames(data);
+        const data = await StaffScheduleService.getStaffMembers();
+        if (mounted) setStaff(data);
       } catch (err) {
         if (mounted) {
           setError(
@@ -37,11 +37,11 @@ export function useStaffSchedule(
           );
         }
       } finally {
-        if (mounted) setNamesLoading(false);
+        if (mounted) setStaffLoading(false);
       }
     };
 
-    loadNames();
+    loadStaff();
     return () => {
       mounted = false;
     };
@@ -82,9 +82,9 @@ export function useStaffSchedule(
   const refetch = useCallback(() => setReloadKey(key => key + 1), []);
 
   return {
-    names,
+    staff,
     view,
-    namesLoading,
+    staffLoading,
     loading: viewLoading,
     error,
     refetch,

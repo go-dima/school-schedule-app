@@ -31,6 +31,15 @@ export interface StaffView {
   extraEnrollmentCounts: Map<string, number>;
 }
 
+/**
+ * A pickable staff member. `teaches` is false when they have no regular
+ * (non-Special) catalog lesson -- still listed, but after everyone who does.
+ */
+export interface StaffMember {
+  name: string;
+  teaches: boolean;
+}
+
 export const EMPTY_STAFF_VIEW: StaffView = {
   classes: [],
   weeklySchedule: {},
@@ -144,23 +153,40 @@ export class StaffScheduleService {
   }
 
   /**
-   * Pure: distinct, trimmed, sorted staff names from (teacher, title)
-   * pairs, excluding the generic mentor placeholder and names that only
-   * ever appear on Special Classes.
+   * Pure: distinct, trimmed staff members from (teacher, title) pairs,
+   * excluding the generic mentor placeholder. Ordered alphabetically, with
+   * everyone who teaches a regular (non-Special) lesson first and the rest
+   * after them -- the lesson count only decides which group, never the
+   * order within it.
    */
-  static toStaffNames(pairs: { teacher: string; title: string }[]): string[] {
-    const names = new Set<string>();
+  static toStaffMembers(
+    pairs: { teacher: string; title: string }[]
+  ): StaffMember[] {
+    const regularLessons = new Map<string, number>();
     pairs.forEach(({ teacher, title }) => {
       const name = teacher.trim();
       if (!name || name === GENERIC_MENTOR_NAME) return;
-      if (ScheduleService.isSpecialClass({ title })) return;
-      names.add(name);
+      const isRegular = !ScheduleService.isSpecialClass({ title });
+      regularLessons.set(
+        name,
+        (regularLessons.get(name) ?? 0) + (isRegular ? 1 : 0)
+      );
     });
-    return Array.from(names).sort((a, b) => a.localeCompare(b, "he"));
+
+    const members = Array.from(regularLessons, ([name, count]) => ({
+      name,
+      teaches: count > 0,
+    }));
+    const byName = (a: StaffMember, b: StaffMember) =>
+      a.name.localeCompare(b.name, "he");
+    return [
+      ...members.filter(m => m.teaches).sort(byName),
+      ...members.filter(m => !m.teaches).sort(byName),
+    ];
   }
 
-  static async getStaffNames(): Promise<string[]> {
-    return this.toStaffNames(await classesApi.getTeacherTitlePairs());
+  static async getStaffMembers(): Promise<StaffMember[]> {
+    return this.toStaffMembers(await classesApi.getTeacherTitlePairs());
   }
 
   static async getCatalogForStaff(name: string): Promise<ClassWithTimeSlot[]> {
