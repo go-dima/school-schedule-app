@@ -37,7 +37,7 @@ import { ScheduleOverrideModal } from "../components/ScheduleOverrideModal";
 import type { ScheduleOverrideFormValues } from "../components/ScheduleOverrideForm";
 import { FiltersBar } from "../components/FiltersBar";
 import { FilterField } from "../components/FilterField";
-import { ChildSelector } from "../components/ChildSelector";
+import { ChildTabs } from "../components/ChildTabs";
 import { AddChildButton } from "../components/AddChildButton";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { ChildGroupTrackSelector } from "../components/ChildGroupTrackSelector";
@@ -342,6 +342,12 @@ const SchedulePageContent: React.FC = () => {
     if (!isAdmin) {
       setSelectedGrade(newChild.grade);
     }
+  };
+
+  // Handler for when a parent picks a child tab
+  const handleParentChildSelect = (child: Child) => {
+    setSelectedChild(child);
+    if (!isAdmin) setSelectedGrade(child.grade);
   };
 
   // Auto-update grade filter when selected child changes (only for non-admin parents)
@@ -973,31 +979,21 @@ const SchedulePageContent: React.FC = () => {
               onChange={handleParentFieldChange}
               disabled={childrenLoading || !canEdit}
             />
-            <FilterField label={t("schedule.page.labels.selectChild")}>
-              <ChildSelector
-                children={userChildren}
-                selectedChildId={selectedChild?.id || null}
-                onChildSelect={childId => {
-                  if (!childId) {
-                    // Handle clear selection
-                    setSelectedChild(undefined);
-                    return;
-                  }
-                  const child = userChildren.find(c => c.id === childId);
-                  setSelectedChild(child || undefined);
-                  // Auto-update grade filter based on selected child (only for non-admin parents)
-                  if (child && !isAdmin) {
-                    setSelectedGrade(child.grade);
-                  }
-                }}
-                style={{ minWidth: 200 }}
-                disabled={childrenLoading}
-              />
-            </FilterField>
           </>
         )}
         {!isStaffView && isParent && (
-          <AddChildButton onAdded={handleParentChildAdded} />
+          <AddChildButton
+            onAdded={handleParentChildAdded}
+            renderTrigger={open => (
+              <ChildTabs
+                childList={userChildren}
+                selectedChildId={selectedChild?.id}
+                onSelect={handleParentChildSelect}
+                onAddClick={open}
+                disabled={childrenLoading}
+              />
+            )}
+          />
         )}
         {!isStaffView && isStaff && (
           <>
