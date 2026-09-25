@@ -174,36 +174,6 @@
   background: #d6ecff;
 }
 
-/* Staff View tabs sit directly above the filters bar; the tabs carry no
-   panes of their own (the page below is the content), so drop the gap antd
-   reserves under the tab bar. */
-.schedule-tabs {
-  padding: 4px 0 12px 0;
-}
-
-/* Tabs carry no panes of their own (the page below is the content), so
-   drop the gap antd reserves under the tab bar and the empty holder. */
-.schedule-tabs > .ant-tabs-nav {
-  margin-bottom: 0;
-}
-
-.schedule-tabs > .ant-tabs-content-holder {
-  display: none;
-}
-
-/* Child tabs: an unselected child's name is grayed like its grade text,
-   regaining the tab's own color on hover and when selected. */
-.schedule-tabs
-  .ant-tabs-tab:not(.ant-tabs-tab-active):not(:hover)
-  .child-tab-name {
-  color: rgba(0, 0, 0, 0.45);
-}
-
-/* Stacked bars (a manager who is also a parent): no extra gap between. */
-.schedule-tabs + .schedule-tabs {
-  padding-top: 0;
-}
-
 /* Staff View dropdown: staff with no regular lessons, listed last. */
 .staff-option--no-lessons {
   color: rgba(0, 0, 0, 0.45);

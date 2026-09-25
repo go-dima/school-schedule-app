@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Space, Tabs } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
+import "./ScheduleTabsBar.css";
 
 // Key of the trailing add pseudo-tab. Never becomes active: selecting it
 // calls `addTab.onClick` instead.
@@ -24,12 +25,13 @@ interface ScheduleTabsBarProps {
 }
 
 /**
- * The schedule page's tab bar: line tabs above the filters bar, with page
- * actions at its end. Shared by the staff/student view tabs and the
+ * The schedule page's tab bar: bordered card tabs above the filters bar,
+ * with page actions at its end. Shared by the staff/student view tabs and the
  * per-child tabs so both read as one pattern.
  *
  * RTL: items render right-to-left in the order given (first = rightmost),
- * with the add tab last (leftmost). Check the on-screen order when changing.
+ * with the add tab last (leftmost). Inside the add tab the label comes
+ * before the "+" (label rightmost). Check the on-screen order when changing.
  */
 export function ScheduleTabsBar({
   items,
@@ -41,6 +43,7 @@ export function ScheduleTabsBar({
   return (
     <Tabs
       className="schedule-tabs"
+      type="card"
       // "" (not undefined) keeps rc-tabs controlled with no tab active;
       // undefined would fall back to highlighting the first tab.
       activeKey={activeKey ?? ""}
@@ -59,8 +62,8 @@ export function ScheduleTabsBar({
                 key: ADD_TAB_KEY,
                 label: (
                   <Space size={4} className="schedule-tabs__add">
-                    <PlusOutlined />
                     {addTab.label}
+                    <PlusOutlined />
                   </Space>
                 ),
               },
