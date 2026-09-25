@@ -1,7 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import PrintableClassRoster from "../components/PrintableClassRoster";
-import type { Child, ClassWithTimeSlot } from "../types";
+import PrintableClassRoster, {
+  type PrintableClassRosterProps,
+} from "../components/PrintableClassRoster";
 import { getClassRosterPrintStyles } from "./loadPrintStyles";
 import {
   PRINT_PAGE_PORTRAIT_CONTENT_WIDTH_PX,
@@ -9,13 +10,10 @@ import {
 } from "./printPageSize";
 import { encodeHTML } from "./htmlEscape";
 
-interface PrintClassRosterData {
-  classInfo: ClassWithTimeSlot;
-  children: Child[];
-}
-
+// Takes exactly the props PrintableClassRoster renders -- one definition, so a
+// new print field can't be added to one side and forgotten on the other.
 export const printClassRoster = async (
-  data: PrintClassRosterData
+  data: PrintableClassRosterProps
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
     try {
@@ -72,10 +70,7 @@ export const printClassRoster = async (
 
         const printableClassRosterElement = React.createElement(
           PrintableClassRoster,
-          {
-            classInfo: data.classInfo,
-            children: data.children,
-          }
+          data
         );
 
         root.render(printableClassRosterElement);
