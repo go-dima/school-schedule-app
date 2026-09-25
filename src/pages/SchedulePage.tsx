@@ -843,11 +843,11 @@ const SchedulePageContent: React.FC = () => {
                 optionType="button"
                 value={isStaffView ? "staff" : "student"}
                 onChange={e => handleViewModeChange(e.target.value)}>
-                <Radio.Button value="student">
-                  {t("schedule.page.labels.studentView")}
-                </Radio.Button>
                 <Radio.Button value="staff">
                   {t("schedule.page.labels.staffView")}
+                </Radio.Button>
+                <Radio.Button value="student">
+                  {t("schedule.page.labels.studentView")}
                 </Radio.Button>
               </Radio.Group>
             )}

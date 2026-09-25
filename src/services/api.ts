@@ -857,7 +857,11 @@ function mapOverrideRow(
 export const scheduleOverridesApi = {
   async getOverrides(childId: string): Promise<ScheduleOverrideWithTimeSlot[]> {
     const [{ data, error }, timeSlotsById] = await Promise.all([
-      supabase.from("schedule_overrides").select("*").eq("child_id", childId),
+      supabase
+        .from("schedule_overrides")
+        .select("*")
+        .in("scope", getAllowedScopes())
+        .eq("child_id", childId),
       fetchTimeSlotsById(),
     ]);
 

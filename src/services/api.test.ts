@@ -840,7 +840,7 @@ describe("scheduleOverridesApi", () => {
     supabase.auth.getUser = originalGetUser;
   });
 
-  it("getOverrides: fetches a child's overrides filtered by child_id and hydrates timeSlot", async () => {
+  it("getOverrides: fetches a child's overrides filtered by scope and child_id and hydrates timeSlot", async () => {
     const rawOverride = {
       id: "override-1",
       child_id: "child-1",
@@ -859,17 +859,19 @@ describe("scheduleOverridesApi", () => {
       data: [rawOverride],
       error: null,
     });
+    const inMock = vi.fn().mockReturnThis();
     supabase.from = vi.fn((table: string) => {
       const timeSlotsChain = mockTimeSlotsFrom(table);
       if (timeSlotsChain) return timeSlotsChain;
       if (table === "schedule_overrides") {
-        return { select: vi.fn().mockReturnThis(), eq: eqMock };
+        return { select: vi.fn().mockReturnThis(), in: inMock, eq: eqMock };
       }
       throw new Error(`unexpected table ${table}`);
     }) as any;
 
     const result = await scheduleOverridesApi.getOverrides("child-1");
 
+    expect(inMock).toHaveBeenCalledWith("scope", ["prod", "test"]);
     expect(eqMock).toHaveBeenCalledWith("child_id", "child-1");
     expect(result).toEqual([
       {
@@ -1160,7 +1162,8 @@ describe("Staff View queries", () => {
     );
   });
 
-  it("scheduleOverridesApi.getOverridesByTeacher joins the child name and filters by trimmed teacher", async () => {
+  it("scheduleOverridesApi.getOverridesByTeacher joins the child name and filters by scope and trimmed teacher", async () => {
+    envState.isProduction = true;
     mockTables({
       schedule_overrides: [
         {
@@ -1193,6 +1196,9 @@ describe("Staff View queries", () => {
     expect(chains.schedule_overrides.select).toHaveBeenCalledWith(
       "*, child:children(first_name, last_name)"
     );
+    expect(chains.schedule_overrides.in).toHaveBeenCalledWith("scope", [
+      "prod",
+    ]);
     expect(chains.schedule_overrides.ilike).toHaveBeenCalledWith(
       "teacher",
       "%דנה%"
