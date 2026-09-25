@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { UserRole, UserRoleData } from "../types";
-import { getRoleFlags } from "./roleFlags";
+import { getRoleFlags, pickDefaultRole } from "./roleFlags";
 
 const roleData = (
   role: UserRole,
@@ -85,5 +85,48 @@ describe("getRoleFlags", () => {
       isParent: false,
       isChild: false,
     });
+  });
+});
+
+describe("pickDefaultRole", () => {
+  it("prefers staff over moderator", () => {
+    expect(pickDefaultRole([roleData("staff"), roleData("moderator")])).toEqual(
+      roleData("staff")
+    );
+  });
+
+  it("prefers child over parent", () => {
+    expect(pickDefaultRole([roleData("parent"), roleData("child")])).toEqual(
+      roleData("child")
+    );
+  });
+
+  it("picks moderator when it is the only role", () => {
+    expect(pickDefaultRole([roleData("moderator")])).toEqual(
+      roleData("moderator")
+    );
+  });
+
+  it("returns null for an empty role list", () => {
+    expect(pickDefaultRole([])).toBeNull();
+  });
+
+  it("ignores unapproved roles", () => {
+    expect(
+      pickDefaultRole([roleData("staff", false), roleData("moderator")])
+    ).toEqual(roleData("moderator"));
+  });
+
+  it("returns null when no role is approved", () => {
+    expect(pickDefaultRole([roleData("admin", false)])).toBeNull();
+  });
+
+  it("picks the same role regardless of input order", () => {
+    const roles = [roleData("moderator"), roleData("staff"), roleData("admin")];
+
+    expect(pickDefaultRole(roles)).toEqual(
+      pickDefaultRole([...roles].reverse())
+    );
+    expect(pickDefaultRole(roles)).toEqual(roleData("staff"));
   });
 });
