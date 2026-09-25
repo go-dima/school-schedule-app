@@ -11,7 +11,6 @@ import {
   AutoComplete,
   Tooltip,
   Radio,
-  Tabs,
 } from "antd";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
@@ -38,6 +37,7 @@ import type { ScheduleOverrideFormValues } from "../components/ScheduleOverrideF
 import { FiltersBar } from "../components/FiltersBar";
 import { FilterField } from "../components/FilterField";
 import { ChildTabs } from "../components/ChildTabs";
+import { ScheduleTabsBar } from "../components/ScheduleTabsBar";
 import { AddChildButton } from "../components/AddChildButton";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { ChildGroupTrackSelector } from "../components/ChildGroupTrackSelector";
@@ -840,6 +840,24 @@ const SchedulePageContent: React.FC = () => {
         </Button>
       );
 
+  // Which tab bars show, top to bottom. Each is hidden when it would offer
+  // only one choice (e.g. no staff/student tabs for non-managers).
+  const showViewTabs = canUseStaffView;
+  const showChildTabs = !isStaffView && isParent;
+  const hasTabBar = showViewTabs || showChildTabs;
+  const tabBarActions = (
+    <Space>
+      <Button
+        icon={<ReloadOutlined />}
+        onClick={handleRefresh}
+        loading={refreshing}
+        disabled={refreshing}>
+        {t("common.buttons.refresh")}
+      </Button>
+      {printButton}
+    </Space>
+  );
+
   if (pageLoading) {
     return (
       <div className="page-loading">
@@ -853,44 +871,47 @@ const SchedulePageContent: React.FC = () => {
 
   return (
     <div className="page-content">
-      {/* Staff View tabs: shown only when there's more than one view to pick
-          (class managers). Print/refresh live at the end of the tab bar;
-          with no tab bar, they stay in the filters bar as before. */}
-      {canUseStaffView && (
-        <Tabs
-          className="schedule-view-tabs"
+      {/* Tab bars above the filters bar, sharing ScheduleTabsBar: the
+          staff/student view tabs (class managers) and the per-child tabs
+          (parents, student view). Refresh/print sit at the end of the
+          top-most bar; with no tab bar they stay in the filters bar. */}
+      {showViewTabs && (
+        <ScheduleTabsBar
           activeKey={isStaffView ? "staff" : "student"}
           onChange={key => handleViewModeChange(key as "staff" | "student")}
-          // RTL: antd lays these out right-to-left as given, so the first
-          // item renders rightmost. Check the on-screen order when changing.
+          // RTL: first item renders rightmost. Check the on-screen order.
           items={[
             { key: "student", label: t("schedule.page.labels.studentView") },
             { key: "staff", label: t("schedule.page.labels.staffView") },
           ]}
-          tabBarExtraContent={
-            <Space>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={handleRefresh}
-                loading={refreshing}
-                disabled={refreshing}>
-                {t("common.buttons.refresh")}
-              </Button>
-              {printButton}
-            </Space>
-          }
+          extra={tabBarActions}
+        />
+      )}
+      {showChildTabs && (
+        <AddChildButton
+          onAdded={handleParentChildAdded}
+          renderTrigger={open => (
+            <ChildTabs
+              childList={userChildren}
+              selectedChildId={selectedChild?.id}
+              onSelect={handleParentChildSelect}
+              onAddClick={open}
+              disabled={childrenLoading}
+              extra={showViewTabs ? undefined : tabBarActions}
+            />
+          )}
         />
       )}
 
       <FiltersBar
         variant="flat"
-        canRefresh={!canUseStaffView}
+        canRefresh={!hasTabBar}
         onRefresh={handleRefresh}
         refreshing={refreshing}
         disabled={refreshing}
         actions={
           <>
-            {!canUseStaffView && printButton}
+            {!hasTabBar && printButton}
             {!isStaffView && (
               <FilterField label={t("schedule.page.labels.searchClass")}>
                 <AutoComplete
@@ -980,20 +1001,6 @@ const SchedulePageContent: React.FC = () => {
               disabled={childrenLoading || !canEdit}
             />
           </>
-        )}
-        {!isStaffView && isParent && (
-          <AddChildButton
-            onAdded={handleParentChildAdded}
-            renderTrigger={open => (
-              <ChildTabs
-                childList={userChildren}
-                selectedChildId={selectedChild?.id}
-                onSelect={handleParentChildSelect}
-                onAddClick={open}
-                disabled={childrenLoading}
-              />
-            )}
-          />
         )}
         {!isStaffView && isStaff && (
           <>

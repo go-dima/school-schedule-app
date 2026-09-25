@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { action } from "@storybook/addon-actions";
+import { Button, Space } from "antd";
+import { PrinterOutlined, ReloadOutlined } from "@ant-design/icons";
 import { ChildTabs } from "../components/ChildTabs";
 import type { Child } from "../types";
 
@@ -79,5 +81,19 @@ export const Disabled: Story = {
     childList: CHILDREN,
     selectedChildId: CHILDREN[0].id,
     disabled: true,
+  },
+};
+
+// As on the schedule page: refresh + print at the end of the tab bar.
+export const WithPageActions: Story = {
+  args: {
+    childList: CHILDREN,
+    selectedChildId: CHILDREN[0].id,
+    extra: (
+      <Space>
+        <Button icon={<ReloadOutlined />}>רענן</Button>
+        <Button icon={<PrinterOutlined />}>הדפס מערכת של נועה לוי</Button>
+      </Space>
+    ),
   },
 };

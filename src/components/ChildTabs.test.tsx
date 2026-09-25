@@ -52,6 +52,11 @@ const renderTabs = (props: Partial<ComponentProps<typeof ChildTabs>> = {}) => {
 const tabWrapper = (tab: HTMLElement) =>
   tab.closest(".ant-tabs-tab") as HTMLElement;
 
+const addTab = () =>
+  screen
+    .getAllByRole("tab")
+    .find(tab => tab.textContent?.includes(ADD_LABEL)) as HTMLElement;
+
 const activeTabs = () =>
   screen
     .getAllByRole("tab")
@@ -76,17 +81,14 @@ describe("ChildTabs", () => {
 
   afterEach(() => cleanup());
 
-  it("renders one tab per child in order, with the add button after them", () => {
+  it("renders one tab per child in order, with the add tab last", () => {
     renderTabs();
     const tabs = screen.getAllByRole("tab");
-    expect(tabs.length).toBe(3);
+    expect(tabs.length).toBe(4);
     expect(tabs[0].textContent?.includes(A.firstName)).toBe(true);
     expect(tabs[1].textContent?.includes(B.firstName)).toBe(true);
     expect(tabs[2].textContent?.includes(C.firstName)).toBe(true);
-
-    const add = screen.getByRole("button", { name: ADD_LABEL });
-    const position = tabs[2].compareDocumentPosition(add);
-    expect(Boolean(position & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+    expect(tabs[3].textContent?.includes(ADD_LABEL)).toBe(true);
   });
 
   it("marks only the selected child as active", () => {
@@ -122,9 +124,9 @@ describe("ChildTabs", () => {
     expect(onAddClick).not.toHaveBeenCalled();
   });
 
-  it("calls onAddClick from the add button without changing selection", () => {
+  it("calls onAddClick from the add tab without changing selection", () => {
     const { onSelect, onAddClick } = renderTabs({ selectedChildId: B.id });
-    fireEvent.click(screen.getByRole("button", { name: ADD_LABEL }));
+    fireEvent.click(addTab());
     expect(onAddClick).toHaveBeenCalledTimes(1);
     expect(onSelect).not.toHaveBeenCalled();
     const active = activeTabs();
@@ -142,9 +144,16 @@ describe("ChildTabs", () => {
     ).toBe(true);
   });
 
-  it("renders only the add button when there are no children", () => {
+  it("renders only the add tab when there are no children", () => {
     renderTabs({ childList: [], selectedChildId: undefined });
-    expect(screen.queryAllByRole("tab").length).toBe(0);
-    expect(screen.getByRole("button", { name: ADD_LABEL })).toBeTruthy();
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs.length).toBe(1);
+    expect(tabs[0].textContent?.includes(ADD_LABEL)).toBe(true);
+    expect(activeTabs().length).toBe(0);
+  });
+
+  it("renders page actions passed as extra at the end of the tab bar", () => {
+    renderTabs({ extra: <button type="button">רענן</button> });
+    expect(screen.getByRole("button", { name: "רענן" })).toBeTruthy();
   });
 });

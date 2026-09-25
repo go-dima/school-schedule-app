@@ -1,8 +1,9 @@
-import { Space, Tabs, Typography } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import type { ReactNode } from "react";
+import { Space, Typography } from "antd";
 import { useTranslation } from "react-i18next";
 import type { Child } from "../types";
 import { GetGradeName } from "@/utils/grades";
+import { ScheduleTabsBar } from "./ScheduleTabsBar";
 
 const { Text } = Typography;
 
@@ -12,6 +13,8 @@ interface ChildTabsProps {
   onSelect: (child: Child) => void;
   onAddClick: () => void;
   disabled?: boolean;
+  // Page actions shown at the end of the tab bar.
+  extra?: ReactNode;
 }
 
 function ChildTabLabel({ child }: { child: Child }) {
@@ -29,8 +32,8 @@ function ChildTabLabel({ child }: { child: Child }) {
 }
 
 /**
- * One tab per child plus a trailing "add child" tab-button. Purely
- * presentational: the parent owns selection and the add-child modal.
+ * One tab per child plus a trailing "add child" tab that acts as a button.
+ * Purely presentational: the parent owns selection and the add-child modal.
  */
 export function ChildTabs({
   childList,
@@ -38,37 +41,24 @@ export function ChildTabs({
   onSelect,
   onAddClick,
   disabled = false,
+  extra,
 }: ChildTabsProps) {
   const { t } = useTranslation();
 
   return (
-    <Tabs
-      className="child-tabs"
-      type="editable-card"
-      size="small"
-      // "" (not undefined) keeps rc-tabs controlled with no tab active;
-      // undefined would fall back to highlighting the first tab.
-      activeKey={selectedChildId ?? ""}
+    <ScheduleTabsBar
+      activeKey={selectedChildId}
       onChange={key => {
         const child = childList.find(c => c.id === key);
         if (child) onSelect(child);
       }}
-      onEdit={(_, action) => {
-        if (action === "add") onAddClick();
-      }}
-      addIcon={
-        <Space size={4}>
-          <PlusOutlined />
-          {t("schedule.page.addChildButton")}
-        </Space>
-      }
-      locale={{ addAriaLabel: t("schedule.page.addChildButton") }}
       items={childList.map(c => ({
         key: c.id,
         label: <ChildTabLabel child={c} />,
-        closable: false,
         disabled,
       }))}
+      addTab={{ label: t("schedule.page.addChildButton"), onClick: onAddClick }}
+      extra={extra}
     />
   );
 }

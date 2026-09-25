@@ -177,42 +177,23 @@
 /* Staff View tabs sit directly above the filters bar; the tabs carry no
    panes of their own (the page below is the content), so drop the gap antd
    reserves under the tab bar. */
-.schedule-view-tabs {
+.schedule-tabs {
   padding: 4px 0 12px 0;
 }
 
-.schedule-view-tabs > .ant-tabs-nav {
+/* Tabs carry no panes of their own (the page below is the content), so
+   drop the gap antd reserves under the tab bar and the empty holder. */
+.schedule-tabs > .ant-tabs-nav {
   margin-bottom: 0;
 }
 
-/* Per-child tabs: inline 32px strip inside the flat filters bar, no panes. */
-.child-tabs {
-  /* Keep the strip at its content width inside the content-sized Space, so
-     rc-tabs never measures a squeezed nav and folds tabs into "…". */
-  min-width: max-content;
-  max-width: 100%;
-}
-
-.child-tabs > .ant-tabs-nav {
-  margin: 0;
-}
-
-.child-tabs > .ant-tabs-nav::before {
-  border-bottom: none;
-}
-
-.child-tabs > .ant-tabs-content-holder {
+.schedule-tabs > .ant-tabs-content-holder {
   display: none;
 }
 
-/* Undo `.filters-section--flat span` (bold/#262626) inside the tabs. */
-.filters-section--flat .child-tabs span {
-  font-weight: inherit;
-  color: inherit;
-}
-
-.filters-section--flat .child-tabs .ant-typography-secondary {
-  color: rgba(0, 0, 0, 0.45);
+/* Stacked bars (a manager who is also a parent): no extra gap between. */
+.schedule-tabs + .schedule-tabs {
+  padding-top: 0;
 }
 
 /* Staff View dropdown: staff with no regular lessons, listed last. */
