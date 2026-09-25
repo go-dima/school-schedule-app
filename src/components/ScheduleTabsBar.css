@@ -27,3 +27,16 @@
 .schedule-tabs + .schedule-tabs {
   padding-top: 0;
 }
+
+/* Compact card tabs: antd's default card padding is 8px 16px. */
+.schedule-tabs.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab {
+  padding: 0 8px;
+}
+
+/* antd spaces a tab icon from its text with a 12px margin (margin-left in
+   RTL, via `.ant-tabs-rtl .ant-tabs-nav .ant-tabs-tab .anticon`); the add
+   tab's Space already provides the gap, so drop it. Selector outranks antd's. */
+.schedule-tabs .ant-tabs-nav .ant-tabs-tab .schedule-tabs__add .anticon {
+  margin-left: 0;
+  margin-right: 0;
+}
