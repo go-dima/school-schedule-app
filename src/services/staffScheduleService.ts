@@ -9,7 +9,7 @@ import { ScheduleService } from "./scheduleService";
 
 // The generic mentor placeholder used as `teacher` on mentoring classes --
 // not a real person, so it never shows up as a staff member to pick.
-const GENERIC_MENTOR_NAME = "חונך";
+const GENERIC_MENTOR_NAME = "חונכ/ת";
 
 const OVERRIDE_ID_PREFIX = "override:";
 

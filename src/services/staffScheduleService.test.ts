@@ -235,8 +235,8 @@ describe("StaffScheduleService.toStaffMembers", () => {
   it("excludes the generic mentor placeholder", () => {
     expect(
       StaffScheduleService.toStaffMembers([
-        { teacher: "חונך", title: "מתמטיקה" },
-        { teacher: " חונך ", title: "אנגלית" },
+        { teacher: "חונכ/ת", title: "מתמטיקה" },
+        { teacher: " חונכ/ת ", title: "אנגלית" },
       ])
     ).toEqual([]);
   });
@@ -270,7 +270,7 @@ describe("StaffScheduleService fetchers", () => {
 
   it("getStaffMembers derives members from the catalog pairs", async () => {
     vi.mocked(classesApi.getTeacherTitlePairs).mockResolvedValue([
-      { teacher: "חונך", title: "מתמטיקה" },
+      { teacher: "חונכ/ת", title: "מתמטיקה" },
       { teacher: "דנה ", title: "מתמטיקה" },
     ]);
 
