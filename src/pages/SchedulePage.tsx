@@ -11,12 +11,14 @@ import {
   AutoComplete,
   Tooltip,
   Radio,
+  Tabs,
 } from "antd";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import {
   UserSwitchOutlined,
   PrinterOutlined,
+  ReloadOutlined,
   LockOutlined,
 } from "@ant-design/icons";
 import { useAuth } from "../contexts/AuthContext";
@@ -815,6 +817,35 @@ const SchedulePageContent: React.FC = () => {
     currentRole?.role === "admin" ||
     currentRole?.role === "staff";
 
+  const handleRefresh = () => {
+    loadScheduleData();
+    if (isStaffView) {
+      refetchStaffView();
+    } else {
+      refetchSelectedSchedule();
+    }
+  };
+  const refreshing = isStaffView ? staffViewLoading : loading;
+
+  // Names whose schedule it prints: the chosen staff member, or the child.
+  const printButton = isStaffView
+    ? staffName && (
+        <Button
+          icon={<PrinterOutlined />}
+          onClick={handleExportStaffSchedule}
+          disabled={staffViewLoading}>
+          {t("schedule.page.exportButtonFor", { name: staffName })}
+        </Button>
+      )
+    : ((isParent && selectedChild) || (isStaff && staffSelectedChild)) && (
+        <Button
+          icon={<PrinterOutlined />}
+          onClick={handleExportSchedule}
+          disabled={loading}>
+          {t("schedule.page.exportButtonFor", { name: printChildName })}
+        </Button>
+      );
+
   if (pageLoading) {
     return (
       <div className="page-loading">
@@ -828,35 +859,41 @@ const SchedulePageContent: React.FC = () => {
 
   return (
     <div className="page-content">
+      {/* Staff View tabs: shown only when there's more than one view to pick
+          (class managers). Print/refresh live at the end of the tab bar;
+          with no tab bar, they stay in the filters bar as before. */}
+      {canUseStaffView && (
+        <Tabs
+          className="schedule-view-tabs"
+          activeKey={isStaffView ? "staff" : "student"}
+          onChange={key => handleViewModeChange(key as "staff" | "student")}
+          items={[
+            { key: "staff", label: t("schedule.page.labels.staffView") },
+            { key: "student", label: t("schedule.page.labels.studentView") },
+          ]}
+          tabBarExtraContent={
+            <Space>
+              {printButton}
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={handleRefresh}
+                loading={refreshing}
+                disabled={refreshing}>
+                {t("common.buttons.refresh")}
+              </Button>
+            </Space>
+          }
+        />
+      )}
+
       <FiltersBar
         variant="flat"
-        canRefresh
-        onRefresh={() => {
-          loadScheduleData();
-          if (isStaffView) {
-            refetchStaffView();
-          } else {
-            refetchSelectedSchedule();
-          }
-        }}
-        refreshing={isStaffView ? staffViewLoading : loading}
-        disabled={isStaffView ? staffViewLoading : loading}
+        canRefresh={!canUseStaffView}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+        disabled={refreshing}
         actions={
           <>
-            {canUseStaffView && (
-              <Radio.Group
-                className="view-mode-toggle"
-                optionType="button"
-                value={isStaffView ? "staff" : "student"}
-                onChange={e => handleViewModeChange(e.target.value)}>
-                <Radio.Button value="staff">
-                  {t("schedule.page.labels.staffView")}
-                </Radio.Button>
-                <Radio.Button value="student">
-                  {t("schedule.page.labels.studentView")}
-                </Radio.Button>
-              </Radio.Group>
-            )}
             {userRoles.length > 1 && (
               <Select
                 value={currentRole?.id}
@@ -871,26 +908,7 @@ const SchedulePageContent: React.FC = () => {
                 ))}
               </Select>
             )}
-            {isStaffView
-              ? staffName && (
-                  <Button
-                    icon={<PrinterOutlined />}
-                    onClick={handleExportStaffSchedule}
-                    disabled={staffViewLoading}>
-                    {t("schedule.page.exportButtonFor", { name: staffName })}
-                  </Button>
-                )
-              : ((isParent && selectedChild) ||
-                  (isStaff && staffSelectedChild)) && (
-                  <Button
-                    icon={<PrinterOutlined />}
-                    onClick={handleExportSchedule}
-                    disabled={loading}>
-                    {t("schedule.page.exportButtonFor", {
-                      name: printChildName,
-                    })}
-                  </Button>
-                )}
+            {!canUseStaffView && printButton}
             {!isStaffView && (
               <FilterField label={t("schedule.page.labels.searchClass")}>
                 <AutoComplete
