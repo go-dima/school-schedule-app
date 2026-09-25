@@ -185,11 +185,6 @@
   margin-bottom: 0;
 }
 
-/* Scoped to the schedule page; .page-content is shared by every page. */
-.page-content.schedule-page-content {
-  padding: 8px 16px;
-}
-
 /* Staff View dropdown: staff with no regular lessons, listed last. */
 .staff-option--no-lessons {
   color: rgba(0, 0, 0, 0.45);

@@ -858,7 +858,7 @@ const SchedulePageContent: React.FC = () => {
   }
 
   return (
-    <div className="page-content schedule-page-content">
+    <div className="page-content">
       {/* Staff View tabs: shown only when there's more than one view to pick
           (class managers). Print/refresh live at the end of the tab bar;
           with no tab bar, they stay in the filters bar as before. */}
