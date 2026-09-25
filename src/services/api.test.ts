@@ -840,7 +840,7 @@ describe("scheduleOverridesApi", () => {
     supabase.auth.getUser = originalGetUser;
   });
 
-  it("getOverrides: fetches a child's overrides filtered by child_id and hydrates timeSlot", async () => {
+  it("getOverrides: fetches a child's overrides filtered by scope and child_id and hydrates timeSlot", async () => {
     const rawOverride = {
       id: "override-1",
       child_id: "child-1",
@@ -859,17 +859,19 @@ describe("scheduleOverridesApi", () => {
       data: [rawOverride],
       error: null,
     });
+    const inMock = vi.fn().mockReturnThis();
     supabase.from = vi.fn((table: string) => {
       const timeSlotsChain = mockTimeSlotsFrom(table);
       if (timeSlotsChain) return timeSlotsChain;
       if (table === "schedule_overrides") {
-        return { select: vi.fn().mockReturnThis(), eq: eqMock };
+        return { select: vi.fn().mockReturnThis(), in: inMock, eq: eqMock };
       }
       throw new Error(`unexpected table ${table}`);
     }) as any;
 
     const result = await scheduleOverridesApi.getOverrides("child-1");
 
+    expect(inMock).toHaveBeenCalledWith("scope", ["prod", "test"]);
     expect(eqMock).toHaveBeenCalledWith("child_id", "child-1");
     expect(result).toEqual([
       {
@@ -1064,5 +1066,151 @@ describe("scheduleOverridesApi", () => {
     await expect(
       scheduleOverridesApi.deleteOverride("override-1")
     ).rejects.toThrow("boom");
+  });
+});
+
+describe("Staff View queries", () => {
+  const originalFrom = supabase.from;
+
+  const rawTimeSlot = {
+    id: "slot-1",
+    name: "שיעור ראשון",
+    start_time: "08:00",
+    end_time: "08:45",
+    created_at: "",
+    updated_at: "",
+  };
+
+  // A chainable, awaitable query builder resolving to `result`, with every
+  // filter method recorded so tests can assert on the query shape.
+  const makeChain = (result: { data: any; error: any }) => {
+    const chain: any = {};
+    ["select", "eq", "in", "ilike", "order"].forEach(method => {
+      chain[method] = vi.fn(() => chain);
+    });
+    chain.then = (resolve: any, reject: any) =>
+      Promise.resolve(result).then(resolve, reject);
+    return chain;
+  };
+
+  let chains: Record<string, any>;
+
+  const mockTables = (rows: Record<string, any[]>) => {
+    chains = {};
+    supabase.from = vi.fn((table: string) => {
+      const data = table === "time_slots" ? [rawTimeSlot] : (rows[table] ?? []);
+      chains[table] = makeChain({ data, error: null });
+      return chains[table];
+    }) as any;
+  };
+
+  afterEach(() => {
+    supabase.from = originalFrom;
+    envState.isProduction = false;
+  });
+
+  it("classesApi.getTeacherTitlePairs selects teacher/title within allowed scopes", async () => {
+    envState.isProduction = true;
+    mockTables({
+      classes: [
+        { teacher: " דנה ", title: "מתמטיקה" },
+        { teacher: null, title: "אמנות" },
+      ],
+    });
+
+    const result = await classesApi.getTeacherTitlePairs();
+
+    expect(chains.classes.select).toHaveBeenCalledWith("teacher, title");
+    expect(chains.classes.in).toHaveBeenCalledWith("scope", ["prod"]);
+    expect(result).toEqual([
+      { teacher: " דנה ", title: "מתמטיקה" },
+      { teacher: "", title: "אמנות" },
+    ]);
+  });
+
+  it("classesApi.getClassesByTeacher matches the trimmed name exactly and hydrates slots", async () => {
+    mockTables({
+      classes: [
+        {
+          id: "c1",
+          title: "מתמטיקה",
+          teacher: "דנה ",
+          slots: [{ dayOfWeek: 0, timeSlotId: "slot-1" }],
+          grades: [3],
+        },
+        // Substring match from ILIKE that isn't the same person.
+        { id: "c2", title: "אנגלית", teacher: "דנה כהן", slots: [] },
+      ],
+    });
+
+    const result = await classesApi.getClassesByTeacher(" דנה");
+
+    expect(chains.classes.ilike).toHaveBeenCalledWith("teacher", "%דנה%");
+    expect(chains.classes.in).toHaveBeenCalledWith("scope", ["prod", "test"]);
+    expect(result.map(c => c.id)).toEqual(["c1"]);
+    expect(result[0].slots[0].timeSlot.startTime).toBe("08:00");
+  });
+
+  it("classesApi.getClassesByTeacher escapes LIKE wildcards in the name", async () => {
+    mockTables({ classes: [] });
+
+    await classesApi.getClassesByTeacher("50%_off");
+
+    expect(chains.classes.ilike).toHaveBeenCalledWith(
+      "teacher",
+      "%50\\%\\_off%"
+    );
+  });
+
+  it("scheduleOverridesApi.getOverridesByTeacher joins the child name and filters by scope and trimmed teacher", async () => {
+    envState.isProduction = true;
+    mockTables({
+      schedule_overrides: [
+        {
+          id: "o1",
+          child_id: "child-1",
+          title: "תגבור",
+          teacher: " דנה",
+          room: "חדר 7",
+          day_of_week: 1,
+          time_slot_id: "slot-1",
+          scope: "prod",
+          child: { first_name: "נועה", last_name: "לוי" },
+        },
+        {
+          id: "o2",
+          child_id: "child-2",
+          title: "תגבור",
+          teacher: "דנה כהן",
+          room: "",
+          day_of_week: 1,
+          time_slot_id: "slot-1",
+          scope: "prod",
+          child: { first_name: "אבי", last_name: "כהן" },
+        },
+      ],
+    });
+
+    const result = await scheduleOverridesApi.getOverridesByTeacher("דנה");
+
+    expect(chains.schedule_overrides.select).toHaveBeenCalledWith(
+      "*, child:children(first_name, last_name)"
+    );
+    expect(chains.schedule_overrides.in).toHaveBeenCalledWith("scope", [
+      "prod",
+    ]);
+    expect(chains.schedule_overrides.ilike).toHaveBeenCalledWith(
+      "teacher",
+      "%דנה%"
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      id: "o1",
+      childId: "child-1",
+      childName: "נועה לוי",
+      dayOfWeek: 1,
+      timeSlotId: "slot-1",
+    });
+    expect(result[0].timeSlot.id).toBe("slot-1");
   });
 });

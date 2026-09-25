@@ -40,6 +40,9 @@ interface ScheduleTableProps {
   canViewClasses?: boolean;
   isAdmin?: boolean;
   showEnrollmentCount?: boolean;
+  // Counts for ids the enrollment RPC doesn't know (e.g. Staff View's
+  // override pseudo-classes), merged over the fetched counts.
+  extraEnrollmentCounts?: Map<string, number>;
   onCreateClass?: (timeSlotId: string, dayOfWeek: number) => void;
   searchTerm?: string;
   childGroupNumber?: number | null;
@@ -71,6 +74,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   canViewClasses = false,
   isAdmin = false,
   showEnrollmentCount = false,
+  extraEnrollmentCounts,
   onCreateClass,
   searchTerm = "",
   childGroupNumber,
@@ -166,6 +170,9 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       cls.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
+
+  const getEnrollmentCount = (classId: string): number =>
+    extraEnrollmentCounts?.get(classId) ?? enrollmentCounts.get(classId) ?? 0;
 
   // Helper function to check if a class time-conflicts with another selected class
   const classHasConflict = (cls: ClassWithTimeSlot): boolean =>
@@ -266,7 +273,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
             cls={doubleClass}
             isContinuation={true}
             showEnrollmentCount={showEnrollmentCount}
-            enrollmentCount={enrollmentCounts.get(doubleClass.id) || 0}
+            enrollmentCount={getEnrollmentCount(doubleClass.id)}
           />
         </div>
       );
@@ -335,7 +342,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
               cls={cls}
               isContinuation={false}
               showEnrollmentCount={showEnrollmentCount}
-              enrollmentCount={enrollmentCounts.get(cls.id) || 0}
+              enrollmentCount={getEnrollmentCount(cls.id)}
               style={{
                 marginBottom: selectedPrimaryClasses.length > 1 ? 4 : 0,
               }}

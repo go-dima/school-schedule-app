@@ -9,6 +9,7 @@ import type {
   ParentChildRelationship,
   PendingApproval,
   ScheduleOverride,
+  ScheduleOverrideWithChildName,
   ScheduleOverrideWithTimeSlot,
   ScheduleSelectionWithClass,
   ScheduleTarget,
@@ -499,6 +500,11 @@ async function fetchTimeSlotsById(): Promise<Map<string, TimeSlot>> {
   return new Map(timeSlots.map(slot => [slot.id, slot]));
 }
 
+// Escapes LIKE/ILIKE wildcards so a user-supplied value matches literally.
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, char => `\\${char}`);
+}
+
 function mapClassRow(
   row: any,
   timeSlotsById: Map<string, TimeSlot>
@@ -558,6 +564,48 @@ export const classesApi = {
 
     if (error) throw new ApiError(error.message);
     return data.map(cls => mapClassRow(cls, timeSlotsById));
+  },
+
+  /**
+   * Every (teacher, title) pair in the catalog, untrimmed and with
+   * duplicates -- the raw material for the Staff View's staff dropdown.
+   * Titles come along so the caller can drop names that only ever appear on
+   * Special Classes.
+   */
+  async getTeacherTitlePairs(): Promise<{ teacher: string; title: string }[]> {
+    const { data, error } = await supabase
+      .from("classes")
+      .select("teacher, title")
+      .in("scope", getAllowedScopes());
+
+    if (error) throw new ApiError(error.message);
+    return (data || []).map(row => ({
+      teacher: row.teacher ?? "",
+      title: row.title ?? "",
+    }));
+  },
+
+  /**
+   * Classes whose `teacher` matches `name` once trimmed. Fetched with a
+   * case-insensitive substring match (so stray whitespace in the stored
+   * value doesn't hide a class), then narrowed to an exact trimmed match.
+   */
+  async getClassesByTeacher(name: string): Promise<ClassWithTimeSlot[]> {
+    const target = name.trim();
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      supabase
+        .from("classes")
+        .select("*")
+        .in("scope", getAllowedScopes())
+        .ilike("teacher", `%${escapeLikePattern(target)}%`)
+        .order("title", { ascending: true }),
+      fetchTimeSlotsById(),
+    ]);
+
+    if (error) throw new ApiError(error.message);
+    return data
+      .filter(row => (row.teacher ?? "").trim() === target)
+      .map(cls => mapClassRow(cls, timeSlotsById));
   },
 
   async createClass(classData: Omit<Class, "id" | "createdAt" | "updatedAt">) {
@@ -809,12 +857,47 @@ function mapOverrideRow(
 export const scheduleOverridesApi = {
   async getOverrides(childId: string): Promise<ScheduleOverrideWithTimeSlot[]> {
     const [{ data, error }, timeSlotsById] = await Promise.all([
-      supabase.from("schedule_overrides").select("*").eq("child_id", childId),
+      supabase
+        .from("schedule_overrides")
+        .select("*")
+        .in("scope", getAllowedScopes())
+        .eq("child_id", childId),
       fetchTimeSlotsById(),
     ]);
 
     if (error) throw new ApiError(error.message);
     return data.map(row => mapOverrideRow(row, timeSlotsById));
+  },
+
+  /**
+   * Overrides across all children whose `teacher` matches `name` once
+   * trimmed, each carrying its child's display name (Staff View). Staff RLS
+   * already allows reading every override (migration 037). Same
+   * substring-fetch + exact-trimmed-filter approach as
+   * classesApi.getClassesByTeacher.
+   */
+  async getOverridesByTeacher(
+    name: string
+  ): Promise<ScheduleOverrideWithChildName[]> {
+    const target = name.trim();
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      supabase
+        .from("schedule_overrides")
+        .select("*, child:children(first_name, last_name)")
+        .in("scope", getAllowedScopes())
+        .ilike("teacher", `%${escapeLikePattern(target)}%`),
+      fetchTimeSlotsById(),
+    ]);
+
+    if (error) throw new ApiError(error.message);
+    return data
+      .filter(row => (row.teacher ?? "").trim() === target)
+      .map(row => ({
+        ...mapOverrideRow(row, timeSlotsById),
+        childName: [row.child?.first_name, row.child?.last_name]
+          .filter(Boolean)
+          .join(" "),
+      }));
   },
 
   async createOverride(

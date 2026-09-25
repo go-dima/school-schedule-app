@@ -5,24 +5,12 @@ import {
   mockWeeklySchedule,
   selectedClassIds,
 } from "./fixtures/scheduleFixtures";
-import type { Child } from "../types";
+import { GetGradeName } from "../utils/grades";
 
 // Renders the same markup/CSS used inside the print popup window, so the
 // print layout and colors can be inspected and tweaked here directly instead
 // of opening a real print dialog.
-const mockChild: Child = {
-  id: "child-1",
-  firstName: "נועה",
-  lastName: "כהן",
-  grade: 4,
-  groupNumber: null,
-  trackNumber: null,
-  scope: "test",
-  createdBy: null,
-  createdByName: null,
-  createdAt: "2024-01-01T00:00:00Z",
-  updatedAt: "2024-01-01T00:00:00Z",
-};
+const childTitle = `מערכת של נועה כהן - ${GetGradeName(4)}`;
 
 const meta: Meta<typeof PrintableSchedule> = {
   title: "Components/PrintableSchedule",
@@ -38,7 +26,8 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    child: mockChild,
+    title: childTitle,
+    grade: 4,
     timeSlots: mockTimeSlots,
     weeklySchedule: mockWeeklySchedule,
     selectedClasses: selectedClassIds,
@@ -47,9 +36,20 @@ export const Default: Story = {
 
 export const NoSelections: Story = {
   args: {
-    child: mockChild,
+    title: childTitle,
+    grade: 4,
     timeSlots: mockTimeSlots,
     weeklySchedule: mockWeeklySchedule,
     selectedClasses: [],
+  },
+};
+
+// Staff View print: no grade filter, every class in the feed is shown.
+export const StaffView: Story = {
+  args: {
+    title: "מערכת של דנה",
+    timeSlots: mockTimeSlots,
+    weeklySchedule: mockWeeklySchedule,
+    selectedClasses: selectedClassIds,
   },
 };

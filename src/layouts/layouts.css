@@ -358,7 +358,7 @@
 .page-content {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border-radius: 16px;
-  padding: 32px;
+  padding: 8px 16px;
   box-shadow: 0 10px 30px rgba(148, 163, 184, 0.1);
   border: 1px solid #e2e8f0;
   margin-bottom: 24px;
@@ -448,7 +448,6 @@
   }
 
   .page-content {
-    padding: 20px;
     border-radius: 12px;
   }
 
@@ -492,10 +491,6 @@
   .app-layout-content {
     padding: 16px;
     min-height: calc(100vh - 60px);
-  }
-
-  .page-content {
-    padding: 16px;
   }
 }
 

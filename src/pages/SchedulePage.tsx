@@ -11,9 +11,15 @@ import {
   AutoComplete,
   Tooltip,
   Radio,
+  Tabs,
 } from "antd";
 import { useTranslation } from "react-i18next";
-import { PrinterOutlined, LockOutlined } from "@ant-design/icons";
+import { useSearchParams } from "react-router-dom";
+import {
+  PrinterOutlined,
+  ReloadOutlined,
+  LockOutlined,
+} from "@ant-design/icons";
 import { useAuth } from "../contexts/AuthContext";
 import { useChildContext } from "../contexts/ChildContext";
 import {
@@ -23,6 +29,7 @@ import {
 import { useSelectedSchedule } from "../hooks/useSelectedSchedule";
 import { useDraftSelectionAwareness } from "../hooks/useDraftSelectionAwareness";
 import { useScheduleOverrides } from "../hooks/useScheduleOverrides";
+import { useStaffSchedule } from "../hooks/useStaffSchedule";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import ScheduleTable from "../components/ScheduleTable";
 import { CreateClassModal } from "../components/CreateClassModal";
@@ -81,6 +88,59 @@ const SchedulePageContent: React.FC = () => {
     updateChild: updateChildForStaff,
   } = useAllChildrenContext();
   const { isStaff, isAdmin, isParent } = roleFlags;
+
+  // Staff View: one staff member's week instead of a student's. URL-backed
+  // (`?view=staff&selected=<name>`) so it survives refresh and can be
+  // linked. Only class managers (admin/staff/moderator) may enter it; the
+  // param is ignored for everyone else.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const canUseStaffView = permissions.canManageClasses;
+  const isStaffView = canUseStaffView && searchParams.get("view") === "staff";
+  const staffName = isStaffView
+    ? searchParams.get("selected") || undefined
+    : undefined;
+  const {
+    staff: staffMembers,
+    staffLoading: staffMembersLoading,
+    view: staffView,
+    loading: staffViewLoading,
+    error: staffViewError,
+    refetch: refetchStaffView,
+  } = useStaffSchedule(isStaffView, staffName);
+
+  const handleViewModeChange = (mode: "student" | "staff") => {
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev);
+        if (mode === "staff") {
+          next.set("view", "staff");
+        } else {
+          next.delete("view");
+          next.delete("selected");
+        }
+        return next;
+      },
+      { replace: true }
+    );
+    trackWithActor(AnalyticsEvent.StaffViewToggled, currentRole?.role, {
+      view: mode,
+    });
+  };
+
+  const handleStaffNameSelect = (name: string | undefined) => {
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev);
+        if (name) next.set("selected", name);
+        else next.delete("selected");
+        return next;
+      },
+      { replace: true }
+    );
+    if (name) {
+      trackWithActor(AnalyticsEvent.StaffViewStaffSelected, currentRole?.role);
+    }
+  };
 
   const [selectedGrade, setSelectedGrade] = useState<number | undefined>(1);
   const [createClassModalOpen, setCreateClassModalOpen] = useState(false);
@@ -305,7 +365,9 @@ const SchedulePageContent: React.FC = () => {
   // child/toggle only shows a local loading state over that section.
   const scheduleGridLoading = selectedScheduleLoading;
   const loading = pageLoading || scheduleGridLoading;
-  const error = scheduleError || selectedScheduleError || childrenError;
+  const error = isStaffView
+    ? scheduleError || staffViewError
+    : scheduleError || selectedScheduleError || childrenError;
 
   // Classes auto-selected by the active child's track can't be picked apart
   // one at a time -- only changing the track (which re-syncs them) can.
@@ -500,8 +562,38 @@ const SchedulePageContent: React.FC = () => {
     }
   };
 
+  const handleExportStaffSchedule = async () => {
+    if (!staffName) return;
+    try {
+      // Same feed as the Staff View grid below.
+      await printSchedule({
+        title: t("schedule.print.staffTitle", { name: staffName }),
+        timeSlots,
+        weeklySchedule: staffView.weeklySchedule,
+        selectedClasses: staffView.selectedClasses,
+        overrides: [],
+        showDraftMarker: false,
+      });
+      trackWithActor(AnalyticsEvent.SchedulePrinted, currentRole?.role, {
+        view: "staff",
+      });
+    } catch (error) {
+      message.error(
+        error instanceof Error
+          ? error.message
+          : t("schedule.page.error.exportFailed")
+      );
+    }
+  };
+
+  // The child whose schedule the print button exports (and names).
+  const printChild = isParent ? selectedChild : staffSelectedChild;
+  const printChildName = printChild
+    ? `${printChild.firstName} ${printChild.lastName}`
+    : "";
+
   const handleExportSchedule = async () => {
-    const currentChild = isParent ? selectedChild : staffSelectedChild;
+    const currentChild = printChild;
 
     if (!currentChild) {
       message.error(t("schedule.page.error.noChildSelected"));
@@ -513,7 +605,12 @@ const SchedulePageContent: React.FC = () => {
       // below) so print can never diverge from what's on screen: same
       // catalog+selections merge, same selection ids, same overrides.
       await printSchedule({
-        child: currentChild,
+        title: t("schedule.print.childTitle", {
+          firstName: currentChild.firstName,
+          lastName: currentChild.lastName,
+          grade: GetGradeName(currentChild.grade),
+        }),
+        grade: currentChild.grade,
         timeSlots,
         weeklySchedule: displayWeeklySchedule,
         selectedClasses,
@@ -708,6 +805,35 @@ const SchedulePageContent: React.FC = () => {
     currentRole?.role === "admin" ||
     currentRole?.role === "staff";
 
+  const handleRefresh = () => {
+    loadScheduleData();
+    if (isStaffView) {
+      refetchStaffView();
+    } else {
+      refetchSelectedSchedule();
+    }
+  };
+  const refreshing = isStaffView ? staffViewLoading : loading;
+
+  // Names whose schedule it prints: the chosen staff member, or the child.
+  const printButton = isStaffView
+    ? staffName && (
+        <Button
+          icon={<PrinterOutlined />}
+          onClick={handleExportStaffSchedule}
+          disabled={staffViewLoading}>
+          {t("schedule.page.exportButtonFor", { name: staffName })}
+        </Button>
+      )
+    : ((isParent && selectedChild) || (isStaff && staffSelectedChild)) && (
+        <Button
+          icon={<PrinterOutlined />}
+          onClick={handleExportSchedule}
+          disabled={loading}>
+          {t("schedule.page.exportButtonFor", { name: printChildName })}
+        </Button>
+      );
+
   if (pageLoading) {
     return (
       <div className="page-loading">
@@ -721,73 +847,113 @@ const SchedulePageContent: React.FC = () => {
 
   return (
     <div className="page-content">
+      {/* Staff View tabs: shown only when there's more than one view to pick
+          (class managers). Print/refresh live at the end of the tab bar;
+          with no tab bar, they stay in the filters bar as before. */}
+      {canUseStaffView && (
+        <Tabs
+          className="schedule-view-tabs"
+          activeKey={isStaffView ? "staff" : "student"}
+          onChange={key => handleViewModeChange(key as "staff" | "student")}
+          // RTL: antd lays these out right-to-left as given, so the first
+          // item renders rightmost. Check the on-screen order when changing.
+          items={[
+            { key: "student", label: t("schedule.page.labels.studentView") },
+            { key: "staff", label: t("schedule.page.labels.staffView") },
+          ]}
+          tabBarExtraContent={
+            <Space>
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={handleRefresh}
+                loading={refreshing}
+                disabled={refreshing}>
+                {t("common.buttons.refresh")}
+              </Button>
+              {printButton}
+            </Space>
+          }
+        />
+      )}
+
       <FiltersBar
         variant="flat"
-        canRefresh
-        onRefresh={() => {
-          loadScheduleData();
-          refetchSelectedSchedule();
-        }}
-        refreshing={loading}
-        disabled={loading}
+        canRefresh={!canUseStaffView}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+        disabled={refreshing}
         actions={
           <>
-            {((isParent && selectedChild) ||
-              (isStaff && staffSelectedChild)) && (
-              <Button
-                icon={<PrinterOutlined />}
-                onClick={handleExportSchedule}
-                disabled={loading}>
-                {t("schedule.page.exportButton")}
-              </Button>
+            {!canUseStaffView && printButton}
+            {!isStaffView && (
+              <FilterField label={t("schedule.page.labels.searchClass")}>
+                <AutoComplete
+                  value={searchTerm}
+                  onChange={setSearchTerm}
+                  options={(() => {
+                    if (!searchTerm) return [];
+
+                    const uniqueClassNames = Array.from(
+                      new Set(
+                        classes
+                          .filter(cls => {
+                            // For staff with selected child, filter by child's grade only
+                            if (isStaff && staffSelectedChild) {
+                              if (
+                                !cls.grades?.includes(staffSelectedChild.grade)
+                              ) {
+                                return false;
+                              }
+                            } else {
+                              // Apply grade filter if set
+                              if (
+                                selectedGrade &&
+                                !cls.grades?.includes(selectedGrade)
+                              ) {
+                                return false;
+                              }
+                            }
+                            // Apply class name filter
+                            return cls.title
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase());
+                          })
+                          .map(cls => cls.title)
+                      )
+                    ).sort();
+
+                    return uniqueClassNames.map(title => ({ value: title }));
+                  })()}
+                  placeholder={t("schedule.page.placeholders.searchClass")}
+                  style={{ minWidth: 200 }}
+                  allowClear
+                  filterOption={false}
+                />
+              </FilterField>
             )}
-            <FilterField label={t("schedule.page.labels.searchClass")}>
-              <AutoComplete
-                value={searchTerm}
-                onChange={setSearchTerm}
-                options={(() => {
-                  if (!searchTerm) return [];
-
-                  const uniqueClassNames = Array.from(
-                    new Set(
-                      classes
-                        .filter(cls => {
-                          // For staff with selected child, filter by child's grade only
-                          if (isStaff && staffSelectedChild) {
-                            if (
-                              !cls.grades?.includes(staffSelectedChild.grade)
-                            ) {
-                              return false;
-                            }
-                          } else {
-                            // Apply grade filter if set
-                            if (
-                              selectedGrade &&
-                              !cls.grades?.includes(selectedGrade)
-                            ) {
-                              return false;
-                            }
-                          }
-                          // Apply class name filter
-                          return cls.title
-                            .toLowerCase()
-                            .includes(searchTerm.toLowerCase());
-                        })
-                        .map(cls => cls.title)
-                    )
-                  ).sort();
-
-                  return uniqueClassNames.map(title => ({ value: title }));
-                })()}
-                placeholder={t("schedule.page.placeholders.searchClass")}
-                style={{ minWidth: 200 }}
-                allowClear
-                filterOption={false}
-              />
-            </FilterField>
           </>
         }>
-        {isParent && userChildren.length > 0 && (
+        {isStaffView && (
+          <FilterField label={t("schedule.page.labels.selectStaff")}>
+            <Select
+              showSearch
+              allowClear
+              value={staffName}
+              onChange={handleStaffNameSelect}
+              placeholder={t("schedule.page.placeholders.selectStaff")}
+              style={{ minWidth: 200 }}
+              loading={staffMembersLoading}
+              optionFilterProp="value"
+              options={staffMembers.map(({ name, teaches }) => ({
+                value: name,
+                label: name,
+                // No regular lessons: listed last (service order), grayed.
+                className: teaches ? undefined : "staff-option--no-lessons",
+              }))}
+            />
+          </FilterField>
+        )}
+        {!isStaffView && isParent && userChildren.length > 0 && (
           <>
             <Radio.Group
               className="draft-committed-toggle"
@@ -830,8 +996,10 @@ const SchedulePageContent: React.FC = () => {
             </FilterField>
           </>
         )}
-        {isParent && <AddChildButton onAdded={handleParentChildAdded} />}
-        {isStaff && (
+        {!isStaffView && isParent && (
+          <AddChildButton onAdded={handleParentChildAdded} />
+        )}
+        {!isStaffView && isStaff && (
           <>
             <ChildGroupTrackSelector
               child={staffSelectedChild}
@@ -856,7 +1024,7 @@ const SchedulePageContent: React.FC = () => {
             </FilterField>
           </>
         )}
-        {(isStaff || isAdmin) && (
+        {!isStaffView && (isStaff || isAdmin) && (
           <FilterField label={t("schedule.page.labels.filterByGrade")}>
             <Select
               value={selectedGrade}
@@ -875,7 +1043,17 @@ const SchedulePageContent: React.FC = () => {
         )}
       </FiltersBar>
 
-      {isParent && userChildren.length === 0 && (
+      {isStaffView && !staffName && (
+        <Alert
+          message={t("schedule.page.alerts.noStaffSelected.title")}
+          description={t("schedule.page.alerts.noStaffSelected.description")}
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
+      {!isStaffView && isParent && userChildren.length === 0 && (
         <Alert
           message={t("schedule.page.alerts.noChildrenFound.title")}
           description={
@@ -898,17 +1076,20 @@ const SchedulePageContent: React.FC = () => {
         />
       )}
 
-      {isParent && userChildren.length > 0 && !selectedChild && (
-        <Alert
-          message={t("schedule.page.alerts.noChildSelected.title")}
-          description={t("schedule.page.alerts.noChildSelected.description")}
-          type="warning"
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
-      )}
+      {!isStaffView &&
+        isParent &&
+        userChildren.length > 0 &&
+        !selectedChild && (
+          <Alert
+            message={t("schedule.page.alerts.noChildSelected.title")}
+            description={t("schedule.page.alerts.noChildSelected.description")}
+            type="warning"
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+        )}
 
-      {!canSelectClasses && !isParent && (
+      {!isStaffView && !canSelectClasses && !isParent && (
         <Alert
           message={t("schedule.page.alerts.noPermission.title")}
           description={
@@ -953,38 +1134,56 @@ const SchedulePageContent: React.FC = () => {
         />
       )}
 
-      {viewStatus === "draft" && <DraftBanner />}
-      {isParent && viewCommitted && <CommittedReadOnlyBanner />}
+      {!isStaffView && viewStatus === "draft" && <DraftBanner />}
+      {!isStaffView && isParent && viewCommitted && <CommittedReadOnlyBanner />}
 
-      <Spin spinning={scheduleGridLoading}>
+      <Spin spinning={isStaffView ? staffViewLoading : scheduleGridLoading}>
         <Card className="schedule-card">
-          <ScheduleTable
-            timeSlots={timeSlots}
-            classes={classes}
-            weeklySchedule={displayWeeklySchedule}
-            userGrade={selectedGrade}
-            selectedClasses={selectedClasses}
-            draftPickedClassIds={Array.from(draftClassIds)}
-            userSelections={selectedSchedule}
-            onClassSelect={handleClassSelect}
-            onClassUnselect={handleClassSelect}
-            canSelectClasses={canSelectClasses}
-            canViewClasses={canViewClasses}
-            isAdmin={permissions.canCreateClasses}
-            showEnrollmentCount={isStaff || isAdmin}
-            onCreateClass={handleCreateClass}
-            searchTerm={searchTerm}
-            childGroupNumber={currentTrackChild?.groupNumber}
-            lockedClassIds={Array.from(lockedClassIds)}
-            overrides={overrides}
-            canCreateOverride={canCreateOverride}
-            onCreateOverride={handleCreateOverride}
-            onOverrideClick={isStaff ? handleOverrideCardClick : undefined}
-            onOverrideDelete={isStaff ? handleDrawerOverrideDelete : undefined}
-          />
+          {isStaffView ? (
+            // Same table, different feed: view-only, every lesson rendered
+            // as a selected card, conflicts flagged via userSelections.
+            <ScheduleTable
+              timeSlots={timeSlots}
+              classes={staffView.classes}
+              weeklySchedule={staffView.weeklySchedule}
+              selectedClasses={staffView.selectedClasses}
+              userSelections={staffView.userSelections}
+              canSelectClasses={false}
+              canViewClasses={false}
+              showEnrollmentCount
+              extraEnrollmentCounts={staffView.extraEnrollmentCounts}
+            />
+          ) : (
+            <ScheduleTable
+              timeSlots={timeSlots}
+              classes={classes}
+              weeklySchedule={displayWeeklySchedule}
+              userGrade={selectedGrade}
+              selectedClasses={selectedClasses}
+              draftPickedClassIds={Array.from(draftClassIds)}
+              userSelections={selectedSchedule}
+              onClassSelect={handleClassSelect}
+              onClassUnselect={handleClassSelect}
+              canSelectClasses={canSelectClasses}
+              canViewClasses={canViewClasses}
+              isAdmin={permissions.canCreateClasses}
+              showEnrollmentCount={isStaff || isAdmin}
+              onCreateClass={handleCreateClass}
+              searchTerm={searchTerm}
+              childGroupNumber={currentTrackChild?.groupNumber}
+              lockedClassIds={Array.from(lockedClassIds)}
+              overrides={overrides}
+              canCreateOverride={canCreateOverride}
+              onCreateOverride={handleCreateOverride}
+              onOverrideClick={isStaff ? handleOverrideCardClick : undefined}
+              onOverrideDelete={
+                isStaff ? handleDrawerOverrideDelete : undefined
+              }
+            />
+          )}
         </Card>
 
-        {canSelectClasses && selectedSchedule.length > 0 && (
+        {!isStaffView && canSelectClasses && selectedSchedule.length > 0 && (
           <Card
             title={
               (isParent && selectedChild) || (isStaff && staffSelectedChild)
