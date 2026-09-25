@@ -912,51 +912,20 @@ const SchedulePageContent: React.FC = () => {
         actions={
           <>
             {!hasTabBar && printButton}
-            {!isStaffView && (
-              <FilterField label={t("schedule.page.labels.searchClass")}>
-                <AutoComplete
-                  value={searchTerm}
-                  onChange={setSearchTerm}
-                  options={(() => {
-                    if (!searchTerm) return [];
-
-                    const uniqueClassNames = Array.from(
-                      new Set(
-                        classes
-                          .filter(cls => {
-                            // For staff with selected child, filter by child's grade only
-                            if (isStaff && staffSelectedChild) {
-                              if (
-                                !cls.grades?.includes(staffSelectedChild.grade)
-                              ) {
-                                return false;
-                              }
-                            } else {
-                              // Apply grade filter if set
-                              if (
-                                selectedGrade &&
-                                !cls.grades?.includes(selectedGrade)
-                              ) {
-                                return false;
-                              }
-                            }
-                            // Apply class name filter
-                            return cls.title
-                              .toLowerCase()
-                              .includes(searchTerm.toLowerCase());
-                          })
-                          .map(cls => cls.title)
-                      )
-                    ).sort();
-
-                    return uniqueClassNames.map(title => ({ value: title }));
-                  })()}
-                  placeholder={t("schedule.page.placeholders.searchClass")}
-                  style={{ minWidth: 200 }}
-                  allowClear
-                  filterOption={false}
-                />
-              </FilterField>
+            {!isStaffView && isParent && userChildren.length > 0 && (
+              <Radio.Group
+                className="draft-committed-toggle"
+                optionType="button"
+                value={viewCommitted ? "committed" : "draft"}
+                onChange={e => setViewCommitted(e.target.value === "committed")}
+                disabled={!selectedChild}>
+                <Radio.Button value="draft">
+                  {t("schedule.page.labels.draftView")}
+                </Radio.Button>
+                <Radio.Button value="committed">
+                  {t("schedule.page.labels.committedView")}
+                </Radio.Button>
+              </Radio.Group>
             )}
           </>
         }>
@@ -980,21 +949,54 @@ const SchedulePageContent: React.FC = () => {
             />
           </FilterField>
         )}
+        {/* Class search sits next to the group/track dropdown (RTL: search
+            rightmost); the draft/committed toggle is on the actions side. */}
+        {!isStaffView && (
+          <FilterField label={t("schedule.page.labels.searchClass")}>
+            <AutoComplete
+              value={searchTerm}
+              onChange={setSearchTerm}
+              options={(() => {
+                if (!searchTerm) return [];
+
+                const uniqueClassNames = Array.from(
+                  new Set(
+                    classes
+                      .filter(cls => {
+                        // For staff with selected child, filter by child's grade only
+                        if (isStaff && staffSelectedChild) {
+                          if (!cls.grades?.includes(staffSelectedChild.grade)) {
+                            return false;
+                          }
+                        } else {
+                          // Apply grade filter if set
+                          if (
+                            selectedGrade &&
+                            !cls.grades?.includes(selectedGrade)
+                          ) {
+                            return false;
+                          }
+                        }
+                        // Apply class name filter
+                        return cls.title
+                          .toLowerCase()
+                          .includes(searchTerm.toLowerCase());
+                      })
+                      .map(cls => cls.title)
+                  )
+                ).sort();
+
+                return uniqueClassNames.map(title => ({ value: title }));
+              })()}
+              placeholder={t("schedule.page.placeholders.searchClass")}
+              style={{ minWidth: 200 }}
+              allowClear
+              filterOption={false}
+            />
+          </FilterField>
+        )}
         {!isStaffView && isParent && userChildren.length > 0 && (
           <>
-            <Radio.Group
-              className="draft-committed-toggle"
-              optionType="button"
-              value={viewCommitted ? "committed" : "draft"}
-              onChange={e => setViewCommitted(e.target.value === "committed")}
-              disabled={!selectedChild}>
-              <Radio.Button value="draft">
-                {t("schedule.page.labels.draftView")}
-              </Radio.Button>
-              <Radio.Button value="committed">
-                {t("schedule.page.labels.committedView")}
-              </Radio.Button>
-            </Radio.Group>
             <ChildGroupTrackSelector
               child={selectedChild}
               onChange={handleParentFieldChange}
