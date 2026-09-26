@@ -351,8 +351,16 @@
       "file": "044_backfill_staff_teacher_links.sql",
       "created_at": "2026-09-26T00:01:00Z",
       "dependencies": ["043_link_users_to_teachers"]
+    },
+    {
+      "id": "045_link_pua_gmail_account",
+      "name": "Link Pua Gmail Account",
+      "description": "Issue #163 (Staff View part 2): data -- פועה דרוקס's display name and class/override links move from her taded account to her gmail account (a4b21a1b-...), which made her committed tutoring selections and is the one she uses. Merging the two accounts stays deferred. Idempotent.",
+      "file": "045_link_pua_gmail_account.sql",
+      "created_at": "2026-09-26T00:02:00Z",
+      "dependencies": ["044_backfill_staff_teacher_links"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 44
+  "schema_version": 45
 }
