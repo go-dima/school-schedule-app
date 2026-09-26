@@ -2,6 +2,8 @@ import React from "react";
 import { Alert, Button, Form, Input, Modal, Select, Space } from "antd";
 import { useTranslation } from "react-i18next";
 import { ScheduleService } from "../services/scheduleService";
+import { StaffScheduleService } from "../services/staffScheduleService";
+import { useStaffMembers } from "../hooks/useStaffMembers";
 import type {
   ScheduleOverride,
   ScheduleOverrideWithTimeSlot,
@@ -9,12 +11,15 @@ import type {
 } from "../types";
 import { DAYS_OF_WEEK } from "../types";
 import { ScopeSelector } from "./ScopeSelector";
+import { TeacherPicker } from "./TeacherPicker";
 
 const { Option } = Select;
 
 export interface ScheduleOverrideFormValues {
   title: string;
   teacher: string;
+  // Linked Teacher, resolved from `teacher` on submit.
+  userId?: string | null;
   room: string;
   dayOfWeek: number;
   timeSlotId: string;
@@ -42,6 +47,8 @@ const ScheduleOverrideForm: React.FC<ScheduleOverrideFormProps> = ({
 }) => {
   const { t } = useTranslation();
   const [form] = Form.useForm();
+  const { members: staffMembers, loading: staffMembersLoading } =
+    useStaffMembers();
 
   // Unlike ClassForm, an override can target any slot -- including
   // breaks/meetings (staff can override those too) -- so this must not
@@ -54,7 +61,12 @@ const ScheduleOverrideForm: React.FC<ScheduleOverrideFormProps> = ({
   const handleSubmit = async (values: ScheduleOverrideFormValues) => {
     await onSubmit({
       title: values.title,
-      teacher: values.teacher,
+      teacher: values.teacher.trim(),
+      userId: StaffScheduleService.resolveTeacherUserId(
+        values.teacher,
+        staffMembers,
+        initialValues ?? undefined
+      ),
       room: values.room || "",
       dayOfWeek: values.dayOfWeek,
       timeSlotId: values.timeSlotId,
@@ -115,7 +127,11 @@ const ScheduleOverrideForm: React.FC<ScheduleOverrideFormProps> = ({
         rules={[
           { required: true, message: t("schedule.override.teacherRequired") },
         ]}>
-        <Input placeholder={t("schedule.override.teacherPlaceholder")} />
+        <TeacherPicker
+          members={staffMembers}
+          loading={staffMembersLoading}
+          placeholder={t("schedule.override.teacherPlaceholder")}
+        />
       </Form.Item>
 
       <Form.Item name="room" label={t("schedule.override.roomLabel")}>

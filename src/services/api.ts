@@ -15,6 +15,9 @@ import type {
   ScheduleTarget,
   Scope,
   SelectionStatus,
+  StaffDirectoryEntry,
+  StaffSelection,
+  TeacherTitlePair,
   TimeSlot,
   User,
   UserRole,
@@ -197,19 +200,27 @@ export const usersApi = {
       email: data.email,
       firstName: data.first_name,
       lastName: data.last_name,
+      displayName: data.display_name ?? null,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
   },
 
+  /**
+   * Own-row update (RLS: auth.uid() = id). A display name may only be set by
+   * staff/admin (migration 043 trigger); blank clears it. A taken display
+   * name fails with code 23505.
+   */
   async updateUserProfile(
     userId: string,
-    updates: { firstName?: string; lastName?: string }
+    updates: { firstName?: string; lastName?: string; displayName?: string }
   ) {
     const updateData: any = {};
     if (updates.firstName !== undefined)
       updateData.first_name = updates.firstName;
     if (updates.lastName !== undefined) updateData.last_name = updates.lastName;
+    if (updates.displayName !== undefined)
+      updateData.display_name = updates.displayName;
 
     const { data, error } = await supabase
       .from("users")
@@ -217,8 +228,22 @@ export const usersApi = {
       .eq("id", userId)
       .select();
 
-    if (error) throw new ApiError(error.message);
+    if (error) throw new ApiError(error.message, undefined, error.code);
     return data[0];
+  },
+
+  /**
+   * Admin-only: set any user's display name (admin_set_display_name RPC,
+   * migration 043 -- admins have no UPDATE policy on other users' rows).
+   * Blank clears it; a taken name fails with code 23505.
+   */
+  async adminSetDisplayName(userId: string, displayName: string) {
+    const { error } = await supabase.rpc("admin_set_display_name", {
+      p_user_id: userId,
+      p_display_name: displayName,
+    });
+
+    if (error) throw new ApiError(error.message, undefined, error.code);
   },
 
   async getUserRoles(userId: string): Promise<UserRoleData[]> {
@@ -530,6 +555,7 @@ function mapClassRow(
     title: row.title,
     description: row.description,
     teacher: row.teacher,
+    userId: row.user_id ?? null,
     slots: hydratedSlots.sort(
       (a, b) =>
         a.dayOfWeek - b.dayOfWeek ||
@@ -567,22 +593,39 @@ export const classesApi = {
   },
 
   /**
-   * Every (teacher, title) pair in the catalog, untrimmed and with
+   * Every (teacher, title, user_id) row in the catalog, untrimmed and with
    * duplicates -- the raw material for the Staff View's staff dropdown.
    * Titles come along so the caller can drop names that only ever appear on
-   * Special Classes.
+   * Special Classes; user_id folds linked classes into their user.
    */
-  async getTeacherTitlePairs(): Promise<{ teacher: string; title: string }[]> {
+  async getTeacherTitlePairs(): Promise<TeacherTitlePair[]> {
     const { data, error } = await supabase
       .from("classes")
-      .select("teacher, title")
+      .select("teacher, title, user_id")
       .in("scope", getAllowedScopes());
 
     if (error) throw new ApiError(error.message);
     return (data || []).map(row => ({
       teacher: row.teacher ?? "",
       title: row.title ?? "",
+      userId: row.user_id ?? null,
     }));
+  },
+
+  /** Classes linked to the teaching user `userId` (classes.user_id). */
+  async getClassesByUserId(userId: string): Promise<ClassWithTimeSlot[]> {
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      supabase
+        .from("classes")
+        .select("*")
+        .in("scope", getAllowedScopes())
+        .eq("user_id", userId)
+        .order("title", { ascending: true }),
+      fetchTimeSlotsById(),
+    ]);
+
+    if (error) throw new ApiError(error.message);
+    return data.map(cls => mapClassRow(cls, timeSlotsById));
   },
 
   /**
@@ -618,6 +661,7 @@ export const classesApi = {
           title: classData.title,
           description: classData.description,
           teacher: classData.teacher,
+          user_id: classData.userId ?? null,
           slots: ScheduleService.toRawSlots(classData.slots),
           grades: classData.grades,
           is_mandatory: classData.isMandatory,
@@ -645,6 +689,7 @@ export const classesApi = {
     if (updates.description !== undefined)
       updateData.description = updates.description;
     if (updates.teacher !== undefined) updateData.teacher = updates.teacher;
+    if (updates.userId !== undefined) updateData.user_id = updates.userId;
     if (updates.slots !== undefined)
       updateData.slots = ScheduleService.toRawSlots(updates.slots);
     if (updates.grades !== undefined) updateData.grades = updates.grades;
@@ -725,6 +770,40 @@ export const scheduleApi = {
       updatedAt: selection.updated_at,
       class: mapClassRow(selection.class, timeSlotsById),
     }));
+  },
+
+  /**
+   * Every committed selection `userId` made, with the child it was made for
+   * -- Staff View's "set by the tutor" stream. Staff RLS can read all
+   * selections (022) and children (031).
+   */
+  async getCommittedSelectionsMadeBy(
+    userId: string
+  ): Promise<StaffSelection[]> {
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      supabase
+        .from("schedule_selections")
+        .select(
+          "child_id, class:classes(*), child:children(first_name, last_name)"
+        )
+        .eq("user_id", userId)
+        .eq("status", "committed")
+        .not("child_id", "is", null),
+      fetchTimeSlotsById(),
+    ]);
+
+    if (error) throw new ApiError(error.message);
+
+    const allowedScopes = getAllowedScopes();
+    return (data as any[])
+      .filter(row => row.class && allowedScopes.includes(row.class.scope))
+      .map(row => ({
+        class: mapClassRow(row.class, timeSlotsById),
+        childId: row.child_id,
+        childName: [row.child?.first_name, row.child?.last_name]
+          .filter(Boolean)
+          .join(" "),
+      }));
   },
 
   async selectSchedule(
@@ -843,6 +922,7 @@ function mapOverrideRow(
     childId: row.child_id,
     title: row.title,
     teacher: row.teacher,
+    userId: row.user_id ?? null,
     room: row.room,
     dayOfWeek: row.day_of_week,
     timeSlotId: row.time_slot_id,
@@ -900,6 +980,28 @@ export const scheduleOverridesApi = {
       }));
   },
 
+  /** Overrides across all children assigned to the teaching user `userId`. */
+  async getOverridesByUserId(
+    userId: string
+  ): Promise<ScheduleOverrideWithChildName[]> {
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      supabase
+        .from("schedule_overrides")
+        .select("*, child:children(first_name, last_name)")
+        .in("scope", getAllowedScopes())
+        .eq("user_id", userId),
+      fetchTimeSlotsById(),
+    ]);
+
+    if (error) throw new ApiError(error.message);
+    return data.map(row => ({
+      ...mapOverrideRow(row, timeSlotsById),
+      childName: [row.child?.first_name, row.child?.last_name]
+        .filter(Boolean)
+        .join(" "),
+    }));
+  },
+
   async createOverride(
     override: Omit<
       ScheduleOverride,
@@ -919,6 +1021,7 @@ export const scheduleOverridesApi = {
             child_id: override.childId,
             title: override.title,
             teacher: override.teacher,
+            user_id: override.userId ?? null,
             room: override.room,
             day_of_week: override.dayOfWeek,
             time_slot_id: override.timeSlotId,
@@ -945,6 +1048,7 @@ export const scheduleOverridesApi = {
     if (updates.childId !== undefined) updateData.child_id = updates.childId;
     if (updates.title !== undefined) updateData.title = updates.title;
     if (updates.teacher !== undefined) updateData.teacher = updates.teacher;
+    if (updates.userId !== undefined) updateData.user_id = updates.userId;
     if (updates.room !== undefined) updateData.room = updates.room;
     if (updates.dayOfWeek !== undefined)
       updateData.day_of_week = updates.dayOfWeek;
@@ -973,6 +1077,24 @@ export const scheduleOverridesApi = {
       .eq("id", id);
 
     if (error) throw new ApiError(error.message);
+  },
+};
+
+// Staff API
+export const staffApi = {
+  /**
+   * Approved admin/staff/moderator users with a display name
+   * (get_staff_directory RPC, migration 043 -- staff can't read other
+   * users' rows directly). Staff-role callers only.
+   */
+  async getStaffDirectory(): Promise<StaffDirectoryEntry[]> {
+    const { data, error } = await supabase.rpc("get_staff_directory");
+
+    if (error) throw new ApiError(error.message, undefined, error.code);
+    return (data || []).map((row: { id: string; display_name: string }) => ({
+      id: row.id,
+      displayName: row.display_name,
+    }));
   },
 };
 

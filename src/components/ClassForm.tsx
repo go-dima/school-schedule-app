@@ -3,12 +3,15 @@ import { Form, Input, Select, Button, Space, Switch, Row, Col } from "antd";
 import { PlusOutlined, MinusCircleOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { ScheduleService } from "../services/scheduleService";
+import { StaffScheduleService } from "../services/staffScheduleService";
+import { useStaffMembers } from "../hooks/useStaffMembers";
 import { getLessonTimeSlots } from "../utils/timeSlots";
 import type { Class, ClassSlot, ClassWithTimeSlot, TimeSlot } from "../types";
 import { GRADES, DAYS_OF_WEEK } from "../types";
 import { GetGradeName } from "@/utils/grades";
 import { ScopeSelector } from "./ScopeSelector";
 import { GroupTrackSelect } from "./GroupTrackSelect";
+import { TeacherPicker } from "./TeacherPicker";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -36,6 +39,8 @@ const ClassForm: React.FC<ClassFormProps> = ({
 }) => {
   const { t } = useTranslation();
   const [form] = Form.useForm();
+  const { members: staffMembers, loading: staffMembersLoading } =
+    useStaffMembers();
 
   // Time slots are day-independent, so the same lesson-slot list applies to
   // every day and every row in the slot picker.
@@ -103,7 +108,12 @@ const ClassForm: React.FC<ClassFormProps> = ({
       const classData: Omit<Class, "id" | "createdAt" | "updatedAt"> = {
         title: values.title,
         description: values.description || "",
-        teacher: values.teacher,
+        teacher: values.teacher.trim(),
+        userId: StaffScheduleService.resolveTeacherUserId(
+          values.teacher,
+          staffMembers,
+          initialValues ?? undefined
+        ),
         slots: values.slots,
         grades: values.grades || [],
         isMandatory: values.isMandatory || false,
@@ -200,7 +210,11 @@ const ClassForm: React.FC<ClassFormProps> = ({
               { required: true, message: t("form.class.teacherRequired") },
               { min: 2, message: t("form.class.teacherMinLength") },
             ]}>
-            <Input placeholder={t("form.class.teacherPlaceholder")} />
+            <TeacherPicker
+              members={staffMembers}
+              loading={staffMembersLoading}
+              placeholder={t("form.class.teacherPlaceholder")}
+            />
           </Form.Item>
         </Col>
       </Row>
