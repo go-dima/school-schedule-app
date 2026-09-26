@@ -511,6 +511,7 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
                 </span>
                 <span className="roster-item-added-by">
                   <AddedByTooltip
+                    displayName={child.addedByDisplayName}
                     firstName={child.addedByFirstName}
                     lastName={child.addedByLastName}
                     at={child.addedByAt}

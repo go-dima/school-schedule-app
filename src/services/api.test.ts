@@ -331,6 +331,7 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
           added_by_first_name: "מיכל",
           added_by_last_name: "רוזן",
           added_by_at: "2024-02-01T00:00:00.000Z",
+          added_by_display_name: "מיכל ר.",
         },
         {
           id: "child-a",
@@ -389,6 +390,7 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
         addedByUserId: "user-c",
         addedByFirstName: "יוסי",
         addedByLastName: "כהן",
+        addedByDisplayName: null,
         addedByAt: "2024-02-05T00:00:00.000Z",
       },
       {
@@ -406,6 +408,7 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
         addedByUserId: "user-b",
         addedByFirstName: "מיכל",
         addedByLastName: "רוזן",
+        addedByDisplayName: "מיכל ר.",
         addedByAt: "2024-02-01T00:00:00.000Z",
       },
       {
@@ -423,6 +426,7 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
         addedByUserId: "user-a",
         addedByFirstName: null,
         addedByLastName: null,
+        addedByDisplayName: null,
         addedByAt: "2024-02-03T00:00:00.000Z",
       },
     ]);
@@ -532,6 +536,34 @@ describe("childrenApi.findLocalDuplicateChildren", () => {
         createdByIsSelf: false,
       },
     ]);
+  });
+
+  it("names the creator by display name when they have one", async () => {
+    mockFromResult = {
+      data: [
+        {
+          id: "child-1",
+          grade: 6,
+          created_by: "user-1",
+          creator: {
+            first_name: "Tal",
+            last_name: "Shor",
+            display_name: "טלוש שור",
+          },
+        },
+      ],
+      error: null,
+    };
+
+    const [match] = await childrenApi.findLocalDuplicateChildren(
+      "ליאו",
+      "פלד",
+      6,
+      undefined,
+      "user-2"
+    );
+
+    expect(match.createdByName).toBe("טלוש שור");
   });
 
   it("excludes the given child id from results", async () => {
@@ -1349,5 +1381,59 @@ describe("staff directory and display names", () => {
       p_user_id: "user-1",
       p_display_name: "טלוש שור",
     });
+  });
+});
+
+describe("childrenApi.getAllChildren creator name", () => {
+  afterEach(() => {
+    mockRpcResult = { data: [], error: null };
+  });
+
+  const row = (creator: Record<string, string | null>) => ({
+    id: "child-1",
+    first_name: "נועה",
+    last_name: "לוי",
+    grade: 3,
+    group_number: null,
+    track_number: null,
+    scope: "prod",
+    created_at: "",
+    updated_at: "",
+    has_parent: false,
+    created_by: "user-1",
+    ...creator,
+  });
+
+  it("prefers the creator's display name, then first + last name, then email", async () => {
+    mockRpcResult = {
+      data: [
+        row({
+          creator_display_name: "טלוש שור",
+          creator_first_name: "Tal",
+          creator_last_name: "Shor",
+          creator_email: "tal@example.com",
+        }),
+        row({
+          creator_display_name: null,
+          creator_first_name: "Tal",
+          creator_last_name: "Shor",
+          creator_email: "tal@example.com",
+        }),
+        row({
+          creator_first_name: null,
+          creator_last_name: null,
+          creator_email: "tal@example.com",
+        }),
+      ],
+      error: null,
+    };
+
+    const result = await childrenApi.getAllChildren();
+
+    expect(result.map(c => c.createdByName)).toEqual([
+      "טלוש שור",
+      "Tal Shor",
+      "tal@example.com",
+    ]);
   });
 });

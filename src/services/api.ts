@@ -27,6 +27,7 @@ import { withTimeout } from "../utils/asyncUtils";
 import { env, getAllowedScopes, isTestScopeEnabled } from "../utils/env";
 import i18n from "../utils/i18n";
 import log from "../utils/logger";
+import { formatPersonName } from "../utils/personName";
 import { NotificationService } from "./notificationService";
 import { ScheduleService } from "./scheduleService";
 import { supabase } from "./supabase";
@@ -887,6 +888,8 @@ export const scheduleApi = {
         addedByUserId: child.added_by_user_id,
         addedByFirstName: child.added_by_first_name,
         addedByLastName: child.added_by_last_name,
+        // Absent until migration 045 is applied -> falls back to the name.
+        addedByDisplayName: child.added_by_display_name ?? null,
         addedByAt: child.added_by_at,
       }))
       .sort((a: EnrolledChild, b: EnrolledChild) =>
@@ -1276,9 +1279,12 @@ export const childrenApi = {
 
     return data.map((child: any) => {
       const creatorName =
-        [child.creator_first_name, child.creator_last_name]
-          .filter(Boolean)
-          .join(" ") ||
+        formatPersonName({
+          // Absent until migration 045 is applied -> falls back to the name.
+          displayName: child.creator_display_name,
+          firstName: child.creator_first_name,
+          lastName: child.creator_last_name,
+        }) ||
         child.creator_email ||
         null;
 
@@ -1385,7 +1391,7 @@ export const childrenApi = {
     let query = supabase
       .from("children")
       .select(
-        "id, grade, created_by, creator:users!children_created_by_fkey(first_name, last_name)"
+        "id, grade, created_by, creator:users!children_created_by_fkey(first_name, last_name, display_name)"
       )
       .ilike("first_name", firstName.trim())
       .ilike("last_name", lastName.trim())
@@ -1411,6 +1417,7 @@ export const childrenApi = {
         creator: {
           first_name: string | null;
           last_name: string | null;
+          display_name: string | null;
         } | null;
       }[]
     ).map(row => ({
@@ -1418,9 +1425,11 @@ export const childrenApi = {
       grade: row.grade,
       createdByUserId: row.created_by,
       createdByName: row.creator
-        ? [row.creator.first_name, row.creator.last_name]
-            .filter(Boolean)
-            .join(" ") || null
+        ? formatPersonName({
+            displayName: row.creator.display_name,
+            firstName: row.creator.first_name,
+            lastName: row.creator.last_name,
+          })
         : null,
       createdByIsSelf: row.created_by === currentUserId,
     }));

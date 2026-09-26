@@ -143,6 +143,7 @@ export interface EnrolledChild extends Child {
   addedByUserId: string;
   addedByFirstName: string | null;
   addedByLastName: string | null;
+  addedByDisplayName: string | null;
   addedByAt: string;
 }
 
