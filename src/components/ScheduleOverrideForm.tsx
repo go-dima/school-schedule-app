@@ -70,7 +70,9 @@ const ScheduleOverrideForm: React.FC<ScheduleOverrideFormProps> = ({
       room: values.room || "",
       dayOfWeek: values.dayOfWeek,
       timeSlotId: values.timeSlotId,
-      scope: values.scope || "prod",
+      // The scope selector renders nothing on production builds, so an edit
+      // keeps the override's own scope rather than defaulting to prod.
+      scope: values.scope || initialValues?.scope || "prod",
     });
   };
 

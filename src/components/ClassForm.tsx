@@ -121,7 +121,10 @@ const ClassForm: React.FC<ClassFormProps> = ({
         groupNumber: values.groupNumber ?? null,
         trackNumber: values.trackNumber ?? null,
         room: values.room || "",
-        scope: values.scope || "prod",
+        // The scope selector isn't always rendered (hidden for staff, who can
+        // edit but not create classes, and on production builds), so an
+        // edit keeps the class's own scope rather than defaulting to prod.
+        scope: values.scope || initialValues?.scope || "prod",
       };
 
       await onSubmit(classData);

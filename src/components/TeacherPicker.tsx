@@ -8,6 +8,8 @@ interface TeacherPickerProps {
   members: StaffMember[];
   loading?: boolean;
   placeholder?: string;
+  autoFocus?: boolean;
+  onBlur?: () => void;
 }
 
 /**
@@ -22,10 +24,15 @@ export const TeacherPicker: React.FC<TeacherPickerProps> = ({
   members,
   loading,
   placeholder,
+  autoFocus,
+  onBlur,
 }) => (
   <AutoComplete
     value={value}
     onChange={onChange}
+    onBlur={onBlur}
+    autoFocus={autoFocus}
+    style={{ width: "100%" }}
     placeholder={placeholder}
     allowClear
     notFoundContent={loading ? undefined : null}
