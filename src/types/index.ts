@@ -5,6 +5,8 @@ export interface User {
   email: string;
   firstName?: string;
   lastName?: string;
+  // Name a staff member is shown under (Staff View, class teacher label).
+  displayName?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -52,7 +54,8 @@ export interface Class {
   id: string;
   title: string;
   description: string;
-  teacher: string;
+  teacher: string; // Label; a cached copy of the linked user's display name when userId is set
+  userId?: string | null; // Linked Teacher: the teaching user, when they have an account
   slots: ClassSlot[]; // One or more Class Slots this class occupies
   grades: number[]; // Changed from single grade to multiple grades
   isMandatory: boolean;
@@ -140,6 +143,7 @@ export interface EnrolledChild extends Child {
   addedByUserId: string;
   addedByFirstName: string | null;
   addedByLastName: string | null;
+  addedByDisplayName: string | null;
   addedByAt: string;
 }
 
@@ -166,7 +170,8 @@ export interface ScheduleOverride {
   id: string;
   childId: string;
   title: string;
-  teacher: string;
+  teacher: string; // Label; a cached copy of the linked user's display name when userId is set
+  userId?: string | null; // Linked Teacher: the teaching user, when they have an account
   room: string;
   dayOfWeek: number;
   timeSlotId: string;
@@ -184,5 +189,25 @@ export interface ScheduleOverrideWithTimeSlot extends ScheduleOverride {
 // plus the display name of the child it was authored for.
 export interface ScheduleOverrideWithChildName
   extends ScheduleOverrideWithTimeSlot {
+  childName: string;
+}
+
+/** A staff user with a display name (get_staff_directory RPC). */
+export interface StaffDirectoryEntry {
+  id: string;
+  displayName: string;
+}
+
+/** A catalog (teacher, title) pair plus the linked teaching user, if any. */
+export interface TeacherTitlePair {
+  teacher: string;
+  title: string;
+  userId: string | null;
+}
+
+/** One committed selection, with the child it was made for (Staff View). */
+export interface StaffSelection {
+  class: ClassWithTimeSlot;
+  childId: string;
   childName: string;
 }

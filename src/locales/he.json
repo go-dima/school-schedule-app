@@ -96,6 +96,7 @@
         "groupPlaceholder": "ללא קבוצה",
         "groupOption": "קבוצה {{group}}",
         "studentView": "תלמידים",
+        "myView": "המערכת שלי",
         "staffView": "צוות",
         "selectStaff": "בחר איש צוות"
       },
@@ -142,6 +143,7 @@
       "createNewClassModal": "צור שיעור חדש",
       "exportButton": "הדפס",
       "exportButtonFor": "הדפס מערכת של {{name}}",
+      "exportMyButton": "הדפס את המערכת שלי",
       "error": {
         "noChildSelected": "נא לבחור ילד תחילה",
         "exportFailed": "שגיאה בהדפסת מערכת השעות",
@@ -482,7 +484,11 @@
       "firstNameRequired": "נא להזין שם פרטי",
       "lastNameRequired": "נא להזין שם משפחה",
       "firstNameMinLength": "שם פרטי חייב להכיל לפחות 2 תווים",
-      "lastNameMinLength": "שם משפחה חייב להכיל לפחות 2 תווים"
+      "lastNameMinLength": "שם משפחה חייב להכיל לפחות 2 תווים",
+      "displayNameLabel": "שם תצוגה",
+      "displayNamePlaceholder": "למשל: רחל כהן",
+      "displayNameHelp": "השם שמופיע בשיעורים שלך ובמערכת הצוות",
+      "displayNameTaken": "השם כבר בשימוש"
     }
   },
   "app": {
@@ -502,6 +508,8 @@
       "baseRoleValidationError": "תפקיד מנהל או אחראי/ת מערכת דורש תפקיד בסיס נוסף (הורה או צוות)",
       "updateSuccess": "תפקידי המשתמש {{email}} עודכנו בהצלחה",
       "updateError": "שגיאה בעדכון תפקידי המשתמש",
+      "displayNameUpdated": "שם התצוגה עודכן",
+      "displayNameError": "שגיאה בעדכון שם התצוגה",
       "selfDemotion": {
         "title": "הסרת הרשאות מנהל מעצמך",
         "description": "אתה עומד להסיר מעצמך את תפקיד המנהל. לאחר השמירה לא תוכל עוד לגשת לדף זה. להמשיך?",
@@ -512,6 +520,8 @@
     },
     "table": {
       "nameColumn": "שם משתמש",
+      "displayNameColumn": "שם תצוגה",
+      "editDisplayName": "ערוך שם תצוגה",
       "emailColumn": "דוא״ל",
       "createdAtColumn": "תאריך הרשמה",
       "lastSignInColumn": "כניסה אחרונה",

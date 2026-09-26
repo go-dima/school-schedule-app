@@ -2,7 +2,7 @@
    tabs and per-child tabs). */
 
 .schedule-tabs {
-  padding: 4px 0 12px 0;
+  padding: 4px 0 8px 0;
 }
 
 /* Tabs carry no panes of their own (the page below is the content), so
@@ -28,9 +28,18 @@
   padding-top: 0;
 }
 
-/* Compact card tabs: antd's default card padding is 8px 16px. */
+/* Compact card tabs: antd's default card padding is 8px 16px. Pinned to
+   32px and to the bottom, so the taller actions area (below) never
+   stretches them off the bar's line. */
 .schedule-tabs.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab {
   padding: 0 8px;
+  height: 32px;
+  align-self: flex-end;
+}
+
+/* Keep the refresh/print buttons clear of the bar's bottom line. */
+.schedule-tabs > .ant-tabs-nav .ant-tabs-extra-content {
+  padding-bottom: 8px;
 }
 
 /* antd spaces a tab icon from its text with a 12px margin (margin-left in

@@ -29,6 +29,11 @@ import { useSelectedSchedule } from "../hooks/useSelectedSchedule";
 import { useDraftSelectionAwareness } from "../hooks/useDraftSelectionAwareness";
 import { useScheduleOverrides } from "../hooks/useScheduleOverrides";
 import { useStaffSchedule } from "../hooks/useStaffSchedule";
+import {
+  parseStaffKey,
+  staffKeyToParam,
+} from "../services/staffScheduleService";
+import type { StaffKey } from "../services/staffScheduleService";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import ScheduleTable from "../components/ScheduleTable";
 import { CreateClassModal } from "../components/CreateClassModal";
@@ -90,15 +95,26 @@ const SchedulePageContent: React.FC = () => {
   const { isStaff, isAdmin, isParent } = roleFlags;
 
   // Staff View: one staff member's week instead of a student's. URL-backed
-  // (`?view=staff&selected=<name>`) so it survives refresh and can be
-  // linked. Only class managers (admin/staff/moderator) may enter it; the
-  // param is ignored for everyone else.
+  // so it survives refresh and can be linked:
+  // - `?view=staff&selected=<user id | name>`: any staff member (צוות tab)
+  // - `?view=mine`: the signed-in staff member's own week (המערכת שלי tab),
+  //   offered only once they have a display name
+  // Only class managers (admin/staff/moderator) may enter either; the param
+  // is ignored for everyone else.
   const [searchParams, setSearchParams] = useSearchParams();
   const canUseStaffView = permissions.canManageClasses;
-  const isStaffView = canUseStaffView && searchParams.get("view") === "staff";
-  const staffName = isStaffView
+  const canUseMyView = canUseStaffView && !!user?.displayName;
+  const viewParam = searchParams.get("view");
+  const isStaffTab = canUseStaffView && viewParam === "staff";
+  const isMyView = canUseMyView && viewParam === "mine";
+  // Either tab shows one staff member's read-only week.
+  const isStaffView = isStaffTab || isMyView;
+  const selectedStaffParam = isStaffTab
     ? searchParams.get("selected") || undefined
     : undefined;
+  const staffKey: StaffKey | undefined = isMyView
+    ? { kind: "user", id: user.id }
+    : parseStaffKey(selectedStaffParam);
   const {
     staff: staffMembers,
     staffLoading: staffMembersLoading,
@@ -106,18 +122,23 @@ const SchedulePageContent: React.FC = () => {
     loading: staffViewLoading,
     error: staffViewError,
     refetch: refetchStaffView,
-  } = useStaffSchedule(isStaffView, staffName);
+  } = useStaffSchedule(isStaffView, staffKey, { loadStaffList: isStaffTab });
+  // Whose week is shown, for the print title/button.
+  const staffName: string | undefined = isMyView
+    ? user.displayName
+    : (staffMembers.find(m => staffKeyToParam(m.key) === selectedStaffParam)
+        ?.label ?? (staffKey?.kind === "name" ? staffKey.name : undefined));
 
-  const handleViewModeChange = (mode: "student" | "staff") => {
+  const handleViewModeChange = (mode: "student" | "mine" | "staff") => {
     setSearchParams(
       prev => {
         const next = new URLSearchParams(prev);
-        if (mode === "staff") {
-          next.set("view", "staff");
-        } else {
+        if (mode === "student") {
           next.delete("view");
-          next.delete("selected");
+        } else {
+          next.set("view", mode);
         }
+        if (mode !== "staff") next.delete("selected");
         return next;
       },
       { replace: true }
@@ -127,17 +148,18 @@ const SchedulePageContent: React.FC = () => {
     });
   };
 
-  const handleStaffNameSelect = (name: string | undefined) => {
+  // `param` is staffKeyToParam(member.key): a user id or a name.
+  const handleStaffSelect = (param: string | undefined) => {
     setSearchParams(
       prev => {
         const next = new URLSearchParams(prev);
-        if (name) next.set("selected", name);
+        if (param) next.set("selected", param);
         else next.delete("selected");
         return next;
       },
       { replace: true }
     );
-    if (name) {
+    if (param) {
       trackWithActor(AnalyticsEvent.StaffViewStaffSelected, currentRole?.role);
     }
   };
@@ -828,7 +850,9 @@ const SchedulePageContent: React.FC = () => {
           icon={<PrinterOutlined />}
           onClick={handleExportStaffSchedule}
           disabled={staffViewLoading}>
-          {t("schedule.page.exportButtonFor", { name: staffName })}
+          {isMyView
+            ? t("schedule.page.exportMyButton")
+            : t("schedule.page.exportButtonFor", { name: staffName })}
         </Button>
       )
     : ((isParent && selectedChild) || (isStaff && staffSelectedChild)) && (
@@ -877,11 +901,16 @@ const SchedulePageContent: React.FC = () => {
           top-most bar; with no tab bar they stay in the filters bar. */}
       {showViewTabs && (
         <ScheduleTabsBar
-          activeKey={isStaffView ? "staff" : "student"}
-          onChange={key => handleViewModeChange(key as "staff" | "student")}
+          activeKey={isMyView ? "mine" : isStaffTab ? "staff" : "student"}
+          onChange={key =>
+            handleViewModeChange(key as "student" | "mine" | "staff")
+          }
           // RTL: first item renders rightmost. Check the on-screen order.
           items={[
             { key: "student", label: t("schedule.page.labels.studentView") },
+            ...(canUseMyView
+              ? [{ key: "mine", label: t("schedule.page.labels.myView") }]
+              : []),
             { key: "staff", label: t("schedule.page.labels.staffView") },
           ]}
           extra={tabBarActions}
@@ -929,20 +958,20 @@ const SchedulePageContent: React.FC = () => {
             )}
           </>
         }>
-        {isStaffView && (
+        {isStaffTab && (
           <FilterField label={t("schedule.page.labels.selectStaff")}>
             <Select
               showSearch
               allowClear
-              value={staffName}
-              onChange={handleStaffNameSelect}
+              value={selectedStaffParam}
+              onChange={handleStaffSelect}
               placeholder={t("schedule.page.placeholders.selectStaff")}
               style={{ minWidth: 200 }}
               loading={staffMembersLoading}
-              optionFilterProp="value"
-              options={staffMembers.map(({ name, teaches }) => ({
-                value: name,
-                label: name,
+              optionFilterProp="label"
+              options={staffMembers.map(({ key, label, teaches }) => ({
+                value: staffKeyToParam(key),
+                label,
                 // No regular lessons: listed last (service order), grayed.
                 className: teaches ? undefined : "staff-option--no-lessons",
               }))}
@@ -1048,7 +1077,7 @@ const SchedulePageContent: React.FC = () => {
         )}
       </FiltersBar>
 
-      {isStaffView && !staffName && (
+      {isStaffTab && !selectedStaffParam && (
         <Alert
           message={t("schedule.page.alerts.noStaffSelected.title")}
           description={t("schedule.page.alerts.noStaffSelected.description")}

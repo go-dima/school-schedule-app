@@ -39,5 +39,15 @@ A placeholder Class whose catalog teacher doesn't say who actually teaches a giv
 _Avoid_: Staff-only class, as a synonym (staff-only Special Classes are a subset)
 
 **Staff View**:
-A read-only view of the schedule grid showing one staff member's week. It includes the Classes they teach (excluding Special Classes) and the Overrides that name them, and flags two different lessons in the same Class Slot as a conflict. It is the counterpart to the student view, which shows one Child's Selections.
+A read-only view of the schedule grid showing one staff member's week. For a staff member with an account it includes the Classes and Overrides linked to them (their Linked Teacher classes, excluding Special Classes) plus the staff-only Special Classes they committed for Children, each listing those Children; for a teacher without an account, the Classes and Overrides whose teacher text names them. It flags two different lessons in the same Class Slot as a conflict. It is the counterpart to the student view, which shows one Child's Selections. כישורי חיים never appears: it is pre-selected, so nothing records who teaches it to each Child.
 _Avoid_: Teacher schedule, staff mode
+
+**My Schedule**:
+The Staff View of the signed-in staff member (tab המערכת שלי). Offered only once they have a Display Name.
+
+**Display Name**:
+The name a staff member is shown under: the teacher label on their Linked Teacher Classes and Overrides, and their entry in the Staff View picker. Unique; set by the staff member on their profile or by an admin.
+_Avoid_: Teacher name (that is the free-text `teacher` label, which for a Linked Teacher is a copy of the Display Name)
+
+**Linked Teacher**:
+A Class or Override whose teacher is a user account (`user_id`), not just a name. Its teacher label follows that user's Display Name. Teachers without an account stay name-only.
