@@ -888,7 +888,7 @@ export const scheduleApi = {
         addedByUserId: child.added_by_user_id,
         addedByFirstName: child.added_by_first_name,
         addedByLastName: child.added_by_last_name,
-        // Absent until migration 045 is applied -> falls back to the name.
+        // Absent until migration 044 is applied -> falls back to the name.
         addedByDisplayName: child.added_by_display_name ?? null,
         addedByAt: child.added_by_at,
       }))
@@ -1280,7 +1280,7 @@ export const childrenApi = {
     return data.map((child: any) => {
       const creatorName =
         formatPersonName({
-          // Absent until migration 045 is applied -> falls back to the name.
+          // Absent until migration 044 is applied -> falls back to the name.
           displayName: child.creator_display_name,
           firstName: child.creator_first_name,
           lastName: child.creator_last_name,
