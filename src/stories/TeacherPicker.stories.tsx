@@ -7,17 +7,17 @@ import type { StaffMember } from "../services/staffScheduleService";
 const MEMBERS: StaffMember[] = [
   {
     key: { kind: "user", id: "user-1" },
-    label: "טלוש שור",
+    label: "אורית שמש",
     teaches: true,
   },
   {
     key: { kind: "user", id: "user-2" },
-    label: "רחל פלדפוגל",
+    label: "מירב אלון",
     teaches: true,
   },
   {
-    key: { kind: "name", name: "רם ז'אן" },
-    label: "רם ז'אן",
+    key: { kind: "name", name: "עידו כץ" },
+    label: "עידו כץ",
     teaches: true,
   },
 ];

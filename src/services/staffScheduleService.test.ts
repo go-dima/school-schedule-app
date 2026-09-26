@@ -31,8 +31,8 @@ vi.mock("./api", () => ({
   },
 }));
 
-const USER_ID = "0c9e4490-d6fc-442c-b4da-5a0b7e256314";
-const OTHER_USER_ID = "57b60ab3-d6e8-4d0a-902b-b04a2f01cfc1";
+const USER_ID = "11111111-1111-4111-8111-111111111111";
+const OTHER_USER_ID = "22222222-2222-4222-8222-222222222222";
 
 const timeSlot = (
   id: string,
@@ -301,9 +301,9 @@ describe("staff keys", () => {
       kind: "user",
       id: USER_ID.toUpperCase(),
     });
-    expect(parseStaffKey(" רם ז'אן ")).toEqual({
+    expect(parseStaffKey(" עידו כץ ")).toEqual({
       kind: "name",
-      name: "רם ז'אן",
+      name: "עידו כץ",
     });
   });
 
@@ -369,22 +369,22 @@ describe("StaffScheduleService.toStaffMembers", () => {
   it("lists every directory user, folding their linked classes into them", () => {
     expect(
       StaffScheduleService.toStaffMembers(
-        [pair("טלוש שור", "מדעים", USER_ID), pair("רם ז'אן", "ספורט")],
+        [pair("אורית שמש", "מדעים", USER_ID), pair("עידו כץ", "ספורט")],
         [
-          { id: USER_ID, displayName: "טלוש שור" },
-          { id: OTHER_USER_ID, displayName: "ארי נירון" },
+          { id: USER_ID, displayName: "אורית שמש" },
+          { id: OTHER_USER_ID, displayName: "גיל אדם" },
         ]
       )
     ).toEqual([
-      { key: { kind: "user", id: USER_ID }, label: "טלוש שור", teaches: true },
+      { key: { kind: "user", id: USER_ID }, label: "אורית שמש", teaches: true },
       {
-        key: { kind: "name", name: "רם ז'אן" },
-        label: "רם ז'אן",
+        key: { kind: "name", name: "עידו כץ" },
+        label: "עידו כץ",
         teaches: true,
       },
       {
         key: { kind: "user", id: OTHER_USER_ID },
-        label: "ארי נירון",
+        label: "גיל אדם",
         teaches: false,
       },
     ]);
@@ -393,11 +393,15 @@ describe("StaffScheduleService.toStaffMembers", () => {
   it("drops an unlinked name that duplicates a user's label", () => {
     expect(
       StaffScheduleService.toStaffMembers(
-        [pair("טלוש שור", "מדעים")],
-        [{ id: USER_ID, displayName: "טלוש שור" }]
+        [pair("אורית שמש", "מדעים")],
+        [{ id: USER_ID, displayName: "אורית שמש" }]
       )
     ).toEqual([
-      { key: { kind: "user", id: USER_ID }, label: "טלוש שור", teaches: false },
+      {
+        key: { kind: "user", id: USER_ID },
+        label: "אורית שמש",
+        teaches: false,
+      },
     ]);
   });
 
@@ -425,19 +429,19 @@ describe("StaffScheduleService.toStaffMembers", () => {
 });
 
 describe("StaffScheduleService.resolveStaffKey", () => {
-  const directory = [{ id: USER_ID, displayName: "טלוש שור" }];
+  const directory = [{ id: USER_ID, displayName: "אורית שמש" }];
 
   it("resolves a name matching a directory user to that user", () => {
     expect(
       StaffScheduleService.resolveStaffKey(
-        { kind: "name", name: "טלוש שור" },
+        { kind: "name", name: "אורית שמש" },
         directory
       )
     ).toEqual({ kind: "user", id: USER_ID });
   });
 
   it("keeps other keys unchanged", () => {
-    const name = { kind: "name", name: "רם ז'אן" } as const;
+    const name = { kind: "name", name: "עידו כץ" } as const;
     const user = { kind: "user", id: OTHER_USER_ID } as const;
     expect(StaffScheduleService.resolveStaffKey(name, directory)).toBe(name);
     expect(StaffScheduleService.resolveStaffKey(user, directory)).toBe(user);
@@ -467,12 +471,12 @@ describe("StaffScheduleService fetchers", () => {
       { teacher: "דנה ", title: "מתמטיקה", userId: null },
     ]);
     vi.mocked(staffApi.getStaffDirectory).mockResolvedValue([
-      { id: USER_ID, displayName: "פועה דרוקס" },
+      { id: USER_ID, displayName: "שירה טל" },
     ]);
 
     const members = await StaffScheduleService.getStaffMembers();
 
-    expect(members.map(m => m.label)).toEqual(["דנה", "פועה דרוקס"]);
+    expect(members.map(m => m.label)).toEqual(["דנה", "שירה טל"]);
   });
 
   it("loads a user's week by id: catalog, overrides and staff-only selections", async () => {
@@ -521,12 +525,12 @@ describe("StaffScheduleService fetchers", () => {
 
     const view = await StaffScheduleService.getStaffView({
       kind: "name",
-      name: "רם ז'אן",
+      name: "עידו כץ",
     });
 
-    expect(classesApi.getClassesByTeacher).toHaveBeenCalledWith("רם ז'אן");
+    expect(classesApi.getClassesByTeacher).toHaveBeenCalledWith("עידו כץ");
     expect(scheduleOverridesApi.getOverridesByTeacher).toHaveBeenCalledWith(
-      "רם ז'אן"
+      "עידו כץ"
     );
     expect(scheduleApi.getCommittedSelectionsMadeBy).not.toHaveBeenCalled();
     expect(view.classes).toHaveLength(2);
@@ -534,12 +538,12 @@ describe("StaffScheduleService fetchers", () => {
 
   it("treats a name that now belongs to a user (old link) as that user", async () => {
     vi.mocked(staffApi.getStaffDirectory).mockResolvedValue([
-      { id: USER_ID, displayName: "טלוש שור" },
+      { id: USER_ID, displayName: "אורית שמש" },
     ]);
 
     await StaffScheduleService.getStaffView({
       kind: "name",
-      name: "טלוש שור",
+      name: "אורית שמש",
     });
 
     expect(classesApi.getClassesByUserId).toHaveBeenCalledWith(USER_ID);
@@ -551,24 +555,24 @@ describe("StaffScheduleService.resolveTeacherUserId", () => {
   const members = [
     {
       key: { kind: "user", id: USER_ID } as const,
-      label: "טלוש שור",
+      label: "אורית שמש",
       teaches: true,
     },
     {
-      key: { kind: "name", name: "רם ז'אן" } as const,
-      label: "רם ז'אן",
+      key: { kind: "name", name: "עידו כץ" } as const,
+      label: "עידו כץ",
       teaches: true,
     },
   ];
 
   it("links a teacher text matching a staff user's display name", () => {
     expect(
-      StaffScheduleService.resolveTeacherUserId(" טלוש שור ", members)
+      StaffScheduleService.resolveTeacherUserId(" אורית שמש ", members)
     ).toBe(USER_ID);
   });
 
   it("leaves free text and name-only teachers unlinked", () => {
-    expect(StaffScheduleService.resolveTeacherUserId("רם ז'אן", members)).toBe(
+    expect(StaffScheduleService.resolveTeacherUserId("עידו כץ", members)).toBe(
       null
     );
     expect(StaffScheduleService.resolveTeacherUserId("מורה חדש", members)).toBe(
@@ -579,8 +583,8 @@ describe("StaffScheduleService.resolveTeacherUserId", () => {
   it("keeps an existing link while the teacher text is unchanged", () => {
     // e.g. the staff list failed to load while editing a linked class
     expect(
-      StaffScheduleService.resolveTeacherUserId("טלוש שור", [], {
-        teacher: "טלוש שור",
+      StaffScheduleService.resolveTeacherUserId("אורית שמש", [], {
+        teacher: "אורית שמש",
         userId: USER_ID,
       })
     ).toBe(USER_ID);
@@ -588,8 +592,8 @@ describe("StaffScheduleService.resolveTeacherUserId", () => {
 
   it("drops the link once the teacher text changes to someone unlinked", () => {
     expect(
-      StaffScheduleService.resolveTeacherUserId("רם ז'אן", members, {
-        teacher: "טלוש שור",
+      StaffScheduleService.resolveTeacherUserId("עידו כץ", members, {
+        teacher: "אורית שמש",
         userId: USER_ID,
       })
     ).toBe(null);

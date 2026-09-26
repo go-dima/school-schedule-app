@@ -546,9 +546,9 @@ describe("childrenApi.findLocalDuplicateChildren", () => {
           grade: 6,
           created_by: "user-1",
           creator: {
-            first_name: "Tal",
-            last_name: "Shor",
-            display_name: "טלוש שור",
+            first_name: "Orit",
+            last_name: "Shemesh",
+            display_name: "אורית שמש",
           },
         },
       ],
@@ -563,7 +563,7 @@ describe("childrenApi.findLocalDuplicateChildren", () => {
       "user-2"
     );
 
-    expect(match.createdByName).toBe("טלוש שור");
+    expect(match.createdByName).toBe("אורית שמש");
   });
 
   it("excludes the given child id from results", async () => {
@@ -1178,7 +1178,7 @@ describe("Staff View queries", () => {
         {
           id: "c1",
           title: "מתמטיקה",
-          teacher: "טלוש שור",
+          teacher: "אורית שמש",
           user_id: "user-1",
           slots: [{ dayOfWeek: 0, timeSlotId: "slot-1" }],
         },
@@ -1199,7 +1199,7 @@ describe("Staff View queries", () => {
           id: "o1",
           child_id: "child-1",
           title: "תגבור",
-          teacher: "טלוש שור",
+          teacher: "אורית שמש",
           user_id: "user-1",
           room: "",
           day_of_week: 1,
@@ -1358,12 +1358,12 @@ describe("staff directory and display names", () => {
 
   it("staffApi.getStaffDirectory maps the RPC rows", async () => {
     mockRpcResult = {
-      data: [{ id: "user-1", display_name: "טלוש שור" }],
+      data: [{ id: "user-1", display_name: "אורית שמש" }],
       error: null,
     };
 
     await expect(staffApi.getStaffDirectory()).resolves.toEqual([
-      { id: "user-1", displayName: "טלוש שור" },
+      { id: "user-1", displayName: "אורית שמש" },
     ]);
     expect(supabase.rpc).toHaveBeenCalledWith("get_staff_directory");
   });
@@ -1375,11 +1375,11 @@ describe("staff directory and display names", () => {
     };
 
     await expect(
-      usersApi.adminSetDisplayName("user-1", "טלוש שור")
+      usersApi.adminSetDisplayName("user-1", "אורית שמש")
     ).rejects.toMatchObject({ code: "23505" });
     expect(supabase.rpc).toHaveBeenCalledWith("admin_set_display_name", {
       p_user_id: "user-1",
-      p_display_name: "טלוש שור",
+      p_display_name: "אורית שמש",
     });
   });
 });
@@ -1408,15 +1408,15 @@ describe("childrenApi.getAllChildren creator name", () => {
     mockRpcResult = {
       data: [
         row({
-          creator_display_name: "טלוש שור",
-          creator_first_name: "Tal",
-          creator_last_name: "Shor",
+          creator_display_name: "אורית שמש",
+          creator_first_name: "Orit",
+          creator_last_name: "Shemesh",
           creator_email: "tal@example.com",
         }),
         row({
           creator_display_name: null,
-          creator_first_name: "Tal",
-          creator_last_name: "Shor",
+          creator_first_name: "Orit",
+          creator_last_name: "Shemesh",
           creator_email: "tal@example.com",
         }),
         row({
@@ -1431,8 +1431,8 @@ describe("childrenApi.getAllChildren creator name", () => {
     const result = await childrenApi.getAllChildren();
 
     expect(result.map(c => c.createdByName)).toEqual([
-      "טלוש שור",
-      "Tal Shor",
+      "אורית שמש",
+      "Orit Shemesh",
       "tal@example.com",
     ]);
   });

@@ -5,23 +5,23 @@ describe("formatPersonName", () => {
   it("prefers the display name", () => {
     expect(
       formatPersonName({
-        displayName: "טלוש שור",
-        firstName: "Tal",
-        lastName: "Shor",
+        displayName: "אורית שמש",
+        firstName: "Orit",
+        lastName: "Shemesh",
       })
-    ).toBe("טלוש שור");
+    ).toBe("אורית שמש");
   });
 
   it("falls back to first + last name", () => {
     expect(
       formatPersonName({
         displayName: null,
-        firstName: "Tal",
-        lastName: "Shor",
+        firstName: "Orit",
+        lastName: "Shemesh",
       })
-    ).toBe("Tal Shor");
-    expect(formatPersonName({ displayName: "  ", firstName: "Tal" })).toBe(
-      "Tal"
+    ).toBe("Orit Shemesh");
+    expect(formatPersonName({ displayName: "  ", firstName: "Orit" })).toBe(
+      "Orit"
     );
   });
 

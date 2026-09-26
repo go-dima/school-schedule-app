@@ -3,7 +3,8 @@
 --   teacher names on classes and schedule overrides, so a staff member's
 --   week ("My schedule" / the Staff tab) can be resolved by user id instead
 --   of free-text name matching. Structure only: every link starts empty,
---   so nothing changes visibly until 044 fills in the agreed mapping.
+--   so nothing changes visibly until display names and links are set
+--   (profile / User Management / the class form, or a one-off data script).
 --     - users.display_name: the name a staff member is shown under.
 --       Unique (trimmed, case-insensitive) among filled-in values; blank is
 --       stored as NULL. Only admins and approved staff/moderators may set
@@ -27,8 +28,7 @@
 -- Date: 2026-09-26
 --
 -- NOTE: This migration is run manually (Supabase SQL editor / psql). Run it
--- before 044 and before deploying the Staff View part 2 code, which reads
--- classes.user_id.
+-- before deploying the Staff View part 2 code, which reads classes.user_id.
 
 BEGIN;
 

@@ -6,9 +6,9 @@ import type { StaffMember } from "../services/staffScheduleService";
 import { TeacherPicker } from "./TeacherPicker";
 
 const members: StaffMember[] = [
-  { key: { kind: "user", id: "user-1" }, label: "טלוש שור", teaches: true },
-  { key: { kind: "user", id: "user-2" }, label: "רחל פלדפוגל", teaches: true },
-  { key: { kind: "name", name: "רם ז'אן" }, label: "רם ז'אן", teaches: true },
+  { key: { kind: "user", id: "user-1" }, label: "אורית שמש", teaches: true },
+  { key: { kind: "user", id: "user-2" }, label: "מירב אלון", teaches: true },
+  { key: { kind: "name", name: "עידו כץ" }, label: "עידו כץ", teaches: true },
 ];
 
 const Controlled = ({ onChange }: { onChange?: (v: string) => void }) => {
@@ -37,9 +37,9 @@ describe("TeacherPicker", () => {
     render(<Controlled />);
     const input = screen.getByRole("combobox");
 
-    fireEvent.change(input, { target: { value: "רח" } });
+    fireEvent.change(input, { target: { value: "מי" } });
 
-    expect(visibleOptions()).toEqual(["רחל פלדפוגל"]);
+    expect(visibleOptions()).toEqual(["מירב אלון"]);
   });
 
   it("shows no suggestions for a name that isn't listed", () => {
