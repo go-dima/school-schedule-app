@@ -286,6 +286,40 @@ describe("ScheduleService.hasConflictInSlot", () => {
   });
 });
 
+describe("ScheduleService שילוב never conflicts", () => {
+  // שילוב (integration) happens inside another lesson, so sharing a slot
+  // with it is not a clash -- for the grid or the selection drawer.
+  const lesson = makeClass({ id: "lesson", title: "מתמטיקה" });
+  const integration = makeClass({ id: "integration", title: "שילוב" });
+  const selections = [makeSelection(lesson), makeSelection(integration)];
+
+  it("doesn't mark a cell where a lesson shares the slot with שילוב", () => {
+    expect(
+      ScheduleService.hasConflictInSlot(selections, lesson, 0, tsFirst.id)
+    ).toBe(false);
+    expect(
+      ScheduleService.hasConflictInSlot(selections, integration, 0, tsFirst.id)
+    ).toBe(false);
+  });
+
+  it("doesn't report שילוב as a class-wide conflict either way", () => {
+    expect(
+      ScheduleService.hasTimeConflict([makeSelection(integration)], lesson)
+    ).toBe(false);
+    expect(
+      ScheduleService.hasTimeConflict([makeSelection(lesson)], integration)
+    ).toBe(false);
+  });
+
+  it("still marks two other lessons sharing a slot, even beside שילוב", () => {
+    const other = makeClass({ id: "other", title: "אנגלית" });
+    const withOther = [...selections, makeSelection(other)];
+    expect(
+      ScheduleService.hasConflictInSlot(withOther, lesson, 0, tsFirst.id)
+    ).toBe(true);
+  });
+});
+
 describe("ScheduleService.getDrawerConflicts", () => {
   it("flags a double lesson that overlaps a different, already-selected class in its other (empty) slot", () => {
     const b = makeClass({

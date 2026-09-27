@@ -50,8 +50,8 @@ const makeClass = (
 });
 
 // A double lesson on Sunday (slots 1+2) and a second lesson that shares
-// only its SECOND slot -- the Staff View case where a tutor's שילוב sits in
-// the continuation half of their own double lesson.
+// only its SECOND slot -- e.g. a tutor's חונכות during the continuation
+// half of their own double lesson in the Staff View.
 const double = makeClass({
   id: "double",
   title: "חשבון",
@@ -62,6 +62,12 @@ const double = makeClass({
   ],
 });
 const sharesSecondSlot = makeClass({
+  id: "mentoring",
+  title: "חונכות",
+  slots: [{ dayOfWeek: 0, timeSlotId: second.id, timeSlot: second }],
+});
+// שילוב happens inside another lesson, so it's shown but never a conflict.
+const integration = makeClass({
   id: "integration",
   title: "שילוב",
   slots: [{ dayOfWeek: 0, timeSlotId: second.id, timeSlot: second }],
@@ -112,7 +118,7 @@ describe("ScheduleTable double-lesson continuation cell", () => {
 
     // The conflict is real, so the other lesson must be visible, not just
     // implied by a red border.
-    expect(screen.getByText("שילוב")).toBeTruthy();
+    expect(screen.getByText("חונכות")).toBeTruthy();
     // The double lesson still shows in both of its slots.
     expect(screen.getAllByText("חשבון")).toHaveLength(2);
   });
@@ -130,6 +136,13 @@ describe("ScheduleTable double-lesson continuation cell", () => {
     const conflicted = [...container.querySelectorAll(".conflict")];
     expect(conflicted).toHaveLength(1);
     expect(conflicted[0].classList.contains("double-continuation")).toBe(true);
+  });
+
+  it("shows שילוב in the same cell without flagging a conflict", () => {
+    const { container } = renderWeek([double, integration]);
+
+    expect(screen.getByText("שילוב")).toBeTruthy();
+    expect(container.querySelectorAll(".conflict")).toHaveLength(0);
   });
 
   it("keeps a lone double lesson conflict-free in both slots", () => {
