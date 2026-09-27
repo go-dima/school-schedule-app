@@ -147,6 +147,30 @@ export class ScheduleService {
   }
 
   /**
+   * Whether `cls` clashes with another selected lesson in ONE specific
+   * (day, time slot) -- the schedule grid marks a cell only where lessons
+   * actually overlap, so a double lesson clashing in one half leaves its
+   * other half unmarked. (hasTimeConflict answers the class-wide question
+   * the selection drawer needs.)
+   */
+  static hasConflictInSlot(
+    userSelections: ScheduleSelectionWithClass[],
+    cls: ClassWithTimeSlot,
+    dayOfWeek: number,
+    timeSlotId: string
+  ): boolean {
+    const inSlot = (slots: ClassSlot[]) =>
+      slots.some(
+        slot => slot.dayOfWeek === dayOfWeek && slot.timeSlotId === timeSlotId
+      );
+    if (!inSlot(cls.slots)) return false;
+    return userSelections.some(
+      selection =>
+        selection.class.id !== cls.id && inSlot(selection.class.slots)
+    );
+  }
+
+  /**
    * Conflicts to flag among the drawer's candidates for one slot. Candidates
    * are already blocked from selection whenever the slot itself has a
    * selection (single-choice-per-slot), so that state is never a "conflict"

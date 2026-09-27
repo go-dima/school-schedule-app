@@ -174,9 +174,19 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   const getEnrollmentCount = (classId: string): number =>
     extraEnrollmentCounts?.get(classId) ?? enrollmentCounts.get(classId) ?? 0;
 
-  // Helper function to check if a class time-conflicts with another selected class
-  const classHasConflict = (cls: ClassWithTimeSlot): boolean =>
-    ScheduleService.hasTimeConflict(userSelections, cls);
+  // Whether a class clashes with another selected lesson in this very cell
+  // (day + time slot) -- cells are marked only where lessons overlap.
+  const hasConflictInCell = (
+    cls: ClassWithTimeSlot,
+    dayOfWeek: number,
+    timeSlotId: string
+  ): boolean =>
+    ScheduleService.hasConflictInSlot(
+      userSelections,
+      cls,
+      dayOfWeek,
+      timeSlotId
+    );
 
   const renderOverrideCard = (o: ScheduleOverrideWithTimeSlot) => (
     <OverrideCard key={o.id} override={o} onEdit={onOverrideClick} />
@@ -268,7 +278,9 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
         ...selectedPrimaryHere,
       ];
       const isMandatory = cellClasses.some(cls => cls.isMandatory);
-      const hasConflict = cellClasses.some(classHasConflict);
+      const hasConflict = cellClasses.some(cls =>
+        hasConflictInCell(cls, dayOfWeek, timeSlot.id)
+      );
 
       // Show full class details in second slot when selected
       return (
@@ -339,7 +351,9 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       const hasMandatoryClass = selectedPrimaryClasses.some(
         cls => cls.isMandatory
       );
-      const hasConflict = selectedPrimaryClasses.some(classHasConflict);
+      const hasConflict = selectedPrimaryClasses.some(cls =>
+        hasConflictInCell(cls, dayOfWeek, timeSlot.id)
+      );
 
       return (
         <div

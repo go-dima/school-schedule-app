@@ -30,9 +30,9 @@ export interface StaffView {
   weeklySchedule: WeeklySchedule;
   // Every id in `classes`, so every cell renders as a "selected" card.
   selectedClasses: string[];
-  // Synthetic selection wrappers, so ScheduleService.hasTimeConflict flags
-  // two different lessons that share a slot -- the table's existing
-  // `conflict` highlighting then works unchanged.
+  // Synthetic selection wrappers, so the table's conflict highlighting
+  // (ScheduleService.hasConflictInSlot) marks each cell where two different
+  // lessons share a slot, unchanged from the student view.
   userSelections: ScheduleSelectionWithClass[];
   // Override pseudo-class id -> number of children in that group.
   extraEnrollmentCounts: Map<string, number>;

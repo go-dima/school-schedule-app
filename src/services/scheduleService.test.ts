@@ -233,6 +233,59 @@ describe("ScheduleService.getConflictingClasses / hasTimeConflict", () => {
   });
 });
 
+describe("ScheduleService.hasConflictInSlot", () => {
+  const double = makeClass({
+    id: "double",
+    isDouble: true,
+    slots: [
+      { dayOfWeek: 0, timeSlotId: tsFirst.id, timeSlot: tsFirst },
+      { dayOfWeek: 0, timeSlotId: tsSecond.id, timeSlot: tsSecond },
+    ],
+  });
+  const inSecondSlot = makeClass({
+    id: "second-only",
+    slots: [{ dayOfWeek: 0, timeSlotId: tsSecond.id, timeSlot: tsSecond }],
+  });
+  const selections = [makeSelection(double), makeSelection(inSecondSlot)];
+
+  it("is true only in the slot where another lesson actually overlaps", () => {
+    expect(
+      ScheduleService.hasConflictInSlot(selections, double, 0, tsSecond.id)
+    ).toBe(true);
+    expect(
+      ScheduleService.hasConflictInSlot(
+        selections,
+        inSecondSlot,
+        0,
+        tsSecond.id
+      )
+    ).toBe(true);
+  });
+
+  it("leaves the double lesson's other half clear", () => {
+    expect(
+      ScheduleService.hasConflictInSlot(selections, double, 0, tsFirst.id)
+    ).toBe(false);
+  });
+
+  it("never conflicts a lesson with itself", () => {
+    expect(
+      ScheduleService.hasConflictInSlot(
+        [makeSelection(double)],
+        double,
+        0,
+        tsSecond.id
+      )
+    ).toBe(false);
+  });
+
+  it("is false for a slot the lesson doesn't occupy", () => {
+    expect(
+      ScheduleService.hasConflictInSlot(selections, inSecondSlot, 0, tsFirst.id)
+    ).toBe(false);
+  });
+});
+
 describe("ScheduleService.getDrawerConflicts", () => {
   it("flags a double lesson that overlaps a different, already-selected class in its other (empty) slot", () => {
     const b = makeClass({

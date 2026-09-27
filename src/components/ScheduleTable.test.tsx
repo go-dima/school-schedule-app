@@ -124,6 +124,14 @@ describe("ScheduleTable double-lesson continuation cell", () => {
     expect(continuation?.classList.contains("conflict")).toBe(true);
   });
 
+  it("flags only the cell where the lessons overlap, not the double's other half", () => {
+    const { container } = renderWeek([double, sharesSecondSlot]);
+
+    const conflicted = [...container.querySelectorAll(".conflict")];
+    expect(conflicted).toHaveLength(1);
+    expect(conflicted[0].classList.contains("double-continuation")).toBe(true);
+  });
+
   it("keeps a lone double lesson conflict-free in both slots", () => {
     const { container } = renderWeek([double]);
 
