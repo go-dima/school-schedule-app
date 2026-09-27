@@ -350,7 +350,7 @@ const StudentsPage: React.FC = () => {
       <div
         style={{
           paddingTop: 12,
-          marginBottom: 16,
+          marginBottom: 8,
           display: "flex",
           justifyContent: "space-between",
           flexWrap: "wrap",

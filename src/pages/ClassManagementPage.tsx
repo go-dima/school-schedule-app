@@ -574,9 +574,7 @@ const ClassManagementPage: React.FC = () => {
           </div>
 
           {/* Filters */}
-          <Card
-            title={t("classManagement.page.filtersTitle")}
-            style={{ marginBottom: 24 }}>
+          <Card title={t("classManagement.page.filtersTitle")}>
             <div
               style={{
                 display: "flex",

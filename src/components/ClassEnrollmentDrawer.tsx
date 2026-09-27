@@ -23,6 +23,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { scheduleApi, classesApi } from "../services/api";
 import { ScheduleService } from "../services/scheduleService";
+import { StaffScheduleService } from "../services/staffScheduleService";
+import { useStaffMembers } from "../hooks/useStaffMembers";
 import type {
   ClassWithTimeSlot,
   EnrolledChild,
@@ -36,6 +38,7 @@ import { GetDayName } from "@/utils/days";
 import { printClassRoster } from "@/utils/printClassRoster";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 import { GroupTrackTags } from "./GroupTrackTags";
+import { TeacherPicker } from "./TeacherPicker";
 import "./ClassEnrollmentDrawer.css";
 
 const { Title, Text } = Typography;
@@ -73,6 +76,8 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestedClassId = useRef<string | null>(null);
+  const { members: staffMembers, loading: staffMembersLoading } =
+    useStaffMembers();
 
   // Mirrors `classInfo`, but updated optimistically by the inline-edit
   // fields below so the drawer reflects a save immediately instead of
@@ -132,7 +137,10 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
   // roll the optimistic change back and surface the error (on failure).
   const saveField = async (
     updates: Partial<
-      Pick<ClassWithTimeSlot, "title" | "teacher" | "room" | "grades">
+      Pick<
+        ClassWithTimeSlot,
+        "title" | "teacher" | "userId" | "room" | "grades"
+      >
     >
   ) => {
     if (!localClassInfo) return;
@@ -177,9 +185,21 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
     }
 
     setEditingTeacher(false);
-    if (trimmed === localClassInfo.teacher) return;
+    // Same Linked Teacher rule as ClassForm: an exact staff display name
+    // links the class, free text unlinks it, unchanged text keeps the link.
+    const userId = StaffScheduleService.resolveTeacherUserId(
+      trimmed,
+      staffMembers,
+      localClassInfo
+    );
+    if (
+      trimmed === localClassInfo.teacher &&
+      userId === (localClassInfo.userId ?? null)
+    ) {
+      return;
+    }
 
-    saveField({ teacher: trimmed });
+    saveField({ teacher: trimmed, userId });
   };
 
   const startEditingRoom = () => {
@@ -327,10 +347,12 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
                 key: "teacher",
                 label: t("classManagement.table.teacherColumn"),
                 children: editingTeacher ? (
-                  <Input
+                  <TeacherPicker
                     autoFocus
+                    members={staffMembers}
+                    loading={staffMembersLoading}
                     value={draftTeacher}
-                    onChange={e => setDraftTeacher(e.target.value)}
+                    onChange={value => setDraftTeacher(value ?? "")}
                     onBlur={handleTeacherSave}
                   />
                 ) : (
@@ -489,6 +511,7 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
                 </span>
                 <span className="roster-item-added-by">
                   <AddedByTooltip
+                    displayName={child.addedByDisplayName}
                     firstName={child.addedByFirstName}
                     lastName={child.addedByLastName}
                     at={child.addedByAt}

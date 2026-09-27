@@ -16,7 +16,7 @@ import { FiltersBar } from "../components/FiltersBar";
 import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
 import { RoleTagPicker } from "../components/RoleTagPicker";
 import { useAuth } from "../contexts/AuthContext";
-import { usersApi } from "../services/api";
+import { ApiError, usersApi } from "../services/api";
 import type { UserRoleData, UserRole } from "../types";
 import { ROLE_TAG_COLORS } from "../constants/roleColors";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
@@ -31,6 +31,12 @@ const ELEVATED_ROLES: UserRole[] = ["admin", "moderator"];
 
 const { Text } = Typography;
 
+// Roles that make a user staff (and so give them a display name).
+const STAFF_ROLES: UserRole[] = ["admin", "staff", "moderator"];
+
+// Postgres unique_violation: the display name belongs to someone else.
+const UNIQUE_VIOLATION = "23505";
+
 interface UserManagementPageProps {}
 
 interface UserWithRoles {
@@ -38,6 +44,7 @@ interface UserWithRoles {
   email: string;
   firstName?: string;
   lastName?: string;
+  displayName?: string;
   createdAt: string;
   lastSignInAt?: string;
   roles: UserRoleData[];
@@ -68,6 +75,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         email: user.email,
         firstName: user.first_name,
         lastName: user.last_name,
+        displayName: user.display_name ?? undefined,
         createdAt: user.created_at,
         lastSignInAt: user.last_sign_in_at,
         roles: user.user_roles.map((role: any) => ({
@@ -85,6 +93,29 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       message.error(t("userManagement.page.loadError"));
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Admin-only RPC (admin_set_display_name): admins can't UPDATE other
+  // users' rows directly. Blank clears the name.
+  const handleDisplayNameChange = async (
+    user: UserWithRoles,
+    value: string
+  ) => {
+    const displayName = value.trim() || undefined;
+    if (displayName === user.displayName) return;
+    try {
+      await usersApi.adminSetDisplayName(user.id, value);
+      setUsers(prev =>
+        prev.map(u => (u.id === user.id ? { ...u, displayName } : u))
+      );
+      message.success(t("userManagement.page.displayNameUpdated"));
+    } catch (error) {
+      message.error(
+        error instanceof ApiError && error.code === UNIQUE_VIOLATION
+          ? t("profile.page.displayNameTaken")
+          : t("userManagement.page.displayNameError")
+      );
     }
   };
 
@@ -244,6 +275,25 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
           </Space>
         );
       },
+    },
+    {
+      title: t("userManagement.table.displayNameColumn"),
+      key: "displayName",
+      width: 130,
+      sorter: (a, b) =>
+        (a.displayName || "").localeCompare(b.displayName || ""),
+      render: (_, record) =>
+        record.roles.some(
+          role => role.approved && STAFF_ROLES.includes(role.role)
+        ) ? (
+          <Text
+            editable={{
+              tooltip: t("userManagement.table.editDisplayName"),
+              onChange: value => handleDisplayNameChange(record, value),
+            }}>
+            {record.displayName || ""}
+          </Text>
+        ) : null,
     },
     {
       title: t("userManagement.table.emailColumn"),
@@ -423,7 +473,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         locale={{
           emptyText: t("userManagement.table.emptyText"),
         }}
-        scroll={{ x: 1040 }}
+        scroll={{ x: 1170 }}
       />
 
       <Modal

@@ -2,16 +2,23 @@ import { useCallback, useEffect, useState } from "react";
 import {
   EMPTY_STAFF_VIEW,
   StaffScheduleService,
+  staffKeyToParam,
 } from "../services/staffScheduleService";
-import type { StaffMember, StaffView } from "../services/staffScheduleService";
+import type {
+  StaffKey,
+  StaffMember,
+  StaffView,
+} from "../services/staffScheduleService";
 
 // The Staff View's data flow: the pickable staff members, and one staff
 // member's week. Independent of the student-view hooks (catalog,
 // selections, overrides) -- the page just chooses which feed reaches the
-// table. `enabled` keeps it fully idle (zero requests) outside Staff View.
+// table. `enabled` keeps it fully idle (zero requests) outside Staff View;
+// `loadStaffList: false` skips the dropdown's list (My schedule has none).
 export function useStaffSchedule(
   enabled: boolean,
-  staffName: string | undefined
+  staffKey: StaffKey | undefined,
+  { loadStaffList = true }: { loadStaffList?: boolean } = {}
 ) {
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [view, setView] = useState<StaffView>(EMPTY_STAFF_VIEW);
@@ -21,8 +28,13 @@ export function useStaffSchedule(
   // Bumped by refetch() to re-run both effects.
   const [reloadKey, setReloadKey] = useState(0);
 
+  // Effects key off a string so an equal key object doesn't refetch.
+  const keyParam = staffKey
+    ? `${staffKey.kind}:${staffKeyToParam(staffKey)}`
+    : undefined;
+
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !loadStaffList) return;
 
     let mounted = true;
     const loadStaff = async () => {
@@ -45,10 +57,10 @@ export function useStaffSchedule(
     return () => {
       mounted = false;
     };
-  }, [enabled, reloadKey]);
+  }, [enabled, loadStaffList, reloadKey]);
 
   useEffect(() => {
-    if (!enabled || !staffName) {
+    if (!enabled || !staffKey) {
       setView(EMPTY_STAFF_VIEW);
       setViewLoading(false);
       return;
@@ -59,7 +71,7 @@ export function useStaffSchedule(
       setViewLoading(true);
       setError(null);
       try {
-        const data = await StaffScheduleService.getStaffView(staffName);
+        const data = await StaffScheduleService.getStaffView(staffKey);
         if (mounted) setView(data);
       } catch (err) {
         if (mounted) {
@@ -77,7 +89,8 @@ export function useStaffSchedule(
     return () => {
       mounted = false;
     };
-  }, [enabled, staffName, reloadKey]);
+    // keyParam stands in for staffKey: equal keys, same string.
+  }, [enabled, keyParam, reloadKey]);
 
   const refetch = useCallback(() => setReloadKey(key => key + 1), []);
 

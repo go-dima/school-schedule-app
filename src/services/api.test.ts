@@ -111,8 +111,15 @@ function defaultFromImpl() {
 }
 
 // Import after the mock so `api.ts` picks up the mocked `./supabase` module.
-const { authApi, scheduleApi, scheduleOverridesApi, childrenApi, classesApi } =
-  await import("./api");
+const {
+  authApi,
+  scheduleApi,
+  scheduleOverridesApi,
+  childrenApi,
+  classesApi,
+  staffApi,
+  usersApi,
+} = await import("./api");
 const { supabase } = await import("./supabase");
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -324,6 +331,7 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
           added_by_first_name: "מיכל",
           added_by_last_name: "רוזן",
           added_by_at: "2024-02-01T00:00:00.000Z",
+          added_by_display_name: "מיכל ר.",
         },
         {
           id: "child-a",
@@ -382,6 +390,7 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
         addedByUserId: "user-c",
         addedByFirstName: "יוסי",
         addedByLastName: "כהן",
+        addedByDisplayName: null,
         addedByAt: "2024-02-05T00:00:00.000Z",
       },
       {
@@ -399,6 +408,7 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
         addedByUserId: "user-b",
         addedByFirstName: "מיכל",
         addedByLastName: "רוזן",
+        addedByDisplayName: "מיכל ר.",
         addedByAt: "2024-02-01T00:00:00.000Z",
       },
       {
@@ -416,6 +426,7 @@ describe("scheduleApi.getClassEnrolledChildren", () => {
         addedByUserId: "user-a",
         addedByFirstName: null,
         addedByLastName: null,
+        addedByDisplayName: null,
         addedByAt: "2024-02-03T00:00:00.000Z",
       },
     ]);
@@ -525,6 +536,34 @@ describe("childrenApi.findLocalDuplicateChildren", () => {
         createdByIsSelf: false,
       },
     ]);
+  });
+
+  it("names the creator by display name when they have one", async () => {
+    mockFromResult = {
+      data: [
+        {
+          id: "child-1",
+          grade: 6,
+          created_by: "user-1",
+          creator: {
+            first_name: "Orit",
+            last_name: "Shemesh",
+            display_name: "אורית שמש",
+          },
+        },
+      ],
+      error: null,
+    };
+
+    const [match] = await childrenApi.findLocalDuplicateChildren(
+      "ליאו",
+      "פלד",
+      6,
+      undefined,
+      "user-2"
+    );
+
+    expect(match.createdByName).toBe("אורית שמש");
   });
 
   it("excludes the given child id from results", async () => {
@@ -879,6 +918,7 @@ describe("scheduleOverridesApi", () => {
         childId: "child-1",
         title: "חונכות אישית",
         teacher: "דנה כהן",
+        userId: null,
         room: "חדר 5",
         dayOfWeek: 2,
         timeSlotId: "slot-1",
@@ -952,6 +992,7 @@ describe("scheduleOverridesApi", () => {
         child_id: "child-1",
         title: "שיעור חורג",
         teacher: "יעל לוי",
+        user_id: null,
         room: "חדר 3",
         day_of_week: 1,
         time_slot_id: "slot-1",
@@ -1085,7 +1126,7 @@ describe("Staff View queries", () => {
   // filter method recorded so tests can assert on the query shape.
   const makeChain = (result: { data: any; error: any }) => {
     const chain: any = {};
-    ["select", "eq", "in", "ilike", "order"].forEach(method => {
+    ["select", "eq", "in", "ilike", "order", "not"].forEach(method => {
       chain[method] = vi.fn(() => chain);
     });
     chain.then = (resolve: any, reject: any) =>
@@ -1109,23 +1150,118 @@ describe("Staff View queries", () => {
     envState.isProduction = false;
   });
 
-  it("classesApi.getTeacherTitlePairs selects teacher/title within allowed scopes", async () => {
+  it("classesApi.getTeacherTitlePairs selects teacher/title/user_id within allowed scopes", async () => {
     envState.isProduction = true;
     mockTables({
       classes: [
-        { teacher: " דנה ", title: "מתמטיקה" },
-        { teacher: null, title: "אמנות" },
+        { teacher: " דנה ", title: "מתמטיקה", user_id: "user-1" },
+        { teacher: null, title: "אמנות", user_id: null },
       ],
     });
 
     const result = await classesApi.getTeacherTitlePairs();
 
-    expect(chains.classes.select).toHaveBeenCalledWith("teacher, title");
+    expect(chains.classes.select).toHaveBeenCalledWith(
+      "teacher, title, user_id"
+    );
     expect(chains.classes.in).toHaveBeenCalledWith("scope", ["prod"]);
     expect(result).toEqual([
-      { teacher: " דנה ", title: "מתמטיקה" },
-      { teacher: "", title: "אמנות" },
+      { teacher: " דנה ", title: "מתמטיקה", userId: "user-1" },
+      { teacher: "", title: "אמנות", userId: null },
     ]);
+  });
+
+  it("classesApi.getClassesByUserId filters by the linked user within allowed scopes", async () => {
+    envState.isProduction = true;
+    mockTables({
+      classes: [
+        {
+          id: "c1",
+          title: "מתמטיקה",
+          teacher: "אורית שמש",
+          user_id: "user-1",
+          slots: [{ dayOfWeek: 0, timeSlotId: "slot-1" }],
+        },
+      ],
+    });
+
+    const result = await classesApi.getClassesByUserId("user-1");
+
+    expect(chains.classes.eq).toHaveBeenCalledWith("user_id", "user-1");
+    expect(chains.classes.in).toHaveBeenCalledWith("scope", ["prod"]);
+    expect(result[0]).toMatchObject({ id: "c1", userId: "user-1" });
+  });
+
+  it("scheduleOverridesApi.getOverridesByUserId filters by the linked user and joins the child name", async () => {
+    mockTables({
+      schedule_overrides: [
+        {
+          id: "o1",
+          child_id: "child-1",
+          title: "תגבור",
+          teacher: "אורית שמש",
+          user_id: "user-1",
+          room: "",
+          day_of_week: 1,
+          time_slot_id: "slot-1",
+          scope: "prod",
+          child: { first_name: "נועה", last_name: "לוי" },
+        },
+      ],
+    });
+
+    const result = await scheduleOverridesApi.getOverridesByUserId("user-1");
+
+    expect(chains.schedule_overrides.eq).toHaveBeenCalledWith(
+      "user_id",
+      "user-1"
+    );
+    expect(result[0]).toMatchObject({
+      id: "o1",
+      userId: "user-1",
+      childName: "נועה לוי",
+    });
+  });
+
+  it("scheduleApi.getCommittedSelectionsMadeBy returns the user's committed child selections in allowed scopes", async () => {
+    envState.isProduction = true;
+    mockTables({
+      schedule_selections: [
+        {
+          child_id: "child-1",
+          class: {
+            id: "c1",
+            title: "חונכות",
+            teacher: "חונכ/ת",
+            scope: "prod",
+            slots: [{ dayOfWeek: 3, timeSlotId: "slot-1" }],
+          },
+          child: { first_name: "נועה", last_name: "לוי" },
+        },
+        {
+          child_id: "child-2",
+          class: { id: "c2", title: "חונכות", scope: "test", slots: [] },
+          child: { first_name: "אבי", last_name: "כהן" },
+        },
+      ],
+    });
+
+    const result = await scheduleApi.getCommittedSelectionsMadeBy("user-1");
+
+    expect(chains.schedule_selections.eq).toHaveBeenCalledWith(
+      "user_id",
+      "user-1"
+    );
+    expect(chains.schedule_selections.eq).toHaveBeenCalledWith(
+      "status",
+      "committed"
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      childId: "child-1",
+      childName: "נועה לוי",
+    });
+    expect(result[0].class.slots[0].timeSlot.id).toBe("slot-1");
   });
 
   it("classesApi.getClassesByTeacher matches the trimmed name exactly and hydrates slots", async () => {
@@ -1212,5 +1348,92 @@ describe("Staff View queries", () => {
       timeSlotId: "slot-1",
     });
     expect(result[0].timeSlot.id).toBe("slot-1");
+  });
+});
+
+describe("staff directory and display names", () => {
+  afterEach(() => {
+    mockRpcResult = { data: [], error: null };
+  });
+
+  it("staffApi.getStaffDirectory maps the RPC rows", async () => {
+    mockRpcResult = {
+      data: [{ id: "user-1", display_name: "אורית שמש" }],
+      error: null,
+    };
+
+    await expect(staffApi.getStaffDirectory()).resolves.toEqual([
+      { id: "user-1", displayName: "אורית שמש" },
+    ]);
+    expect(supabase.rpc).toHaveBeenCalledWith("get_staff_directory");
+  });
+
+  it("usersApi.adminSetDisplayName calls the admin RPC and keeps the SQLSTATE", async () => {
+    mockRpcResult = {
+      data: null,
+      error: { message: "duplicate key", code: "23505" },
+    };
+
+    await expect(
+      usersApi.adminSetDisplayName("user-1", "אורית שמש")
+    ).rejects.toMatchObject({ code: "23505" });
+    expect(supabase.rpc).toHaveBeenCalledWith("admin_set_display_name", {
+      p_user_id: "user-1",
+      p_display_name: "אורית שמש",
+    });
+  });
+});
+
+describe("childrenApi.getAllChildren creator name", () => {
+  afterEach(() => {
+    mockRpcResult = { data: [], error: null };
+  });
+
+  const row = (creator: Record<string, string | null>) => ({
+    id: "child-1",
+    first_name: "נועה",
+    last_name: "לוי",
+    grade: 3,
+    group_number: null,
+    track_number: null,
+    scope: "prod",
+    created_at: "",
+    updated_at: "",
+    has_parent: false,
+    created_by: "user-1",
+    ...creator,
+  });
+
+  it("prefers the creator's display name, then first + last name, then email", async () => {
+    mockRpcResult = {
+      data: [
+        row({
+          creator_display_name: "אורית שמש",
+          creator_first_name: "Orit",
+          creator_last_name: "Shemesh",
+          creator_email: "tal@example.com",
+        }),
+        row({
+          creator_display_name: null,
+          creator_first_name: "Orit",
+          creator_last_name: "Shemesh",
+          creator_email: "tal@example.com",
+        }),
+        row({
+          creator_first_name: null,
+          creator_last_name: null,
+          creator_email: "tal@example.com",
+        }),
+      ],
+      error: null,
+    };
+
+    const result = await childrenApi.getAllChildren();
+
+    expect(result.map(c => c.createdByName)).toEqual([
+      "אורית שמש",
+      "Orit Shemesh",
+      "tal@example.com",
+    ]);
   });
 });
