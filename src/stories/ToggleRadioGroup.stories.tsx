@@ -3,15 +3,14 @@ import { useState } from "react";
 import { Space, Typography } from "antd";
 import { ToggleRadioGroup } from "../components/ToggleRadioGroup";
 import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
+import { REQUESTABLE_ROLES, type RequestableRole } from "../constants/roles";
 import { ROLE_TAG_COLORS } from "../constants/roleColors";
 import i18n from "../utils/i18n";
 
 const { Text } = Typography;
 
-// The role options the signup page will offer, with i18n labels and
-// ROLE_TAG_COLORS. In RTL, staff should render rightmost.
-const REQUESTABLE_ROLES = ["staff", "parent", "child"] as const;
-type RequestableRole = (typeof REQUESTABLE_ROLES)[number];
+// Same option list the signup page builds: REQUESTABLE_ROLES order, i18n
+// labels, ROLE_TAG_COLORS. In RTL, staff should render rightmost.
 
 const roleOptions = REQUESTABLE_ROLES.map(role => ({
   value: role,

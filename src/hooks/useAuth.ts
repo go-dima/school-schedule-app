@@ -3,6 +3,7 @@ import { authApi, usersApi } from "../services/api";
 import { getPermissions } from "../services/permissions";
 import { getRoleFlags, pickDefaultRole } from "../services/roleFlags";
 import type { User, UserRole, UserRoleData } from "../types";
+import type { RequestableRole } from "../constants/roles";
 import { withTimeout } from "../utils/asyncUtils";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 
@@ -179,12 +180,12 @@ export function useAuth() {
     }
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (requestedRole?: RequestableRole) => {
     setError(null);
     setLoading(true);
 
     try {
-      await authApi.signInWithGoogle();
+      await authApi.signInWithGoogle(requestedRole);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Google sign in failed");
       throw err;
@@ -193,12 +194,16 @@ export function useAuth() {
     }
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    requestedRole?: RequestableRole
+  ) => {
     setError(null);
     setLoading(true);
 
     try {
-      await authApi.signUp(email, password);
+      await authApi.signUp(email, password, requestedRole);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign up failed");
       throw err;

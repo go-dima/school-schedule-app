@@ -78,6 +78,7 @@ vi.mock("./supabase", () => {
         chain.ilike = vi.fn(() => chain);
         chain.not = vi.fn(() => chain);
         chain.is = vi.fn(() => chain);
+        chain.limit = vi.fn(() => chain);
         chain.insert = vi.fn(() => chain);
         chain.update = vi.fn(() => chain);
         chain.order = vi.fn(() => chain);
@@ -104,6 +105,7 @@ function defaultFromImpl() {
   chain.ilike = vi.fn(() => chain);
   chain.not = vi.fn(() => chain);
   chain.is = vi.fn(() => chain);
+  chain.limit = vi.fn(() => chain);
   chain.insert = vi.fn(() => chain);
   chain.update = vi.fn(() => chain);
   chain.order = vi.fn(() => chain);
@@ -165,35 +167,74 @@ describe("authApi.onAuthStateChange", () => {
     expect(supabase.from).toHaveBeenCalledWith("user_roles");
   });
 
-  it("does not insert when a profile row already exists", async () => {
-    mockSingleResult = { data: { id: "user-1" }, error: null };
-    const user = { id: "user-1", email: "a@b.com" };
-
-    const fromCalls: string[] = [];
+  // Records each table's insert rows; user_roles lookups resolve to
+  // `existingRoles`.
+  function trackInserts(existingRoles: { id: string }[]) {
+    const inserts: Record<string, any[]> = {};
     (supabase.from as any).mockImplementation((table: string) => {
-      fromCalls.push(table);
       const chain: any = {};
       chain.select = vi.fn(() => chain);
       chain.eq = vi.fn(() => chain);
-      chain.not = vi.fn(() => chain);
-      chain.is = vi.fn(() => chain);
-      chain.insert = vi.fn(() => chain);
+      chain.limit = vi.fn(() => chain);
+      chain.insert = vi.fn((rows: any[]) => {
+        inserts[table] = rows;
+        return chain;
+      });
       chain.single = vi.fn(() => Promise.resolve(mockSingleResult));
       chain.then = (resolve: any, reject: any) =>
-        Promise.resolve(mockFromResult).then(resolve, reject);
+        Promise.resolve(
+          table === "user_roles"
+            ? { data: existingRoles, error: null }
+            : { data: null, error: null }
+        ).then(resolve, reject);
       return chain;
     });
+    return inserts;
+  }
 
+  async function signIn(user: any) {
     const callbackFired = new Promise<void>(resolve => {
       authApi.onAuthStateChange(() => resolve());
     });
     const handler = authCallbacks[authCallbacks.length - 1];
     handler("SIGNED_IN", { user });
-
     await withTimeout(callbackFired, 200);
+  }
 
-    expect(fromCalls).toEqual(["users"]);
-    expect(fromCalls).not.toContain("user_roles");
+  it("inserts nothing when the user already has a profile and a role", async () => {
+    mockSingleResult = { data: { id: "user-1" }, error: null };
+    const inserts = trackInserts([{ id: "role-1" }]);
+
+    await signIn({ id: "user-1", email: "a@b.com" });
+
+    expect(inserts).toEqual({});
+  });
+
+  it("still requests a role when the trigger already created the profile", async () => {
+    mockSingleResult = { data: { id: "user-1" }, error: null };
+    const inserts = trackInserts([]);
+
+    await signIn({ id: "user-1", email: "a@b.com" });
+
+    expect(inserts.users).toBeUndefined();
+    expect(inserts.user_roles).toEqual([
+      { user_id: "user-1", role: "parent", approved: false },
+    ]);
+  });
+
+  it("requests the role chosen at email signup", async () => {
+    mockSingleResult = { data: null, error: { message: "no rows found" } };
+    const inserts = trackInserts([]);
+
+    await signIn({
+      id: "user-1",
+      email: "a@b.com",
+      user_metadata: { requested_role: "child" },
+    });
+
+    expect(inserts.user_roles).toEqual([
+      { user_id: "user-1", role: "child", approved: false },
+    ]);
   });
 
   it("delivers the signed-in user to the callback only after the ensure step settles", async () => {
@@ -207,6 +248,7 @@ describe("authApi.onAuthStateChange", () => {
       chain.eq = vi.fn(() => chain);
       chain.not = vi.fn(() => chain);
       chain.is = vi.fn(() => chain);
+      chain.limit = vi.fn(() => chain);
       chain.insert = vi.fn(() => chain);
       chain.single = vi.fn(async () => {
         order.push(`single:${table}`);
@@ -257,6 +299,18 @@ describe("authApi.signUp", () => {
     await authApi.signUp("a@b.com", "password123");
 
     expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it("carries the requested role in user metadata", async () => {
+    (supabase.auth.signUp as any).mockClear();
+
+    await authApi.signUp("a@b.com", "password123", "staff");
+
+    expect(supabase.auth.signUp).toHaveBeenCalledWith({
+      email: "a@b.com",
+      password: "password123",
+      options: { data: { requested_role: "staff" } },
+    });
   });
 });
 
