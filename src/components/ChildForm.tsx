@@ -36,8 +36,9 @@ export function ChildForm({
   canNavigateToEdit = false,
 }: ChildFormProps) {
   const { t } = useTranslation();
-  const { user, roleFlags } = useAuth();
-  const isParent = roleFlags.isParent;
+  const { user, permissions } = useAuth();
+  // Only a parent can claim an existing child (claim_child).
+  const canClaim = permissions.canManageChildren;
   const [form] = Form.useForm();
   const isEditing = !!child;
   const [duplicateDialog, setDuplicateDialog] = useState<{
@@ -128,7 +129,7 @@ export function ChildForm({
       // child instead of creating a duplicate -- offer that as the primary
       // action. Staff/admin can't claim (claim_child rejects non-parents),
       // so they only get the create-anyway/cancel choice.
-      if (isParent) {
+      if (canClaim) {
         setDuplicateDialog({ values, match: decision.match });
         return;
       }

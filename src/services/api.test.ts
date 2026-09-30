@@ -81,6 +81,7 @@ vi.mock("./supabase", () => {
         chain.update = vi.fn(() => chain);
         chain.order = vi.fn(() => chain);
         chain.single = vi.fn(() => Promise.resolve(mockSingleResult));
+        chain.maybeSingle = vi.fn(() => Promise.resolve(mockFromResult));
         // Makes the chain awaitable: `await supabase.from(...).select(...)...`
         // resolves to whatever `mockFromResult` currently holds.
         chain.then = (resolve: any, reject: any) =>
@@ -105,6 +106,7 @@ function defaultFromImpl() {
   chain.update = vi.fn(() => chain);
   chain.order = vi.fn(() => chain);
   chain.single = vi.fn(() => Promise.resolve(mockSingleResult));
+  chain.maybeSingle = vi.fn(() => Promise.resolve(mockFromResult));
   chain.then = (resolve: any, reject: any) =>
     Promise.resolve(mockFromResult).then(resolve, reject);
   return chain;
@@ -724,6 +726,49 @@ describe("childrenApi.getChildById", () => {
     };
 
     await expect(childrenApi.getChildById("child-1")).rejects.toThrow();
+  });
+});
+
+describe("childrenApi.getMyLinkedChild", () => {
+  beforeEach(() => {
+    (supabase.from as any).mockClear();
+  });
+
+  afterEach(() => {
+    mockFromResult = { data: [], error: null };
+  });
+
+  it("looks the student up by the login's user id and maps the draft track", async () => {
+    mockFromResult = {
+      data: {
+        id: "child-1",
+        first_name: "איתי",
+        last_name: "כהן",
+        grade: 4,
+        group_number: null,
+        track_number_draft: 2,
+        track_number_committed: 1,
+        scope: "prod",
+        created_by: "admin-1",
+        created_at: "2026-01-01T00:00:00Z",
+        updated_at: "2026-01-01T00:00:00Z",
+      },
+      error: null,
+    };
+
+    const child = await childrenApi.getMyLinkedChild("user-1");
+
+    expect(fromChainFor("children").eq).toHaveBeenCalledWith(
+      "user_id",
+      "user-1"
+    );
+    expect(child).toMatchObject({ id: "child-1", grade: 4, trackNumber: 2 });
+  });
+
+  it("returns null when the account isn't linked", async () => {
+    mockFromResult = { data: null, error: null };
+
+    expect(await childrenApi.getMyLinkedChild("user-1")).toBeNull();
   });
 });
 
