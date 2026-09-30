@@ -9,14 +9,19 @@ import {
   Divider,
   Space,
 } from "antd";
-import { UserOutlined, LockOutlined, GoogleOutlined } from "@ant-design/icons";
+import {
+  UserOutlined,
+  LockOutlined,
+  GoogleOutlined,
+  UserAddOutlined,
+} from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { ROUTES } from "../routes/paths";
 import "./AuthPages.css";
 
-const { Title, Text, Link } = Typography;
+const { Title, Text } = Typography;
 
 interface LoginFormValues {
   email: string;
@@ -137,12 +142,15 @@ const LoginPage: React.FC = () => {
           </Space>
 
           <div className="auth-footer">
-            <Text>
-              {t("auth.login.signupPrompt")}{" "}
-              <Link onClick={() => navigate(ROUTES.SIGNUP)}>
-                {t("auth.login.signupLink")}
-              </Link>
-            </Text>
+            <Text>{t("auth.login.signupPrompt")}</Text>
+            <Button
+              icon={<UserAddOutlined />}
+              size="large"
+              block
+              onClick={() => navigate(ROUTES.SIGNUP)}
+              className="oauth-btn auth-signup-btn">
+              {t("auth.login.signupButton")}
+            </Button>
           </div>
         </Card>
       </div>

@@ -63,6 +63,7 @@ const loginMeta: Meta<typeof LoginPage> = {
 export default loginMeta;
 type LoginStory = StoryObj<typeof loginMeta>;
 
+// The signup entry point is a full-width button under the Google button.
 export const LoginDefault: LoginStory = {
   render: () => <LoginPage />,
 };
