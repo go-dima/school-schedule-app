@@ -441,6 +441,15 @@ export const usersApi = {
     if (error) throw new ApiError(error.message);
   },
 
+  /** Revoke the child role and clear the account's student link. */
+  async unlinkChildUser(userId: string) {
+    const { error } = await supabase.rpc("unlink_child_account", {
+      p_user_id: userId,
+    });
+
+    if (error) throw new ApiError(error.message);
+  },
+
   async revokeApprovedRole(roleId: string) {
     const { data, error } = await supabase
       .from("user_roles")

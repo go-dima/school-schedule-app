@@ -864,6 +864,25 @@ describe("usersApi.approveChildUser", () => {
   });
 });
 
+describe("usersApi.unlinkChildUser", () => {
+  beforeEach(() => {
+    (supabase.rpc as any).mockClear();
+    mockRpcResult = { data: null, error: null };
+  });
+
+  afterEach(() => {
+    mockRpcResult = { data: [], error: null };
+  });
+
+  it("revokes child and clears the link through the RPC", async () => {
+    await usersApi.unlinkChildUser("user-1");
+
+    expect(supabase.rpc).toHaveBeenCalledWith("unlink_child_account", {
+      p_user_id: "user-1",
+    });
+  });
+});
+
 describe("childrenApi.getUnlinkedChildren", () => {
   beforeEach(() => {
     (supabase.from as any).mockClear();
