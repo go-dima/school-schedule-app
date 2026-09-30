@@ -85,7 +85,11 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
 
   const handleApproveWithRole = (approval: PendingApproval) => {
     setSelectedApproval(approval);
-    form.setFieldsValue({ role: approval.role }); // Set default role
+    // Default to the requested role, unless it's one this dropdown can't
+    // grant yet (child needs a linked student record).
+    form.setFieldsValue({
+      role: approval.role === "child" ? undefined : approval.role,
+    });
     setRoleModalVisible(true);
   };
 
@@ -160,15 +164,6 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
         <Space>
           <TeamOutlined />
           {t("roles.staff")}
-        </Space>
-      ),
-    },
-    {
-      value: "child" as UserRole,
-      label: (
-        <Space>
-          <UserOutlined />
-          {t("roles.child")}
         </Space>
       ),
     },
