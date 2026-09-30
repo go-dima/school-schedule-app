@@ -22,6 +22,7 @@ import type {
   User,
   UserRole,
   UserRoleData,
+  ChildAccountLink,
 } from "../types";
 import { withTimeout } from "../utils/asyncUtils";
 import { env, getAllowedScopes, isTestScopeEnabled } from "../utils/env";
@@ -419,6 +420,25 @@ export const usersApi = {
 
     if (error) throw new ApiError(error.message);
     return data[0];
+  },
+
+  /** Approve (or grant) the child role and link the account to a student,
+   * existing or new, in one transaction. Replaces any pending requests. */
+  async approveChildUser(userId: string, link: ChildAccountLink) {
+    const { error } = await supabase.rpc(
+      "approve_child_account",
+      "childId" in link
+        ? { p_user_id: userId, p_child_id: link.childId }
+        : {
+            p_user_id: userId,
+            p_first_name: link.newChild.firstName,
+            p_last_name: link.newChild.lastName,
+            p_grade: link.newChild.grade,
+            p_group_number: link.newChild.groupNumber,
+          }
+    );
+
+    if (error) throw new ApiError(error.message);
   },
 
   async revokeApprovedRole(roleId: string) {
@@ -1348,6 +1368,33 @@ export const childrenApi = {
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
+  },
+
+  /** Students with no linked account, for the approval link picker. */
+  async getUnlinkedChildren(): Promise<Child[]> {
+    const { data, error } = await supabase
+      .from("children")
+      .select("*")
+      .is("user_id", null)
+      .in("scope", getAllowedScopes())
+      .order("last_name")
+      .order("first_name");
+
+    if (error) throw new ApiError(error.message);
+
+    return (data ?? []).map(row => ({
+      id: row.id,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      grade: row.grade,
+      groupNumber: row.group_number,
+      trackNumber: row.track_number_draft,
+      scope: row.scope,
+      createdBy: row.created_by ?? null,
+      createdByName: null,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
   },
 
   async getChildWithParents(

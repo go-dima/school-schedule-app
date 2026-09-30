@@ -77,6 +77,7 @@ vi.mock("./supabase", () => {
         chain.in = vi.fn(() => chain);
         chain.ilike = vi.fn(() => chain);
         chain.not = vi.fn(() => chain);
+        chain.is = vi.fn(() => chain);
         chain.insert = vi.fn(() => chain);
         chain.update = vi.fn(() => chain);
         chain.order = vi.fn(() => chain);
@@ -102,6 +103,7 @@ function defaultFromImpl() {
   chain.in = vi.fn(() => chain);
   chain.ilike = vi.fn(() => chain);
   chain.not = vi.fn(() => chain);
+  chain.is = vi.fn(() => chain);
   chain.insert = vi.fn(() => chain);
   chain.update = vi.fn(() => chain);
   chain.order = vi.fn(() => chain);
@@ -174,6 +176,7 @@ describe("authApi.onAuthStateChange", () => {
       chain.select = vi.fn(() => chain);
       chain.eq = vi.fn(() => chain);
       chain.not = vi.fn(() => chain);
+      chain.is = vi.fn(() => chain);
       chain.insert = vi.fn(() => chain);
       chain.single = vi.fn(() => Promise.resolve(mockSingleResult));
       chain.then = (resolve: any, reject: any) =>
@@ -203,6 +206,7 @@ describe("authApi.onAuthStateChange", () => {
       chain.select = vi.fn(() => chain);
       chain.eq = vi.fn(() => chain);
       chain.not = vi.fn(() => chain);
+      chain.is = vi.fn(() => chain);
       chain.insert = vi.fn(() => chain);
       chain.single = vi.fn(async () => {
         order.push(`single:${table}`);
@@ -810,6 +814,67 @@ describe("childrenApi.updateTrack", () => {
     await expect(
       childrenApi.updateTrack("child-1", "draft", 1)
     ).rejects.toThrow("Not allowed");
+  });
+});
+
+describe("usersApi.approveChildUser", () => {
+  beforeEach(() => {
+    (supabase.rpc as any).mockClear();
+    mockRpcResult = { data: null, error: null };
+  });
+
+  afterEach(() => {
+    mockRpcResult = { data: [], error: null };
+  });
+
+  it("links an existing student", async () => {
+    await usersApi.approveChildUser("user-1", { childId: "child-1" });
+
+    expect(supabase.rpc).toHaveBeenCalledWith("approve_child_account", {
+      p_user_id: "user-1",
+      p_child_id: "child-1",
+    });
+  });
+
+  it("creates a new student", async () => {
+    await usersApi.approveChildUser("user-1", {
+      newChild: {
+        firstName: "נועה",
+        lastName: "לוי",
+        grade: 2,
+        groupNumber: 1,
+      },
+    });
+
+    expect(supabase.rpc).toHaveBeenCalledWith("approve_child_account", {
+      p_user_id: "user-1",
+      p_first_name: "נועה",
+      p_last_name: "לוי",
+      p_grade: 2,
+      p_group_number: 1,
+    });
+  });
+
+  it("throws when the RPC rejects the link", async () => {
+    mockRpcResult = { data: null, error: { message: "already linked" } };
+
+    await expect(
+      usersApi.approveChildUser("user-1", { childId: "child-1" })
+    ).rejects.toThrow("already linked");
+  });
+});
+
+describe("childrenApi.getUnlinkedChildren", () => {
+  beforeEach(() => {
+    (supabase.from as any).mockClear();
+  });
+
+  it("asks only for students without a linked account", async () => {
+    mockFromResult = { data: [], error: null };
+
+    await childrenApi.getUnlinkedChildren();
+
+    expect(fromChainFor("children").is).toHaveBeenCalledWith("user_id", null);
   });
 });
 
