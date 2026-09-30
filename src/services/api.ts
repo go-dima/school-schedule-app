@@ -723,19 +723,14 @@ export const classesApi = {
 
 // Schedule Selections API
 //
-// Every schedule_selections row is either child-linked (a parent/staff
-// member picking for a student, target: { childId }) or user-linked (the
-// "child" role picking for themselves, target: { userId }). Known
-// limitation carried over unchanged from the pre-unification getUserSchedule
-// /selectClass/unselectClass: the { userId } insert never sets child_id,
-// which is NOT NULL on schedule_selections -- so a "child"-role user's own
-// selectSchedule call fails today. Tracked in #65, not fixed here.
+// Every schedule_selections row belongs to a student (child_id is NOT
+// NULL); user_id records who made the pick (parent, child user or staff).
 export const scheduleApi = {
   async getSelectedSchedule(
     target: ScheduleTarget,
     status: SelectionStatus
   ): Promise<ScheduleSelectionWithClass[]> {
-    let query = supabase
+    const query = supabase
       .from("schedule_selections")
       .select(
         `
@@ -743,11 +738,8 @@ export const scheduleApi = {
         class:classes(*)
       `
       )
-      .eq("status", status);
-    query =
-      "userId" in target
-        ? query.eq("user_id", target.userId)
-        : query.eq("child_id", target.childId);
+      .eq("status", status)
+      .eq("child_id", target.childId);
 
     const [{ data, error }, timeSlotsById] = await Promise.all([
       query,
@@ -812,25 +804,17 @@ export const scheduleApi = {
     classId: string,
     status: SelectionStatus
   ) {
-    const row =
-      "childId" in target
-        ? await (async () => {
-            // Get current user ID (parent/staff making the selection)
-            const {
-              data: { user },
-            } = await withTimeout(
-              supabase.auth.getUser(),
-              AUTH_LOCKED_CALL_TIMEOUT_MS
-            );
-            if (!user) throw new ApiError("User not authenticated");
-            return {
-              user_id: user.id,
-              child_id: target.childId,
-              class_id: classId,
-              status,
-            };
-          })()
-        : { user_id: target.userId, class_id: classId, status };
+    // The signed-in user making the pick (parent, child user or staff).
+    const {
+      data: { user },
+    } = await withTimeout(supabase.auth.getUser(), AUTH_LOCKED_CALL_TIMEOUT_MS);
+    if (!user) throw new ApiError("User not authenticated");
+    const row = {
+      user_id: user.id,
+      child_id: target.childId,
+      class_id: classId,
+      status,
+    };
 
     const { data, error } = await supabase
       .from("schedule_selections")
@@ -849,17 +833,12 @@ export const scheduleApi = {
     classId: string,
     status: SelectionStatus
   ) {
-    let query = supabase
+    const { error } = await supabase
       .from("schedule_selections")
       .delete()
       .eq("class_id", classId)
-      .eq("status", status);
-    query =
-      "userId" in target
-        ? query.eq("user_id", target.userId)
-        : query.eq("child_id", target.childId);
-
-    const { error } = await query;
+      .eq("status", status)
+      .eq("child_id", target.childId);
 
     if (error) throw new ApiError(error.message);
   },
