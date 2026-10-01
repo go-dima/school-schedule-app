@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { RoleTagColor } from "../constants/roleColors";
+import { toggleOptionClassName } from "./toggleOptionClassName";
 import "./ToggleFilterGroup.css";
 
 // Native dblclick fires after two click events close together, so a naive
@@ -8,7 +9,7 @@ import "./ToggleFilterGroup.css";
 // it outright instead of visibly flashing through the toggled state.
 const DOUBLE_CLICK_GRACE_MS = 250;
 
-interface ToggleFilterGroupOption<T extends string> {
+export interface ToggleFilterGroupOption<T extends string> {
   value: T;
   label: string;
   /** Active-state color, matching antd's preset Tag colors (e.g. from
@@ -82,16 +83,11 @@ export function ToggleFilterGroup<T extends string>({
     <div className="toggle-filter-group" role="group">
       {options.map(option => {
         const active = value.includes(option.value);
-        const activeClass = option.color
-          ? `toggle-filter-group__option--active-${option.color}`
-          : "toggle-filter-group__option--active";
         return (
           <button
             key={option.value}
             type="button"
-            className={
-              "toggle-filter-group__option" + (active ? ` ${activeClass}` : "")
-            }
+            className={toggleOptionClassName(active, option.color)}
             aria-pressed={active}
             onClick={() => handleClick(option.value)}
             onDoubleClick={
