@@ -115,7 +115,7 @@ export function useChildren() {
       }
 
       if (trackNumber !== undefined) {
-        await childrenApi.updateChildTrack(childId, "draft", trackNumber);
+        await childrenApi.updateTrack(childId, "draft", trackNumber);
         updatedChild = { ...updatedChild, trackNumber };
       }
 

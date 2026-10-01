@@ -375,8 +375,16 @@
       "file": "047_child_account_link.sql",
       "created_at": "2026-09-30T00:00:00Z",
       "dependencies": ["046_drop_open_children_insert"]
+    },
+    {
+      "id": "048_set_track_draft",
+      "name": "Set Track Draft",
+      "description": "Child role: replace set_own_track_draft() with set_track_draft(p_child_id, p_track_number), the single draft-track write path for a child's parent or the linked child user. Writes only track_number_draft; committed tracks stay a direct staff/admin update.",
+      "file": "048_set_track_draft.sql",
+      "created_at": "2026-10-01T00:02:00Z",
+      "dependencies": ["047_child_account_link"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 47
+  "schema_version": 48
 }

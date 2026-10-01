@@ -772,6 +772,47 @@ describe("childrenApi.getMyLinkedChild", () => {
   });
 });
 
+describe("childrenApi.updateTrack", () => {
+  beforeEach(() => {
+    (supabase.from as any).mockClear();
+    (supabase.rpc as any).mockClear();
+    mockRpcResult = { data: null, error: null };
+    mockFromResult = { data: null, error: null };
+  });
+
+  afterEach(() => {
+    mockRpcResult = { data: [], error: null };
+    mockFromResult = { data: [], error: null };
+  });
+
+  it("sets the draft through the RPC (parent or child user)", async () => {
+    await childrenApi.updateTrack("child-1", "draft", 2);
+
+    expect(supabase.rpc).toHaveBeenCalledWith("set_track_draft", {
+      p_child_id: "child-1",
+      p_track_number: 2,
+    });
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it("writes the committed column directly (staff)", async () => {
+    await childrenApi.updateTrack("child-1", "committed", 1);
+
+    const chain = fromChainFor("children");
+    expect(chain.update).toHaveBeenCalledWith({ track_number_committed: 1 });
+    expect(chain.eq).toHaveBeenCalledWith("id", "child-1");
+    expect(supabase.rpc).not.toHaveBeenCalled();
+  });
+
+  it("throws when the RPC rejects the caller", async () => {
+    mockRpcResult = { data: null, error: { message: "Not allowed" } };
+
+    await expect(
+      childrenApi.updateTrack("child-1", "draft", 1)
+    ).rejects.toThrow("Not allowed");
+  });
+});
+
 describe("childrenApi.getChildWithParents", () => {
   beforeEach(() => {
     (supabase.from as any).mockClear();

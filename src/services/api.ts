@@ -1232,21 +1232,27 @@ export const childrenApi = {
    * Track is split into track_number_draft (parent-owned) and
    * track_number_committed (staff/admin-owned) -- a separate write path
    * from updateChild since the two are never touched by the same caller's
-   * intent. No DB-level enforcement of which status a caller may write
-   * (see migration 023's header) -- callers must pass the correct status.
+   * intent. The draft goes through set_track_draft (migration 048), which
+   * only a child's parent or the linked child user may call; callers must
+   * still pass the right status.
    */
-  async updateChildTrack(
+  async updateTrack(
     childId: string,
     status: SelectionStatus,
     trackNumber: number | null
   ): Promise<void> {
-    const column =
-      status === "committed" ? "track_number_committed" : "track_number_draft";
-
-    const { error } = await supabase
-      .from("children")
-      .update({ [column]: trackNumber })
-      .eq("id", childId);
+    // Draft: one RPC for a child's parent and for the linked child user
+    // (who has no UPDATE on children). Committed: staff/admin, directly.
+    const { error } =
+      status === "draft"
+        ? await supabase.rpc("set_track_draft", {
+            p_child_id: childId,
+            p_track_number: trackNumber,
+          })
+        : await supabase
+            .from("children")
+            .update({ track_number_committed: trackNumber })
+            .eq("id", childId);
 
     if (error) throw new ApiError(error.message);
   },
