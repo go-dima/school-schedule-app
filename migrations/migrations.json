@@ -351,8 +351,16 @@
       "file": "044_display_name_in_creator_rpcs.sql",
       "created_at": "2026-09-26T00:01:00Z",
       "dependencies": ["043_link_users_to_teachers"]
+    },
+    {
+      "id": "045_lock_down_user_roles_self_insert",
+      "name": "Lock Down User Roles Self Insert",
+      "description": "Security: replace the live user_roles_insert_own policy (WITH CHECK user_id = auth.uid() OR service_role, which let any signed-in user insert an approved admin role for themselves) with one self-request policy: own row, approved = false, role in parent/staff/child. Admin grants keep using user_roles_admin_insert_all.",
+      "file": "045_lock_down_user_roles_self_insert.sql",
+      "created_at": "2026-10-01T00:00:00Z",
+      "dependencies": ["044_display_name_in_creator_rpcs"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 44
+  "schema_version": 45
 }
