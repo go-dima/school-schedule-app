@@ -16,7 +16,7 @@
       "googleButton": "התחבר עם Google",
       "googleError": "שגיאה בהתחברות עם Google",
       "signupPrompt": "עדיין אין לך חשבון?",
-      "signupLink": "הירשם עכשיו"
+      "signupButton": "הרשמה"
     },
     "signup": {
       "title": "הרשמה",

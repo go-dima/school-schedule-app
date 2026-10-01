@@ -122,6 +122,10 @@
   color: #8c8c8c;
 }
 
+.auth-signup-btn {
+  margin-top: 8px;
+}
+
 .auth-alert {
   margin-bottom: 24px;
   text-align: right;
