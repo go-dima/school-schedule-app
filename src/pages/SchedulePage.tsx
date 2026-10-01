@@ -189,8 +189,9 @@ const SchedulePageContent: React.FC = () => {
   const { viewStatus, overrideChildId, canCreateOverride } =
     ScheduleService.resolveScheduleView({
       role: currentRole?.role,
+      canPickSchedule: permissions.canPickSchedule,
       viewCommitted,
-      parentSelectedChildId: selectedChild?.id,
+      selectedChildId: selectedChild?.id,
       staffSelectedChildId: staffSelectedChild?.id,
     });
 

@@ -297,8 +297,12 @@ export class ScheduleService {
    */
   static resolveScheduleView(input: {
     role: UserRole | undefined;
+    /** permissions.canPickSchedule: parent or child. */
+    canPickSchedule: boolean;
     viewCommitted: boolean;
-    parentSelectedChildId: string | undefined;
+    /** ChildContext's selected child: one of a parent's children, or a
+     * child user's own linked student. */
+    selectedChildId: string | undefined;
     staffSelectedChildId: string | undefined;
   }): {
     viewStatus: SelectionStatus;
@@ -306,10 +310,9 @@ export class ScheduleService {
     canCreateOverride: boolean;
   } {
     const isStaff = input.role === "staff";
-    const isParent = input.role === "parent";
 
     const viewStatus: SelectionStatus =
-      isParent && input.viewCommitted
+      input.canPickSchedule && input.viewCommitted
         ? "committed"
         : ScheduleService.resolveSelectionStatus(input.role);
 
@@ -317,7 +320,7 @@ export class ScheduleService {
       viewStatus === "committed"
         ? isStaff
           ? input.staffSelectedChildId
-          : input.parentSelectedChildId
+          : input.selectedChildId
         : undefined;
 
     const canCreateOverride = isStaff && !!input.staffSelectedChildId;

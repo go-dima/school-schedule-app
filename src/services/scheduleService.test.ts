@@ -531,8 +531,9 @@ describe("ScheduleService.resolveScheduleView", () => {
       name: "parent, draft (not toggled): no overrides",
       input: {
         role: "parent",
+        canPickSchedule: true,
         viewCommitted: false,
-        parentSelectedChildId: "child-1",
+        selectedChildId: "child-1",
         staffSelectedChildId: undefined,
       },
       expected: {
@@ -545,8 +546,9 @@ describe("ScheduleService.resolveScheduleView", () => {
       name: "parent, toggled to committed: overrides for that child",
       input: {
         role: "parent",
+        canPickSchedule: true,
         viewCommitted: true,
-        parentSelectedChildId: "child-1",
+        selectedChildId: "child-1",
         staffSelectedChildId: undefined,
       },
       expected: {
@@ -559,8 +561,9 @@ describe("ScheduleService.resolveScheduleView", () => {
       name: "parent, toggled to committed, no child selected yet: no overrides",
       input: {
         role: "parent",
+        canPickSchedule: true,
         viewCommitted: true,
-        parentSelectedChildId: undefined,
+        selectedChildId: undefined,
         staffSelectedChildId: undefined,
       },
       expected: {
@@ -573,8 +576,9 @@ describe("ScheduleService.resolveScheduleView", () => {
       name: "staff, child selected: always committed, overrides for that child, can create",
       input: {
         role: "staff",
+        canPickSchedule: false,
         viewCommitted: false,
-        parentSelectedChildId: undefined,
+        selectedChildId: undefined,
         staffSelectedChildId: "child-2",
       },
       expected: {
@@ -587,8 +591,9 @@ describe("ScheduleService.resolveScheduleView", () => {
       name: "staff, no child selected: committed, no overrides, cannot create",
       input: {
         role: "staff",
+        canPickSchedule: false,
         viewCommitted: false,
-        parentSelectedChildId: undefined,
+        selectedChildId: undefined,
         staffSelectedChildId: undefined,
       },
       expected: {
@@ -601,8 +606,9 @@ describe("ScheduleService.resolveScheduleView", () => {
       name: "admin: committed, but no override read/write (staff-only feature)",
       input: {
         role: "admin",
+        canPickSchedule: false,
         viewCommitted: false,
-        parentSelectedChildId: undefined,
+        selectedChildId: undefined,
         staffSelectedChildId: "child-2",
       },
       expected: {
@@ -612,11 +618,27 @@ describe("ScheduleService.resolveScheduleView", () => {
       },
     },
     {
-      name: "child role: draft, no overrides (no Child record to key off)",
+      name: "child, toggled to committed: overrides for their own student",
       input: {
         role: "child",
+        canPickSchedule: true,
+        viewCommitted: true,
+        selectedChildId: "own-student",
+        staffSelectedChildId: undefined,
+      },
+      expected: {
+        viewStatus: "committed",
+        overrideChildId: "own-student",
+        canCreateOverride: false,
+      },
+    },
+    {
+      name: "child, not linked to a student yet: draft, no overrides",
+      input: {
+        role: "child",
+        canPickSchedule: true,
         viewCommitted: false,
-        parentSelectedChildId: undefined,
+        selectedChildId: undefined,
         staffSelectedChildId: undefined,
       },
       expected: {
@@ -629,8 +651,9 @@ describe("ScheduleService.resolveScheduleView", () => {
       name: "no role yet: draft, no overrides",
       input: {
         role: undefined,
+        canPickSchedule: false,
         viewCommitted: false,
-        parentSelectedChildId: undefined,
+        selectedChildId: undefined,
         staffSelectedChildId: undefined,
       },
       expected: {
