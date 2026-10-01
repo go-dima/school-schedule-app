@@ -19,15 +19,20 @@ import { useAuth } from "../contexts/AuthContext";
 import { ApiError, usersApi } from "../services/api";
 import type { UserRoleData, UserRole } from "../types";
 import { ROLE_TAG_COLORS } from "../constants/roleColors";
+import { ALL_ROLES } from "../constants/roles";
+import { validateRoleSet, type RoleSetError } from "../services/roleRules";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 import "./UserManagementPage.css";
 
-const ALL_ROLES: UserRole[] = ["admin", "moderator", "staff", "parent"];
+// Roles the edit modal can grant. child is left out until granting it can
+// also link the account to a student record.
+const GRANTABLE_ROLES: UserRole[] = ALL_ROLES.filter(role => role !== "child");
 
-// admin/moderator are elevated roles that require a base role (staff or
-// parent) to remain meaningful -- they don't carry their own identity.
-const BASE_ROLES: UserRole[] = ["staff", "parent"];
-const ELEVATED_ROLES: UserRole[] = ["admin", "moderator"];
+const ROLE_SET_ERROR_KEYS: Record<RoleSetError, string> = {
+  noRoles: "userManagement.page.noRolesValidationError",
+  exclusiveCombined: "userManagement.page.childExclusiveValidationError",
+  elevatedWithoutBase: "userManagement.page.baseRoleValidationError",
+};
 
 const { Text } = Typography;
 
@@ -135,20 +140,6 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
     );
   };
 
-  // Elevated roles (admin/moderator) carry no identity of their own -- they
-  // must be paired with a base role (staff or parent).
-  const validateRoleSet = (roles: UserRole[]): string | null => {
-    if (roles.length === 0) {
-      return t("userManagement.page.noRolesValidationError");
-    }
-    const hasElevated = roles.some(role => ELEVATED_ROLES.includes(role));
-    const hasBase = roles.some(role => BASE_ROLES.includes(role));
-    if (hasElevated && !hasBase) {
-      return t("userManagement.page.baseRoleValidationError");
-    }
-    return null;
-  };
-
   const applyRoleChanges = async (user: UserWithRoles, desired: UserRole[]) => {
     const current = user.roles
       .filter(role => role.approved)
@@ -186,9 +177,9 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
   const saveRoles = async () => {
     if (!selectedUser) return;
 
-    const validationMessage = validateRoleSet(selectedRoles);
-    if (validationMessage) {
-      setValidationError(validationMessage);
+    const roleSetError = validateRoleSet(selectedRoles);
+    if (roleSetError) {
+      setValidationError(t(ROLE_SET_ERROR_KEYS[roleSetError]));
       return;
     }
     setValidationError(null);
@@ -512,7 +503,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         </p>
         <div style={{ marginBottom: 16 }}>
           <RoleTagPicker
-            roles={ALL_ROLES}
+            roles={GRANTABLE_ROLES}
             selected={selectedRoles}
             onToggle={toggleRole}
           />
