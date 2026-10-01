@@ -359,8 +359,16 @@
       "file": "045_lock_down_user_roles_self_insert.sql",
       "created_at": "2026-10-01T00:00:00Z",
       "dependencies": ["044_display_name_in_creator_rpcs"]
+    },
+    {
+      "id": "046_drop_open_children_insert",
+      "name": "Drop Open Children Insert",
+      "description": "Security (#188): drop the out-of-band \"Authenticated users can create children\" policy, which let any signed-in user (even pending approval) insert students directly. Children are created only through create_child_with_relationship (SECURITY DEFINER), which is unaffected.",
+      "file": "046_drop_open_children_insert.sql",
+      "created_at": "2026-10-01T00:01:00Z",
+      "dependencies": ["045_lock_down_user_roles_self_insert"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 45
+  "schema_version": 46
 }
