@@ -40,24 +40,27 @@ export function ChildProvider({
   const [selectedChild, setSelectedChild] = useState<Child | undefined>(
     undefined
   );
-  const { roleFlags } = useAuth();
+  const { permissions } = useAuth();
   const { children, loading, error, createChild, updateChild, removeChild } =
     useChildren();
-  const isParent = roleFlags.isParent;
+  // Parents pick among their children; a child user's list is just their
+  // own linked student (see useChildren), so it gets selected here too and
+  // the whole parent flow works on it unchanged.
+  const { canPickSchedule } = permissions;
 
-  // Auto-select first child if user is a parent and no child is selected
+  // Auto-select the first child when nothing is selected
   useEffect(() => {
-    if (isParent && children.length && !selectedChild && !loading) {
+    if (canPickSchedule && children.length && !selectedChild && !loading) {
       setSelectedChild(children[0]);
     }
-  }, [children, selectedChild, isParent, loading]);
+  }, [children, selectedChild, canPickSchedule, loading]);
 
-  // Clear selected child if user is not a parent
+  // Clear the selected child if the user can't pick schedules
   useEffect(() => {
-    if (!isParent && selectedChild) {
+    if (!canPickSchedule && selectedChild) {
       setSelectedChild(undefined);
     }
-  }, [isParent, selectedChild]);
+  }, [canPickSchedule, selectedChild]);
 
   // Clear selected child if it no longer exists in children array
   useEffect(() => {

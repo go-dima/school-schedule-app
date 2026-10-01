@@ -23,8 +23,8 @@ const ProfileSettingsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [success, setSuccess] = useState(false);
-  const { user, roleFlags, permissions, refreshProfile } = useAuth();
-  const isParent = roleFlags.isParent;
+  const { user, permissions, refreshProfile } = useAuth();
+  const { canManageChildren } = permissions;
   // Staff-role users (admin/staff/moderator) have a display name: the name
   // their classes and Staff View show them under.
   const hasDisplayName = permissions.canManageClasses;
@@ -34,7 +34,9 @@ const ProfileSettingsPage: React.FC = () => {
   // to "profile" for anyone not on the "children" tab, and for non-parents
   // regardless of what the URL says (they have no children tab to show).
   const activeTab =
-    searchParams.get("tab") === "children" && isParent ? "children" : "profile";
+    searchParams.get("tab") === "children" && canManageChildren
+      ? "children"
+      : "profile";
 
   const handleTabChange = (key: string) => {
     setSearchParams(key === "profile" ? {} : { tab: key });
@@ -188,7 +190,7 @@ const ProfileSettingsPage: React.FC = () => {
   ];
 
   // Add children management tab for parents
-  if (isParent) {
+  if (canManageChildren) {
     tabItems.push({
       key: "children",
       label: (

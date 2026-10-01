@@ -1336,6 +1336,35 @@ export const childrenApi = {
     };
   },
 
+  /** The student linked to this login (children.user_id), for a child
+   * user. Null when the account isn't linked yet or the student's scope
+   * isn't allowed here. RLS only returns the row to an approved child. */
+  async getMyLinkedChild(userId: string): Promise<Child | null> {
+    const { data, error } = await supabase
+      .from("children")
+      .select("*")
+      .eq("user_id", userId)
+      .in("scope", getAllowedScopes())
+      .maybeSingle();
+
+    if (error) throw new ApiError(error.message);
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      grade: data.grade,
+      groupNumber: data.group_number,
+      trackNumber: data.track_number_draft,
+      scope: data.scope,
+      createdBy: data.created_by ?? null,
+      createdByName: null,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+  },
+
   async getChildWithParents(
     childId: string,
     status: SelectionStatus = "draft"
