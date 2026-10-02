@@ -5,10 +5,16 @@ import { Button, Modal, Typography } from "antd";
 const { Text } = Typography;
 import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
 import { RoleTagPicker } from "../components/RoleTagPicker";
+import { ChildAccountLinkPicker } from "../components/ChildAccountLinkPicker";
+import {
+  EMPTY_CHILD_LINK_DRAFT,
+  childLinkValue,
+  type ChildLinkDraft,
+} from "../components/childAccountLink";
 import { ROLE_TAG_COLORS } from "../constants/roleColors";
 import { ALL_ROLES } from "../constants/roles";
 import { validateRoleSet, type RoleSetError } from "../services/roleRules";
-import type { UserRole } from "../types";
+import type { Child, UserRole } from "../types";
 
 // UserManagementPage's role filter bar and role-edit modal both need real
 // Supabase data to render via the full page, so these stories exercise the
@@ -67,9 +73,22 @@ export const RoleFilterBar: Story = {
   render: () => <FilterBarDemo />,
 };
 
-// The picker lists every role, child included, to preview the exclusivity
-// rule; the page itself only offers child once granting it can link a
-// student record.
+const linkStudents: Child[] = [
+  {
+    id: "s1",
+    firstName: "נועה",
+    lastName: "לוי",
+    grade: 2,
+    groupNumber: null,
+    trackNumber: null,
+    scope: "test",
+    createdBy: null,
+    createdByName: null,
+    createdAt: "2026-01-01T00:00:00Z",
+    updatedAt: "2026-01-01T00:00:00Z",
+  },
+];
+
 function RoleEditModalDemo({
   initialRoles = ["parent"],
 }: {
@@ -77,7 +96,13 @@ function RoleEditModalDemo({
 }) {
   const [open, setOpen] = useState(true);
   const [selectedRoles, setSelectedRoles] = useState<UserRole[]>(initialRoles);
+  const [linkDraft, setLinkDraft] = useState<ChildLinkDraft>(
+    EMPTY_CHILD_LINK_DRAFT
+  );
   const roleSetError = validateRoleSet(selectedRoles);
+  // Granting child alone needs a linked student, like approval does.
+  const needsLink = !roleSetError && selectedRoles.includes("child");
+  const canSave = !roleSetError && (!needsLink || !!childLinkValue(linkDraft));
 
   const toggleRole = (role: UserRole, checked: boolean) => {
     setSelectedRoles(prev =>
@@ -95,7 +120,7 @@ function RoleEditModalDemo({
         onCancel={() => setOpen(false)}
         okText="שמור"
         cancelText="ביטול"
-        okButtonProps={{ disabled: !!roleSetError }}
+        okButtonProps={{ disabled: !canSave }}
         footer={(_, { OkBtn, CancelBtn }) => (
           <div
             style={{
@@ -124,6 +149,13 @@ function RoleEditModalDemo({
             onToggle={toggleRole}
           />
         </div>
+        {needsLink && (
+          <ChildAccountLinkPicker
+            students={linkStudents}
+            value={linkDraft}
+            onChange={setLinkDraft}
+          />
+        )}
       </Modal>
     </>
   );
@@ -136,4 +168,9 @@ export const RoleEditModal: Story = {
 // Child plus any other role is rejected; Save stays disabled.
 export const ChildExclusivityError: Story = {
   render: () => <RoleEditModalDemo initialRoles={["parent", "child"]} />,
+};
+
+// Granting child on its own shows the student link picker.
+export const GrantChildWithLink: Story = {
+  render: () => <RoleEditModalDemo initialRoles={["child"]} />,
 };
