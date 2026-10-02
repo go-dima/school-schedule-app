@@ -93,6 +93,19 @@ export interface ScheduleSelectionWithClass extends ScheduleSelection {
 // student staff picked).
 export type ScheduleTarget = { childId: string };
 
+// The student a child login gets linked to at approval: an existing one, or
+// a new one to create (see approve_child_account, migration 047).
+export interface NewLinkedChild {
+  firstName: string;
+  lastName: string;
+  grade: number;
+  groupNumber: number | null;
+}
+
+export type ChildAccountLink =
+  | { childId: string }
+  | { newChild: NewLinkedChild };
+
 export interface WeeklySchedule {
   [dayOfWeek: number]: {
     [timeSlotId: string]: ClassWithTimeSlot[];
