@@ -88,10 +88,10 @@ export interface ScheduleSelectionWithClass extends ScheduleSelection {
   class: ClassWithTimeSlot;
 }
 
-// Identifies whose schedule_selections rows to read/write: either a
-// child-linked selection (parent/staff acting for a student) or a
-// user-linked one (the "child" role selecting for themselves).
-export type ScheduleTarget = { userId: string } | { childId: string };
+// Identifies whose schedule_selections rows to read/write: always a
+// student (a parent's child, a child user's own linked student, or the
+// student staff picked).
+export type ScheduleTarget = { childId: string };
 
 export interface WeeklySchedule {
   [dayOfWeek: number]: {

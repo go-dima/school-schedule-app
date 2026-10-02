@@ -484,11 +484,7 @@ const SchedulePageContent: React.FC = () => {
     // `target`. Mismatched, computeChanges would never see its own writes land,
     // looping writes against the wrong child forever. Only sync when both
     // agree on the same child.
-    if (
-      !target ||
-      !("childId" in target) ||
-      target.childId !== currentTrackChild?.id
-    ) {
+    if (!target || target.childId !== currentTrackChild?.id) {
       return;
     }
 
@@ -566,7 +562,7 @@ const SchedulePageContent: React.FC = () => {
       if (isClassSelected(classId)) {
         // Locked classes (track, group, or mandatory match) can't be
         // unselected.
-        if ("childId" in target && lockedClassIds.has(classId)) {
+        if (lockedClassIds.has(classId)) {
           message.warning(t("schedule.page.error.lockedClassCannotUnselect"));
           return;
         }

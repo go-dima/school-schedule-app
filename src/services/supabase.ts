@@ -141,7 +141,7 @@ export type Database = {
           id: string;
           user_id: string;
           class_id: string;
-          child_id: string | null;
+          child_id: string;
           status: "draft" | "committed";
           created_at: string;
           updated_at: string;
@@ -150,7 +150,7 @@ export type Database = {
           id?: string;
           user_id: string;
           class_id: string;
-          child_id?: string | null;
+          child_id: string;
           status?: "draft" | "committed";
           created_at?: string;
           updated_at?: string;
@@ -159,10 +159,27 @@ export type Database = {
           id?: string;
           user_id?: string;
           class_id?: string;
-          child_id?: string | null;
+          child_id?: string;
           status?: "draft" | "committed";
           created_at?: string;
           updated_at?: string;
+        };
+      };
+      children: {
+        Row: {
+          id: string;
+          first_name: string;
+          last_name: string;
+          grade: number;
+          group_number: number | null;
+          track_number_draft: number | null;
+          track_number_committed: number | null;
+          scope: "test" | "prod";
+          created_by: string | null;
+          // The login linked to this student (child role), migration 045.
+          user_id: string | null;
+          created_at: string;
+          updated_at: string;
         };
       };
     };
@@ -173,7 +190,7 @@ export type Database = {
       [_ in never]: never;
     };
     Enums: {
-      user_role: "admin" | "parent" | "child" | "staff";
+      user_role: "admin" | "parent" | "child" | "staff" | "moderator";
     };
     CompositeTypes: {
       [_ in never]: never;
