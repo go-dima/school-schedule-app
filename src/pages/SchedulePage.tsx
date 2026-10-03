@@ -556,8 +556,18 @@ const SchedulePageContent: React.FC = () => {
     canEdit,
   ]);
 
+  // handleClassSelect awaits the API call and then a refetch before
+  // isClassSelected reflects the new state -- so a second click on the same
+  // class while that round-trip is still in flight sees stale state and
+  // fires a second insert for the same (child_id, class_id, status),
+  // hitting schedule_selections_child_class_status_key as a raw Postgres
+  // error instead of a no-op. Guard re-entrancy per class instead.
+  const pendingSelectionClassIdsRef = React.useRef<Set<string>>(new Set());
+
   const handleClassSelect = async (classId: string) => {
     if (!target) return;
+    if (pendingSelectionClassIdsRef.current.has(classId)) return;
+    pendingSelectionClassIdsRef.current.add(classId);
     try {
       if (isClassSelected(classId)) {
         // Locked classes (track, group, or mandatory match) can't be
@@ -582,6 +592,8 @@ const SchedulePageContent: React.FC = () => {
           ? err.message
           : t("schedule.page.error.updateClassSelection")
       );
+    } finally {
+      pendingSelectionClassIdsRef.current.delete(classId);
     }
   };
 
