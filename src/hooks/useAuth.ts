@@ -15,43 +15,24 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [userRoles, setUserRoles] = useState<UserRoleData[]>([]);
   const [currentRole, setCurrentRole] = useState<UserRoleData | null>(null);
+  // Stays true until supabase-js delivers its first auth event (see below).
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [initialized, setInitialized] = useState(false);
 
-  // Ref to track active operations and prevent race conditions
+  // Ref to track the active auth listener so it can be aborted
   const activeOperationRef = useRef<{
-    initAuth: AbortController | null;
     authStateChange: AbortController | null;
   }>({
-    initAuth: null,
     authStateChange: null,
   });
 
   useEffect(() => {
     let mounted = true;
 
-    // Prevent re-initialization if already initialized
-    if (initialized) {
-      return () => {
-        mounted = false;
-      };
-    }
-
-    // Prevent multiple simultaneous auth initializations
-    if (activeOperationRef.current.initAuth) {
-      return () => {
-        mounted = false;
-      };
-    }
-
     // Cancel any existing auth state change operations
     if (activeOperationRef.current.authStateChange) {
       activeOperationRef.current.authStateChange.abort();
     }
-
-    const initController = new AbortController();
-    activeOperationRef.current.initAuth = initController;
 
     const loadUserRoles = async (
       userId: string,
@@ -77,50 +58,21 @@ export function useAuth() {
       }
     };
 
-    const initAuth = async () => {
-      try {
-        // Instead of calling getCurrentUser which hangs,
-        // let the auth state change listener handle the initial auth state
-        console.log(
-          "🔐 useAuth: Skipping getCurrentUser, relying on auth state listener"
-        );
-
-        if (initController.signal.aborted || !mounted) return;
-
-        // Initialize as no user - the auth state change listener will update if there's a session
-        setUser(null);
-        setUserRoles([]);
-        setCurrentRole(null);
-        setError(null);
-      } catch (err) {
-        if (initController.signal.aborted || !mounted) return;
-
-        // Treat as no user and allow app to proceed
-        setUser(null);
-        setUserRoles([]);
-        setCurrentRole(null);
-        setError(null);
-      } finally {
-        if (!initController.signal.aborted && mounted) {
-          setLoading(false);
-          setInitialized(true);
-          activeOperationRef.current.initAuth = null;
-        }
-      }
-    };
-
-    initAuth();
-
     const authStateController = new AbortController();
     activeOperationRef.current.authStateChange = authStateController;
 
+    // `loading` starts true and is first cleared here, once the first auth
+    // event has been handled. supabase-js emits its first event
+    // (INITIAL_SESSION) only after its async initialization -- which is when
+    // it reads an OAuth / email-link callback's `#access_token=...` from the
+    // URL. App renders the router only once `loading` is false, so no route
+    // guard can redirect (e.g. `/` -> `/login`) and wipe that hash before
+    // supabase-js has consumed it. Clearing `loading` any earlier loses the
+    // session on slow devices.
     const {
       data: { subscription },
     } = authApi.onAuthStateChange(async supabaseUser => {
       if (authStateController.signal.aborted || !mounted) return;
-
-      // Don't process auth state changes if initial auth is still loading
-      if (activeOperationRef.current.initAuth) return;
 
       setError(null);
       setLoading(true);
@@ -158,10 +110,8 @@ export function useAuth() {
 
     return () => {
       mounted = false;
-      initController.abort();
       authStateController.abort();
       subscription?.unsubscribe();
-      activeOperationRef.current.initAuth = null;
       activeOperationRef.current.authStateChange = null;
     };
   }, []);
@@ -259,10 +209,6 @@ export function useAuth() {
 
   const clearApplicationState = () => {
     // Abort any ongoing operations
-    if (activeOperationRef.current.initAuth) {
-      activeOperationRef.current.initAuth.abort();
-      activeOperationRef.current.initAuth = null;
-    }
     if (activeOperationRef.current.authStateChange) {
       activeOperationRef.current.authStateChange.abort();
       activeOperationRef.current.authStateChange = null;
@@ -274,7 +220,6 @@ export function useAuth() {
     setCurrentRole(null);
     setLoading(false);
     setError(null);
-    setInitialized(false);
 
     // Clear browser storage
     try {
