@@ -321,7 +321,7 @@
       "editButton": "ערוך",
       "removeButton": "הסר",
       "deleteConfirmTitle": "האם אתה בטוח שברצונך להסיר את הילד?",
-      "deleteConfirmDescription": "פעולה זו תסיר את הילד מהחשבון שלך ותמחק את כל בחירות השעורים שלו.",
+      "deleteConfirmDescription": "פעולה זו תסיר את הילד מהחשבון שלך. אם אין הורים נוספים המקושרים לילד, הילד וכל בחירות השעורים שלו יימחקו.",
       "confirmDelete": "כן, הסר",
       "createdDate": "נוצר: {{date}}",
       "editModalTitle": "עריכת פרטי ילד",
@@ -332,7 +332,8 @@
     "duplicateWarning": {
       "title": "שם דומה כבר קיים",
       "existsMessage": "שם הילד/ה {{name}} (כיתה {{grade}}) כבר נוצר ע\"י {{creator}}",
-      "attachExisting": "צרף ילד קיים",
+      "alreadyAssignedMessage": "{{name}} כבר משויך/ת ל{{parent}} - להוסיף גם אותך?",
+      "attachExisting": "הוסף אותי כהורה",
       "addNewChild": "הוסף ילד חדש",
       "continueAnyway": "המשך בכל זאת",
       "cancel": "ביטול",

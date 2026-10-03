@@ -124,8 +124,9 @@ export function ChildForm({
     }
 
     if (decision.kind === "confirm") {
-      // An approved parent can attach themselves to the existing (unclaimed)
-      // child instead of creating a duplicate -- offer that as the primary
+      // An approved parent can link themselves to the existing child (as its
+      // first or an additional parent) instead of creating a duplicate --
+      // offer that as the primary
       // action. Staff/admin can't claim (claim_child rejects non-parents),
       // so they only get the create-anyway/cancel choice.
       if (isParent) {
@@ -233,13 +234,20 @@ export function ChildForm({
               {t("child.duplicateWarning.attachExisting")}
             </Button>,
           ]}>
-          {t("child.duplicateWarning.existsMessage", {
-            name: `${duplicateDialog.values.firstName} ${duplicateDialog.values.lastName}`,
-            creator:
-              duplicateDialog.match.createdByName ??
-              t("child.duplicateWarning.unknownCreator"),
-            grade: GetGradeNameShort(duplicateDialog.match.grade),
-          })}
+          {duplicateDialog.match.hasLinkedParent
+            ? t("child.duplicateWarning.alreadyAssignedMessage", {
+                name: `${duplicateDialog.values.firstName} ${duplicateDialog.values.lastName}`,
+                parent:
+                  duplicateDialog.match.linkedParentName ??
+                  t("child.duplicateWarning.unknownCreator"),
+              })
+            : t("child.duplicateWarning.existsMessage", {
+                name: `${duplicateDialog.values.firstName} ${duplicateDialog.values.lastName}`,
+                creator:
+                  duplicateDialog.match.createdByName ??
+                  t("child.duplicateWarning.unknownCreator"),
+                grade: GetGradeNameShort(duplicateDialog.match.grade),
+              })}
         </Modal>
       )}
     </Form>
