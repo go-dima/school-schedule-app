@@ -135,7 +135,7 @@ export function useChildren() {
     if (!user?.id) throw new Error("User not authenticated");
 
     try {
-      await childrenApi.deleteChild(childId);
+      await childrenApi.unlinkChild(childId);
       setChildren(prev => prev.filter(child => child.id !== childId));
     } catch (err) {
       const message =

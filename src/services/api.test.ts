@@ -557,34 +557,96 @@ describe("childrenApi.deleteChild", () => {
 
 describe("childrenApi.findLocalDuplicateChildren", () => {
   afterEach(() => {
-    mockFromResult = { data: [], error: null };
-    (supabase.from as any).mockClear();
+    mockRpcResult = { data: [], error: null };
+    (supabase.rpc as any).mockClear();
   });
 
-  it("queries children directly (no RPC) filtered by name+grade and maps creator info", async () => {
-    mockFromResult = {
+  const row = (overrides: Record<string, unknown> = {}) => ({
+    id: "child-1",
+    grade: 6,
+    created_by: "user-1",
+    creator_first_name: "נתלי",
+    creator_last_name: "צינדורף",
+    creator_display_name: null,
+    parent_first_name: null,
+    parent_last_name: null,
+    parent_display_name: null,
+    has_parent: false,
+    linked_to_me: false,
+    ...overrides,
+  });
+
+  it("calls the find_child_matches RPC with trimmed names, grade, allowed scopes and exclude id", async () => {
+    await childrenApi.findLocalDuplicateChildren(
+      " נועה ",
+      "לוי ",
+      6,
+      "child-9",
+      "user-2"
+    );
+
+    expect(supabase.rpc).toHaveBeenCalledWith("find_child_matches", {
+      p_first_name: "נועה",
+      p_last_name: "לוי",
+      p_grade: 6,
+      p_scopes: ["prod", "test"],
+      p_exclude_child_id: "child-9",
+    });
+  });
+
+  it("limits matches to the prod scope in production", async () => {
+    envState.isProduction = true;
+    try {
+      await childrenApi.findLocalDuplicateChildren(
+        "נועה",
+        "לוי",
+        6,
+        undefined,
+        "user-2"
+      );
+    } finally {
+      envState.isProduction = false;
+    }
+
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "find_child_matches",
+      expect.objectContaining({ p_scopes: ["prod"] })
+    );
+  });
+
+  it("passes a null exclude id when none is given", async () => {
+    await childrenApi.findLocalDuplicateChildren(
+      "נועה",
+      "לוי",
+      6,
+      undefined,
+      "user-2"
+    );
+
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "find_child_matches",
+      expect.objectContaining({ p_exclude_child_id: null })
+    );
+  });
+
+  it("reports creator and linked parent separately", async () => {
+    mockRpcResult = {
       data: [
-        {
-          id: "child-1",
-          grade: 6,
-          created_by: "user-1",
-          creator: {
-            first_name: "נתלי",
-            last_name: "צינדורף",
-            email: "natalie@example.com",
-          },
-        },
+        row({
+          parent_first_name: "דנה",
+          parent_last_name: "לוי",
+          has_parent: true,
+        }),
       ],
       error: null,
     };
 
-    const currentUserId = "user-2";
     const result = await childrenApi.findLocalDuplicateChildren(
-      "ליאו",
-      "פלד",
+      "נועה",
+      "לוי",
       6,
       undefined,
-      currentUserId
+      "user-2"
     );
 
     expect(result).toEqual([
@@ -594,55 +656,136 @@ describe("childrenApi.findLocalDuplicateChildren", () => {
         createdByUserId: "user-1",
         createdByName: "נתלי צינדורף",
         createdByIsSelf: false,
+        hasLinkedParent: true,
+        linkedParentName: "דנה לוי",
+        linkedToMe: false,
       },
     ]);
   });
 
-  it("names the creator by display name when they have one", async () => {
-    mockFromResult = {
+  it("prefers display names for the creator and the linked parent", async () => {
+    mockRpcResult = {
       data: [
-        {
-          id: "child-1",
-          grade: 6,
-          created_by: "user-1",
-          creator: {
-            first_name: "Orit",
-            last_name: "Shemesh",
-            display_name: "אורית שמש",
-          },
-        },
+        row({
+          creator_display_name: "אורית שמש",
+          parent_first_name: "דנה",
+          parent_last_name: "לוי",
+          parent_display_name: "דנה ל.",
+          has_parent: true,
+        }),
       ],
       error: null,
     };
 
     const [match] = await childrenApi.findLocalDuplicateChildren(
-      "ליאו",
-      "פלד",
+      "נועה",
+      "לוי",
       6,
       undefined,
       "user-2"
     );
 
     expect(match.createdByName).toBe("אורית שמש");
+    expect(match.linkedParentName).toBe("דנה ל.");
   });
 
-  it("excludes the given child id from results", async () => {
-    mockFromResult = { data: [], error: null };
+  it("reports no linked parent for an unclaimed child", async () => {
+    mockRpcResult = { data: [row()], error: null };
 
-    await childrenApi.findLocalDuplicateChildren(
-      "ליאו",
-      "פלד",
+    const [match] = await childrenApi.findLocalDuplicateChildren(
+      "נועה",
+      "לוי",
       6,
-      "child-1",
+      undefined,
       "user-2"
     );
 
-    expect(supabase.from).toHaveBeenCalledWith("children");
-    // The mocked `from(...)` chain returns a fresh object per call (see the
-    // mock setup above), so grab the specific chain instance this call
-    // produced to inspect how `.neq(...)` was actually invoked on it.
-    const chain = (supabase.from as any).mock.results[0].value;
-    expect(chain.neq).toHaveBeenCalledWith("id", "child-1");
+    expect(match.createdByName).toBe("נתלי צינדורף");
+    expect(match.hasLinkedParent).toBe(false);
+    expect(match.linkedParentName).toBeNull();
+  });
+
+  it("returns a null name when neither parent nor creator has one", async () => {
+    mockRpcResult = {
+      data: [
+        row({
+          created_by: null,
+          creator_first_name: null,
+          creator_last_name: null,
+        }),
+      ],
+      error: null,
+    };
+
+    const [match] = await childrenApi.findLocalDuplicateChildren(
+      "נועה",
+      "לוי",
+      6,
+      undefined,
+      "user-2"
+    );
+
+    expect(match.createdByName).toBeNull();
+    expect(match.createdByUserId).toBeNull();
+  });
+
+  it("maps linkedToMe and createdByIsSelf", async () => {
+    mockRpcResult = {
+      data: [row({ created_by: "user-2", linked_to_me: true })],
+      error: null,
+    };
+
+    const [match] = await childrenApi.findLocalDuplicateChildren(
+      "נועה",
+      "לוי",
+      6,
+      undefined,
+      "user-2"
+    );
+
+    expect(match.linkedToMe).toBe(true);
+    expect(match.createdByIsSelf).toBe(true);
+  });
+
+  it("throws an ApiError when the RPC fails", async () => {
+    mockRpcResult = { data: null, error: { message: "boom" } };
+
+    await expect(
+      childrenApi.findLocalDuplicateChildren(
+        "נועה",
+        "לוי",
+        6,
+        undefined,
+        "user-2"
+      )
+    ).rejects.toThrow("Failed to check for duplicate children: boom");
+  });
+});
+
+describe("childrenApi.unlinkChild", () => {
+  afterEach(() => {
+    mockRpcResult = { data: [], error: null };
+  });
+
+  it("calls the remove_child_for_parent RPC", async () => {
+    mockRpcResult = { data: null, error: null };
+
+    await expect(childrenApi.unlinkChild("child-1")).resolves.toBeUndefined();
+
+    expect(supabase.rpc).toHaveBeenCalledWith("remove_child_for_parent", {
+      p_child_id: "child-1",
+    });
+  });
+
+  it("throws when the RPC errors", async () => {
+    mockRpcResult = {
+      data: null,
+      error: { message: "You are not linked to this child" },
+    };
+
+    await expect(childrenApi.unlinkChild("child-1")).rejects.toThrow(
+      "You are not linked to this child"
+    );
   });
 });
 
@@ -681,12 +824,12 @@ describe("childrenApi.claimChild", () => {
     mockRpcResult = {
       data: null,
       error: {
-        message: "This child already has a linked parent and cannot be claimed",
+        message: "Child not found",
       },
     };
 
     await expect(childrenApi.claimChild("child-1")).rejects.toThrow(
-      "This child already has a linked parent and cannot be claimed"
+      "Child not found"
     );
   });
 });

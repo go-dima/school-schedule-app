@@ -1481,11 +1481,13 @@ export const childrenApi = {
   },
 
   /**
-   * Local (client-visible) duplicate check: a direct `children` query, not
-   * an RPC, so it stays cheap enough to run as the user types a new child's
-   * name/grade (see Task 6). Joins `users` via the FK Postgres auto-named
-   * `children_created_by_fkey` (migration 030) to surface who created each
-   * candidate match.
+   * Duplicate check by exact name (case-insensitive) + grade. Goes through
+   * the `find_child_matches` RPC (migration 049) rather than a direct
+   * `children` query, because RLS hides children already linked to another
+   * family -- and those are exactly the ones a second parent needs to find
+   * so they can link to the same record instead of creating a duplicate.
+   * Creator and linked parent are reported separately: a staff-created
+   * child can also have a parent.
    */
   async findLocalDuplicateChildren(
     firstName: string,
@@ -1494,20 +1496,13 @@ export const childrenApi = {
     excludeChildId: string | undefined,
     currentUserId: string
   ): Promise<DuplicateChildMatch[]> {
-    let query = supabase
-      .from("children")
-      .select(
-        "id, grade, created_by, creator:users!children_created_by_fkey(first_name, last_name, display_name)"
-      )
-      .ilike("first_name", firstName.trim())
-      .ilike("last_name", lastName.trim())
-      .eq("grade", grade);
-
-    if (excludeChildId) {
-      query = query.neq("id", excludeChildId);
-    }
-
-    const { data, error } = await query;
+    const { data, error } = await supabase.rpc("find_child_matches", {
+      p_first_name: firstName.trim(),
+      p_last_name: lastName.trim(),
+      p_grade: grade,
+      p_scopes: getAllowedScopes(),
+      p_exclude_child_id: excludeChildId ?? null,
+    });
 
     if (error) {
       throw new ApiError(
@@ -1516,28 +1511,36 @@ export const childrenApi = {
     }
 
     return (
-      (data ?? []) as unknown as {
+      (data ?? []) as {
         id: string;
         grade: number;
         created_by: string | null;
-        creator: {
-          first_name: string | null;
-          last_name: string | null;
-          display_name: string | null;
-        } | null;
+        creator_first_name: string | null;
+        creator_last_name: string | null;
+        creator_display_name: string | null;
+        parent_first_name: string | null;
+        parent_last_name: string | null;
+        parent_display_name: string | null;
+        has_parent: boolean;
+        linked_to_me: boolean;
       }[]
     ).map(row => ({
       id: row.id,
       grade: row.grade,
       createdByUserId: row.created_by,
-      createdByName: row.creator
-        ? formatPersonName({
-            displayName: row.creator.display_name,
-            firstName: row.creator.first_name,
-            lastName: row.creator.last_name,
-          })
-        : null,
+      createdByName: formatPersonName({
+        displayName: row.creator_display_name,
+        firstName: row.creator_first_name,
+        lastName: row.creator_last_name,
+      }),
       createdByIsSelf: row.created_by === currentUserId,
+      hasLinkedParent: row.has_parent,
+      linkedParentName: formatPersonName({
+        displayName: row.parent_display_name,
+        firstName: row.parent_first_name,
+        lastName: row.parent_last_name,
+      }),
+      linkedToMe: row.linked_to_me,
     }));
   },
 
@@ -1555,6 +1558,18 @@ export const childrenApi = {
       isPrimary: data.is_primary,
       createdAt: data.created_at,
     };
+  },
+
+  /**
+   * A parent's "delete": removes only the caller's own link. The child
+   * record is deleted only when no other parent is linked (migration 049).
+   */
+  async unlinkChild(childId: string): Promise<void> {
+    const { error } = await supabase.rpc("remove_child_for_parent", {
+      p_child_id: childId,
+    });
+
+    if (error) throw new ApiError(error.message);
   },
 };
 

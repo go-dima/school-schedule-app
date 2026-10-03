@@ -383,8 +383,16 @@
       "file": "048_set_track_draft.sql",
       "created_at": "2026-10-01T00:02:00Z",
       "dependencies": ["047_child_account_link"]
+    },
+    {
+      "id": "049_allow_multiple_parents",
+      "name": "Allow Multiple Parents",
+      "description": "Let a second approved parent link to a child another parent already added: add a SECURITY DEFINER find_child_matches RPC (exact case-insensitive first+last name and grade, limited to the caller's allowed scopes, returns creator and linked-parent names including display_name, has_parent and linked_to_me, past RLS), make claim_child an idempotent 'link me as a parent' (primary only for the first link, no longer refuses already-linked children), and add remove_child_for_parent, which removes the caller's own link and deletes the child only when no links remain.",
+      "file": "049_allow_multiple_parents.sql",
+      "created_at": "2026-10-03T00:00:00Z",
+      "dependencies": ["048_set_track_draft"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 48
+  "schema_version": 49
 }

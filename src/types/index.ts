@@ -142,6 +142,11 @@ export interface DuplicateChildMatch {
   createdByUserId: string | null;
   createdByName: string | null;
   createdByIsSelf: boolean;
+  /** At least one parent is linked (independent of who created the child). */
+  hasLinkedParent: boolean;
+  /** The primary linked parent, else the oldest link; null if none/unnamed. */
+  linkedParentName: string | null;
+  linkedToMe: boolean;
 }
 
 export interface ParentChildRelationship {
