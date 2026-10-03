@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { userEvent, within } from "@storybook/testing-library";
 import LoginPage from "../pages/LoginPage";
 import SignupPage from "../pages/SignupPage";
 import { AuthContext, type AuthContextType } from "../contexts/AuthContext";
@@ -89,6 +90,16 @@ const signupMeta: Meta<typeof SignupPage> = {
 
 type SignupStory = StoryObj<typeof signupMeta>;
 
+// No role chosen yet: both signup buttons disabled, "choose your role" hint.
 export const SignupDefault: SignupStory = {
   render: () => <SignupPage />,
+};
+
+// A role chosen: the hint goes away and both buttons are enabled.
+export const SignupRoleChosen: SignupStory = {
+  render: () => <SignupPage />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("radio", { name: "הורה" }));
+  },
 };

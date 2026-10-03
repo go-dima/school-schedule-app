@@ -24,6 +24,13 @@ import type {
   UserRoleData,
   ChildAccountLink,
 } from "../types";
+import type { RequestableRole } from "../constants/roles";
+import {
+  clearStoredRequestedRole,
+  readStoredRequestedRole,
+  resolveRequestedRole,
+  storeRequestedRole,
+} from "./requestedRole";
 import { withTimeout } from "../utils/asyncUtils";
 import { env, getAllowedScopes, isTestScopeEnabled } from "../utils/env";
 import i18n from "../utils/i18n";
@@ -64,10 +71,17 @@ function assertTestScopeAllowed(scope: Scope | undefined) {
 
 // Authentication API
 export const authApi = {
-  async signUp(email: string, password: string) {
+  async signUp(
+    email: string,
+    password: string,
+    requestedRole?: RequestableRole
+  ) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: requestedRole
+        ? { data: { requested_role: requestedRole } }
+        : undefined,
     });
 
     if (error) {
@@ -87,7 +101,10 @@ export const authApi = {
     return data;
   },
 
-  async signInWithGoogle() {
+  async signInWithGoogle(requestedRole?: RequestableRole) {
+    // OAuth can't carry user metadata, so the signup page's choice waits in
+    // sessionStorage for ensureUserProfile after the redirect.
+    if (requestedRole) storeRequestedRole(requestedRole);
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -156,35 +173,54 @@ async function ensureUserProfile(user: any) {
     .eq("id", user.id)
     .single();
 
-  if (existingUser) return;
+  if (!existingUser) {
+    const { error: profileError } = await supabase.from("users").insert([
+      {
+        id: user.id,
+        email: user.email,
+        first_name: user.user_metadata?.full_name?.split(" ")[0] || "",
+        last_name:
+          user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || "",
+      },
+    ]);
 
-  // Create user profile
-  const { error: profileError } = await supabase.from("users").insert([
-    {
-      id: user.id,
-      email: user.email,
-      first_name: user.user_metadata?.full_name?.split(" ")[0] || "",
-      last_name:
-        user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || "",
-    },
-  ]);
-
-  if (profileError) {
-    log.error("User profile creation failed", { error: profileError });
+    if (profileError) {
+      log.error("User profile creation failed", { error: profileError });
+    }
   }
 
-  // Create default parent role for new users
+  // Decided separately from the users row: the handle_new_user trigger
+  // (003) can create that row first. Only a user with no role rows at all
+  // gets a pending request.
+  const { data: existingRoles, error: rolesError } = await supabase
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", user.id)
+    .limit(1);
+
+  if (rolesError) {
+    log.error("User role lookup failed", { error: rolesError });
+    return;
+  }
+  if (existingRoles && existingRoles.length > 0) return;
+
+  const role = resolveRequestedRole(
+    user.user_metadata,
+    readStoredRequestedRole()
+  );
   const { error: roleError } = await supabase.from("user_roles").insert([
     {
       user_id: user.id,
-      role: "parent",
+      role,
       approved: false, // Requires admin approval
     },
   ]);
 
   if (roleError) {
     log.error("User role creation failed", { error: roleError });
+    return;
   }
+  clearStoredRequestedRole();
 }
 
 // Users API
