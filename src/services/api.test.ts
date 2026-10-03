@@ -578,16 +578,16 @@ describe("childrenApi.findLocalDuplicateChildren", () => {
 
   it("calls the find_child_matches RPC with trimmed names, grade, allowed scopes and exclude id", async () => {
     await childrenApi.findLocalDuplicateChildren(
-      " ליאו ",
-      "פלד ",
+      " נועה ",
+      "לוי ",
       6,
       "child-9",
       "user-2"
     );
 
     expect(supabase.rpc).toHaveBeenCalledWith("find_child_matches", {
-      p_first_name: "ליאו",
-      p_last_name: "פלד",
+      p_first_name: "נועה",
+      p_last_name: "לוי",
       p_grade: 6,
       p_scopes: ["prod", "test"],
       p_exclude_child_id: "child-9",
@@ -598,8 +598,8 @@ describe("childrenApi.findLocalDuplicateChildren", () => {
     envState.isProduction = true;
     try {
       await childrenApi.findLocalDuplicateChildren(
-        "ליאו",
-        "פלד",
+        "נועה",
+        "לוי",
         6,
         undefined,
         "user-2"
@@ -616,8 +616,8 @@ describe("childrenApi.findLocalDuplicateChildren", () => {
 
   it("passes a null exclude id when none is given", async () => {
     await childrenApi.findLocalDuplicateChildren(
-      "ליאו",
-      "פלד",
+      "נועה",
+      "לוי",
       6,
       undefined,
       "user-2"
@@ -642,8 +642,8 @@ describe("childrenApi.findLocalDuplicateChildren", () => {
     };
 
     const result = await childrenApi.findLocalDuplicateChildren(
-      "ליאו",
-      "פלד",
+      "נועה",
+      "לוי",
       6,
       undefined,
       "user-2"
@@ -678,8 +678,8 @@ describe("childrenApi.findLocalDuplicateChildren", () => {
     };
 
     const [match] = await childrenApi.findLocalDuplicateChildren(
-      "ליאו",
-      "פלד",
+      "נועה",
+      "לוי",
       6,
       undefined,
       "user-2"
@@ -693,8 +693,8 @@ describe("childrenApi.findLocalDuplicateChildren", () => {
     mockRpcResult = { data: [row()], error: null };
 
     const [match] = await childrenApi.findLocalDuplicateChildren(
-      "ליאו",
-      "פלד",
+      "נועה",
+      "לוי",
       6,
       undefined,
       "user-2"
@@ -718,8 +718,8 @@ describe("childrenApi.findLocalDuplicateChildren", () => {
     };
 
     const [match] = await childrenApi.findLocalDuplicateChildren(
-      "ליאו",
-      "פלד",
+      "נועה",
+      "לוי",
       6,
       undefined,
       "user-2"
@@ -736,8 +736,8 @@ describe("childrenApi.findLocalDuplicateChildren", () => {
     };
 
     const [match] = await childrenApi.findLocalDuplicateChildren(
-      "ליאו",
-      "פלד",
+      "נועה",
+      "לוי",
       6,
       undefined,
       "user-2"
@@ -752,8 +752,8 @@ describe("childrenApi.findLocalDuplicateChildren", () => {
 
     await expect(
       childrenApi.findLocalDuplicateChildren(
-        "ליאו",
-        "פלד",
+        "נועה",
+        "לוי",
         6,
         undefined,
         "user-2"
