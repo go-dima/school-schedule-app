@@ -6,10 +6,8 @@ import type {
   SelectionStatus,
 } from "../types";
 
-// A specific person's selected classes -- either a student a parent/staff
-// member has picked ({ childId }) or the "child" role's own picks
-// ({ userId }). Replaces the old useChildSchedule and the selections half
-// of the old useSchedule.
+// A student's selected classes (see ScheduleTarget). Replaces the old
+// useChildSchedule and the selections half of the old useSchedule.
 export function useSelectedSchedule(
   target: ScheduleTarget | undefined,
   status: SelectionStatus
@@ -18,11 +16,7 @@ export function useSelectedSchedule(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const targetKey = target
-    ? "userId" in target
-      ? `user:${target.userId}`
-      : `child:${target.childId}`
-    : undefined;
+  const targetKey = target?.childId;
 
   useEffect(() => {
     if (!target) {

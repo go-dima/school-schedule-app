@@ -9,6 +9,9 @@ interface ChildGroupTrackSelectorProps {
   child: Child | undefined;
   onChange: (field: SelectionField, value: number | null) => Promise<void>;
   disabled?: boolean;
+  /** False shows the group read-only. A child user can change their own
+   * track but not their group, which staff or a parent sets. */
+  canEditGroup?: boolean;
   style?: React.CSSProperties;
 }
 
@@ -23,6 +26,7 @@ export function ChildGroupTrackSelector({
   child,
   onChange,
   disabled = false,
+  canEditGroup = true,
   style,
 }: ChildGroupTrackSelectorProps) {
   const { t } = useTranslation();
@@ -66,7 +70,9 @@ export function ChildGroupTrackSelector({
       onChange={handleChange}
       optionLabel={optionLabel}
       placeholder={placeholder}
-      disabled={disabled || saving}
+      disabled={
+        disabled || saving || (field === "groupNumber" && !canEditGroup)
+      }
       loading={saving}
       style={style}
     />

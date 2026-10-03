@@ -4,7 +4,7 @@ import type { ClassWithTimeSlot, Child } from "../types";
 import { GetGradeName } from "../utils/grades";
 import "./PrintableClassRoster.css";
 
-interface PrintableClassRosterProps {
+export interface PrintableClassRosterProps {
   classInfo: ClassWithTimeSlot;
   children: Child[];
 }

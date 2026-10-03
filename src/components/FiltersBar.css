@@ -9,7 +9,7 @@
    a quirky min-width) that would otherwise distort this flex layout, so
    reset it back to an invisible, non-participating wrapper. */
 .filters-section {
-  margin-bottom: 24px;
+  margin-bottom: 8px;
   border: 0;
   padding: 0;
   min-width: 0;
@@ -75,8 +75,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
-  padding: 12px 16px;
+  margin-bottom: 8px;
+  padding: 8px 0;
 }
 
 /* .filters-row is space-between internally, but as a flex item here it

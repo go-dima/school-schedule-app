@@ -14,6 +14,9 @@ describe("decideDuplicateWarning", () => {
         createdByUserId: "u1",
         createdByName: "Me",
         createdByIsSelf: true,
+        hasLinkedParent: false,
+        linkedParentName: null,
+        linkedToMe: false,
       },
     ];
     expect(decideDuplicateWarning(matches)).toEqual({
@@ -30,11 +33,33 @@ describe("decideDuplicateWarning", () => {
         createdByUserId: "u2",
         createdByName: "Other",
         createdByIsSelf: false,
+        hasLinkedParent: false,
+        linkedParentName: null,
+        linkedToMe: false,
       },
     ];
     expect(decideDuplicateWarning(matches)).toEqual({
       kind: "confirm",
       match: matches[0],
+    });
+  });
+
+  it("returns redirect when the current user is already linked as a parent", () => {
+    const matches = [
+      {
+        id: "c1",
+        grade: 6,
+        createdByUserId: "u2",
+        createdByName: "Other",
+        createdByIsSelf: false,
+        hasLinkedParent: true,
+        linkedParentName: "Other",
+        linkedToMe: true,
+      },
+    ];
+    expect(decideDuplicateWarning(matches)).toEqual({
+      kind: "redirect",
+      childId: "c1",
     });
   });
 
@@ -46,6 +71,9 @@ describe("decideDuplicateWarning", () => {
         createdByUserId: "u2",
         createdByName: "Other",
         createdByIsSelf: false,
+        hasLinkedParent: false,
+        linkedParentName: null,
+        linkedToMe: false,
       },
       {
         id: "c2",
@@ -53,6 +81,9 @@ describe("decideDuplicateWarning", () => {
         createdByUserId: "u1",
         createdByName: "Me",
         createdByIsSelf: true,
+        hasLinkedParent: false,
+        linkedParentName: null,
+        linkedToMe: false,
       },
     ];
     expect(decideDuplicateWarning(matches)).toEqual({

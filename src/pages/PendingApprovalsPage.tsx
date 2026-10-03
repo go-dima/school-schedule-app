@@ -15,6 +15,7 @@ import {
   Select,
   Modal,
   Form,
+  Divider,
 } from "antd";
 import {
   CheckOutlined,
@@ -29,9 +30,16 @@ import {
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { useAuth } from "../contexts/AuthContext";
-import { usersApi } from "../services/api";
-import type { PendingApproval, UserRole } from "../types";
+import { childrenApi, usersApi } from "../services/api";
+import type { Child, PendingApproval, UserRole } from "../types";
+import { ChildAccountLinkPicker } from "../components/ChildAccountLinkPicker";
+import {
+  EMPTY_CHILD_LINK_DRAFT,
+  childLinkValue,
+  type ChildLinkDraft,
+} from "../components/childAccountLink";
 import { ROLE_TAG_COLORS } from "../constants/roleColors";
+import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 import "./PendingApprovalsPage.css";
 
 const { Title, Text } = Typography;
@@ -57,6 +65,48 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
   const [selectedApproval, setSelectedApproval] =
     useState<PendingApproval | null>(null);
   const [form] = Form.useForm();
+  const chosenRole = Form.useWatch<UserRole | undefined>("role", form);
+  // A child account must be linked to a student record at approval.
+  const [childLink, setChildLink] = useState<ChildLinkDraft>(
+    EMPTY_CHILD_LINK_DRAFT
+  );
+  const [unlinkedStudents, setUnlinkedStudents] = useState<Child[]>([]);
+  const [unlinkedLoading, setUnlinkedLoading] = useState(false);
+  const needsChildLink = chosenRole === "child";
+  const childLinkComplete = childLinkValue(childLink) !== undefined;
+
+  useEffect(() => {
+    if (!roleModalVisible || !needsChildLink) return;
+    let cancelled = false;
+    setUnlinkedLoading(true);
+    childrenApi
+      .getUnlinkedChildren()
+      .then(students => {
+        if (!cancelled) setUnlinkedStudents(students);
+      })
+      .catch(err => {
+        if (!cancelled) {
+          message.error(
+            err instanceof Error
+              ? err.message
+              : t("pendingApprovals.childLink.loadError")
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setUnlinkedLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [roleModalVisible, needsChildLink, t]);
+
+  const closeRoleModal = () => {
+    setRoleModalVisible(false);
+    setSelectedApproval(null);
+    setChildLink(EMPTY_CHILD_LINK_DRAFT);
+    form.resetFields();
+  };
 
   useEffect(() => {
     loadData();
@@ -91,19 +141,28 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
   const handleConfirmApproval = async (values: { role: UserRole }) => {
     if (!selectedApproval) return;
 
+    const link = childLinkValue(childLink);
+    if (values.role === "child" && !link) return;
+
     setActionLoading(selectedApproval.id);
     try {
-      await usersApi.approveUserWithRole(selectedApproval.userId, values.role);
+      if (values.role === "child" && link) {
+        await usersApi.approveChildUser(selectedApproval.userId, link);
+      } else {
+        await usersApi.approveUserWithRole(
+          selectedApproval.userId,
+          values.role
+        );
+      }
       message.success(
         t("pendingApprovals.page.approveSuccess", {
           email: selectedApproval.user.email,
           role: t(`roles.${values.role}`, values.role),
         })
       );
+      trackEvent(AnalyticsEvent.SignupApproved, { role: values.role });
       await loadData();
-      setRoleModalVisible(false);
-      setSelectedApproval(null);
-      form.resetFields();
+      closeRoleModal();
     } catch (err) {
       message.error(
         err instanceof Error
@@ -129,6 +188,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
           email: userEmail,
         })
       );
+      trackEvent(AnalyticsEvent.SignupRejected, { role });
       await loadData();
     } catch (err) {
       message.error(
@@ -423,11 +483,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
           </Space>
         }
         open={roleModalVisible}
-        onCancel={() => {
-          setRoleModalVisible(false);
-          setSelectedApproval(null);
-          form.resetFields();
-        }}
+        onCancel={closeRoleModal}
         footer={null}
         width={500}>
         {selectedApproval && (
@@ -478,20 +534,42 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
                 />
               </Form.Item>
 
+              {needsChildLink && (
+                <div style={{ marginBottom: 24 }}>
+                  <Divider orientation="right" plain>
+                    <Text strong>{t("pendingApprovals.childLink.title")}</Text>
+                  </Divider>
+                  <Text
+                    type="secondary"
+                    style={{ display: "block", marginBottom: 12 }}>
+                    {t("pendingApprovals.childLink.description")}
+                  </Text>
+                  <ChildAccountLinkPicker
+                    students={unlinkedStudents}
+                    value={childLink}
+                    onChange={setChildLink}
+                    loading={unlinkedLoading}
+                    disabled={actionLoading === selectedApproval.id}
+                  />
+                </div>
+              )}
+
               <Form.Item style={{ marginBottom: 0, textAlign: "left" }}>
                 <Space>
+                  {needsChildLink && !childLinkComplete && (
+                    <Text type="danger" style={{ fontSize: 13 }}>
+                      {t("pendingApprovals.childLink.incomplete")}
+                    </Text>
+                  )}
                   <Button
-                    onClick={() => {
-                      setRoleModalVisible(false);
-                      setSelectedApproval(null);
-                      form.resetFields();
-                    }}
+                    onClick={closeRoleModal}
                     disabled={actionLoading === selectedApproval?.id}>
                     {t("common.buttons.cancel")}
                   </Button>
                   <Button
                     type="primary"
                     htmlType="submit"
+                    disabled={needsChildLink && !childLinkComplete}
                     loading={actionLoading === selectedApproval?.id}
                     icon={<CheckOutlined />}>
                     {t("pendingApprovals.modal.submitButton")}
