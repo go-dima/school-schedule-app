@@ -8,7 +8,7 @@ export type DuplicateWarningDecision =
 export function decideDuplicateWarning(
   matches: DuplicateChildMatch[]
 ): DuplicateWarningDecision {
-  const selfMatch = matches.find(m => m.createdByIsSelf);
+  const selfMatch = matches.find(m => m.createdByIsSelf || m.linkedToMe);
   if (selfMatch) {
     return { kind: "redirect", childId: selfMatch.id };
   }

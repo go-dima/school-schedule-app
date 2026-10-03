@@ -9,20 +9,33 @@ import type {
   ParentChildRelationship,
   PendingApproval,
   ScheduleOverride,
+  ScheduleOverrideWithChildName,
   ScheduleOverrideWithTimeSlot,
   ScheduleSelectionWithClass,
   ScheduleTarget,
   Scope,
   SelectionStatus,
+  StaffDirectoryEntry,
+  StaffSelection,
+  TeacherTitlePair,
   TimeSlot,
   User,
   UserRole,
   UserRoleData,
+  ChildAccountLink,
 } from "../types";
+import type { RequestableRole } from "../constants/roles";
+import {
+  clearStoredRequestedRole,
+  readStoredRequestedRole,
+  resolveRequestedRole,
+  storeRequestedRole,
+} from "./requestedRole";
 import { withTimeout } from "../utils/asyncUtils";
 import { env, getAllowedScopes, isTestScopeEnabled } from "../utils/env";
 import i18n from "../utils/i18n";
 import log from "../utils/logger";
+import { formatPersonName } from "../utils/personName";
 import { NotificationService } from "./notificationService";
 import { ScheduleService } from "./scheduleService";
 import { supabase } from "./supabase";
@@ -58,10 +71,17 @@ function assertTestScopeAllowed(scope: Scope | undefined) {
 
 // Authentication API
 export const authApi = {
-  async signUp(email: string, password: string) {
+  async signUp(
+    email: string,
+    password: string,
+    requestedRole?: RequestableRole
+  ) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: requestedRole
+        ? { data: { requested_role: requestedRole } }
+        : undefined,
     });
 
     if (error) {
@@ -81,7 +101,10 @@ export const authApi = {
     return data;
   },
 
-  async signInWithGoogle() {
+  async signInWithGoogle(requestedRole?: RequestableRole) {
+    // OAuth can't carry user metadata, so the signup page's choice waits in
+    // sessionStorage for ensureUserProfile after the redirect.
+    if (requestedRole) storeRequestedRole(requestedRole);
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -150,35 +173,54 @@ async function ensureUserProfile(user: any) {
     .eq("id", user.id)
     .single();
 
-  if (existingUser) return;
+  if (!existingUser) {
+    const { error: profileError } = await supabase.from("users").insert([
+      {
+        id: user.id,
+        email: user.email,
+        first_name: user.user_metadata?.full_name?.split(" ")[0] || "",
+        last_name:
+          user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || "",
+      },
+    ]);
 
-  // Create user profile
-  const { error: profileError } = await supabase.from("users").insert([
-    {
-      id: user.id,
-      email: user.email,
-      first_name: user.user_metadata?.full_name?.split(" ")[0] || "",
-      last_name:
-        user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || "",
-    },
-  ]);
-
-  if (profileError) {
-    log.error("User profile creation failed", { error: profileError });
+    if (profileError) {
+      log.error("User profile creation failed", { error: profileError });
+    }
   }
 
-  // Create default parent role for new users
+  // Decided separately from the users row: the handle_new_user trigger
+  // (003) can create that row first. Only a user with no role rows at all
+  // gets a pending request.
+  const { data: existingRoles, error: rolesError } = await supabase
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", user.id)
+    .limit(1);
+
+  if (rolesError) {
+    log.error("User role lookup failed", { error: rolesError });
+    return;
+  }
+  if (existingRoles && existingRoles.length > 0) return;
+
+  const role = resolveRequestedRole(
+    user.user_metadata,
+    readStoredRequestedRole()
+  );
   const { error: roleError } = await supabase.from("user_roles").insert([
     {
       user_id: user.id,
-      role: "parent",
+      role,
       approved: false, // Requires admin approval
     },
   ]);
 
   if (roleError) {
     log.error("User role creation failed", { error: roleError });
+    return;
   }
+  clearStoredRequestedRole();
 }
 
 // Users API
@@ -196,19 +238,27 @@ export const usersApi = {
       email: data.email,
       firstName: data.first_name,
       lastName: data.last_name,
+      displayName: data.display_name ?? null,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
   },
 
+  /**
+   * Own-row update (RLS: auth.uid() = id). A display name may only be set by
+   * staff/admin (migration 043 trigger); blank clears it. A taken display
+   * name fails with code 23505.
+   */
   async updateUserProfile(
     userId: string,
-    updates: { firstName?: string; lastName?: string }
+    updates: { firstName?: string; lastName?: string; displayName?: string }
   ) {
     const updateData: any = {};
     if (updates.firstName !== undefined)
       updateData.first_name = updates.firstName;
     if (updates.lastName !== undefined) updateData.last_name = updates.lastName;
+    if (updates.displayName !== undefined)
+      updateData.display_name = updates.displayName;
 
     const { data, error } = await supabase
       .from("users")
@@ -216,8 +266,22 @@ export const usersApi = {
       .eq("id", userId)
       .select();
 
-    if (error) throw new ApiError(error.message);
+    if (error) throw new ApiError(error.message, undefined, error.code);
     return data[0];
+  },
+
+  /**
+   * Admin-only: set any user's display name (admin_set_display_name RPC,
+   * migration 043 -- admins have no UPDATE policy on other users' rows).
+   * Blank clears it; a taken name fails with code 23505.
+   */
+  async adminSetDisplayName(userId: string, displayName: string) {
+    const { error } = await supabase.rpc("admin_set_display_name", {
+      p_user_id: userId,
+      p_display_name: displayName,
+    });
+
+    if (error) throw new ApiError(error.message, undefined, error.code);
   },
 
   async getUserRoles(userId: string): Promise<UserRoleData[]> {
@@ -394,6 +458,34 @@ export const usersApi = {
     return data[0];
   },
 
+  /** Approve (or grant) the child role and link the account to a student,
+   * existing or new, in one transaction. Replaces any pending requests. */
+  async approveChildUser(userId: string, link: ChildAccountLink) {
+    const { error } = await supabase.rpc(
+      "approve_child_account",
+      "childId" in link
+        ? { p_user_id: userId, p_child_id: link.childId }
+        : {
+            p_user_id: userId,
+            p_first_name: link.newChild.firstName,
+            p_last_name: link.newChild.lastName,
+            p_grade: link.newChild.grade,
+            p_group_number: link.newChild.groupNumber,
+          }
+    );
+
+    if (error) throw new ApiError(error.message);
+  },
+
+  /** Revoke the child role and clear the account's student link. */
+  async unlinkChildUser(userId: string) {
+    const { error } = await supabase.rpc("unlink_child_account", {
+      p_user_id: userId,
+    });
+
+    if (error) throw new ApiError(error.message);
+  },
+
   async revokeApprovedRole(roleId: string) {
     const { data, error } = await supabase
       .from("user_roles")
@@ -499,6 +591,11 @@ async function fetchTimeSlotsById(): Promise<Map<string, TimeSlot>> {
   return new Map(timeSlots.map(slot => [slot.id, slot]));
 }
 
+// Escapes LIKE/ILIKE wildcards so a user-supplied value matches literally.
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, char => `\\${char}`);
+}
+
 function mapClassRow(
   row: any,
   timeSlotsById: Map<string, TimeSlot>
@@ -524,6 +621,7 @@ function mapClassRow(
     title: row.title,
     description: row.description,
     teacher: row.teacher,
+    userId: row.user_id ?? null,
     slots: hydratedSlots.sort(
       (a, b) =>
         a.dayOfWeek - b.dayOfWeek ||
@@ -560,6 +658,65 @@ export const classesApi = {
     return data.map(cls => mapClassRow(cls, timeSlotsById));
   },
 
+  /**
+   * Every (teacher, title, user_id) row in the catalog, untrimmed and with
+   * duplicates -- the raw material for the Staff View's staff dropdown.
+   * Titles come along so the caller can drop names that only ever appear on
+   * Special Classes; user_id folds linked classes into their user.
+   */
+  async getTeacherTitlePairs(): Promise<TeacherTitlePair[]> {
+    const { data, error } = await supabase
+      .from("classes")
+      .select("teacher, title, user_id")
+      .in("scope", getAllowedScopes());
+
+    if (error) throw new ApiError(error.message);
+    return (data || []).map(row => ({
+      teacher: row.teacher ?? "",
+      title: row.title ?? "",
+      userId: row.user_id ?? null,
+    }));
+  },
+
+  /** Classes linked to the teaching user `userId` (classes.user_id). */
+  async getClassesByUserId(userId: string): Promise<ClassWithTimeSlot[]> {
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      supabase
+        .from("classes")
+        .select("*")
+        .in("scope", getAllowedScopes())
+        .eq("user_id", userId)
+        .order("title", { ascending: true }),
+      fetchTimeSlotsById(),
+    ]);
+
+    if (error) throw new ApiError(error.message);
+    return data.map(cls => mapClassRow(cls, timeSlotsById));
+  },
+
+  /**
+   * Classes whose `teacher` matches `name` once trimmed. Fetched with a
+   * case-insensitive substring match (so stray whitespace in the stored
+   * value doesn't hide a class), then narrowed to an exact trimmed match.
+   */
+  async getClassesByTeacher(name: string): Promise<ClassWithTimeSlot[]> {
+    const target = name.trim();
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      supabase
+        .from("classes")
+        .select("*")
+        .in("scope", getAllowedScopes())
+        .ilike("teacher", `%${escapeLikePattern(target)}%`)
+        .order("title", { ascending: true }),
+      fetchTimeSlotsById(),
+    ]);
+
+    if (error) throw new ApiError(error.message);
+    return data
+      .filter(row => (row.teacher ?? "").trim() === target)
+      .map(cls => mapClassRow(cls, timeSlotsById));
+  },
+
   async createClass(classData: Omit<Class, "id" | "createdAt" | "updatedAt">) {
     assertTestScopeAllowed(classData.scope);
 
@@ -570,6 +727,7 @@ export const classesApi = {
           title: classData.title,
           description: classData.description,
           teacher: classData.teacher,
+          user_id: classData.userId ?? null,
           slots: ScheduleService.toRawSlots(classData.slots),
           grades: classData.grades,
           is_mandatory: classData.isMandatory,
@@ -597,6 +755,7 @@ export const classesApi = {
     if (updates.description !== undefined)
       updateData.description = updates.description;
     if (updates.teacher !== undefined) updateData.teacher = updates.teacher;
+    if (updates.userId !== undefined) updateData.user_id = updates.userId;
     if (updates.slots !== undefined)
       updateData.slots = ScheduleService.toRawSlots(updates.slots);
     if (updates.grades !== undefined) updateData.grades = updates.grades;
@@ -629,19 +788,14 @@ export const classesApi = {
 
 // Schedule Selections API
 //
-// Every schedule_selections row is either child-linked (a parent/staff
-// member picking for a student, target: { childId }) or user-linked (the
-// "child" role picking for themselves, target: { userId }). Known
-// limitation carried over unchanged from the pre-unification getUserSchedule
-// /selectClass/unselectClass: the { userId } insert never sets child_id,
-// which is NOT NULL on schedule_selections -- so a "child"-role user's own
-// selectSchedule call fails today. Tracked in #65, not fixed here.
+// Every schedule_selections row belongs to a student (child_id is NOT
+// NULL); user_id records who made the pick (parent, child user or staff).
 export const scheduleApi = {
   async getSelectedSchedule(
     target: ScheduleTarget,
     status: SelectionStatus
   ): Promise<ScheduleSelectionWithClass[]> {
-    let query = supabase
+    const query = supabase
       .from("schedule_selections")
       .select(
         `
@@ -649,11 +803,8 @@ export const scheduleApi = {
         class:classes(*)
       `
       )
-      .eq("status", status);
-    query =
-      "userId" in target
-        ? query.eq("user_id", target.userId)
-        : query.eq("child_id", target.childId);
+      .eq("status", status)
+      .eq("child_id", target.childId);
 
     const [{ data, error }, timeSlotsById] = await Promise.all([
       query,
@@ -679,30 +830,56 @@ export const scheduleApi = {
     }));
   },
 
+  /**
+   * Every committed selection `userId` made, with the child it was made for
+   * -- Staff View's "set by the tutor" stream. Staff RLS can read all
+   * selections (022) and children (031).
+   */
+  async getCommittedSelectionsMadeBy(
+    userId: string
+  ): Promise<StaffSelection[]> {
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      supabase
+        .from("schedule_selections")
+        .select(
+          "child_id, class:classes(*), child:children(first_name, last_name)"
+        )
+        .eq("user_id", userId)
+        .eq("status", "committed")
+        .not("child_id", "is", null),
+      fetchTimeSlotsById(),
+    ]);
+
+    if (error) throw new ApiError(error.message);
+
+    const allowedScopes = getAllowedScopes();
+    return (data as any[])
+      .filter(row => row.class && allowedScopes.includes(row.class.scope))
+      .map(row => ({
+        class: mapClassRow(row.class, timeSlotsById),
+        childId: row.child_id,
+        childName: [row.child?.first_name, row.child?.last_name]
+          .filter(Boolean)
+          .join(" "),
+      }));
+  },
+
   async selectSchedule(
     target: ScheduleTarget,
     classId: string,
     status: SelectionStatus
   ) {
-    const row =
-      "childId" in target
-        ? await (async () => {
-            // Get current user ID (parent/staff making the selection)
-            const {
-              data: { user },
-            } = await withTimeout(
-              supabase.auth.getUser(),
-              AUTH_LOCKED_CALL_TIMEOUT_MS
-            );
-            if (!user) throw new ApiError("User not authenticated");
-            return {
-              user_id: user.id,
-              child_id: target.childId,
-              class_id: classId,
-              status,
-            };
-          })()
-        : { user_id: target.userId, class_id: classId, status };
+    // The signed-in user making the pick (parent, child user or staff).
+    const {
+      data: { user },
+    } = await withTimeout(supabase.auth.getUser(), AUTH_LOCKED_CALL_TIMEOUT_MS);
+    if (!user) throw new ApiError("User not authenticated");
+    const row = {
+      user_id: user.id,
+      child_id: target.childId,
+      class_id: classId,
+      status,
+    };
 
     const { data, error } = await supabase
       .from("schedule_selections")
@@ -721,17 +898,12 @@ export const scheduleApi = {
     classId: string,
     status: SelectionStatus
   ) {
-    let query = supabase
+    const { error } = await supabase
       .from("schedule_selections")
       .delete()
       .eq("class_id", classId)
-      .eq("status", status);
-    query =
-      "userId" in target
-        ? query.eq("user_id", target.userId)
-        : query.eq("child_id", target.childId);
-
-    const { error } = await query;
+      .eq("status", status)
+      .eq("child_id", target.childId);
 
     if (error) throw new ApiError(error.message);
   },
@@ -760,6 +932,8 @@ export const scheduleApi = {
         addedByUserId: child.added_by_user_id,
         addedByFirstName: child.added_by_first_name,
         addedByLastName: child.added_by_last_name,
+        // Absent until migration 044 is applied -> falls back to the name.
+        addedByDisplayName: child.added_by_display_name ?? null,
         addedByAt: child.added_by_at,
       }))
       .sort((a: EnrolledChild, b: EnrolledChild) =>
@@ -795,6 +969,7 @@ function mapOverrideRow(
     childId: row.child_id,
     title: row.title,
     teacher: row.teacher,
+    userId: row.user_id ?? null,
     room: row.room,
     dayOfWeek: row.day_of_week,
     timeSlotId: row.time_slot_id,
@@ -809,12 +984,69 @@ function mapOverrideRow(
 export const scheduleOverridesApi = {
   async getOverrides(childId: string): Promise<ScheduleOverrideWithTimeSlot[]> {
     const [{ data, error }, timeSlotsById] = await Promise.all([
-      supabase.from("schedule_overrides").select("*").eq("child_id", childId),
+      supabase
+        .from("schedule_overrides")
+        .select("*")
+        .in("scope", getAllowedScopes())
+        .eq("child_id", childId),
       fetchTimeSlotsById(),
     ]);
 
     if (error) throw new ApiError(error.message);
     return data.map(row => mapOverrideRow(row, timeSlotsById));
+  },
+
+  /**
+   * Overrides across all children whose `teacher` matches `name` once
+   * trimmed, each carrying its child's display name (Staff View). Staff RLS
+   * already allows reading every override (migration 037). Same
+   * substring-fetch + exact-trimmed-filter approach as
+   * classesApi.getClassesByTeacher.
+   */
+  async getOverridesByTeacher(
+    name: string
+  ): Promise<ScheduleOverrideWithChildName[]> {
+    const target = name.trim();
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      supabase
+        .from("schedule_overrides")
+        .select("*, child:children(first_name, last_name)")
+        .in("scope", getAllowedScopes())
+        .ilike("teacher", `%${escapeLikePattern(target)}%`),
+      fetchTimeSlotsById(),
+    ]);
+
+    if (error) throw new ApiError(error.message);
+    return data
+      .filter(row => (row.teacher ?? "").trim() === target)
+      .map(row => ({
+        ...mapOverrideRow(row, timeSlotsById),
+        childName: [row.child?.first_name, row.child?.last_name]
+          .filter(Boolean)
+          .join(" "),
+      }));
+  },
+
+  /** Overrides across all children assigned to the teaching user `userId`. */
+  async getOverridesByUserId(
+    userId: string
+  ): Promise<ScheduleOverrideWithChildName[]> {
+    const [{ data, error }, timeSlotsById] = await Promise.all([
+      supabase
+        .from("schedule_overrides")
+        .select("*, child:children(first_name, last_name)")
+        .in("scope", getAllowedScopes())
+        .eq("user_id", userId),
+      fetchTimeSlotsById(),
+    ]);
+
+    if (error) throw new ApiError(error.message);
+    return data.map(row => ({
+      ...mapOverrideRow(row, timeSlotsById),
+      childName: [row.child?.first_name, row.child?.last_name]
+        .filter(Boolean)
+        .join(" "),
+    }));
   },
 
   async createOverride(
@@ -836,6 +1068,7 @@ export const scheduleOverridesApi = {
             child_id: override.childId,
             title: override.title,
             teacher: override.teacher,
+            user_id: override.userId ?? null,
             room: override.room,
             day_of_week: override.dayOfWeek,
             time_slot_id: override.timeSlotId,
@@ -862,6 +1095,7 @@ export const scheduleOverridesApi = {
     if (updates.childId !== undefined) updateData.child_id = updates.childId;
     if (updates.title !== undefined) updateData.title = updates.title;
     if (updates.teacher !== undefined) updateData.teacher = updates.teacher;
+    if (updates.userId !== undefined) updateData.user_id = updates.userId;
     if (updates.room !== undefined) updateData.room = updates.room;
     if (updates.dayOfWeek !== undefined)
       updateData.day_of_week = updates.dayOfWeek;
@@ -890,6 +1124,24 @@ export const scheduleOverridesApi = {
       .eq("id", id);
 
     if (error) throw new ApiError(error.message);
+  },
+};
+
+// Staff API
+export const staffApi = {
+  /**
+   * Approved admin/staff/moderator users with a display name
+   * (get_staff_directory RPC, migration 043 -- staff can't read other
+   * users' rows directly). Staff-role callers only.
+   */
+  async getStaffDirectory(): Promise<StaffDirectoryEntry[]> {
+    const { data, error } = await supabase.rpc("get_staff_directory");
+
+    if (error) throw new ApiError(error.message, undefined, error.code);
+    return (data || []).map((row: { id: string; display_name: string }) => ({
+      id: row.id,
+      displayName: row.display_name,
+    }));
   },
 };
 
@@ -1024,21 +1276,27 @@ export const childrenApi = {
    * Track is split into track_number_draft (parent-owned) and
    * track_number_committed (staff/admin-owned) -- a separate write path
    * from updateChild since the two are never touched by the same caller's
-   * intent. No DB-level enforcement of which status a caller may write
-   * (see migration 023's header) -- callers must pass the correct status.
+   * intent. The draft goes through set_track_draft (migration 048), which
+   * only a child's parent or the linked child user may call; callers must
+   * still pass the right status.
    */
-  async updateChildTrack(
+  async updateTrack(
     childId: string,
     status: SelectionStatus,
     trackNumber: number | null
   ): Promise<void> {
-    const column =
-      status === "committed" ? "track_number_committed" : "track_number_draft";
-
-    const { error } = await supabase
-      .from("children")
-      .update({ [column]: trackNumber })
-      .eq("id", childId);
+    // Draft: one RPC for a child's parent and for the linked child user
+    // (who has no UPDATE on children). Committed: staff/admin, directly.
+    const { error } =
+      status === "draft"
+        ? await supabase.rpc("set_track_draft", {
+            p_child_id: childId,
+            p_track_number: trackNumber,
+          })
+        : await supabase
+            .from("children")
+            .update({ track_number_committed: trackNumber })
+            .eq("id", childId);
 
     if (error) throw new ApiError(error.message);
   },
@@ -1071,9 +1329,12 @@ export const childrenApi = {
 
     return data.map((child: any) => {
       const creatorName =
-        [child.creator_first_name, child.creator_last_name]
-          .filter(Boolean)
-          .join(" ") ||
+        formatPersonName({
+          // Absent until migration 044 is applied -> falls back to the name.
+          displayName: child.creator_display_name,
+          firstName: child.creator_first_name,
+          lastName: child.creator_last_name,
+        }) ||
         child.creator_email ||
         null;
 
@@ -1125,6 +1386,62 @@ export const childrenApi = {
     };
   },
 
+  /** The student linked to this login (children.user_id), for a child
+   * user. Null when the account isn't linked yet or the student's scope
+   * isn't allowed here. RLS only returns the row to an approved child. */
+  async getMyLinkedChild(userId: string): Promise<Child | null> {
+    const { data, error } = await supabase
+      .from("children")
+      .select("*")
+      .eq("user_id", userId)
+      .in("scope", getAllowedScopes())
+      .maybeSingle();
+
+    if (error) throw new ApiError(error.message);
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      grade: data.grade,
+      groupNumber: data.group_number,
+      trackNumber: data.track_number_draft,
+      scope: data.scope,
+      createdBy: data.created_by ?? null,
+      createdByName: null,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+  },
+
+  /** Students with no linked account, for the approval link picker. */
+  async getUnlinkedChildren(): Promise<Child[]> {
+    const { data, error } = await supabase
+      .from("children")
+      .select("*")
+      .is("user_id", null)
+      .in("scope", getAllowedScopes())
+      .order("last_name")
+      .order("first_name");
+
+    if (error) throw new ApiError(error.message);
+
+    return (data ?? []).map(row => ({
+      id: row.id,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      grade: row.grade,
+      groupNumber: row.group_number,
+      trackNumber: row.track_number_draft,
+      scope: row.scope,
+      createdBy: row.created_by ?? null,
+      createdByName: null,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  },
+
   async getChildWithParents(
     childId: string,
     status: SelectionStatus = "draft"
@@ -1164,11 +1481,13 @@ export const childrenApi = {
   },
 
   /**
-   * Local (client-visible) duplicate check: a direct `children` query, not
-   * an RPC, so it stays cheap enough to run as the user types a new child's
-   * name/grade (see Task 6). Joins `users` via the FK Postgres auto-named
-   * `children_created_by_fkey` (migration 030) to surface who created each
-   * candidate match.
+   * Duplicate check by exact name (case-insensitive) + grade. Goes through
+   * the `find_child_matches` RPC (migration 049) rather than a direct
+   * `children` query, because RLS hides children already linked to another
+   * family -- and those are exactly the ones a second parent needs to find
+   * so they can link to the same record instead of creating a duplicate.
+   * Creator and linked parent are reported separately: a staff-created
+   * child can also have a parent.
    */
   async findLocalDuplicateChildren(
     firstName: string,
@@ -1177,20 +1496,13 @@ export const childrenApi = {
     excludeChildId: string | undefined,
     currentUserId: string
   ): Promise<DuplicateChildMatch[]> {
-    let query = supabase
-      .from("children")
-      .select(
-        "id, grade, created_by, creator:users!children_created_by_fkey(first_name, last_name)"
-      )
-      .ilike("first_name", firstName.trim())
-      .ilike("last_name", lastName.trim())
-      .eq("grade", grade);
-
-    if (excludeChildId) {
-      query = query.neq("id", excludeChildId);
-    }
-
-    const { data, error } = await query;
+    const { data, error } = await supabase.rpc("find_child_matches", {
+      p_first_name: firstName.trim(),
+      p_last_name: lastName.trim(),
+      p_grade: grade,
+      p_scopes: getAllowedScopes(),
+      p_exclude_child_id: excludeChildId ?? null,
+    });
 
     if (error) {
       throw new ApiError(
@@ -1199,25 +1511,36 @@ export const childrenApi = {
     }
 
     return (
-      (data ?? []) as unknown as {
+      (data ?? []) as {
         id: string;
         grade: number;
         created_by: string | null;
-        creator: {
-          first_name: string | null;
-          last_name: string | null;
-        } | null;
+        creator_first_name: string | null;
+        creator_last_name: string | null;
+        creator_display_name: string | null;
+        parent_first_name: string | null;
+        parent_last_name: string | null;
+        parent_display_name: string | null;
+        has_parent: boolean;
+        linked_to_me: boolean;
       }[]
     ).map(row => ({
       id: row.id,
       grade: row.grade,
       createdByUserId: row.created_by,
-      createdByName: row.creator
-        ? [row.creator.first_name, row.creator.last_name]
-            .filter(Boolean)
-            .join(" ") || null
-        : null,
+      createdByName: formatPersonName({
+        displayName: row.creator_display_name,
+        firstName: row.creator_first_name,
+        lastName: row.creator_last_name,
+      }),
       createdByIsSelf: row.created_by === currentUserId,
+      hasLinkedParent: row.has_parent,
+      linkedParentName: formatPersonName({
+        displayName: row.parent_display_name,
+        firstName: row.parent_first_name,
+        lastName: row.parent_last_name,
+      }),
+      linkedToMe: row.linked_to_me,
     }));
   },
 
@@ -1235,6 +1558,18 @@ export const childrenApi = {
       isPrimary: data.is_primary,
       createdAt: data.created_at,
     };
+  },
+
+  /**
+   * A parent's "delete": removes only the caller's own link. The child
+   * record is deleted only when no other parent is linked (migration 049).
+   */
+  async unlinkChild(childId: string): Promise<void> {
+    const { error } = await supabase.rpc("remove_child_for_parent", {
+      p_child_id: childId,
+    });
+
+    if (error) throw new ApiError(error.message);
   },
 };
 

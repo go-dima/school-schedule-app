@@ -16,12 +16,15 @@
       "googleButton": "התחבר עם Google",
       "googleError": "שגיאה בהתחברות עם Google",
       "signupPrompt": "עדיין אין לך חשבון?",
-      "signupLink": "הירשם עכשיו"
+      "signupButton": "הרשמה"
     },
     "signup": {
       "title": "הרשמה",
-      "subtitle": "צור חשבון הורה חדש במערכת השעות",
+      "subtitle": "צור חשבון חדש במערכת השעות",
       "error": "שגיאה בהרשמה",
+      "roleLabel": "אני נרשם/ת בתור",
+      "roleRequired": "בחר/י את התפקיד שלך",
+      "noRoleSelected": "לא נבחר תפקיד",
       "verifyEmail": {
         "title": "כמעט סיימת!",
         "alertTitle": "אנא אשר/י את כתובת הדוא\"ל",
@@ -68,6 +71,10 @@
   },
   "schedule": {
     "draftBanner": "הבחירה היא טויטה בלבד",
+    "print": {
+      "childTitle": "מערכת של {{firstName}} {{lastName}} - {{grade}}",
+      "staffTitle": "מערכת של {{name}}"
+    },
     "committedReadOnlyBanner": "מערכת מוצגת לצפייה בלבד",
     "page": {
       "title": "מערכת שעות",
@@ -79,7 +86,6 @@
       "classSelectionError": "שגיאה בעדכון בחירת השיעור",
       "dataLoadingError": "שגיאה בטעינת הנתונים",
       "profileButton": "פרופיל",
-      "roleSelectorPlaceholder": "בחר תפקיד",
       "labels": {
         "selectChild": "בחר ילד",
         "selectChildForStaff": "בחר תלמיד",
@@ -91,14 +97,18 @@
         "trackPlaceholder": "ללא מסלול",
         "trackOption": "מסלול {{track}}",
         "groupPlaceholder": "ללא קבוצה",
-        "groupOption": "קבוצה {{group}}"
+        "groupOption": "קבוצה {{group}}",
+        "studentView": "תלמידים",
+        "myView": "המערכת שלי",
+        "staffView": "צוות",
+        "selectStaff": "בחר איש צוות"
       },
       "placeholders": {
         "allGrades": "כל הכיתות",
         "searchClass": "הקלד שם שיעור לחיפוש...",
-        "selectRole": "בחר תפקיד",
         "selectChildForStaff": "בחר תלמיד...",
-        "classFilterDisabled": "חיפוש מבוטל - נבחר תלמיד"
+        "classFilterDisabled": "חיפוש מבוטל - נבחר תלמיד",
+        "selectStaff": "בחר איש צוות..."
       },
       "childSelectorLabel": "בחר ילד:",
       "gradeFilterLabel": "סנן לפי כיתה:",
@@ -109,9 +119,19 @@
           "title": "לא נבחר ילד",
           "description": "בחר ילד מהרשימה כדי לצפות ולערוך את מערכת השעות שלו."
         },
+        "noStaffSelected": {
+          "title": "לא נבחר איש צוות",
+          "description": "בחר איש צוות מהרשימה כדי לצפות במערכת השעות שלו."
+        },
         "noPermission": {
           "title": "אין הרשאה לבחירת שיעורים",
-          "adminStaffViewOnly": "מנהלים וצוות יכולים לצפות במערכת השעות אך לא לבחור שיעורים."
+          "needsApproval": "נדרשת אישור מנהל להפעלת התפקיד. אנא המתן לאישור או פנה למנהל.",
+          "adminStaffViewOnly": "מנהלים וצוות יכולים לצפות במערכת השעות אך לא לבחור שיעורים.",
+          "studentsParentsOnly": "רק תלמידים והורים יכולים לבחור שיעורים במערכת השעות."
+        },
+        "childNotLinked": {
+          "title": "החשבון עדיין לא מקושר לתלמיד",
+          "description": "מנהל המערכת צריך לקשר את החשבון לרשומת התלמיד שלך. לאחר מכן תוכל/י לבחור שיעורים."
         },
         "noChildrenFound": {
           "title": "לא נמצאו ילדים",
@@ -131,6 +151,8 @@
       "selectedClassesTitle": "השיעורים שנבחרו",
       "createNewClassModal": "צור שיעור חדש",
       "exportButton": "הדפס",
+      "exportButtonFor": "הדפס מערכת של {{name}}",
+      "exportMyButton": "הדפס את המערכת שלי",
       "error": {
         "noChildSelected": "נא לבחור ילד תחילה",
         "exportFailed": "שגיאה בהדפסת מערכת השעות",
@@ -141,7 +163,8 @@
         "loadData": "שגיאה בטעינת הנתונים",
         "loadTimeSlots": "שגיאה בטעינת זמני השיעורים",
         "timeSlotNotFound": "זמן השיעור לא נמצא",
-        "createClass": "שגיאה ביצירת השיעור"
+        "createClass": "שגיאה ביצירת השיעור",
+        "loadStaffSchedule": "שגיאה בטעינת מערכת איש הצוות"
       },
       "success": {
         "classCreated": "השיעור נוצר בהצלחה"
@@ -309,7 +332,7 @@
       "editButton": "ערוך",
       "removeButton": "הסר",
       "deleteConfirmTitle": "האם אתה בטוח שברצונך להסיר את הילד?",
-      "deleteConfirmDescription": "פעולה זו תסיר את הילד מהחשבון שלך ותמחק את כל בחירות השעורים שלו.",
+      "deleteConfirmDescription": "פעולה זו תסיר את הילד מהחשבון שלך. אם אין הורים נוספים המקושרים לילד, הילד וכל בחירות השעורים שלו יימחקו.",
       "confirmDelete": "כן, הסר",
       "createdDate": "נוצר: {{date}}",
       "editModalTitle": "עריכת פרטי ילד",
@@ -320,7 +343,8 @@
     "duplicateWarning": {
       "title": "שם דומה כבר קיים",
       "existsMessage": "שם הילד/ה {{name}} (כיתה {{grade}}) כבר נוצר ע\"י {{creator}}",
-      "attachExisting": "צרף ילד קיים",
+      "alreadyAssignedMessage": "{{name}} כבר משויך/ת ל{{parent}} - להוסיף גם אותך?",
+      "attachExisting": "הוסף אותי כהורה",
       "addNewChild": "הוסף ילד חדש",
       "continueAnyway": "המשך בכל זאת",
       "cancel": "ביטול",
@@ -332,7 +356,6 @@
   },
   "classManagement": {
     "page": {
-      "title": "ניהול שיעורים",
       "loading": "טוען נתוני שיעורים...",
       "backToSchedule": "חזרה למערכת השעות",
       "registrationApprovals": "אישורי הרשמה",
@@ -471,7 +494,11 @@
       "firstNameRequired": "נא להזין שם פרטי",
       "lastNameRequired": "נא להזין שם משפחה",
       "firstNameMinLength": "שם פרטי חייב להכיל לפחות 2 תווים",
-      "lastNameMinLength": "שם משפחה חייב להכיל לפחות 2 תווים"
+      "lastNameMinLength": "שם משפחה חייב להכיל לפחות 2 תווים",
+      "displayNameLabel": "שם תצוגה",
+      "displayNamePlaceholder": "למשל: רחל כהן",
+      "displayNameHelp": "השם שמופיע בשיעורים שלך ובמערכת הצוות",
+      "displayNameTaken": "השם כבר בשימוש"
     }
   },
   "app": {
@@ -489,8 +516,11 @@
       "loadError": "שגיאה בטעינת המשתמשים",
       "noRolesValidationError": "יש לבחור לפחות תפקיד אחד",
       "baseRoleValidationError": "תפקיד מנהל או אחראי/ת מערכת דורש תפקיד בסיס נוסף (הורה או צוות)",
+      "childExclusiveValidationError": "תפקיד תלמיד לא ניתן לשילוב עם תפקידים אחרים",
       "updateSuccess": "תפקידי המשתמש {{email}} עודכנו בהצלחה",
       "updateError": "שגיאה בעדכון תפקידי המשתמש",
+      "displayNameUpdated": "שם התצוגה עודכן",
+      "displayNameError": "שגיאה בעדכון שם התצוגה",
       "selfDemotion": {
         "title": "הסרת הרשאות מנהל מעצמך",
         "description": "אתה עומד להסיר מעצמך את תפקיד המנהל. לאחר השמירה לא תוכל עוד לגשת לדף זה. להמשיך?",
@@ -501,6 +531,8 @@
     },
     "table": {
       "nameColumn": "שם משתמש",
+      "displayNameColumn": "שם תצוגה",
+      "editDisplayName": "ערוך שם תצוגה",
       "emailColumn": "דוא״ל",
       "createdAtColumn": "תאריך הרשמה",
       "lastSignInColumn": "כניסה אחרונה",
@@ -565,6 +597,17 @@
       "roleRequired": "נא לבחור תפקיד",
       "rolePlaceholder": "בחר תפקיד למשתמש",
       "submitButton": "אשר משתמש"
+    },
+    "childLink": {
+      "title": "קישור לרשומת תלמיד",
+      "description": "חשבון תלמיד חייב להיות מקושר לרשומת תלמיד. בחר/י תלמיד קיים או צור/י רשומה חדשה.",
+      "modeExisting": "תלמיד קיים",
+      "modeNew": "תלמיד חדש",
+      "studentLabel": "תלמיד",
+      "studentPlaceholder": "חפש/י תלמיד לפי שם",
+      "noUnlinked": "אין תלמידים ללא חשבון מקושר",
+      "incomplete": "יש לבחור תלמיד או למלא את פרטי התלמיד החדש",
+      "loadError": "שגיאה בטעינת רשימת התלמידים"
     }
   },
   "common": {
@@ -590,13 +633,11 @@
       "cancel": "ביטול",
       "logout": "התנתק",
       "pendingRequests": "בקשות ממתינות",
-      "classManagement": "ניהול שיעורים",
-      "userManagement": "ניהול משתמשים"
+      "classManagement": "ניהול שיעורים"
     }
   },
   "students": {
     "page": {
-      "title": "תלמידים",
       "addButton": "הוסף תלמיד",
       "editButton": "ערוך",
       "removeButton": "הסר",

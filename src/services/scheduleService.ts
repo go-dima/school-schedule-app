@@ -15,6 +15,22 @@ import { isLessonTimeSlot } from "../utils/timeSlots";
 // entirely from the schedule catalog for everyone else.
 const STAFF_ONLY_CLASS_TITLES = new Set(["חונכות", "שילוב", "מחויבות אישית"]);
 
+// Special Classes: per-child placeholder classes whose `teacher` is not the
+// person who actually teaches each child (that's decided per selection).
+// Superset of the staff-only titles -- "כישורי חיים" is special but still
+// visible to parents, so it deliberately stays out of the set above.
+const SPECIAL_CLASS_TITLES = new Set([
+  ...STAFF_ONLY_CLASS_TITLES,
+  "כישורי חיים",
+]);
+
+// Lessons that happen INSIDE another lesson (שילוב: integration support
+// within a class), so sharing a slot with one is never a conflict.
+const NON_CONFLICTING_CLASS_TITLES = new Set(["שילוב"]);
+
+const neverConflicts = (cls: Pick<ClassWithTimeSlot, "title">): boolean =>
+  NON_CONFLICTING_CLASS_TITLES.has(cls.title.trim());
+
 export class ScheduleService {
   static slotKey(slot: ClassSlot): string {
     return `${slot.dayOfWeek}:${slot.timeSlotId}`;
@@ -115,10 +131,12 @@ export class ScheduleService {
     userSelections: ScheduleSelectionWithClass[],
     newClass: ClassWithTimeSlot
   ): ClassWithTimeSlot[] {
+    if (neverConflicts(newClass)) return [];
     const conflicts = userSelections
       .filter(
         selection =>
           selection.class.id !== newClass.id &&
+          !neverConflicts(selection.class) &&
           this.slotsOverlap(newClass.slots, selection.class.slots)
       )
       .map(selection => selection.class);
@@ -135,6 +153,32 @@ export class ScheduleService {
     newClass: ClassWithTimeSlot
   ): boolean {
     return this.getConflictingClasses(userSelections, newClass).length > 0;
+  }
+
+  /**
+   * Whether `cls` clashes with another selected lesson in ONE specific
+   * (day, time slot) -- the schedule grid marks a cell only where lessons
+   * actually overlap, so a double lesson clashing in one half leaves its
+   * other half unmarked. (hasTimeConflict answers the class-wide question
+   * the selection drawer needs.)
+   */
+  static hasConflictInSlot(
+    userSelections: ScheduleSelectionWithClass[],
+    cls: ClassWithTimeSlot,
+    dayOfWeek: number,
+    timeSlotId: string
+  ): boolean {
+    const inSlot = (slots: ClassSlot[]) =>
+      slots.some(
+        slot => slot.dayOfWeek === dayOfWeek && slot.timeSlotId === timeSlotId
+      );
+    if (!inSlot(cls.slots) || neverConflicts(cls)) return false;
+    return userSelections.some(
+      selection =>
+        selection.class.id !== cls.id &&
+        !neverConflicts(selection.class) &&
+        inSlot(selection.class.slots)
+    );
   }
 
   /**
@@ -253,8 +297,12 @@ export class ScheduleService {
    */
   static resolveScheduleView(input: {
     role: UserRole | undefined;
+    /** permissions.canPickSchedule: parent or child. */
+    canPickSchedule: boolean;
     viewCommitted: boolean;
-    parentSelectedChildId: string | undefined;
+    /** ChildContext's selected child: one of a parent's children, or a
+     * child user's own linked student. */
+    selectedChildId: string | undefined;
     staffSelectedChildId: string | undefined;
   }): {
     viewStatus: SelectionStatus;
@@ -262,10 +310,9 @@ export class ScheduleService {
     canCreateOverride: boolean;
   } {
     const isStaff = input.role === "staff";
-    const isParent = input.role === "parent";
 
     const viewStatus: SelectionStatus =
-      isParent && input.viewCommitted
+      input.canPickSchedule && input.viewCommitted
         ? "committed"
         : ScheduleService.resolveSelectionStatus(input.role);
 
@@ -273,7 +320,7 @@ export class ScheduleService {
       viewStatus === "committed"
         ? isStaff
           ? input.staffSelectedChildId
-          : input.parentSelectedChildId
+          : input.selectedChildId
         : undefined;
 
     const canCreateOverride = isStaff && !!input.staffSelectedChildId;
@@ -320,6 +367,15 @@ export class ScheduleService {
   /** True for staff-only placeholder classes (e.g. "חונכות", "שילוב"). */
   static isStaffOnlyClass(cls: ClassWithTimeSlot): boolean {
     return STAFF_ONLY_CLASS_TITLES.has(cls.title);
+  }
+
+  /**
+   * True for Special Classes -- the staff-only placeholders plus
+   * "כישורי חיים". Their catalog `teacher` doesn't say who teaches a given
+   * child, so the Staff View leaves them out of its catalog stream.
+   */
+  static isSpecialClass(cls: Pick<ClassWithTimeSlot, "title">): boolean {
+    return SPECIAL_CLASS_TITLES.has(cls.title.trim());
   }
 
   /**

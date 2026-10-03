@@ -8,23 +8,30 @@ export function useChildren() {
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, permissions } = useAuth();
+  const { canManageChildren, canPickSchedule } = permissions;
 
   useEffect(() => {
-    if (!user?.id) {
+    if (!user?.id || (!canManageChildren && !canPickSchedule)) {
       setChildren([]);
       setLoading(false);
       return;
     }
 
     let mounted = true;
+    setLoading(true);
+
+    // A parent's list is their children; a child user's is just their own
+    // linked student (empty until an admin links the account).
+    const fetchChildren = async (userId: string): Promise<Child[]> => {
+      if (canManageChildren) return childrenApi.getParentChildren(userId);
+      const own = await childrenApi.getMyLinkedChild(userId);
+      return own ? [own] : [];
+    };
 
     const loadChildren = async () => {
       try {
-        const childrenData = await withTimeout(
-          childrenApi.getParentChildren(user.id),
-          10000
-        );
+        const childrenData = await withTimeout(fetchChildren(user.id), 10000);
         if (mounted) {
           setChildren(childrenData);
           setError(null);
@@ -53,7 +60,7 @@ export function useChildren() {
     return () => {
       mounted = false;
     };
-  }, [user?.id]);
+  }, [user?.id, canManageChildren, canPickSchedule]);
 
   const createChild = async (
     firstName: string,
@@ -108,7 +115,7 @@ export function useChildren() {
       }
 
       if (trackNumber !== undefined) {
-        await childrenApi.updateChildTrack(childId, "draft", trackNumber);
+        await childrenApi.updateTrack(childId, "draft", trackNumber);
         updatedChild = { ...updatedChild, trackNumber };
       }
 
@@ -128,7 +135,7 @@ export function useChildren() {
     if (!user?.id) throw new Error("User not authenticated");
 
     try {
-      await childrenApi.deleteChild(childId);
+      await childrenApi.unlinkChild(childId);
       setChildren(prev => prev.filter(child => child.id !== childId));
     } catch (err) {
       const message =

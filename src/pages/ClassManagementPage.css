@@ -10,7 +10,7 @@
 }
 
 .class-management-header {
-  margin-bottom: 24px;
+  margin-bottom: 8px;
 }
 
 /* Wrapper is a <fieldset> (see ClassManagementPage's `loading` vs
@@ -35,7 +35,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
+}
+
+/* Page title lives in the app header; keep the action buttons at the
+   inline-end (visual left in RTL). */
+.class-management-controls .header-main {
+  justify-content: flex-end;
 }
 
 .header-main h2 {

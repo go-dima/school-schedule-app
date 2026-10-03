@@ -1,12 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import PrintableSchedule from "../components/PrintableSchedule";
-import type {
-  Child,
-  TimeSlot,
-  WeeklySchedule,
-  ScheduleOverrideWithTimeSlot,
-} from "../types";
+import PrintableSchedule, {
+  type PrintableScheduleProps,
+} from "../components/PrintableSchedule";
 import { getPrintStyles } from "./loadPrintStyles";
 import {
   PRINT_PAGE_CONTENT_WIDTH_PX,
@@ -14,16 +10,11 @@ import {
 } from "./printPageSize";
 import { encodeHTML } from "./htmlEscape";
 
-interface PrintScheduleData {
-  child: Child;
-  timeSlots: TimeSlot[];
-  weeklySchedule: WeeklySchedule;
-  selectedClasses: string[];
-  overrides: ScheduleOverrideWithTimeSlot[];
-  showDraftMarker: boolean;
-}
-
-export const printSchedule = async (data: PrintScheduleData): Promise<void> => {
+// Takes exactly the props PrintableSchedule renders -- one definition, so a
+// new print field can't be added to one side and forgotten on the other.
+export const printSchedule = async (
+  data: PrintableScheduleProps
+): Promise<void> => {
   return new Promise((resolve, reject) => {
     try {
       // Create a new window for printing
@@ -38,13 +29,8 @@ export const printSchedule = async (data: PrintScheduleData): Promise<void> => {
         return;
       }
 
-      // Set up the HTML structure for the print window using secure DOM methods
-      // Sanitize child name for title
-      const safeFirstName = encodeHTML(data.child.firstName);
-      const safeLastName = encodeHTML(data.child.lastName);
-
-      // Use a simpler approach by writing HTML directly to the document
-      const titleText = "מערכת של " + safeFirstName + " " + safeLastName;
+      // Sanitize the title before writing it into the document's HTML
+      const titleText = encodeHTML(data.title);
 
       const htmlContent = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -85,14 +71,7 @@ export const printSchedule = async (data: PrintScheduleData): Promise<void> => {
         // Create the PrintableSchedule element
         const printableScheduleElement = React.createElement(
           PrintableSchedule,
-          {
-            child: data.child,
-            timeSlots: data.timeSlots,
-            weeklySchedule: data.weeklySchedule,
-            selectedClasses: data.selectedClasses,
-            overrides: data.overrides,
-            showDraftMarker: data.showDraftMarker,
-          }
+          data
         );
 
         root.render(printableScheduleElement);

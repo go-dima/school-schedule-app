@@ -1,24 +1,46 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, Form, Input, Button, Alert, Space, Tabs } from "antd";
 import { UserOutlined, SaveOutlined, UserAddOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
-import { usersApi } from "../services/api";
+import { ApiError, usersApi } from "../services/api";
 import { ChildManagement } from "../components/ChildManagement";
 
 interface ProfileFormValues {
   firstName: string;
   lastName: string;
+  displayName?: string;
 }
+
+// Postgres unique_violation: the display name belongs to someone else.
+const UNIQUE_VIOLATION = "23505";
 
 const ProfileSettingsPage: React.FC = () => {
   const { t } = useTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("profile");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [success, setSuccess] = useState(false);
-  const { user, roleFlags, refreshProfile } = useAuth();
+  const { user, permissions, refreshProfile } = useAuth();
+  const { canManageChildren } = permissions;
+  // Staff-role users (admin/staff/moderator) have a display name: the name
+  // their classes and Staff View show them under.
+  const hasDisplayName = permissions.canManageClasses;
+
+  // Reflected in the URL (?tab=profile|children) so this settings section is
+  // a real, bookmarkable page rather than untracked local state -- default
+  // to "profile" for anyone not on the "children" tab, and for non-parents
+  // regardless of what the URL says (they have no children tab to show).
+  const activeTab =
+    searchParams.get("tab") === "children" && canManageChildren
+      ? "children"
+      : "profile";
+
+  const handleTabChange = (key: string) => {
+    setSearchParams(key === "profile" ? {} : { tab: key });
+  };
 
   // Set initial form values when component mounts
   useEffect(() => {
@@ -26,6 +48,7 @@ const ProfileSettingsPage: React.FC = () => {
       form.setFieldsValue({
         firstName: user.firstName || "",
         lastName: user.lastName || "",
+        displayName: user.displayName || "",
       });
     }
   }, [user, form]);
@@ -41,6 +64,7 @@ const ProfileSettingsPage: React.FC = () => {
       await usersApi.updateUserProfile(user.id, {
         firstName: values.firstName,
         lastName: values.lastName,
+        ...(hasDisplayName && { displayName: values.displayName ?? "" }),
       });
 
       await refreshProfile();
@@ -52,14 +76,16 @@ const ProfileSettingsPage: React.FC = () => {
       }, 3000);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : t("profile.page.updateError")
+        err instanceof ApiError && err.code === UNIQUE_VIOLATION
+          ? t("profile.page.displayNameTaken")
+          : err instanceof Error
+            ? err.message
+            : t("profile.page.updateError")
       );
     } finally {
       setLoading(false);
     }
   };
-
-  const isParent = roleFlags.isParent;
 
   const tabItems = [
     {
@@ -135,6 +161,19 @@ const ProfileSettingsPage: React.FC = () => {
               />
             </Form.Item>
 
+            {hasDisplayName && (
+              <Form.Item
+                name="displayName"
+                label={t("profile.page.displayNameLabel")}
+                extra={t("profile.page.displayNameHelp")}>
+                <Input
+                  prefix={<UserOutlined />}
+                  placeholder={t("profile.page.displayNamePlaceholder")}
+                  size="large"
+                />
+              </Form.Item>
+            )}
+
             <Form.Item style={{ marginBottom: 0 }}>
               <Button
                 type="primary"
@@ -151,7 +190,7 @@ const ProfileSettingsPage: React.FC = () => {
   ];
 
   // Add children management tab for parents
-  if (isParent) {
+  if (canManageChildren) {
     tabItems.push({
       key: "children",
       label: (
@@ -172,7 +211,7 @@ const ProfileSettingsPage: React.FC = () => {
     <div className="page-content">
       <Tabs
         activeKey={activeTab}
-        onChange={setActiveTab}
+        onChange={handleTabChange}
         items={tabItems}
         size="large"
       />

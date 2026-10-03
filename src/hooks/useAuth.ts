@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { authApi, usersApi } from "../services/api";
 import { getPermissions } from "../services/permissions";
-import { getRoleFlags } from "../services/roleFlags";
+import { getRoleFlags, pickDefaultRole } from "../services/roleFlags";
 import type { User, UserRole, UserRoleData } from "../types";
+import type { RequestableRole } from "../constants/roles";
 import { withTimeout } from "../utils/asyncUtils";
+import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 
 // Keep below App.tsx's 5s loading-timeout screen so a stuck query resolves to
 // the existing "proceed as signed out" fallback instead of that blunter screen.
@@ -65,7 +67,7 @@ export function useAuth() {
 
         const approvedRoles = roles.filter(role => role.approved);
         setUserRoles(approvedRoles);
-        setCurrentRole(approvedRoles[0] || null);
+        setCurrentRole(pickDefaultRole(approvedRoles));
       } catch (err) {
         if (controller.signal.aborted || !mounted) return;
 
@@ -178,12 +180,12 @@ export function useAuth() {
     }
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (requestedRole?: RequestableRole) => {
     setError(null);
     setLoading(true);
 
     try {
-      await authApi.signInWithGoogle();
+      await authApi.signInWithGoogle(requestedRole);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Google sign in failed");
       throw err;
@@ -192,12 +194,16 @@ export function useAuth() {
     }
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    requestedRole?: RequestableRole
+  ) => {
     setError(null);
     setLoading(true);
 
     try {
-      await authApi.signUp(email, password);
+      await authApi.signUp(email, password, requestedRole);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign up failed");
       throw err;
@@ -226,6 +232,7 @@ export function useAuth() {
   const switchRole = (role: UserRoleData) => {
     if (userRoles.some(r => r.id === role.id)) {
       setCurrentRole(role);
+      trackEvent(AnalyticsEvent.RoleSwitched, { role: role.role });
     }
   };
 

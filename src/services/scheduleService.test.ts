@@ -233,6 +233,93 @@ describe("ScheduleService.getConflictingClasses / hasTimeConflict", () => {
   });
 });
 
+describe("ScheduleService.hasConflictInSlot", () => {
+  const double = makeClass({
+    id: "double",
+    isDouble: true,
+    slots: [
+      { dayOfWeek: 0, timeSlotId: tsFirst.id, timeSlot: tsFirst },
+      { dayOfWeek: 0, timeSlotId: tsSecond.id, timeSlot: tsSecond },
+    ],
+  });
+  const inSecondSlot = makeClass({
+    id: "second-only",
+    slots: [{ dayOfWeek: 0, timeSlotId: tsSecond.id, timeSlot: tsSecond }],
+  });
+  const selections = [makeSelection(double), makeSelection(inSecondSlot)];
+
+  it("is true only in the slot where another lesson actually overlaps", () => {
+    expect(
+      ScheduleService.hasConflictInSlot(selections, double, 0, tsSecond.id)
+    ).toBe(true);
+    expect(
+      ScheduleService.hasConflictInSlot(
+        selections,
+        inSecondSlot,
+        0,
+        tsSecond.id
+      )
+    ).toBe(true);
+  });
+
+  it("leaves the double lesson's other half clear", () => {
+    expect(
+      ScheduleService.hasConflictInSlot(selections, double, 0, tsFirst.id)
+    ).toBe(false);
+  });
+
+  it("never conflicts a lesson with itself", () => {
+    expect(
+      ScheduleService.hasConflictInSlot(
+        [makeSelection(double)],
+        double,
+        0,
+        tsSecond.id
+      )
+    ).toBe(false);
+  });
+
+  it("is false for a slot the lesson doesn't occupy", () => {
+    expect(
+      ScheduleService.hasConflictInSlot(selections, inSecondSlot, 0, tsFirst.id)
+    ).toBe(false);
+  });
+});
+
+describe("ScheduleService שילוב never conflicts", () => {
+  // שילוב (integration) happens inside another lesson, so sharing a slot
+  // with it is not a clash -- for the grid or the selection drawer.
+  const lesson = makeClass({ id: "lesson", title: "מתמטיקה" });
+  const integration = makeClass({ id: "integration", title: "שילוב" });
+  const selections = [makeSelection(lesson), makeSelection(integration)];
+
+  it("doesn't mark a cell where a lesson shares the slot with שילוב", () => {
+    expect(
+      ScheduleService.hasConflictInSlot(selections, lesson, 0, tsFirst.id)
+    ).toBe(false);
+    expect(
+      ScheduleService.hasConflictInSlot(selections, integration, 0, tsFirst.id)
+    ).toBe(false);
+  });
+
+  it("doesn't report שילוב as a class-wide conflict either way", () => {
+    expect(
+      ScheduleService.hasTimeConflict([makeSelection(integration)], lesson)
+    ).toBe(false);
+    expect(
+      ScheduleService.hasTimeConflict([makeSelection(lesson)], integration)
+    ).toBe(false);
+  });
+
+  it("still marks two other lessons sharing a slot, even beside שילוב", () => {
+    const other = makeClass({ id: "other", title: "אנגלית" });
+    const withOther = [...selections, makeSelection(other)];
+    expect(
+      ScheduleService.hasConflictInSlot(withOther, lesson, 0, tsFirst.id)
+    ).toBe(true);
+  });
+});
+
 describe("ScheduleService.getDrawerConflicts", () => {
   it("flags a double lesson that overlaps a different, already-selected class in its other (empty) slot", () => {
     const b = makeClass({
@@ -444,8 +531,9 @@ describe("ScheduleService.resolveScheduleView", () => {
       name: "parent, draft (not toggled): no overrides",
       input: {
         role: "parent",
+        canPickSchedule: true,
         viewCommitted: false,
-        parentSelectedChildId: "child-1",
+        selectedChildId: "child-1",
         staffSelectedChildId: undefined,
       },
       expected: {
@@ -458,8 +546,9 @@ describe("ScheduleService.resolveScheduleView", () => {
       name: "parent, toggled to committed: overrides for that child",
       input: {
         role: "parent",
+        canPickSchedule: true,
         viewCommitted: true,
-        parentSelectedChildId: "child-1",
+        selectedChildId: "child-1",
         staffSelectedChildId: undefined,
       },
       expected: {
@@ -472,8 +561,9 @@ describe("ScheduleService.resolveScheduleView", () => {
       name: "parent, toggled to committed, no child selected yet: no overrides",
       input: {
         role: "parent",
+        canPickSchedule: true,
         viewCommitted: true,
-        parentSelectedChildId: undefined,
+        selectedChildId: undefined,
         staffSelectedChildId: undefined,
       },
       expected: {
@@ -486,8 +576,9 @@ describe("ScheduleService.resolveScheduleView", () => {
       name: "staff, child selected: always committed, overrides for that child, can create",
       input: {
         role: "staff",
+        canPickSchedule: false,
         viewCommitted: false,
-        parentSelectedChildId: undefined,
+        selectedChildId: undefined,
         staffSelectedChildId: "child-2",
       },
       expected: {
@@ -500,8 +591,9 @@ describe("ScheduleService.resolveScheduleView", () => {
       name: "staff, no child selected: committed, no overrides, cannot create",
       input: {
         role: "staff",
+        canPickSchedule: false,
         viewCommitted: false,
-        parentSelectedChildId: undefined,
+        selectedChildId: undefined,
         staffSelectedChildId: undefined,
       },
       expected: {
@@ -514,8 +606,9 @@ describe("ScheduleService.resolveScheduleView", () => {
       name: "admin: committed, but no override read/write (staff-only feature)",
       input: {
         role: "admin",
+        canPickSchedule: false,
         viewCommitted: false,
-        parentSelectedChildId: undefined,
+        selectedChildId: undefined,
         staffSelectedChildId: "child-2",
       },
       expected: {
@@ -525,11 +618,27 @@ describe("ScheduleService.resolveScheduleView", () => {
       },
     },
     {
-      name: "child role: draft, no overrides (no Child record to key off)",
+      name: "child, toggled to committed: overrides for their own student",
       input: {
         role: "child",
+        canPickSchedule: true,
+        viewCommitted: true,
+        selectedChildId: "own-student",
+        staffSelectedChildId: undefined,
+      },
+      expected: {
+        viewStatus: "committed",
+        overrideChildId: "own-student",
+        canCreateOverride: false,
+      },
+    },
+    {
+      name: "child, not linked to a student yet: draft, no overrides",
+      input: {
+        role: "child",
+        canPickSchedule: true,
         viewCommitted: false,
-        parentSelectedChildId: undefined,
+        selectedChildId: undefined,
         staffSelectedChildId: undefined,
       },
       expected: {
@@ -542,8 +651,9 @@ describe("ScheduleService.resolveScheduleView", () => {
       name: "no role yet: draft, no overrides",
       input: {
         role: undefined,
+        canPickSchedule: false,
         viewCommitted: false,
-        parentSelectedChildId: undefined,
+        selectedChildId: undefined,
         staffSelectedChildId: undefined,
       },
       expected: {
