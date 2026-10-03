@@ -145,11 +145,14 @@
 
 /* Every card variant (selected, override, "N classes" placeholder) is a
    direct child of .schedule-cell and should fill it exactly the same way
-   -- see .schedule-cell's own comment. */
+   -- see .schedule-cell's own comment. Fills via flex-grow rather than
+   height: 100%, so a cell holding several cards (a conflict) stacks them
+   at their content height instead of giving each one the full cell
+   height and overflowing into the rows below. */
 .class-card {
   position: relative;
   width: 100%;
-  height: 100%;
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
   margin: 0;
