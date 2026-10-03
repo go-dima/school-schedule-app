@@ -177,7 +177,7 @@ const SchedulePageContent: React.FC = () => {
   const [allTimeSlots, setAllTimeSlots] = useState<TimeSlot[]>([]);
   const [modalLoading, setModalLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [viewCommitted, setViewCommitted] = useState(false);
+  const [viewCommitted, setViewCommitted] = useState(true);
 
   const [overrideModalOpen, setOverrideModalOpen] = useState(false);
   const [overrideDay, setOverrideDay] = useState<number | null>(null);
@@ -207,10 +207,10 @@ const SchedulePageContent: React.FC = () => {
     currentRole?.role
   );
 
-  // Snap the toggle back to draft when the child is cleared, so a disabled
-  // toggle never looks visually "stuck on" for the next child selected.
+  // Snap the toggle back to committed (the default) when the child is
+  // cleared, so the next child selected always opens on the committed view.
   useEffect(() => {
-    if (!selectedChild) setViewCommitted(false);
+    if (!selectedChild) setViewCommitted(true);
   }, [selectedChild]);
 
   const handleStaffChildSelect = (childId: string | undefined) => {
