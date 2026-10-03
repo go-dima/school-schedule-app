@@ -337,14 +337,62 @@
       "dependencies": ["041_moderator_can_manage_classes"]
     },
     {
-      "id": "043_allow_multiple_parents",
-      "name": "Allow Multiple Parents",
-      "description": "Let a second approved parent link to a child another parent already added: add a SECURITY DEFINER find_child_matches RPC (exact case-insensitive first+last name and grade, limited to the caller's allowed scopes, returns creator name, has_parent and the linked parent's name and linked_to_me, past RLS), make claim_child an idempotent 'link me as a parent' (primary only for the first link, no longer refuses already-linked children), and add remove_child_for_parent, which removes the caller's own link and deletes the child only when no links remain.",
-      "file": "043_allow_multiple_parents.sql",
-      "created_at": "2026-10-03T00:00:00Z",
+      "id": "043_link_users_to_teachers",
+      "name": "Link Users To Teachers",
+      "description": "Issue #163 (Staff View part 2): users.display_name (unique, staff/admin only) plus optional user_id on classes and schedule_overrides; teacher becomes a cached label synced from display_name by triggers; get_staff_directory() RPC for staff and admin_set_display_name() RPC for admins. Structure only -- all links start empty.",
+      "file": "043_link_users_to_teachers.sql",
+      "created_at": "2026-09-26T00:00:00Z",
       "dependencies": ["042_harden_advisor_findings"]
+    },
+    {
+      "id": "044_display_name_in_creator_rpcs",
+      "name": "Display Name In Creator RPCs",
+      "description": "Issue #163 (Staff View part 2): get_children_with_parent_status gains creator_display_name and get_class_enrolled_children gains added_by_display_name (appended last; bodies otherwise unchanged from 032 / 039), so \"created by\" / \"added by\" show the Display Name, falling back to first + last name.",
+      "file": "044_display_name_in_creator_rpcs.sql",
+      "created_at": "2026-09-26T00:01:00Z",
+      "dependencies": ["043_link_users_to_teachers"]
+    },
+    {
+      "id": "045_lock_down_user_roles_self_insert",
+      "name": "Lock Down User Roles Self Insert",
+      "description": "Security: replace the live user_roles_insert_own policy (WITH CHECK user_id = auth.uid() OR service_role, which let any signed-in user insert an approved admin role for themselves) with one self-request policy: own row, approved = false, role in parent/staff/child. Admin grants keep using user_roles_admin_insert_all.",
+      "file": "045_lock_down_user_roles_self_insert.sql",
+      "created_at": "2026-10-01T00:00:00Z",
+      "dependencies": ["044_display_name_in_creator_rpcs"]
+    },
+    {
+      "id": "046_drop_open_children_insert",
+      "name": "Drop Open Children Insert",
+      "description": "Security (#188): drop the out-of-band \"Authenticated users can create children\" policy, which let any signed-in user (even pending approval) insert students directly. Children are created only through create_child_with_relationship (SECURITY DEFINER), which is unaffected.",
+      "file": "046_drop_open_children_insert.sql",
+      "created_at": "2026-10-01T00:01:00Z",
+      "dependencies": ["045_lock_down_user_roles_self_insert"]
+    },
+    {
+      "id": "047_child_account_link",
+      "name": "Child Account Link",
+      "description": "Child role: children.user_id links a child login to one student record; my_linked_child_id() helper; RLS for a linked child user (own children row, own draft selections, own committed selections and overrides); drops the dead child_id IS NULL policy and partial index from 022; admin RPCs approve_child_account() and unlink_child_account(); caller-scoped set_own_track_draft(). Structure only -- no account is linked until an admin approves one.",
+      "file": "047_child_account_link.sql",
+      "created_at": "2026-09-30T00:00:00Z",
+      "dependencies": ["046_drop_open_children_insert"]
+    },
+    {
+      "id": "048_set_track_draft",
+      "name": "Set Track Draft",
+      "description": "Child role: replace set_own_track_draft() with set_track_draft(p_child_id, p_track_number), the single draft-track write path for a child's parent or the linked child user. Writes only track_number_draft; committed tracks stay a direct staff/admin update.",
+      "file": "048_set_track_draft.sql",
+      "created_at": "2026-10-01T00:02:00Z",
+      "dependencies": ["047_child_account_link"]
+    },
+    {
+      "id": "049_allow_multiple_parents",
+      "name": "Allow Multiple Parents",
+      "description": "Let a second approved parent link to a child another parent already added: add a SECURITY DEFINER find_child_matches RPC (exact case-insensitive first+last name and grade, limited to the caller's allowed scopes, returns creator and linked-parent names including display_name, has_parent and linked_to_me, past RLS), make claim_child an idempotent 'link me as a parent' (primary only for the first link, no longer refuses already-linked children), and add remove_child_for_parent, which removes the caller's own link and deletes the child only when no links remain.",
+      "file": "049_allow_multiple_parents.sql",
+      "created_at": "2026-10-03T00:00:00Z",
+      "dependencies": ["048_set_track_draft"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 43
+  "schema_version": 49
 }

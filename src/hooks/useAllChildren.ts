@@ -107,7 +107,7 @@ export function useAllChildren() {
     }
 
     if (trackNumber !== undefined) {
-      await childrenApi.updateChildTrack(childId, "committed", trackNumber);
+      await childrenApi.updateTrack(childId, "committed", trackNumber);
       updatedChild = { ...updatedChild, trackNumber };
     }
 

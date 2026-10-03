@@ -8,14 +8,16 @@ export interface RoleFlags {
   isChild: boolean;
 }
 
-// Ordered most- to least-specific as a schedule identity. child/parent come
-// first because they are the only roles that can select classes, so a user who
-// holds one should land there. moderator is last: it is a capability-only role
-// (permissions derive from the full role list, never from the active role) and
-// carries no identity of its own, so it is only picked when it stands alone.
+// Ordered most- to least-specific as a schedule identity. parent comes first
+// because it can select classes, so a user who holds it alongside staff lands
+// there. child is exclusive (see roleRules.ts), so its position only matters
+// for a role set that shouldn't exist. moderator is last: it is a
+// capability-only role (permissions derive from the full role list, never
+// from the active role) and carries no identity of its own, so it is only
+// picked when it stands alone.
 const ROLE_PRIORITY: UserRole[] = [
-  "child",
   "parent",
+  "child",
   "staff",
   "admin",
   "moderator",

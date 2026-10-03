@@ -29,6 +29,11 @@ import { useSelectedSchedule } from "../hooks/useSelectedSchedule";
 import { useDraftSelectionAwareness } from "../hooks/useDraftSelectionAwareness";
 import { useScheduleOverrides } from "../hooks/useScheduleOverrides";
 import { useStaffSchedule } from "../hooks/useStaffSchedule";
+import {
+  parseStaffKey,
+  staffKeyToParam,
+} from "../services/staffScheduleService";
+import type { StaffKey } from "../services/staffScheduleService";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import ScheduleTable from "../components/ScheduleTable";
 import { CreateClassModal } from "../components/CreateClassModal";
@@ -68,8 +73,7 @@ const { Option } = Select;
 const SchedulePageContent: React.FC = () => {
   const { t } = useTranslation();
 
-  const { user, currentRole, userRoles, switchRole, roleFlags, permissions } =
-    useAuth();
+  const { user, currentRole, userRoles, roleFlags, permissions } = useAuth();
   const {
     selectedChild,
     setSelectedChild,
@@ -87,18 +91,32 @@ const SchedulePageContent: React.FC = () => {
     setSelectedChild: setStaffSelectedChild,
     updateChild: updateChildForStaff,
   } = useAllChildrenContext();
-  const { isStaff, isAdmin, isParent } = roleFlags;
+  const { isStaff, isAdmin } = roleFlags;
+  // Parent and child both pick for `selectedChild` (ChildContext); only a
+  // parent has several children to switch between or add.
+  const { canPickSchedule, canManageChildren } = permissions;
 
   // Staff View: one staff member's week instead of a student's. URL-backed
-  // (`?view=staff&selected=<name>`) so it survives refresh and can be
-  // linked. Only class managers (admin/staff/moderator) may enter it; the
-  // param is ignored for everyone else.
+  // so it survives refresh and can be linked:
+  // - `?view=staff&selected=<user id | name>`: any staff member (צוות tab)
+  // - `?view=mine`: the signed-in staff member's own week (המערכת שלי tab),
+  //   offered only once they have a display name
+  // Only class managers (admin/staff/moderator) may enter either; the param
+  // is ignored for everyone else.
   const [searchParams, setSearchParams] = useSearchParams();
   const canUseStaffView = permissions.canManageClasses;
-  const isStaffView = canUseStaffView && searchParams.get("view") === "staff";
-  const staffName = isStaffView
+  const canUseMyView = canUseStaffView && !!user?.displayName;
+  const viewParam = searchParams.get("view");
+  const isStaffTab = canUseStaffView && viewParam === "staff";
+  const isMyView = canUseMyView && viewParam === "mine";
+  // Either tab shows one staff member's read-only week.
+  const isStaffView = isStaffTab || isMyView;
+  const selectedStaffParam = isStaffTab
     ? searchParams.get("selected") || undefined
     : undefined;
+  const staffKey: StaffKey | undefined = isMyView
+    ? { kind: "user", id: user.id }
+    : parseStaffKey(selectedStaffParam);
   const {
     staff: staffMembers,
     staffLoading: staffMembersLoading,
@@ -106,18 +124,23 @@ const SchedulePageContent: React.FC = () => {
     loading: staffViewLoading,
     error: staffViewError,
     refetch: refetchStaffView,
-  } = useStaffSchedule(isStaffView, staffName);
+  } = useStaffSchedule(isStaffView, staffKey, { loadStaffList: isStaffTab });
+  // Whose week is shown, for the print title/button.
+  const staffName: string | undefined = isMyView
+    ? user.displayName
+    : (staffMembers.find(m => staffKeyToParam(m.key) === selectedStaffParam)
+        ?.label ?? (staffKey?.kind === "name" ? staffKey.name : undefined));
 
-  const handleViewModeChange = (mode: "student" | "staff") => {
+  const handleViewModeChange = (mode: "student" | "mine" | "staff") => {
     setSearchParams(
       prev => {
         const next = new URLSearchParams(prev);
-        if (mode === "staff") {
-          next.set("view", "staff");
-        } else {
+        if (mode === "student") {
           next.delete("view");
-          next.delete("selected");
+        } else {
+          next.set("view", mode);
         }
+        if (mode !== "staff") next.delete("selected");
         return next;
       },
       { replace: true }
@@ -127,17 +150,18 @@ const SchedulePageContent: React.FC = () => {
     });
   };
 
-  const handleStaffNameSelect = (name: string | undefined) => {
+  // `param` is staffKeyToParam(member.key): a user id or a name.
+  const handleStaffSelect = (param: string | undefined) => {
     setSearchParams(
       prev => {
         const next = new URLSearchParams(prev);
-        if (name) next.set("selected", name);
+        if (param) next.set("selected", param);
         else next.delete("selected");
         return next;
       },
       { replace: true }
     );
-    if (name) {
+    if (param) {
       trackWithActor(AnalyticsEvent.StaffViewStaffSelected, currentRole?.role);
     }
   };
@@ -167,17 +191,18 @@ const SchedulePageContent: React.FC = () => {
   const { viewStatus, overrideChildId, canCreateOverride } =
     ScheduleService.resolveScheduleView({
       role: currentRole?.role,
+      canPickSchedule,
       viewCommitted,
-      parentSelectedChildId: selectedChild?.id,
+      selectedChildId: selectedChild?.id,
       staffSelectedChildId: staffSelectedChild?.id,
     });
 
-  // Read-only whenever a parent has toggled to the committed view. Auto-sync
+  // Read-only whenever a parent or child has toggled to the committed view. Auto-sync
   // writes (track/group/mandatory changes) must always target the role's
   // real write status (draft, for parents) even while this is true -- never
   // `viewStatus`, since that's just what's being displayed and RLS rejects a
   // parent writing a `committed` row.
-  const canEdit = !(isParent && viewCommitted);
+  const canEdit = !(canPickSchedule && viewCommitted);
   const writeStatus: SelectionStatus = ScheduleService.resolveSelectionStatus(
     currentRole?.role
   );
@@ -214,18 +239,15 @@ const SchedulePageContent: React.FC = () => {
     loadScheduleData,
   } = useScheduleCatalog();
 
-  // Whose selections to read/write: a parent's or staff's chosen student, or
-  // (for the "child" role only) the logged-in user's own picks. Everyone
-  // else (no child chosen yet, or a role with no self-select concept) gets
-  // no target and therefore no selections.
+  // Whose selections to read/write: the selected child (a parent's child, or
+  // a child user's own linked student), or staff's chosen student. Everyone
+  // else (no child chosen yet) gets no target and therefore no selections.
   const target: ScheduleTarget | undefined =
-    isParent && selectedChild
+    canPickSchedule && selectedChild
       ? { childId: selectedChild.id }
       : isStaff && staffSelectedChild
         ? { childId: staffSelectedChild.id }
-        : currentRole?.role === "child" && user?.id
-          ? { userId: user.id }
-          : undefined;
+        : undefined;
 
   const {
     schedule: selectedSchedule,
@@ -350,12 +372,12 @@ const SchedulePageContent: React.FC = () => {
     if (!isAdmin) setSelectedGrade(child.grade);
   };
 
-  // Auto-update grade filter when selected child changes (only for non-admin parents)
+  // Auto-update grade filter when selected child changes (not for admins)
   React.useEffect(() => {
-    if (selectedChild && isParent && !isAdmin) {
+    if (selectedChild && canPickSchedule && !isAdmin) {
       setSelectedGrade(selectedChild.grade);
     }
-  }, [selectedChild, isParent, isAdmin]);
+  }, [selectedChild, canPickSchedule, isAdmin]);
 
   // Page-level loading: catalog (classes/time slots) and the child roster
   // only load once (or on an explicit refresh), so gating the full-page
@@ -366,7 +388,7 @@ const SchedulePageContent: React.FC = () => {
   // refreshing the schedule grid. See `scheduleGridLoading` below.
   const pageLoading =
     scheduleLoading ||
-    (isParent ? childrenLoading : isStaff ? allChildrenLoading : false);
+    (canPickSchedule ? childrenLoading : isStaff ? allChildrenLoading : false);
   // Scoped to the schedule grid + selected-classes summary, so switching
   // child/toggle only shows a local loading state over that section.
   const scheduleGridLoading = selectedScheduleLoading;
@@ -462,11 +484,7 @@ const SchedulePageContent: React.FC = () => {
     // `target`. Mismatched, computeChanges would never see its own writes land,
     // looping writes against the wrong child forever. Only sync when both
     // agree on the same child.
-    if (
-      !target ||
-      !("childId" in target) ||
-      target.childId !== currentTrackChild?.id
-    ) {
+    if (!target || target.childId !== currentTrackChild?.id) {
       return;
     }
 
@@ -542,10 +560,9 @@ const SchedulePageContent: React.FC = () => {
     if (!target) return;
     try {
       if (isClassSelected(classId)) {
-        // Locked classes (track, group, or mandatory match) only apply to
-        // the child-entity flows (parent/staff); the "child" role's own
-        // selections aren't tied to a Child record with these attributes.
-        if ("childId" in target && lockedClassIds.has(classId)) {
+        // Locked classes (track, group, or mandatory match) can't be
+        // unselected.
+        if (lockedClassIds.has(classId)) {
           message.warning(t("schedule.page.error.lockedClassCannotUnselect"));
           return;
         }
@@ -593,7 +610,7 @@ const SchedulePageContent: React.FC = () => {
   };
 
   // The child whose schedule the print button exports (and names).
-  const printChild = isParent ? selectedChild : staffSelectedChild;
+  const printChild = canPickSchedule ? selectedChild : staffSelectedChild;
   const printChildName = printChild
     ? `${printChild.firstName} ${printChild.lastName}`
     : "";
@@ -798,8 +815,7 @@ const SchedulePageContent: React.FC = () => {
 
   const selectedClasses = selectedSchedule.map(selection => selection.classId);
   const hasSelectableTarget =
-    ((currentRole?.role === "child" || currentRole?.role === "parent") &&
-      (!isParent || selectedChild !== null)) ||
+    (canPickSchedule && !!selectedChild) ||
     (isStaff && staffSelectedChild !== null);
 
   // A parent viewing the read-only committed schedule gets no interaction at
@@ -828,10 +844,13 @@ const SchedulePageContent: React.FC = () => {
           icon={<PrinterOutlined />}
           onClick={handleExportStaffSchedule}
           disabled={staffViewLoading}>
-          {t("schedule.page.exportButtonFor", { name: staffName })}
+          {isMyView
+            ? t("schedule.page.exportMyButton")
+            : t("schedule.page.exportButtonFor", { name: staffName })}
         </Button>
       )
-    : ((isParent && selectedChild) || (isStaff && staffSelectedChild)) && (
+    : ((canPickSchedule && selectedChild) ||
+        (isStaff && staffSelectedChild)) && (
         <Button
           icon={<PrinterOutlined />}
           onClick={handleExportSchedule}
@@ -843,7 +862,7 @@ const SchedulePageContent: React.FC = () => {
   // Which tab bars show, top to bottom. Each is hidden when it would offer
   // only one choice (e.g. no staff/student tabs for non-managers).
   const showViewTabs = canUseStaffView;
-  const showChildTabs = !isStaffView && isParent;
+  const showChildTabs = !isStaffView && canManageChildren;
   const hasTabBar = showViewTabs || showChildTabs;
   const tabBarActions = (
     <Space>
@@ -877,11 +896,16 @@ const SchedulePageContent: React.FC = () => {
           top-most bar; with no tab bar they stay in the filters bar. */}
       {showViewTabs && (
         <ScheduleTabsBar
-          activeKey={isStaffView ? "staff" : "student"}
-          onChange={key => handleViewModeChange(key as "staff" | "student")}
+          activeKey={isMyView ? "mine" : isStaffTab ? "staff" : "student"}
+          onChange={key =>
+            handleViewModeChange(key as "student" | "mine" | "staff")
+          }
           // RTL: first item renders rightmost. Check the on-screen order.
           items={[
             { key: "student", label: t("schedule.page.labels.studentView") },
+            ...(canUseMyView
+              ? [{ key: "mine", label: t("schedule.page.labels.myView") }]
+              : []),
             { key: "staff", label: t("schedule.page.labels.staffView") },
           ]}
           extra={tabBarActions}
@@ -912,7 +936,7 @@ const SchedulePageContent: React.FC = () => {
         actions={
           <>
             {!hasTabBar && printButton}
-            {!isStaffView && isParent && userChildren.length > 0 && (
+            {!isStaffView && canPickSchedule && userChildren.length > 0 && (
               <Radio.Group
                 className="draft-committed-toggle"
                 optionType="button"
@@ -929,20 +953,20 @@ const SchedulePageContent: React.FC = () => {
             )}
           </>
         }>
-        {isStaffView && (
+        {isStaffTab && (
           <FilterField label={t("schedule.page.labels.selectStaff")}>
             <Select
               showSearch
               allowClear
-              value={staffName}
-              onChange={handleStaffNameSelect}
+              value={selectedStaffParam}
+              onChange={handleStaffSelect}
               placeholder={t("schedule.page.placeholders.selectStaff")}
               style={{ minWidth: 200 }}
               loading={staffMembersLoading}
-              optionFilterProp="value"
-              options={staffMembers.map(({ name, teaches }) => ({
-                value: name,
-                label: name,
+              optionFilterProp="label"
+              options={staffMembers.map(({ key, label, teaches }) => ({
+                value: staffKeyToParam(key),
+                label,
                 // No regular lessons: listed last (service order), grayed.
                 className: teaches ? undefined : "staff-option--no-lessons",
               }))}
@@ -995,12 +1019,13 @@ const SchedulePageContent: React.FC = () => {
             />
           </FilterField>
         )}
-        {!isStaffView && isParent && userChildren.length > 0 && (
+        {!isStaffView && canPickSchedule && userChildren.length > 0 && (
           <>
             <ChildGroupTrackSelector
               child={selectedChild}
               onChange={handleParentFieldChange}
               disabled={childrenLoading || !canEdit}
+              canEditGroup={canManageChildren}
             />
           </>
         )}
@@ -1048,7 +1073,7 @@ const SchedulePageContent: React.FC = () => {
         )}
       </FiltersBar>
 
-      {isStaffView && !staffName && (
+      {isStaffTab && !selectedStaffParam && (
         <Alert
           message={t("schedule.page.alerts.noStaffSelected.title")}
           description={t("schedule.page.alerts.noStaffSelected.description")}
@@ -1058,7 +1083,7 @@ const SchedulePageContent: React.FC = () => {
         />
       )}
 
-      {!isStaffView && isParent && userChildren.length === 0 && (
+      {!isStaffView && canManageChildren && userChildren.length === 0 && (
         <Alert
           message={t("schedule.page.alerts.noChildrenFound.title")}
           description={
@@ -1082,7 +1107,7 @@ const SchedulePageContent: React.FC = () => {
       )}
 
       {!isStaffView &&
-        isParent &&
+        canManageChildren &&
         userChildren.length > 0 &&
         !selectedChild && (
           <Alert
@@ -1094,7 +1119,7 @@ const SchedulePageContent: React.FC = () => {
           />
         )}
 
-      {!isStaffView && !canSelectClasses && !isParent && (
+      {!isStaffView && !canSelectClasses && !canPickSchedule && (
         <Alert
           message={t("schedule.page.alerts.noPermission.title")}
           description={
@@ -1107,26 +1132,22 @@ const SchedulePageContent: React.FC = () => {
           type="warning"
           showIcon
           style={{ marginBottom: 16 }}
-          action={
-            userRoles.length > 1 &&
-            (currentRole?.role === "admin" || currentRole?.role === "staff") ? (
-              <Button
-                size="small"
-                type="primary"
-                onClick={() => {
-                  const childOrParentRole = userRoles.find(
-                    role => role.role === "child" || role.role === "parent"
-                  );
-                  if (childOrParentRole) {
-                    switchRole(childOrParentRole);
-                  }
-                }}>
-                {t("schedule.page.buttons.switchToAppropriateRole")}
-              </Button>
-            ) : undefined
-          }
         />
       )}
+
+      {!isStaffView &&
+        canPickSchedule &&
+        !canManageChildren &&
+        !childrenLoading &&
+        userChildren.length === 0 && (
+          <Alert
+            message={t("schedule.page.alerts.childNotLinked.title")}
+            description={t("schedule.page.alerts.childNotLinked.description")}
+            type="info"
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+        )}
 
       {error && (
         <Alert
@@ -1140,7 +1161,9 @@ const SchedulePageContent: React.FC = () => {
       )}
 
       {!isStaffView && viewStatus === "draft" && <DraftBanner />}
-      {!isStaffView && isParent && viewCommitted && <CommittedReadOnlyBanner />}
+      {!isStaffView && canPickSchedule && viewCommitted && (
+        <CommittedReadOnlyBanner />
+      )}
 
       <Spin spinning={isStaffView ? staffViewLoading : scheduleGridLoading}>
         <Card className="schedule-card">
@@ -1191,12 +1214,10 @@ const SchedulePageContent: React.FC = () => {
         {!isStaffView && canSelectClasses && selectedSchedule.length > 0 && (
           <Card
             title={
-              (isParent && selectedChild) || (isStaff && staffSelectedChild)
+              printChild
                 ? t("schedule.page.selectedClassesForChild", {
-                    firstName: (isParent ? selectedChild : staffSelectedChild)
-                      ?.firstName,
-                    lastName: (isParent ? selectedChild : staffSelectedChild)
-                      ?.lastName,
+                    firstName: printChild.firstName,
+                    lastName: printChild.lastName,
                   })
                 : t("schedule.page.selectedClassesTitle")
             }

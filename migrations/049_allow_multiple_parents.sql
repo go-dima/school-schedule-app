@@ -1,4 +1,4 @@
--- Migration: 043_allow_multiple_parents
+-- Migration: 049_allow_multiple_parents
 -- Description: Let a second (third, ...) approved parent link themselves to a
 --   child another parent already added, through the normal add-child flow
 --   (add child -> enter details -> "add me as parent"). There is no invite
@@ -12,7 +12,8 @@
 --       dialog needs (id, grade, creator name, whether any parent is linked
 --       and that parent's name, whether the caller is already linked). A
 --       child can be staff-created AND have a parent, so creator and parent
---       are reported separately. Names match with lower(trim(...)) equality, not
+--       are reported separately, each with display_name (043) so the client
+--       can name them like everywhere else (formatPersonName). Names match with lower(trim(...)) equality, not
 --       ilike, so '%' or '_' typed into a name can't act as wildcards. The
 --       caller passes the scopes it may see (getAllowedScopes()), so a prod
 --       parent never matches -- and links to -- a test-scope child.
@@ -47,8 +48,10 @@ RETURNS TABLE (
     created_by uuid,
     creator_first_name text,
     creator_last_name text,
+    creator_display_name text,
     parent_first_name text,
     parent_last_name text,
+    parent_display_name text,
     has_parent boolean,
     linked_to_me boolean
 )
@@ -82,8 +85,10 @@ BEGIN
         c.created_by,
         creator.first_name,
         creator.last_name,
+        creator.display_name,
         linked_parent.first_name,
         linked_parent.last_name,
+        linked_parent.display_name,
         linked_parent.parent_id IS NOT NULL,
         EXISTS (
             SELECT 1 FROM public.parent_child_relationships mine
@@ -94,7 +99,7 @@ BEGIN
     LEFT JOIN public.users creator ON creator.id = c.created_by
     LEFT JOIN LATERAL (
         -- The primary parent, else the oldest link.
-        SELECT pcr.parent_id, u.first_name, u.last_name
+        SELECT pcr.parent_id, u.first_name, u.last_name, u.display_name
         FROM public.parent_child_relationships pcr
         LEFT JOIN public.users u ON u.id = pcr.parent_id
         WHERE pcr.child_id = c.id

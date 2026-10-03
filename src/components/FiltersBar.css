@@ -1,7 +1,7 @@
 /* FiltersBar */
 
 .filters-section {
-  margin-bottom: 24px;
+  margin-bottom: 8px;
 }
 
 .filters-row {
@@ -69,7 +69,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   padding: 8px 0;
 }
 

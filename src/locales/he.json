@@ -16,12 +16,15 @@
       "googleButton": "התחבר עם Google",
       "googleError": "שגיאה בהתחברות עם Google",
       "signupPrompt": "עדיין אין לך חשבון?",
-      "signupLink": "הירשם עכשיו"
+      "signupButton": "הרשמה"
     },
     "signup": {
       "title": "הרשמה",
-      "subtitle": "צור חשבון הורה חדש במערכת השעות",
+      "subtitle": "צור חשבון חדש במערכת השעות",
       "error": "שגיאה בהרשמה",
+      "roleLabel": "אני נרשם/ת בתור",
+      "roleRequired": "בחר/י את התפקיד שלך",
+      "noRoleSelected": "לא נבחר תפקיד",
       "verifyEmail": {
         "title": "כמעט סיימת!",
         "alertTitle": "אנא אשר/י את כתובת הדוא\"ל",
@@ -96,6 +99,7 @@
         "groupPlaceholder": "ללא קבוצה",
         "groupOption": "קבוצה {{group}}",
         "studentView": "תלמידים",
+        "myView": "המערכת שלי",
         "staffView": "צוות",
         "selectStaff": "בחר איש צוות"
       },
@@ -121,7 +125,13 @@
         },
         "noPermission": {
           "title": "אין הרשאה לבחירת שיעורים",
-          "adminStaffViewOnly": "מנהלים וצוות יכולים לצפות במערכת השעות אך לא לבחור שיעורים."
+          "needsApproval": "נדרשת אישור מנהל להפעלת התפקיד. אנא המתן לאישור או פנה למנהל.",
+          "adminStaffViewOnly": "מנהלים וצוות יכולים לצפות במערכת השעות אך לא לבחור שיעורים.",
+          "studentsParentsOnly": "רק תלמידים והורים יכולים לבחור שיעורים במערכת השעות."
+        },
+        "childNotLinked": {
+          "title": "החשבון עדיין לא מקושר לתלמיד",
+          "description": "מנהל המערכת צריך לקשר את החשבון לרשומת התלמיד שלך. לאחר מכן תוכל/י לבחור שיעורים."
         },
         "noChildrenFound": {
           "title": "לא נמצאו ילדים",
@@ -142,6 +152,7 @@
       "createNewClassModal": "צור שיעור חדש",
       "exportButton": "הדפס",
       "exportButtonFor": "הדפס מערכת של {{name}}",
+      "exportMyButton": "הדפס את המערכת שלי",
       "error": {
         "noChildSelected": "נא לבחור ילד תחילה",
         "exportFailed": "שגיאה בהדפסת מערכת השעות",
@@ -483,7 +494,11 @@
       "firstNameRequired": "נא להזין שם פרטי",
       "lastNameRequired": "נא להזין שם משפחה",
       "firstNameMinLength": "שם פרטי חייב להכיל לפחות 2 תווים",
-      "lastNameMinLength": "שם משפחה חייב להכיל לפחות 2 תווים"
+      "lastNameMinLength": "שם משפחה חייב להכיל לפחות 2 תווים",
+      "displayNameLabel": "שם תצוגה",
+      "displayNamePlaceholder": "למשל: רחל כהן",
+      "displayNameHelp": "השם שמופיע בשיעורים שלך ובמערכת הצוות",
+      "displayNameTaken": "השם כבר בשימוש"
     }
   },
   "app": {
@@ -501,8 +516,11 @@
       "loadError": "שגיאה בטעינת המשתמשים",
       "noRolesValidationError": "יש לבחור לפחות תפקיד אחד",
       "baseRoleValidationError": "תפקיד מנהל או אחראי/ת מערכת דורש תפקיד בסיס נוסף (הורה או צוות)",
+      "childExclusiveValidationError": "תפקיד תלמיד לא ניתן לשילוב עם תפקידים אחרים",
       "updateSuccess": "תפקידי המשתמש {{email}} עודכנו בהצלחה",
       "updateError": "שגיאה בעדכון תפקידי המשתמש",
+      "displayNameUpdated": "שם התצוגה עודכן",
+      "displayNameError": "שגיאה בעדכון שם התצוגה",
       "selfDemotion": {
         "title": "הסרת הרשאות מנהל מעצמך",
         "description": "אתה עומד להסיר מעצמך את תפקיד המנהל. לאחר השמירה לא תוכל עוד לגשת לדף זה. להמשיך?",
@@ -513,6 +531,8 @@
     },
     "table": {
       "nameColumn": "שם משתמש",
+      "displayNameColumn": "שם תצוגה",
+      "editDisplayName": "ערוך שם תצוגה",
       "emailColumn": "דוא״ל",
       "createdAtColumn": "תאריך הרשמה",
       "lastSignInColumn": "כניסה אחרונה",
@@ -577,6 +597,17 @@
       "roleRequired": "נא לבחור תפקיד",
       "rolePlaceholder": "בחר תפקיד למשתמש",
       "submitButton": "אשר משתמש"
+    },
+    "childLink": {
+      "title": "קישור לרשומת תלמיד",
+      "description": "חשבון תלמיד חייב להיות מקושר לרשומת תלמיד. בחר/י תלמיד קיים או צור/י רשומה חדשה.",
+      "modeExisting": "תלמיד קיים",
+      "modeNew": "תלמיד חדש",
+      "studentLabel": "תלמיד",
+      "studentPlaceholder": "חפש/י תלמיד לפי שם",
+      "noUnlinked": "אין תלמידים ללא חשבון מקושר",
+      "incomplete": "יש לבחור תלמיד או למלא את פרטי התלמיד החדש",
+      "loadError": "שגיאה בטעינת רשימת התלמידים"
     }
   },
   "common": {

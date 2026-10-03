@@ -93,12 +93,14 @@
   gap: 8px;
 }
 
-.google-btn {
+/* :not(:disabled) keeps antd's disabled look (e.g. signup before a role is
+   chosen) instead of a clickable-looking red button. */
+.google-btn:not(:disabled) {
   border-color: #db4437;
   color: #db4437;
 }
 
-.google-btn:hover {
+.google-btn:not(:disabled):hover {
   border-color: #c23321;
   color: #c23321;
 }
@@ -120,6 +122,33 @@
 
 .auth-footer .ant-typography {
   color: #8c8c8c;
+}
+
+.auth-signup-btn {
+  margin-top: 8px;
+}
+
+/* Signup role request: the ToggleRadioGroup stretched to the card width,
+   each option an equal share. Layout only; colors come from
+   ToggleFilterGroup.css. */
+.auth-role-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.auth-role-picker .toggle-filter-group {
+  display: flex;
+}
+
+.auth-role-picker .toggle-filter-group__option {
+  flex: 1;
+  padding: 8px 12px;
+}
+
+.auth-role-picker__hint {
+  font-size: 13px;
 }
 
 .auth-alert {

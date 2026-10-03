@@ -174,9 +174,19 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   const getEnrollmentCount = (classId: string): number =>
     extraEnrollmentCounts?.get(classId) ?? enrollmentCounts.get(classId) ?? 0;
 
-  // Helper function to check if a class time-conflicts with another selected class
-  const classHasConflict = (cls: ClassWithTimeSlot): boolean =>
-    ScheduleService.hasTimeConflict(userSelections, cls);
+  // Whether a class clashes with another selected lesson in this very cell
+  // (day + time slot) -- cells are marked only where lessons overlap.
+  const hasConflictInCell = (
+    cls: ClassWithTimeSlot,
+    dayOfWeek: number,
+    timeSlotId: string
+  ): boolean =>
+    ScheduleService.hasConflictInSlot(
+      userSelections,
+      cls,
+      dayOfWeek,
+      timeSlotId
+    );
 
   const renderOverrideCard = (o: ScheduleOverrideWithTimeSlot) => (
     <OverrideCard key={o.id} override={o} onEdit={onOverrideClick} />
@@ -256,10 +266,21 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     );
 
     if (selectedContinuationClasses.length) {
-      // This is the second slot of a SELECTED double lesson
-      const doubleClass = selectedContinuationClasses[0];
-      const isMandatory = doubleClass.isMandatory;
-      const hasConflict = classHasConflict(doubleClass);
+      // This is the second slot of a SELECTED double lesson. Any other
+      // selected lesson in this same slot is shown too -- a child has at
+      // most one, but a Staff View week can hold several, and hiding one
+      // would leave its conflict flagged with nothing visible to explain it.
+      const selectedPrimaryHere = primaryClasses.filter(cls =>
+        selectedClasses.includes(cls.id)
+      );
+      const cellClasses = [
+        ...selectedContinuationClasses,
+        ...selectedPrimaryHere,
+      ];
+      const isMandatory = cellClasses.some(cls => cls.isMandatory);
+      const hasConflict = cellClasses.some(cls =>
+        hasConflictInCell(cls, dayOfWeek, timeSlot.id)
+      );
 
       // Show full class details in second slot when selected
       return (
@@ -269,12 +290,15 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           } ${hasConflict ? "conflict" : ""} ${isSelectableSlot ? "clickable" : ""} ${highlightClass}`}
           title={hasConflict ? t("schedule.table.conflictTooltip") : undefined}
           onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
-          <ClassCard
-            cls={doubleClass}
-            isContinuation={true}
-            showEnrollmentCount={showEnrollmentCount}
-            enrollmentCount={getEnrollmentCount(doubleClass.id)}
-          />
+          {cellClasses.map(cls => (
+            <ClassCard
+              key={cls.id}
+              cls={cls}
+              isContinuation={selectedContinuationClasses.includes(cls)}
+              showEnrollmentCount={showEnrollmentCount}
+              enrollmentCount={getEnrollmentCount(cls.id)}
+            />
+          ))}
         </div>
       );
     }
@@ -327,7 +351,9 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       const hasMandatoryClass = selectedPrimaryClasses.some(
         cls => cls.isMandatory
       );
-      const hasConflict = selectedPrimaryClasses.some(classHasConflict);
+      const hasConflict = selectedPrimaryClasses.some(cls =>
+        hasConflictInCell(cls, dayOfWeek, timeSlot.id)
+      );
 
       return (
         <div

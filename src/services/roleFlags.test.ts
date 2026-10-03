@@ -95,10 +95,14 @@ describe("pickDefaultRole", () => {
     );
   });
 
-  it("prefers child over parent", () => {
-    expect(pickDefaultRole([roleData("parent"), roleData("child")])).toEqual(
-      roleData("child")
+  it("prefers parent over staff", () => {
+    expect(pickDefaultRole([roleData("staff"), roleData("parent")])).toEqual(
+      roleData("parent")
     );
+  });
+
+  it("picks child when it is the only role", () => {
+    expect(pickDefaultRole([roleData("child")])).toEqual(roleData("child"));
   });
 
   it("picks moderator when it is the only role", () => {

@@ -2,21 +2,37 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   ClassWithTimeSlot,
   ScheduleOverrideWithChildName,
+  StaffSelection,
   TimeSlot,
 } from "../types";
-import { classesApi, scheduleOverridesApi } from "./api";
+import { classesApi, scheduleApi, scheduleOverridesApi, staffApi } from "./api";
 import { ScheduleService } from "./scheduleService";
-import { StaffScheduleService } from "./staffScheduleService";
+import {
+  parseStaffKey,
+  staffKeyToParam,
+  StaffScheduleService,
+} from "./staffScheduleService";
 
 vi.mock("./api", () => ({
   classesApi: {
     getTeacherTitlePairs: vi.fn(),
     getClassesByTeacher: vi.fn(),
+    getClassesByUserId: vi.fn(),
   },
   scheduleOverridesApi: {
     getOverridesByTeacher: vi.fn(),
+    getOverridesByUserId: vi.fn(),
+  },
+  scheduleApi: {
+    getCommittedSelectionsMadeBy: vi.fn(),
+  },
+  staffApi: {
+    getStaffDirectory: vi.fn(),
   },
 }));
+
+const USER_ID = "11111111-1111-4111-8111-111111111111";
+const OTHER_USER_ID = "22222222-2222-4222-8222-222222222222";
 
 const timeSlot = (
   id: string,
@@ -73,9 +89,23 @@ const makeOverride = (
   ...overrides,
 });
 
+const makeSelection = (
+  overrides: Partial<StaffSelection> = {}
+): StaffSelection => ({
+  class: makeClass({
+    id: "mentoring-1",
+    title: "חונכות",
+    teacher: "חונכ/ת",
+    slots: [{ dayOfWeek: 3, timeSlotId: tsFirst.id, timeSlot: tsFirst }],
+  }),
+  childId: "child-1",
+  childName: "נועה לוי",
+  ...overrides,
+});
+
 const build = (input: {
   catalog?: ClassWithTimeSlot[];
-  selections?: ClassWithTimeSlot[];
+  selections?: StaffSelection[];
   overrides?: ScheduleOverrideWithChildName[];
 }) =>
   StaffScheduleService.buildStaffView({
@@ -204,100 +234,288 @@ describe("StaffScheduleService.buildStaffView", () => {
     expect(conflictsOf(view, double)).toBe(false);
   });
 
-  it("merges the selections stream without duplicating catalog classes", () => {
-    const shared = makeClass({ id: "shared" });
-    const special = makeClass({
-      id: "special",
-      title: "חונכות",
-      slots: [{ dayOfWeek: 3, timeSlotId: tsFirst.id, timeSlot: tsFirst }],
+  it("groups a tutor's selections per class, listing the children", () => {
+    const view = build({
+      selections: [
+        makeSelection({ childId: "c1", childName: "נועה לוי" }),
+        makeSelection({ childId: "c2", childName: "אבי כהן" }),
+        makeSelection({
+          class: makeClass({
+            id: "integration-1",
+            title: "שילוב",
+            teacher: "חונכ/ת",
+            slots: [
+              { dayOfWeek: 4, timeSlotId: tsFirst.id, timeSlot: tsFirst },
+            ],
+          }),
+          childId: "c3",
+          childName: "רון",
+        }),
+      ],
     });
-    const view = build({ catalog: [shared], selections: [shared, special] });
 
-    expect(view.classes.map(c => c.id)).toEqual(["shared", "special"]);
+    const wednesday = view.weeklySchedule[3][tsFirst.id];
+    expect(wednesday).toHaveLength(1);
+    expect(wednesday[0].title).toBe("חונכות");
+    expect(wednesday[0].teacher).toBe("אבי כהן, נועה לוי");
+    expect(view.extraEnrollmentCounts.get(wednesday[0].id)).toBe(2);
+    expect(view.weeklySchedule[4][tsFirst.id]).toHaveLength(1);
+    expect(view.classes).toHaveLength(2);
+  });
+
+  it("keeps a grouped selection's catalog details and never conflicts with itself", () => {
+    const view = build({
+      selections: [
+        makeSelection({ childId: "c1" }),
+        makeSelection({ childId: "c2", childName: "אבי" }),
+      ],
+    });
+
+    const [grouped] = view.classes;
+    expect(grouped.id).not.toBe("mentoring-1");
+    expect(grouped.room).toBe("חדר 1");
+    expect(grouped.slots).toHaveLength(1);
+    expect(conflictsOf(view, grouped)).toBe(false);
+  });
+
+  it("flags a selection sharing a slot with a catalog class as a conflict", () => {
+    const view = build({
+      catalog: [
+        makeClass({
+          slots: [{ dayOfWeek: 3, timeSlotId: tsFirst.id, timeSlot: tsFirst }],
+        }),
+      ],
+      selections: [makeSelection()],
+    });
+
+    const cell = view.weeklySchedule[3][tsFirst.id];
+    expect(cell).toHaveLength(2);
+    expect(cell.every(cls => conflictsOf(view, cls))).toBe(true);
+  });
+});
+
+describe("staff keys", () => {
+  it("parses a UUID as a user and anything else as a trimmed name", () => {
+    expect(parseStaffKey(USER_ID)).toEqual({ kind: "user", id: USER_ID });
+    expect(parseStaffKey(USER_ID.toUpperCase())).toEqual({
+      kind: "user",
+      id: USER_ID.toUpperCase(),
+    });
+    expect(parseStaffKey(" עידו כץ ")).toEqual({
+      kind: "name",
+      name: "עידו כץ",
+    });
+  });
+
+  it("returns undefined for a missing or blank param", () => {
+    expect(parseStaffKey(null)).toBeUndefined();
+    expect(parseStaffKey(undefined)).toBeUndefined();
+    expect(parseStaffKey("  ")).toBeUndefined();
+  });
+
+  it("round-trips through the URL param", () => {
+    const keys = [
+      { kind: "user", id: USER_ID } as const,
+      { kind: "name", name: "בת שירות 1" } as const,
+    ];
+    keys.forEach(key =>
+      expect(parseStaffKey(staffKeyToParam(key))).toEqual(key)
+    );
   });
 });
 
 describe("StaffScheduleService.toStaffMembers", () => {
-  it("returns distinct, trimmed, alphabetical names", () => {
+  const pair = (
+    teacher: string,
+    title: string,
+    userId: string | null = null
+  ) => ({
+    teacher,
+    title,
+    userId,
+  });
+
+  it("returns distinct, trimmed, alphabetical names for unlinked teachers", () => {
     expect(
-      StaffScheduleService.toStaffMembers([
-        { teacher: " רונית ", title: "מתמטיקה" },
-        { teacher: "רונית", title: "אנגלית" },
-        { teacher: "אבי", title: "ספורט" },
-        { teacher: "", title: "אמנות" },
-      ])
+      StaffScheduleService.toStaffMembers(
+        [
+          pair(" רונית ", "מתמטיקה"),
+          pair("רונית", "אנגלית"),
+          pair("אבי", "ספורט"),
+          pair("", "אמנות"),
+        ],
+        []
+      )
     ).toEqual([
-      { name: "אבי", teaches: true },
-      { name: "רונית", teaches: true },
+      { key: { kind: "name", name: "אבי" }, label: "אבי", teaches: true },
+      { key: { kind: "name", name: "רונית" }, label: "רונית", teaches: true },
     ]);
   });
 
-  it("excludes the generic mentor placeholder", () => {
+  it("excludes the placeholder names", () => {
     expect(
-      StaffScheduleService.toStaffMembers([
-        { teacher: "חונכ/ת", title: "מתמטיקה" },
-        { teacher: " חונכ/ת ", title: "אנגלית" },
-      ])
+      StaffScheduleService.toStaffMembers(
+        [
+          pair("חונכ/ת", "מתמטיקה"),
+          pair(" חונכ/ת ", "אנגלית"),
+          pair("כללי", "אסיפה"),
+          pair("לא ידוע", "מדעים"),
+        ],
+        []
+      )
     ).toEqual([]);
+  });
+
+  it("lists every directory user, folding their linked classes into them", () => {
+    expect(
+      StaffScheduleService.toStaffMembers(
+        [pair("אורית שמש", "מדעים", USER_ID), pair("עידו כץ", "ספורט")],
+        [
+          { id: USER_ID, displayName: "אורית שמש" },
+          { id: OTHER_USER_ID, displayName: "גיל אדם" },
+        ]
+      )
+    ).toEqual([
+      { key: { kind: "user", id: USER_ID }, label: "אורית שמש", teaches: true },
+      {
+        key: { kind: "name", name: "עידו כץ" },
+        label: "עידו כץ",
+        teaches: true,
+      },
+      {
+        key: { kind: "user", id: OTHER_USER_ID },
+        label: "גיל אדם",
+        teaches: false,
+      },
+    ]);
+  });
+
+  it("drops an unlinked name that duplicates a user's label", () => {
+    expect(
+      StaffScheduleService.toStaffMembers(
+        [pair("אורית שמש", "מדעים")],
+        [{ id: USER_ID, displayName: "אורית שמש" }]
+      )
+    ).toEqual([
+      {
+        key: { kind: "user", id: USER_ID },
+        label: "אורית שמש",
+        teaches: false,
+      },
+    ]);
   });
 
   it("lists staff with no regular lessons last, alphabetically, not by lesson count", () => {
     expect(
-      StaffScheduleService.toStaffMembers([
-        { teacher: "תמר", title: "כישורי חיים" },
-        { teacher: "אורי", title: "שילוב" },
-        { teacher: "יעל", title: "שילוב" },
-        { teacher: "יעל", title: "מדעים" },
-        { teacher: "בני", title: "ספורט" },
-        { teacher: "בני", title: "ספורט" },
-        { teacher: "בני", title: "ספורט" },
-      ])
+      StaffScheduleService.toStaffMembers(
+        [
+          pair("תמר", "כישורי חיים"),
+          pair("אורי", "שילוב"),
+          pair("יעל", "שילוב"),
+          pair("יעל", "מדעים"),
+          pair("בני", "ספורט"),
+          pair("בני", "ספורט"),
+          pair("בני", "ספורט"),
+        ],
+        []
+      ).map(({ label, teaches }) => ({ label, teaches }))
     ).toEqual([
-      { name: "בני", teaches: true },
-      { name: "יעל", teaches: true },
-      { name: "אורי", teaches: false },
-      { name: "תמר", teaches: false },
+      { label: "בני", teaches: true },
+      { label: "יעל", teaches: true },
+      { label: "אורי", teaches: false },
+      { label: "תמר", teaches: false },
     ]);
+  });
+});
+
+describe("StaffScheduleService.resolveStaffKey", () => {
+  const directory = [{ id: USER_ID, displayName: "אורית שמש" }];
+
+  it("resolves a name matching a directory user to that user", () => {
+    expect(
+      StaffScheduleService.resolveStaffKey(
+        { kind: "name", name: "אורית שמש" },
+        directory
+      )
+    ).toEqual({ kind: "user", id: USER_ID });
+  });
+
+  it("keeps other keys unchanged", () => {
+    const name = { kind: "name", name: "עידו כץ" } as const;
+    const user = { kind: "user", id: OTHER_USER_ID } as const;
+    expect(StaffScheduleService.resolveStaffKey(name, directory)).toBe(name);
+    expect(StaffScheduleService.resolveStaffKey(user, directory)).toBe(user);
   });
 });
 
 describe("StaffScheduleService fetchers", () => {
   beforeEach(() => {
     vi.mocked(classesApi.getTeacherTitlePairs).mockReset();
-    vi.mocked(classesApi.getClassesByTeacher).mockReset();
-    vi.mocked(scheduleOverridesApi.getOverridesByTeacher).mockReset();
+    vi.mocked(classesApi.getClassesByTeacher).mockReset().mockResolvedValue([]);
+    vi.mocked(classesApi.getClassesByUserId).mockReset().mockResolvedValue([]);
+    vi.mocked(scheduleOverridesApi.getOverridesByTeacher)
+      .mockReset()
+      .mockResolvedValue([]);
+    vi.mocked(scheduleOverridesApi.getOverridesByUserId)
+      .mockReset()
+      .mockResolvedValue([]);
+    vi.mocked(scheduleApi.getCommittedSelectionsMadeBy)
+      .mockReset()
+      .mockResolvedValue([]);
+    vi.mocked(staffApi.getStaffDirectory).mockReset().mockResolvedValue([]);
   });
 
-  it("getStaffMembers derives members from the catalog pairs", async () => {
+  it("getStaffMembers combines the catalog pairs and the staff directory", async () => {
     vi.mocked(classesApi.getTeacherTitlePairs).mockResolvedValue([
-      { teacher: "חונכ/ת", title: "מתמטיקה" },
-      { teacher: "דנה ", title: "מתמטיקה" },
+      { teacher: "חונכ/ת", title: "מתמטיקה", userId: null },
+      { teacher: "דנה ", title: "מתמטיקה", userId: null },
+    ]);
+    vi.mocked(staffApi.getStaffDirectory).mockResolvedValue([
+      { id: USER_ID, displayName: "שירה טל" },
     ]);
 
-    await expect(StaffScheduleService.getStaffMembers()).resolves.toEqual([
-      { name: "דנה", teaches: true },
-    ]);
+    const members = await StaffScheduleService.getStaffMembers();
+
+    expect(members.map(m => m.label)).toEqual(["דנה", "שירה טל"]);
   });
 
-  it("getCatalogForStaff drops Special Classes", async () => {
-    vi.mocked(classesApi.getClassesByTeacher).mockResolvedValue([
+  it("loads a user's week by id: catalog, overrides and staff-only selections", async () => {
+    vi.mocked(classesApi.getClassesByUserId).mockResolvedValue([
       makeClass({ id: "a" }),
-      makeClass({ id: "b", title: "כישורי חיים" }),
+      makeClass({ id: "life-skills", title: "כישורי חיים" }),
+    ]);
+    vi.mocked(scheduleOverridesApi.getOverridesByUserId).mockResolvedValue([
+      makeOverride(),
+    ]);
+    vi.mocked(scheduleApi.getCommittedSelectionsMadeBy).mockResolvedValue([
+      makeSelection(),
+      // A regular class the tutor happened to commit: not theirs to teach.
+      makeSelection({ class: makeClass({ id: "english", title: "אנגלית" }) }),
+      // Special, but pre-selected -- not set by the tutor (known gap).
+      makeSelection({
+        class: makeClass({ id: "life", title: "כישורי חיים" }),
+      }),
     ]);
 
-    const result = await StaffScheduleService.getCatalogForStaff("דנה");
+    const view = await StaffScheduleService.getStaffView({
+      kind: "user",
+      id: USER_ID,
+    });
 
-    expect(classesApi.getClassesByTeacher).toHaveBeenCalledWith("דנה");
-    expect(result.map(c => c.id)).toEqual(["a"]);
+    expect(classesApi.getClassesByUserId).toHaveBeenCalledWith(USER_ID);
+    expect(scheduleOverridesApi.getOverridesByUserId).toHaveBeenCalledWith(
+      USER_ID
+    );
+    expect(scheduleApi.getCommittedSelectionsMadeBy).toHaveBeenCalledWith(
+      USER_ID
+    );
+    expect(classesApi.getClassesByTeacher).not.toHaveBeenCalled();
+    expect(view.classes.map(c => c.title).sort()).toEqual(
+      ["חונכות", "מתמטיקה", "תגבור"].sort()
+    );
   });
 
-  it("getSelectionsForStaff is a stub until part 2", async () => {
-    await expect(
-      StaffScheduleService.getSelectionsForStaff("דנה")
-    ).resolves.toEqual([]);
-  });
-
-  it("getStaffView combines the catalog and override streams", async () => {
+  it("loads a name-only teacher's week by name, with no selections", async () => {
     vi.mocked(classesApi.getClassesByTeacher).mockResolvedValue([
       makeClass({ id: "a" }),
     ]);
@@ -305,11 +523,79 @@ describe("StaffScheduleService fetchers", () => {
       makeOverride(),
     ]);
 
-    const view = await StaffScheduleService.getStaffView("דנה");
+    const view = await StaffScheduleService.getStaffView({
+      kind: "name",
+      name: "עידו כץ",
+    });
 
+    expect(classesApi.getClassesByTeacher).toHaveBeenCalledWith("עידו כץ");
     expect(scheduleOverridesApi.getOverridesByTeacher).toHaveBeenCalledWith(
-      "דנה"
+      "עידו כץ"
     );
+    expect(scheduleApi.getCommittedSelectionsMadeBy).not.toHaveBeenCalled();
     expect(view.classes).toHaveLength(2);
+  });
+
+  it("treats a name that now belongs to a user (old link) as that user", async () => {
+    vi.mocked(staffApi.getStaffDirectory).mockResolvedValue([
+      { id: USER_ID, displayName: "אורית שמש" },
+    ]);
+
+    await StaffScheduleService.getStaffView({
+      kind: "name",
+      name: "אורית שמש",
+    });
+
+    expect(classesApi.getClassesByUserId).toHaveBeenCalledWith(USER_ID);
+    expect(classesApi.getClassesByTeacher).not.toHaveBeenCalled();
+  });
+});
+
+describe("StaffScheduleService.resolveTeacherUserId", () => {
+  const members = [
+    {
+      key: { kind: "user", id: USER_ID } as const,
+      label: "אורית שמש",
+      teaches: true,
+    },
+    {
+      key: { kind: "name", name: "עידו כץ" } as const,
+      label: "עידו כץ",
+      teaches: true,
+    },
+  ];
+
+  it("links a teacher text matching a staff user's display name", () => {
+    expect(
+      StaffScheduleService.resolveTeacherUserId(" אורית שמש ", members)
+    ).toBe(USER_ID);
+  });
+
+  it("leaves free text and name-only teachers unlinked", () => {
+    expect(StaffScheduleService.resolveTeacherUserId("עידו כץ", members)).toBe(
+      null
+    );
+    expect(StaffScheduleService.resolveTeacherUserId("מורה חדש", members)).toBe(
+      null
+    );
+  });
+
+  it("keeps an existing link while the teacher text is unchanged", () => {
+    // e.g. the staff list failed to load while editing a linked class
+    expect(
+      StaffScheduleService.resolveTeacherUserId("אורית שמש", [], {
+        teacher: "אורית שמש",
+        userId: USER_ID,
+      })
+    ).toBe(USER_ID);
+  });
+
+  it("drops the link once the teacher text changes to someone unlinked", () => {
+    expect(
+      StaffScheduleService.resolveTeacherUserId("עידו כץ", members, {
+        teacher: "אורית שמש",
+        userId: USER_ID,
+      })
+    ).toBe(null);
   });
 });

@@ -5,6 +5,8 @@ export interface User {
   email: string;
   firstName?: string;
   lastName?: string;
+  // Name a staff member is shown under (Staff View, class teacher label).
+  displayName?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -52,7 +54,8 @@ export interface Class {
   id: string;
   title: string;
   description: string;
-  teacher: string;
+  teacher: string; // Label; a cached copy of the linked user's display name when userId is set
+  userId?: string | null; // Linked Teacher: the teaching user, when they have an account
   slots: ClassSlot[]; // One or more Class Slots this class occupies
   grades: number[]; // Changed from single grade to multiple grades
   isMandatory: boolean;
@@ -85,10 +88,23 @@ export interface ScheduleSelectionWithClass extends ScheduleSelection {
   class: ClassWithTimeSlot;
 }
 
-// Identifies whose schedule_selections rows to read/write: either a
-// child-linked selection (parent/staff acting for a student) or a
-// user-linked one (the "child" role selecting for themselves).
-export type ScheduleTarget = { userId: string } | { childId: string };
+// Identifies whose schedule_selections rows to read/write: always a
+// student (a parent's child, a child user's own linked student, or the
+// student staff picked).
+export type ScheduleTarget = { childId: string };
+
+// The student a child login gets linked to at approval: an existing one, or
+// a new one to create (see approve_child_account, migration 047).
+export interface NewLinkedChild {
+  firstName: string;
+  lastName: string;
+  grade: number;
+  groupNumber: number | null;
+}
+
+export type ChildAccountLink =
+  | { childId: string }
+  | { newChild: NewLinkedChild };
 
 export interface WeeklySchedule {
   [dayOfWeek: number]: {
@@ -145,6 +161,7 @@ export interface EnrolledChild extends Child {
   addedByUserId: string;
   addedByFirstName: string | null;
   addedByLastName: string | null;
+  addedByDisplayName: string | null;
   addedByAt: string;
 }
 
@@ -171,7 +188,8 @@ export interface ScheduleOverride {
   id: string;
   childId: string;
   title: string;
-  teacher: string;
+  teacher: string; // Label; a cached copy of the linked user's display name when userId is set
+  userId?: string | null; // Linked Teacher: the teaching user, when they have an account
   room: string;
   dayOfWeek: number;
   timeSlotId: string;
@@ -189,5 +207,25 @@ export interface ScheduleOverrideWithTimeSlot extends ScheduleOverride {
 // plus the display name of the child it was authored for.
 export interface ScheduleOverrideWithChildName
   extends ScheduleOverrideWithTimeSlot {
+  childName: string;
+}
+
+/** A staff user with a display name (get_staff_directory RPC). */
+export interface StaffDirectoryEntry {
+  id: string;
+  displayName: string;
+}
+
+/** A catalog (teacher, title) pair plus the linked teaching user, if any. */
+export interface TeacherTitlePair {
+  teacher: string;
+  title: string;
+  userId: string | null;
+}
+
+/** One committed selection, with the child it was made for (Staff View). */
+export interface StaffSelection {
+  class: ClassWithTimeSlot;
+  childId: string;
   childName: string;
 }

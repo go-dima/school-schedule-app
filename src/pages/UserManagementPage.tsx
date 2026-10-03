@@ -7,6 +7,7 @@ import {
   Space,
   Typography,
   message,
+  Divider,
   Modal,
   Alert,
 } from "antd";
@@ -16,20 +17,33 @@ import { FiltersBar } from "../components/FiltersBar";
 import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
 import { RoleTagPicker } from "../components/RoleTagPicker";
 import { useAuth } from "../contexts/AuthContext";
-import { usersApi } from "../services/api";
-import type { UserRoleData, UserRole } from "../types";
+import { ApiError, childrenApi, usersApi } from "../services/api";
+import type { Child, ChildAccountLink, UserRoleData, UserRole } from "../types";
+import { ChildAccountLinkPicker } from "../components/ChildAccountLinkPicker";
+import {
+  EMPTY_CHILD_LINK_DRAFT,
+  childLinkValue,
+  type ChildLinkDraft,
+} from "../components/childAccountLink";
 import { ROLE_TAG_COLORS } from "../constants/roleColors";
+import { ALL_ROLES } from "../constants/roles";
+import { validateRoleSet, type RoleSetError } from "../services/roleRules";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 import "./UserManagementPage.css";
 
-const ALL_ROLES: UserRole[] = ["admin", "moderator", "staff", "parent"];
-
-// admin/moderator are elevated roles that require a base role (staff or
-// parent) to remain meaningful -- they don't carry their own identity.
-const BASE_ROLES: UserRole[] = ["staff", "parent"];
-const ELEVATED_ROLES: UserRole[] = ["admin", "moderator"];
+const ROLE_SET_ERROR_KEYS: Record<RoleSetError, string> = {
+  noRoles: "userManagement.page.noRolesValidationError",
+  exclusiveCombined: "userManagement.page.childExclusiveValidationError",
+  elevatedWithoutBase: "userManagement.page.baseRoleValidationError",
+};
 
 const { Text } = Typography;
+
+// Roles that make a user staff (and so give them a display name).
+const STAFF_ROLES: UserRole[] = ["admin", "staff", "moderator"];
+
+// Postgres unique_violation: the display name belongs to someone else.
+const UNIQUE_VIOLATION = "23505";
 
 interface UserManagementPageProps {}
 
@@ -38,6 +52,7 @@ interface UserWithRoles {
   email: string;
   firstName?: string;
   lastName?: string;
+  displayName?: string;
   createdAt: string;
   lastSignInAt?: string;
   roles: UserRoleData[];
@@ -57,6 +72,44 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
   // equivalent to the old empty-array "no filter" default, but the UI always
   // shows each role's on/off state instead of hiding it behind a dropdown.
   const [roleFilter, setRoleFilter] = useState<UserRole[]>(ALL_ROLES);
+  // Granting child needs a student record to link, as at approval.
+  const [childLink, setChildLink] = useState<ChildLinkDraft>(
+    EMPTY_CHILD_LINK_DRAFT
+  );
+  const [unlinkedStudents, setUnlinkedStudents] = useState<Child[]>([]);
+  const [unlinkedLoading, setUnlinkedLoading] = useState(false);
+  const needsChildLink =
+    modalVisible &&
+    selectedRoles.length === 1 &&
+    selectedRoles[0] === "child" &&
+    !selectedUser?.roles.some(role => role.role === "child" && role.approved);
+  const childLinkComplete = childLinkValue(childLink) !== undefined;
+
+  useEffect(() => {
+    if (!needsChildLink) return;
+    let cancelled = false;
+    setUnlinkedLoading(true);
+    childrenApi
+      .getUnlinkedChildren()
+      .then(students => {
+        if (!cancelled) setUnlinkedStudents(students);
+      })
+      .catch(err => {
+        if (!cancelled) {
+          message.error(
+            err instanceof Error
+              ? err.message
+              : t("pendingApprovals.childLink.loadError")
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setUnlinkedLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [needsChildLink, t]);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -68,6 +121,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         email: user.email,
         firstName: user.first_name,
         lastName: user.last_name,
+        displayName: user.display_name ?? undefined,
         createdAt: user.created_at,
         lastSignInAt: user.last_sign_in_at,
         roles: user.user_roles.map((role: any) => ({
@@ -88,12 +142,36 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
     }
   };
 
+  // Admin-only RPC (admin_set_display_name): admins can't UPDATE other
+  // users' rows directly. Blank clears the name.
+  const handleDisplayNameChange = async (
+    user: UserWithRoles,
+    value: string
+  ) => {
+    const displayName = value.trim() || undefined;
+    if (displayName === user.displayName) return;
+    try {
+      await usersApi.adminSetDisplayName(user.id, value);
+      setUsers(prev =>
+        prev.map(u => (u.id === user.id ? { ...u, displayName } : u))
+      );
+      message.success(t("userManagement.page.displayNameUpdated"));
+    } catch (error) {
+      message.error(
+        error instanceof ApiError && error.code === UNIQUE_VIOLATION
+          ? t("profile.page.displayNameTaken")
+          : t("userManagement.page.displayNameError")
+      );
+    }
+  };
+
   const handleManageRoles = (user: UserWithRoles) => {
     setSelectedUser(user);
     setSelectedRoles(
       user.roles.filter(role => role.approved).map(role => role.role)
     );
     setValidationError(null);
+    setChildLink(EMPTY_CHILD_LINK_DRAFT);
     setModalVisible(true);
   };
 
@@ -104,21 +182,34 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
     );
   };
 
-  // Elevated roles (admin/moderator) carry no identity of their own -- they
-  // must be paired with a base role (staff or parent).
-  const validateRoleSet = (roles: UserRole[]): string | null => {
-    if (roles.length === 0) {
-      return t("userManagement.page.noRolesValidationError");
+  const grantRole = async (userId: string, role: UserRole) => {
+    await usersApi.requestRole(userId, role);
+    const userRoles = await usersApi.getUserRoles(userId);
+    const newRole = userRoles.find(r => r.role === role && !r.approved);
+    if (newRole) {
+      await usersApi.approveRole(newRole.id);
     }
-    const hasElevated = roles.some(role => ELEVATED_ROLES.includes(role));
-    const hasBase = roles.some(role => BASE_ROLES.includes(role));
-    if (hasElevated && !hasBase) {
-      return t("userManagement.page.baseRoleValidationError");
+    if (role === "moderator") {
+      trackEvent(AnalyticsEvent.ModeratorGranted);
+    } else if (role === "admin") {
+      trackEvent(AnalyticsEvent.AdminGranted);
     }
-    return null;
   };
 
-  const applyRoleChanges = async (user: UserWithRoles, desired: UserRole[]) => {
+  const revokeRole = async (role: UserRoleData) => {
+    await usersApi.revokeApprovedRole(role.id);
+    if (role.role === "moderator") {
+      trackEvent(AnalyticsEvent.ModeratorRevoked);
+    } else if (role.role === "admin") {
+      trackEvent(AnalyticsEvent.AdminRevoked);
+    }
+  };
+
+  const applyRoleChanges = async (
+    user: UserWithRoles,
+    desired: UserRole[],
+    childLink: ChildAccountLink | undefined
+  ) => {
     const current = user.roles
       .filter(role => role.approved)
       .map(role => role.role);
@@ -128,36 +219,36 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
       role => role.approved && !desired.includes(role.role)
     );
 
-    for (const role of toAdd) {
-      await usersApi.requestRole(user.id, role);
-      const userRoles = await usersApi.getUserRoles(user.id);
-      const newRole = userRoles.find(r => r.role === role && !r.approved);
-      if (newRole) {
-        await usersApi.approveRole(newRole.id);
-      }
-      if (role === "moderator") {
-        trackEvent(AnalyticsEvent.ModeratorGranted);
-      } else if (role === "admin") {
-        trackEvent(AnalyticsEvent.AdminGranted);
-      }
+    // child is exclusive (validateRoleSet), so granting it means every other
+    // role goes. approve_child_account rejects while another approved role
+    // remains, so those are revoked first; it then grants child and links
+    // the student in one step.
+    if (toAdd.includes("child")) {
+      if (!childLink)
+        throw new Error(t("pendingApprovals.childLink.incomplete"));
+      for (const role of toRemove) await revokeRole(role);
+      await usersApi.approveChildUser(user.id, childLink);
+      return;
     }
 
+    // Revoking child also clears the student link, and goes first so the
+    // user is never child plus something else.
+    if (toRemove.some(role => role.role === "child")) {
+      await usersApi.unlinkChildUser(user.id);
+    }
+
+    for (const role of toAdd) await grantRole(user.id, role);
     for (const role of toRemove) {
-      await usersApi.revokeApprovedRole(role.id);
-      if (role.role === "moderator") {
-        trackEvent(AnalyticsEvent.ModeratorRevoked);
-      } else if (role.role === "admin") {
-        trackEvent(AnalyticsEvent.AdminRevoked);
-      }
+      if (role.role !== "child") await revokeRole(role);
     }
   };
 
   const saveRoles = async () => {
     if (!selectedUser) return;
 
-    const validationMessage = validateRoleSet(selectedRoles);
-    if (validationMessage) {
-      setValidationError(validationMessage);
+    const roleSetError = validateRoleSet(selectedRoles);
+    if (roleSetError) {
+      setValidationError(t(ROLE_SET_ERROR_KEYS[roleSetError]));
       return;
     }
     setValidationError(null);
@@ -170,7 +261,11 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
     const performSave = async () => {
       setActionLoading(true);
       try {
-        await applyRoleChanges(selectedUser, selectedRoles);
+        await applyRoleChanges(
+          selectedUser,
+          selectedRoles,
+          childLinkValue(childLink)
+        );
         message.success(
           t("userManagement.page.updateSuccess", { email: selectedUser.email })
         );
@@ -244,6 +339,25 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
           </Space>
         );
       },
+    },
+    {
+      title: t("userManagement.table.displayNameColumn"),
+      key: "displayName",
+      width: 130,
+      sorter: (a, b) =>
+        (a.displayName || "").localeCompare(b.displayName || ""),
+      render: (_, record) =>
+        record.roles.some(
+          role => role.approved && STAFF_ROLES.includes(role.role)
+        ) ? (
+          <Text
+            editable={{
+              tooltip: t("userManagement.table.editDisplayName"),
+              onChange: value => handleDisplayNameChange(record, value),
+            }}>
+            {record.displayName || ""}
+          </Text>
+        ) : null,
     },
     {
       title: t("userManagement.table.emailColumn"),
@@ -423,7 +537,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         locale={{
           emptyText: t("userManagement.table.emptyText"),
         }}
-        scroll={{ x: 1040 }}
+        scroll={{ x: 1170 }}
       />
 
       <Modal
@@ -438,7 +552,11 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         confirmLoading={actionLoading}
         okText={t("common.buttons.save")}
         cancelText={t("common.buttons.cancel")}
-        okButtonProps={{ disabled: selectedRoles.length === 0 }}
+        okButtonProps={{
+          disabled:
+            selectedRoles.length === 0 ||
+            (needsChildLink && !childLinkComplete),
+        }}
         footer={(_, { OkBtn, CancelBtn }) => (
           <div
             style={{
@@ -450,6 +568,11 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
             {selectedRoles.length === 0 && (
               <Text type="danger" style={{ fontSize: 13 }}>
                 {t("userManagement.page.noRolesValidationError")}
+              </Text>
+            )}
+            {needsChildLink && !childLinkComplete && (
+              <Text type="danger" style={{ fontSize: 13 }}>
+                {t("pendingApprovals.childLink.incomplete")}
               </Text>
             )}
             <CancelBtn />
@@ -467,6 +590,25 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
             onToggle={toggleRole}
           />
         </div>
+        {needsChildLink && (
+          <div style={{ marginBottom: 16 }}>
+            <Divider orientation="right" plain>
+              <Text strong>{t("pendingApprovals.childLink.title")}</Text>
+            </Divider>
+            <Text
+              type="secondary"
+              style={{ display: "block", marginBottom: 12 }}>
+              {t("pendingApprovals.childLink.description")}
+            </Text>
+            <ChildAccountLinkPicker
+              students={unlinkedStudents}
+              value={childLink}
+              onChange={setChildLink}
+              loading={unlinkedLoading}
+              disabled={actionLoading}
+            />
+          </div>
+        )}
         {validationError && (
           <Alert
             message={validationError}
