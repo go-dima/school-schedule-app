@@ -27,7 +27,9 @@ import type {
 } from "../types";
 import type { RequestableRole } from "../constants/roles";
 import {
+  buildOAuthRedirectUrl,
   clearStoredRequestedRole,
+  parseRequestedRole,
   readStoredRequestedRole,
   resolveRequestedRole,
   storeRequestedRole,
@@ -104,12 +106,16 @@ export const authApi = {
 
   async signInWithGoogle(requestedRole?: RequestableRole) {
     // OAuth can't carry user metadata, so the signup page's choice waits in
-    // sessionStorage for ensureUserProfile after the redirect.
+    // sessionStorage for ensureUserProfile after the redirect. It also rides
+    // in the redirect URL, for when the result opens in a new tab (Android).
     if (requestedRole) storeRequestedRole(requestedRole);
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: buildOAuthRedirectUrl(
+          window.location.origin,
+          requestedRole
+        ),
       },
     });
 
@@ -174,16 +180,23 @@ async function ensureUserProfile(user: any) {
     .eq("id", user.id)
     .single();
 
+  // Normally the signup trigger (migration 051) has created the profile and a
+  // pending role already. This stays as the fallback for when it hasn't (the
+  // trigger isn't installed yet, or it skipped the user). ignoreDuplicates:
+  // a row the trigger created in the meantime is a no-op, not a 409.
   if (!existingUser) {
-    const { error: profileError } = await supabase.from("users").insert([
-      {
-        id: user.id,
-        email: user.email,
-        first_name: user.user_metadata?.full_name?.split(" ")[0] || "",
-        last_name:
-          user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || "",
-      },
-    ]);
+    const { error: profileError } = await supabase.from("users").upsert(
+      [
+        {
+          id: user.id,
+          email: user.email,
+          first_name: user.user_metadata?.full_name?.split(" ")[0] || "",
+          last_name:
+            user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || "",
+        },
+      ],
+      { onConflict: "id", ignoreDuplicates: true }
+    );
 
     // Without a profile row the role insert can only fail on the
     // user_roles -> users foreign key, which hides this error behind it.
@@ -193,25 +206,27 @@ async function ensureUserProfile(user: any) {
     }
   }
 
-  // Decided separately from the users row: the handle_new_user trigger
-  // (003) can create that row first. Only a user with no role rows at all
-  // gets a pending request.
+  // Decided separately from the users row: the signup trigger can create
+  // that row first. Only a user with no role rows at all gets a pending
+  // request here.
   const { data: existingRoles, error: rolesError } = await supabase
     .from("user_roles")
-    .select("id")
-    .eq("user_id", user.id)
-    .limit(1);
+    .select("role, approved")
+    .eq("user_id", user.id);
 
   if (rolesError) {
     log.error("User role lookup failed", { error: rolesError });
     return;
   }
-  if (existingRoles && existingRoles.length > 0) return;
 
-  const role = resolveRequestedRole(
-    user.user_metadata,
-    readStoredRequestedRole()
-  );
+  const storedRole = readStoredRequestedRole();
+
+  if (existingRoles && existingRoles.length > 0) {
+    await correctPendingRole(existingRoles, parseRequestedRole(storedRole));
+    return;
+  }
+
+  const role = resolveRequestedRole(user.user_metadata, storedRole);
   const { error: roleError } = await supabase.from("user_roles").insert([
     {
       user_id: user.id,
@@ -222,6 +237,36 @@ async function ensureUserProfile(user: any) {
 
   if (roleError) {
     log.error("User role creation failed", { error: roleError });
+    return;
+  }
+  clearStoredRequestedRole();
+}
+
+// The signup trigger files a Google signup as a pending parent request
+// (OAuth carries no metadata). When the signup page's stored choice differs,
+// swap the pending request for it. Users with an approved role are left
+// alone; so are users with no stored choice (a plain sign-in), whose pending
+// request may have been set by the email-signup metadata or by an admin.
+async function correctPendingRole(
+  roles: { role: string; approved: boolean }[],
+  storedRole: RequestableRole | null
+) {
+  if (!storedRole) return;
+
+  const alreadyRequested =
+    roles.length === 1 && !roles[0].approved && roles[0].role === storedRole;
+  if (alreadyRequested || roles.some(r => r.approved)) {
+    clearStoredRequestedRole();
+    return;
+  }
+
+  // Migration 050. Keeps the stored choice on failure (e.g. the migration
+  // isn't applied yet) so the next sign-in in this tab can retry.
+  const { error } = await supabase.rpc("request_signup_role", {
+    p_role: storedRole,
+  });
+  if (error) {
+    log.error("Signup role request failed", { error });
     return;
   }
   clearStoredRequestedRole();

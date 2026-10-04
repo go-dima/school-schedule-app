@@ -1,5 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import { env } from "../utils/env";
+import { captureRequestedRoleFromUrl } from "./requestedRole";
+
+// Before the client exists: an OAuth return carries the signup page's role
+// choice as `?requested_role=` (it may land in a new tab on Android, without
+// the original tab's sessionStorage). This only drops that parameter; the
+// callback hash/params stay for detectSessionInUrl below.
+captureRequestedRoleFromUrl();
 
 export const supabase = createClient(env.supabaseUrl, env.supabaseAnonKey, {
   auth: {

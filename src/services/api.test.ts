@@ -67,6 +67,9 @@ vi.mock("./supabase", () => {
         getUser: vi.fn(() => new Promise(() => {})),
         signUp: vi.fn(() => Promise.resolve(mockSignUpResult)),
         signOut: vi.fn(() => Promise.resolve(mockSignOutResult)),
+        signInWithOAuth: vi.fn(() =>
+          Promise.resolve({ data: {}, error: null })
+        ),
       },
       rpc: vi.fn(() => Promise.resolve(mockRpcResult)),
       from: vi.fn(() => {
@@ -80,6 +83,7 @@ vi.mock("./supabase", () => {
         chain.is = vi.fn(() => chain);
         chain.limit = vi.fn(() => chain);
         chain.insert = vi.fn(() => chain);
+        chain.upsert = vi.fn(() => chain);
         chain.update = vi.fn(() => chain);
         chain.order = vi.fn(() => chain);
         chain.single = vi.fn(() => Promise.resolve(mockSingleResult));
@@ -107,6 +111,7 @@ function defaultFromImpl() {
   chain.is = vi.fn(() => chain);
   chain.limit = vi.fn(() => chain);
   chain.insert = vi.fn(() => chain);
+  chain.upsert = vi.fn(() => chain);
   chain.update = vi.fn(() => chain);
   chain.order = vi.fn(() => chain);
   chain.single = vi.fn(() => Promise.resolve(mockSingleResult));
@@ -137,14 +142,32 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
+// In-memory sessionStorage for the node test environment.
+function fakeSessionStorage(initial: Record<string, string> = {}) {
+  const store = new Map(Object.entries(initial));
+  return {
+    getItem: (key: string) => store.get(key) ?? null,
+    setItem: (key: string, value: string) => void store.set(key, value),
+    removeItem: (key: string) => void store.delete(key),
+    store,
+  };
+}
+
 describe("authApi.onAuthStateChange", () => {
+  let storage = fakeSessionStorage();
+
   beforeEach(() => {
     (supabase.from as any).mockClear();
+    (supabase.rpc as any).mockClear();
+    storage = fakeSessionStorage();
+    vi.stubGlobal("sessionStorage", storage);
   });
 
   afterEach(() => {
     mockSingleResult = { data: null, error: { message: "no rows found" } };
+    mockRpcResult = { data: [], error: null };
     (supabase.from as any).mockImplementation(defaultFromImpl);
+    vi.unstubAllGlobals();
   });
 
   it("creates profile + parent role when the signed-in user has no existing row", async () => {
@@ -169,11 +192,16 @@ describe("authApi.onAuthStateChange", () => {
 
   // Records each table's insert rows; user_roles lookups resolve to
   // `existingRoles`, and a table's insert fails with `insertErrors[table]`.
+  // Profile writes go through upsert (ignoreDuplicates), role writes through
+  // insert; both are recorded in `inserts`, and upsert options in
+  // `upsertOptions`.
+  let upsertOptions: Record<string, any> = {};
   function trackInserts(
-    existingRoles: { id: string }[],
+    existingRoles: { role: string; approved: boolean }[],
     insertErrors: Record<string, { code: string; message: string }> = {}
   ) {
     const inserts: Record<string, any[]> = {};
+    upsertOptions = {};
     (supabase.from as any).mockImplementation((table: string) => {
       const chain: any = {};
       let inserting = false;
@@ -182,6 +210,12 @@ describe("authApi.onAuthStateChange", () => {
       chain.limit = vi.fn(() => chain);
       chain.insert = vi.fn((rows: any[]) => {
         inserts[table] = rows;
+        inserting = true;
+        return chain;
+      });
+      chain.upsert = vi.fn((rows: any[], options: any) => {
+        inserts[table] = rows;
+        upsertOptions[table] = options;
         inserting = true;
         return chain;
       });
@@ -210,7 +244,7 @@ describe("authApi.onAuthStateChange", () => {
 
   it("inserts nothing when the user already has a profile and a role", async () => {
     mockSingleResult = { data: { id: "user-1" }, error: null };
-    const inserts = trackInserts([{ id: "role-1" }]);
+    const inserts = trackInserts([{ role: "parent", approved: false }]);
 
     await signIn({ id: "user-1", email: "a@b.com" });
 
@@ -260,6 +294,118 @@ describe("authApi.onAuthStateChange", () => {
     ]);
   });
 
+  it("creates the profile as an upsert that ignores an existing row", async () => {
+    mockSingleResult = { data: null, error: { message: "no rows found" } };
+    const inserts = trackInserts([]);
+
+    await signIn({
+      id: "user-1",
+      email: "a@b.com",
+      user_metadata: { full_name: "Jane Doe" },
+    });
+
+    expect(inserts.users).toEqual([
+      { id: "user-1", email: "a@b.com", first_name: "Jane", last_name: "Doe" },
+    ]);
+    expect(upsertOptions.users).toEqual({
+      onConflict: "id",
+      ignoreDuplicates: true,
+    });
+  });
+
+  it("requests the stored Google signup role when no trigger made a request", async () => {
+    mockSingleResult = { data: null, error: { message: "no rows found" } };
+    storage.store.set("requestedRole", "staff");
+    const inserts = trackInserts([]);
+
+    await signIn({ id: "user-1", email: "a@b.com" });
+
+    expect(inserts.user_roles).toEqual([
+      { user_id: "user-1", role: "staff", approved: false },
+    ]);
+    expect(supabase.rpc).not.toHaveBeenCalled();
+    expect(storage.store.has("requestedRole")).toBe(false);
+  });
+
+  describe("correcting the trigger's pending request", () => {
+    beforeEach(() => {
+      mockSingleResult = { data: { id: "user-1" }, error: null };
+    });
+
+    it("asks for the stored role when it differs from the pending one", async () => {
+      storage.store.set("requestedRole", "staff");
+      const inserts = trackInserts([{ role: "parent", approved: false }]);
+
+      await signIn({ id: "user-1", email: "a@b.com" });
+
+      expect(supabase.rpc).toHaveBeenCalledWith("request_signup_role", {
+        p_role: "staff",
+      });
+      expect(inserts).toEqual({});
+      expect(storage.store.has("requestedRole")).toBe(false);
+    });
+
+    it("leaves a matching pending request alone", async () => {
+      storage.store.set("requestedRole", "staff");
+      trackInserts([{ role: "staff", approved: false }]);
+
+      await signIn({ id: "user-1", email: "a@b.com" });
+
+      expect(supabase.rpc).not.toHaveBeenCalled();
+      expect(storage.store.has("requestedRole")).toBe(false);
+    });
+
+    it("leaves a user with an approved role alone", async () => {
+      storage.store.set("requestedRole", "staff");
+      trackInserts([
+        { role: "parent", approved: true },
+        { role: "child", approved: false },
+      ]);
+
+      await signIn({ id: "user-1", email: "a@b.com" });
+
+      expect(supabase.rpc).not.toHaveBeenCalled();
+      expect(storage.store.has("requestedRole")).toBe(false);
+    });
+
+    it("does nothing when no role is stored", async () => {
+      trackInserts([{ role: "parent", approved: false }]);
+
+      await signIn({
+        id: "user-1",
+        email: "a@b.com",
+        user_metadata: { requested_role: "staff" },
+      });
+
+      expect(supabase.rpc).not.toHaveBeenCalled();
+    });
+
+    it("ignores a stored role that can't be requested", async () => {
+      storage.store.set("requestedRole", "admin");
+      trackInserts([{ role: "parent", approved: false }]);
+
+      await signIn({ id: "user-1", email: "a@b.com" });
+
+      expect(supabase.rpc).not.toHaveBeenCalled();
+    });
+
+    it("keeps the stored role when the request fails, for a retry", async () => {
+      storage.store.set("requestedRole", "child");
+      mockRpcResult = {
+        data: null,
+        error: { message: "function request_signup_role does not exist" },
+      };
+      trackInserts([{ role: "parent", approved: false }]);
+
+      await signIn({ id: "user-1", email: "a@b.com" });
+
+      expect(supabase.rpc).toHaveBeenCalledWith("request_signup_role", {
+        p_role: "child",
+      });
+      expect(storage.store.get("requestedRole")).toBe("child");
+    });
+  });
+
   it("delivers the signed-in user to the callback only after the ensure step settles", async () => {
     mockSingleResult = { data: null, error: { message: "no rows found" } };
     const order: string[] = [];
@@ -273,6 +419,7 @@ describe("authApi.onAuthStateChange", () => {
       chain.is = vi.fn(() => chain);
       chain.limit = vi.fn(() => chain);
       chain.insert = vi.fn(() => chain);
+      chain.upsert = vi.fn(() => chain);
       chain.single = vi.fn(async () => {
         order.push(`single:${table}`);
         return mockSingleResult;
@@ -310,6 +457,40 @@ describe("authApi.onAuthStateChange", () => {
 
     expect(received).toEqual([user]);
     expect(supabase.from).not.toHaveBeenCalled();
+  });
+});
+
+describe("authApi.signInWithGoogle", () => {
+  let storage = fakeSessionStorage();
+
+  beforeEach(() => {
+    (supabase.auth.signInWithOAuth as any).mockClear();
+    storage = fakeSessionStorage();
+    vi.stubGlobal("sessionStorage", storage);
+    vi.stubGlobal("window", { location: { origin: "https://app.test" } });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("carries the chosen role in the redirect URL and sessionStorage", async () => {
+    await authApi.signInWithGoogle("staff");
+
+    expect(supabase.auth.signInWithOAuth).toHaveBeenCalledWith({
+      provider: "google",
+      options: { redirectTo: "https://app.test/?requested_role=staff" },
+    });
+    expect(storage.store.get("requestedRole")).toBe("staff");
+  });
+
+  it("redirects to the plain origin without a role", async () => {
+    await authApi.signInWithGoogle();
+
+    expect(supabase.auth.signInWithOAuth).toHaveBeenCalledWith({
+      provider: "google",
+      options: { redirectTo: "https://app.test" },
+    });
   });
 });
 
