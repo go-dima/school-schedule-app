@@ -1,7 +1,7 @@
 import React from "react";
 import { staffKeyToParam } from "../services/staffScheduleService";
 import type { StaffMember } from "../services/staffScheduleService";
-import { NameSearch } from "./NameSearch";
+import { TextSearch } from "./TextSearch";
 import "./StaffPicker.css";
 
 interface StaffPickerProps {
@@ -25,10 +25,10 @@ export const StaffPicker: React.FC<StaffPickerProps> = ({
   placeholder,
   style,
 }) => (
-  <NameSearch<StaffMember>
+  <TextSearch<StaffMember>
     mode="pick"
     items={members}
-    getName={member => member.label}
+    getText={member => member.label}
     getKey={member => staffKeyToParam(member.key)}
     // No regular lessons: listed last (service order), grayed in the
     // dropdown only -- the selected name itself stays plain.

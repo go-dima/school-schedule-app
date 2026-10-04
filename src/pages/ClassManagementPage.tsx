@@ -40,8 +40,8 @@ import { EnrollmentService } from "../services/enrollmentService";
 import ClassEnrollmentDrawer from "../components/ClassEnrollmentDrawer";
 import { ScopeTag } from "../components/ScopeTag";
 import { ScopeFilter } from "../components/ScopeSelector";
-import { NameSearch } from "../components/NameSearch";
-import { filterByName } from "@/utils/nameSearch";
+import { TextSearch } from "../components/TextSearch";
+import { filterByText } from "@/utils/textSearch";
 import { ALL_SCOPES } from "../constants/scopes";
 import { isTestScopeEnabled } from "../utils/env";
 
@@ -97,8 +97,8 @@ const ClassManagementPage: React.FC = () => {
   const filteredClasses = useMemo(() => {
     let filtered = classes;
 
-    filtered = filterByName(filtered, searchTerm, cls => cls.title);
-    filtered = filterByName(filtered, teacherSearchTerm, cls => cls.teacher);
+    filtered = filterByText(filtered, searchTerm, cls => cls.title);
+    filtered = filterByText(filtered, teacherSearchTerm, cls => cls.teacher);
 
     if (selectedDay !== null) {
       filtered = filtered.filter(cls =>
@@ -648,10 +648,10 @@ const ClassManagementPage: React.FC = () => {
                 />
 
                 <Space size={4} align="center">
-                  <NameSearch<string>
+                  <TextSearch<string>
                     mode="filter"
                     items={teacherNames}
-                    getName={teacher => teacher}
+                    getText={teacher => teacher}
                     value={teacherSearchTerm}
                     onChange={setTeacherSearchTerm}
                     placeholder={t(
@@ -664,10 +664,10 @@ const ClassManagementPage: React.FC = () => {
                 </Space>
 
                 <Space size={4} align="center">
-                  <NameSearch<string>
+                  <TextSearch<string>
                     mode="filter"
                     items={classTitles}
-                    getName={title => title}
+                    getText={title => title}
                     value={searchTerm}
                     onChange={setSearchTerm}
                     placeholder={t("classManagement.page.searchPlaceholder")}

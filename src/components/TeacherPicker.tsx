@@ -1,6 +1,6 @@
 import React from "react";
 import type { StaffMember } from "../services/staffScheduleService";
-import { NameSearch } from "./NameSearch";
+import { TextSearch } from "./TextSearch";
 
 interface TeacherPickerProps {
   value?: string;
@@ -27,10 +27,10 @@ export const TeacherPicker: React.FC<TeacherPickerProps> = ({
   autoFocus,
   onBlur,
 }) => (
-  <NameSearch<StaffMember>
+  <TextSearch<StaffMember>
     mode="filter"
     items={members}
-    getName={member => member.label}
+    getText={member => member.label}
     value={value ?? ""}
     onChange={text => onChange?.(text)}
     loading={loading}

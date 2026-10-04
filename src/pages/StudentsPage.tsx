@@ -39,7 +39,7 @@ import { GetGradeName } from "@/utils/grades";
 import { ScopeTag } from "../components/ScopeTag";
 import { ScopeFilter } from "../components/ScopeSelector";
 import { ALL_SCOPES } from "../constants/scopes";
-import { filterByName } from "@/utils/nameSearch";
+import { filterByText } from "@/utils/textSearch";
 import { studentName } from "@/utils/personName";
 import { isTestScopeEnabled } from "../utils/env";
 
@@ -172,7 +172,7 @@ const StudentsPage: React.FC = () => {
     let filtered = children as ChildWithParent[];
 
     // Apply search filter
-    filtered = filterByName(filtered, searchTerm, studentName);
+    filtered = filterByText(filtered, searchTerm, studentName);
 
     // Apply grade filter
     if (selectedGrade !== undefined) {

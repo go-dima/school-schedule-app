@@ -39,8 +39,8 @@ import { printClassRoster } from "@/utils/printClassRoster";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 import { GroupTrackTags } from "./GroupTrackTags";
 import { TeacherPicker } from "./TeacherPicker";
-import { NameSearch } from "./NameSearch";
-import { filterByName } from "@/utils/nameSearch";
+import { TextSearch } from "./TextSearch";
+import { filterByText } from "@/utils/textSearch";
 import { studentName } from "@/utils/personName";
 import "./ClassEnrollmentDrawer.css";
 import { ScopeTag } from "./ScopeTag";
@@ -253,7 +253,7 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
     saveField({ grades: sortedGrades });
   };
 
-  const visibleChildren = filterByName(children, rosterSearch, studentName);
+  const visibleChildren = filterByText(children, rosterSearch, studentName);
   const isFiltering = visibleChildren.length !== children.length;
 
   const handlePrint = async () => {
@@ -525,10 +525,10 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
                     count: children.length,
                   })}
             </Text>
-            <NameSearch
+            <TextSearch
               mode="filter"
               items={children}
-              getName={studentName}
+              getText={studentName}
               value={rosterSearch}
               onChange={setRosterSearch}
               placeholder={t("students.search.placeholder")}

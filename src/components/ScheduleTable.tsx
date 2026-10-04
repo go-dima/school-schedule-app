@@ -26,7 +26,7 @@ import "./ScheduleTable.css";
 import { EnrollmentService } from "../services/enrollmentService";
 import { OverrideSuffixButton } from "@/elements/OverrideSuffixButton";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
-import { matchesName } from "@/utils/nameSearch";
+import { matchesText } from "@/utils/textSearch";
 
 interface ScheduleTableProps {
   timeSlots: TimeSlot[];
@@ -174,7 +174,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       : dayClasses;
     filteredClasses = filterByGroup(filteredClasses);
 
-    return filteredClasses.some(cls => matchesName(cls.title, searchTerm));
+    return filteredClasses.some(cls => matchesText(cls.title, searchTerm));
   };
 
   const getEnrollmentCount = (classId: string): number =>

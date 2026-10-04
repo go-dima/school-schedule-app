@@ -43,7 +43,7 @@ import { ScheduleTabsBar } from "../components/ScheduleTabsBar";
 import { AddChildButton } from "../components/AddChildButton";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { StaffPicker } from "../components/StaffPicker";
-import { NameSearch } from "../components/NameSearch";
+import { TextSearch } from "../components/TextSearch";
 import { ChildGroupTrackSelector } from "../components/ChildGroupTrackSelector";
 import type { SelectionField } from "../components/ChildGroupTrackSelector";
 import { classesApi, timeSlotsApi } from "../services/api";
@@ -990,10 +990,10 @@ const SchedulePageContent: React.FC = () => {
             rightmost); the draft/committed toggle is on the actions side. */}
         {!isStaffView && (
           <FilterField label={t("schedule.page.labels.searchClass")}>
-            <NameSearch<string>
+            <TextSearch<string>
               mode="filter"
               items={classTitles}
-              getName={title => title}
+              getText={title => title}
               value={searchTerm}
               onChange={setSearchTerm}
               placeholder={t("schedule.page.placeholders.searchClass")}

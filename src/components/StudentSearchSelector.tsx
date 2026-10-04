@@ -3,8 +3,8 @@ import { Modal, message } from "antd";
 import { PlusOutlined, UserOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { ChildForm } from "./ChildForm";
-import { NameSearch } from "./NameSearch";
-import type { NameSearchExtraOption } from "./NameSearch";
+import { TextSearch } from "./TextSearch";
+import type { TextSearchExtraOption } from "./TextSearch";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import { useAuth } from "../contexts/AuthContext";
 import { GetGradeName } from "@/utils/grades";
@@ -42,7 +42,7 @@ type StudentSearchSelectorProps =
   | StudentSearchSelectorFilterProps;
 
 /**
- * NameSearch over students, plus the "add student" row for a name nothing
+ * TextSearch over students, plus the "add student" row for a name nothing
  * matches, which opens ChildForm prefilled with that name.
  */
 export const StudentSearchSelector: React.FC<
@@ -72,7 +72,7 @@ export const StudentSearchSelector: React.FC<
     </div>
   );
 
-  const addStudentOption: NameSearchExtraOption = {
+  const addStudentOption: TextSearchExtraOption = {
     label: query => (
       <div
         style={{
@@ -147,7 +147,7 @@ export const StudentSearchSelector: React.FC<
 
   const common = {
     items: children,
-    getName: studentName,
+    getText: studentName,
     renderOption: renderStudent,
     extraOption: addStudentOption,
     placeholder,
@@ -158,7 +158,7 @@ export const StudentSearchSelector: React.FC<
   return (
     <>
       {props.mode === "pick" ? (
-        <NameSearch<Child>
+        <TextSearch<Child>
           {...common}
           mode="pick"
           getKey={child => child.id}
@@ -166,7 +166,7 @@ export const StudentSearchSelector: React.FC<
           onSelect={child => props.onChildSelect(child?.id)}
         />
       ) : (
-        <NameSearch<Child>
+        <TextSearch<Child>
           {...common}
           mode="filter"
           value={props.value}
