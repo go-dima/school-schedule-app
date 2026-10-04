@@ -9,7 +9,6 @@ import {
   message,
   Spin,
   Empty,
-  Tag,
   Select,
   Dropdown,
   MenuProps,
@@ -27,20 +26,21 @@ import type { ColumnsType } from "antd/es/table";
 import { ChildForm } from "../components/ChildForm";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { GroupTrackTags } from "../components/GroupTrackTags";
-import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
 import { useAuth } from "../contexts/AuthContext";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import { childrenApi } from "../services/api";
 import type { Child, Scope } from "../types";
 import { GRADES } from "../types";
-import { isTestScopeEnabled } from "../utils/env";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 
 type ChildWithParent = Child & { assignedParent: boolean };
 
-const ALL_SCOPES: Scope[] = ["prod", "test"];
 import { GetGradeName } from "@/utils/grades";
+import { ScopeTag } from "../components/ScopeTag";
+import { ScopeFilter } from "../components/ScopeSelector";
+import { ALL_SCOPES } from "../constants/scopes";
 import { filterByStudentName } from "@/utils/studentNameSearch";
+import { isTestScopeEnabled } from "../utils/env";
 
 const { Text } = Typography;
 
@@ -82,7 +82,9 @@ const StudentsPage: React.FC = () => {
   );
   // Admin-only (see the ToggleFilterGroup below) -- staff never see this
   // filter. Both scopes start ON, equivalent to "no filter".
-  const [selectedScopes, setSelectedScopes] = useState<Scope[]>(ALL_SCOPES);
+  const [selectedScopes, setSelectedScopes] = useState<Scope[]>([
+    ...ALL_SCOPES,
+  ]);
 
   const handleCreateChild = async (data: {
     firstName: string;
@@ -228,17 +230,18 @@ const StudentsPage: React.FC = () => {
         />
       ),
     },
-    {
-      title: t("students.table.scope"),
-      dataIndex: "scope",
-      key: "scope",
-      width: 100,
-      render: (scope: "prod" | "test") => (
-        <Tag color={scope === "prod" ? "green" : "orange"}>
-          {t(`scope.${scope}`)}
-        </Tag>
-      ),
-    },
+    // Production loads prod data only, so the column would always read prod.
+    ...(isTestScopeEnabled()
+      ? [
+          {
+            title: t("students.table.scope"),
+            dataIndex: "scope",
+            key: "scope",
+            width: 100,
+            render: (scope: Scope) => <ScopeTag scope={scope} />,
+          },
+        ]
+      : []),
     {
       title: t("students.table.createdDate"),
       dataIndex: "createdAt",
@@ -374,16 +377,8 @@ const StudentsPage: React.FC = () => {
           </Select>
         </Space>
         <Space wrap>
-          {isAdmin && isTestScopeEnabled() && (
-            <ToggleFilterGroup<Scope>
-              value={selectedScopes}
-              onChange={setSelectedScopes}
-              options={ALL_SCOPES.map(scope => ({
-                value: scope,
-                label: t(`scope.${scope}`),
-              }))}
-              doubleClickToIsolate={false}
-            />
+          {isAdmin && (
+            <ScopeFilter value={selectedScopes} onChange={setSelectedScopes} />
           )}
           <Button
             type="primary"
