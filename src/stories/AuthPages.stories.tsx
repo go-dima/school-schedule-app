@@ -2,7 +2,10 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { userEvent, within } from "@storybook/testing-library";
 import LoginPage from "../pages/LoginPage";
 import SignupPage from "../pages/SignupPage";
-import { AuthContext, type AuthContextType } from "../contexts/AuthContext";
+import {
+  AuthContext,
+  type AuthContextType,
+} from "../contexts/AuthContextObject";
 
 const mockAuthValue: AuthContextType = {
   user: null,

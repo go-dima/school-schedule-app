@@ -1,22 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { classesApi, timeSlotsApi } from "../services/api";
 import { ScheduleService } from "../services/scheduleService";
 import type { ClassWithTimeSlot, TimeSlot, WeeklySchedule } from "../types";
 import log from "../utils/logger";
 import { useAuth } from "./AuthContext";
-
-interface ScheduleCatalogContextValue {
-  classes: ClassWithTimeSlot[];
-  timeSlots: TimeSlot[];
-  weeklySchedule: WeeklySchedule;
-  loading: boolean;
-  error: string | null;
-  loadScheduleData: () => Promise<void>;
-}
-
-const ScheduleCatalogContext = createContext<
-  ScheduleCatalogContextValue | undefined
->(undefined);
+import { ScheduleCatalogContext } from "./ScheduleCatalogContextObject";
 
 // The class/time-slot catalog: staff/admin see every class, everyone else
 // has staff-only placeholder classes (e.g. "חונכות", "שילוב") excluded.
@@ -95,13 +83,3 @@ export const ScheduleCatalogProvider: React.FC<{
     </ScheduleCatalogContext.Provider>
   );
 };
-
-export function useScheduleCatalog(): ScheduleCatalogContextValue {
-  const context = useContext(ScheduleCatalogContext);
-  if (!context) {
-    throw new Error(
-      "useScheduleCatalog must be used within a ScheduleCatalogProvider"
-    );
-  }
-  return context;
-}

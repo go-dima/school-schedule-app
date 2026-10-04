@@ -21,10 +21,8 @@ import {
 } from "@ant-design/icons";
 import { useAuth } from "../contexts/AuthContext";
 import { useChildContext } from "../contexts/ChildContext";
-import {
-  ScheduleCatalogProvider,
-  useScheduleCatalog,
-} from "../contexts/ScheduleCatalogContext";
+import { ScheduleCatalogProvider } from "../contexts/ScheduleCatalogContext";
+import { useScheduleCatalog } from "../hooks/useScheduleCatalog";
 import { useSelectedSchedule } from "../hooks/useSelectedSchedule";
 import { useDraftSelectionAwareness } from "../hooks/useDraftSelectionAwareness";
 import { useScheduleOverrides } from "../hooks/useScheduleOverrides";
