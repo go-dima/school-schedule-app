@@ -22,6 +22,7 @@ import type {
   User,
   UserRole,
   UserRoleData,
+  UserWithRoles,
   ChildAccountLink,
 } from "../types";
 import type { RequestableRole } from "../constants/roles";
@@ -179,7 +180,7 @@ async function ensureUserProfile(user: any) {
     .eq("id", user.id)
     .single();
 
-  // Normally the signup trigger (migration 050) has created the profile and a
+  // Normally the signup trigger (migration 051) has created the profile and a
   // pending role already. This stays as the fallback for when it hasn't (the
   // trigger isn't installed yet, or it skipped the user). ignoreDuplicates:
   // a row the trigger created in the meantime is a no-op, not a 409.
@@ -287,6 +288,7 @@ export const usersApi = {
       firstName: data.first_name,
       lastName: data.last_name,
       displayName: data.display_name ?? null,
+      scope: data.scope ?? "prod",
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };
@@ -327,6 +329,22 @@ export const usersApi = {
     const { error } = await supabase.rpc("admin_set_display_name", {
       p_user_id: userId,
       p_display_name: displayName,
+    });
+
+    if (error) throw new ApiError(error.message, undefined, error.code);
+  },
+
+  /**
+   * Admin-only: move a user between the test and prod scopes
+   * (admin_set_user_scope RPC, migration 050 -- a guard trigger stops
+   * anyone else from changing scope, including on their own row).
+   */
+  async adminSetUserScope(userId: string, scope: Scope) {
+    assertTestScopeAllowed(scope);
+
+    const { error } = await supabase.rpc("admin_set_user_scope", {
+      p_user_id: userId,
+      p_scope: scope,
     });
 
     if (error) throw new ApiError(error.message, undefined, error.code);
@@ -461,20 +479,22 @@ export const usersApi = {
     // Get user IDs to fetch user details
     const userIds = userRoles.map(role => role.user_id);
 
-    // Get user details
+    // Get user details. Scope-filtered here, at the fetch: in production a
+    // test account's row is not returned at all.
     const { data: users, error: usersError } = await supabase
       .from("users")
       .select("*")
-      .in("id", userIds);
+      .in("id", userIds)
+      .in("scope", getAllowedScopes());
 
     if (usersError) throw new ApiError(usersError.message);
 
-    // Combine the data
-    return userRoles.map(role => {
-      const user = users?.find(u => u.id === role.user_id);
-      if (!user) {
-        throw new ApiError(`User not found for role ${role.id}`);
-      }
+    // Combine the data. A role whose user wasn't returned (filtered out by
+    // scope) is skipped, not an error.
+    const usersById = new Map((users ?? []).map(u => [u.id, u]));
+    return userRoles.flatMap(role => {
+      const user = usersById.get(role.user_id);
+      if (!user) return [];
 
       return {
         id: role.id,
@@ -488,6 +508,7 @@ export const usersApi = {
           email: user.email,
           firstName: user.first_name,
           lastName: user.last_name,
+          scope: user.scope ?? "prod",
           createdAt: user.created_at,
           updatedAt: user.updated_at,
         },
@@ -545,7 +566,8 @@ export const usersApi = {
     return data[0];
   },
 
-  async getAllUsersWithRoles(): Promise<any[]> {
+  /** Every user the environment may see (scope-filtered), with all roles. */
+  async getAllUsersWithRoles(): Promise<UserWithRoles[]> {
     const { data, error } = await supabase
       .from("users")
       .select(
@@ -560,10 +582,28 @@ export const usersApi = {
         )
       `
       )
+      .in("scope", getAllowedScopes())
       .order("created_at", { ascending: false });
 
     if (error) throw new ApiError(error.message);
-    return data || [];
+    return (data || []).map((user: any) => ({
+      id: user.id,
+      email: user.email,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      displayName: user.display_name ?? undefined,
+      scope: user.scope ?? "prod",
+      createdAt: user.created_at,
+      lastSignInAt: user.last_sign_in_at,
+      roles: (user.user_roles || []).map((role: any) => ({
+        id: role.id,
+        userId: user.id,
+        role: role.role as UserRole,
+        approved: role.approved,
+        createdAt: role.created_at,
+        updatedAt: role.updated_at,
+      })),
+    }));
   },
 };
 
@@ -1180,10 +1220,13 @@ export const staffApi = {
   /**
    * Approved admin/staff/moderator users with a display name
    * (get_staff_directory RPC, migration 043 -- staff can't read other
-   * users' rows directly). Staff-role callers only.
+   * users' rows directly). Staff-role callers only. Scope-filtered in the
+   * RPC (migration 050), so production never lists a test account.
    */
   async getStaffDirectory(): Promise<StaffDirectoryEntry[]> {
-    const { data, error } = await supabase.rpc("get_staff_directory");
+    const { data, error } = await supabase.rpc("get_staff_directory", {
+      p_scopes: getAllowedScopes(),
+    });
 
     if (error) throw new ApiError(error.message, undefined, error.code);
     return (data || []).map((row: { id: string; display_name: string }) => ({

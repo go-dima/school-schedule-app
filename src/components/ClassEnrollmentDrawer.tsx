@@ -39,7 +39,11 @@ import { printClassRoster } from "@/utils/printClassRoster";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 import { GroupTrackTags } from "./GroupTrackTags";
 import { TeacherPicker } from "./TeacherPicker";
+import { StudentSearchSelector } from "./StudentSearchSelector";
+import { filterByStudentName } from "@/utils/studentNameSearch";
 import "./ClassEnrollmentDrawer.css";
+import { ScopeTag } from "./ScopeTag";
+import { isTestScopeEnabled } from "../utils/env";
 
 const { Title, Text } = Typography;
 
@@ -75,6 +79,7 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
   const [children, setChildren] = useState<EnrolledChild[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rosterSearch, setRosterSearch] = useState("");
   const requestedClassId = useRef<string | null>(null);
   const { members: staffMembers, loading: staffMembersLoading } =
     useStaffMembers();
@@ -109,6 +114,9 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
 
     const classId = classInfo.id;
     requestedClassId.current = classId;
+    // Fresh search per open / class switch. Kept out of the [classInfo]
+    // effect above so inline edits don't wipe what the user typed.
+    setRosterSearch("");
     setLoading(true);
     setError(null);
 
@@ -244,9 +252,13 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
     saveField({ grades: sortedGrades });
   };
 
+  const visibleChildren = filterByStudentName(children, rosterSearch);
+  const isFiltering = visibleChildren.length !== children.length;
+
   const handlePrint = async () => {
     if (!localClassInfo) return;
     try {
+      // The roster search is a temporary on-screen filter; print the full roster.
       await printClassRoster({ classInfo: localClassInfo, children });
       trackEvent(AnalyticsEvent.ClassRosterPrinted, {
         classId: localClassInfo.id,
@@ -459,18 +471,15 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
                   </Space>
                 ),
               },
-              {
-                key: "scope",
-                label: t("classManagement.table.environmentColumn"),
-                children: (
-                  <Tag
-                    color={
-                      localClassInfo.scope === "prod" ? "green" : "orange"
-                    }>
-                    {t(`scope.${localClassInfo.scope}`)}
-                  </Tag>
-                ),
-              },
+              ...(isTestScopeEnabled()
+                ? [
+                    {
+                      key: "scope",
+                      label: t("classManagement.table.environmentColumn"),
+                      children: <ScopeTag scope={localClassInfo.scope} />,
+                    },
+                  ]
+                : []),
             ]}
           />
           <Divider style={{ margin: "16px 0" }} />
@@ -495,12 +504,51 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
         />
       ) : (
         <>
-          <Text style={{ display: "block", marginBottom: 12 }}>
-            {t("schedule.enrollment.students", { count: children.length })}
-          </Text>
+          {/* Caption first in the DOM: in RTL it renders on the right and the
+              search on the left, at opposite edges of the drawer. */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 12,
+            }}>
+            <Text>
+              {isFiltering
+                ? t("classManagement.enrollmentDrawer.filteredCount", {
+                    shown: visibleChildren.length,
+                    count: children.length,
+                  })
+                : t("schedule.enrollment.students", {
+                    count: children.length,
+                  })}
+            </Text>
+            <StudentSearchSelector
+              children={children}
+              mode="search"
+              value={rosterSearch}
+              onSearchChange={setRosterSearch}
+              placeholder={t("students.search.placeholder")}
+              style={{ width: 180 }}
+              allowClear
+              isCreateAllowed={false}
+              showSuggestions={false}
+            />
+          </div>
           <List
             bordered
-            dataSource={children}
+            dataSource={visibleChildren}
+            locale={{
+              emptyText: (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={t(
+                    "classManagement.enrollmentDrawer.noSearchResults"
+                  )}
+                />
+              ),
+            }}
             renderItem={child => (
               <List.Item key={child.id} className="roster-item">
                 <Text className="roster-item-name">

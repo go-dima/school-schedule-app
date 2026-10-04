@@ -7,6 +7,8 @@ export interface User {
   lastName?: string;
   // Name a staff member is shown under (Staff View, class teacher label).
   displayName?: string | null;
+  // test | prod (migration 050). Test accounts are hidden in production.
+  scope?: Scope;
   createdAt: string;
   updatedAt: string;
 }
@@ -18,6 +20,19 @@ export interface UserRoleData {
   approved: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+/** A user row with all of its role rows (User Management list). */
+export interface UserWithRoles {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  displayName?: string;
+  scope: Scope;
+  createdAt: string;
+  lastSignInAt?: string;
+  roles: UserRoleData[];
 }
 
 export interface PendingApproval {

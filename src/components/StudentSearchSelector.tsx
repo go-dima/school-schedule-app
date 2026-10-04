@@ -6,6 +6,7 @@ import { ChildForm } from "./ChildForm";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import { useAuth } from "../contexts/AuthContext";
 import { GetGradeName } from "@/utils/grades";
+import { matchesStudentName } from "@/utils/studentNameSearch";
 import type { Child } from "../types";
 
 interface StudentSearchSelectorProps {
@@ -22,6 +23,10 @@ interface StudentSearchSelectorProps {
   isCreateAllowed?: boolean;
   mode?: "select" | "search"; // 'select' for SchedulePage, 'search' for StudentsPage
   value?: string; // For controlled input in search mode
+  // Show matching students as a dropdown under the input. Turn off when the
+  // caller already renders the filtered results itself (e.g. a roster list),
+  // so the input acts as a plain filter box.
+  showSuggestions?: boolean;
 }
 
 export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
@@ -38,6 +43,7 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
   isCreateAllowed = true,
   mode = "select",
   value,
+  showSuggestions = true,
 }) => {
   const { t } = useTranslation();
   const { roleFlags } = useAuth();
@@ -67,18 +73,12 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
 
   // Generate search options with add student functionality
   const searchOptions = useMemo(() => {
-    // Filter children by search term (show all if no search term)
-    const filteredChildren = children.filter(child => {
-      if (!searchTerm) return true; // Show all children when no search term
+    if (!showSuggestions) return [];
 
-      const fullName = `${child.firstName} ${child.lastName}`.toLowerCase();
-      const search = searchTerm.toLowerCase();
-      return (
-        fullName.includes(search) ||
-        child.firstName.toLowerCase().includes(search) ||
-        child.lastName.toLowerCase().includes(search)
-      );
-    });
+    // Filter children by search term (show all if no search term)
+    const filteredChildren = children.filter(child =>
+      matchesStudentName(child, searchTerm)
+    );
 
     // Generate matching children options
     const matchingChildren = filteredChildren.map(child => {
@@ -120,7 +120,7 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
     }
 
     return matchingChildren;
-  }, [searchTerm, children, t, mode, isCreateAllowed]);
+  }, [searchTerm, children, t, mode, isCreateAllowed, showSuggestions]);
 
   const handleSearchSelect = (value: string) => {
     if (value.startsWith("__ADD_STUDENT__")) {

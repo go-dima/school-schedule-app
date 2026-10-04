@@ -1,4 +1,4 @@
--- Migration: 050_create_profile_on_signup
+-- Migration: 051_create_profile_on_signup
 -- Description: Create the profile and the pending role request in the
 --   database when an account is confirmed, instead of relying only on the
 --   client.

@@ -426,7 +426,9 @@
     "enrollmentDrawer": {
       "noChildren": "עדיין לא נרשמו תלמידים לשיעור זה",
       "addedByTooltip": "נוסף על ידי {{name}} · {{date}}",
-      "addedByUnknown": "משתמש לא ידוע"
+      "addedByUnknown": "משתמש לא ידוע",
+      "filteredCount": "{{shown}} מתוך {{count}} תלמידים",
+      "noSearchResults": "לא נמצאו תלמידים תואמים"
     }
   },
   "mandatoryClassManager": {
@@ -521,6 +523,8 @@
       "updateError": "שגיאה בעדכון תפקידי המשתמש",
       "displayNameUpdated": "שם התצוגה עודכן",
       "displayNameError": "שגיאה בעדכון שם התצוגה",
+      "scopeUpdated": "הסביבה של המשתמש עודכנה",
+      "scopeError": "שגיאה בעדכון הסביבה של המשתמש",
       "selfDemotion": {
         "title": "הסרת הרשאות מנהל מעצמך",
         "description": "אתה עומד להסיר מעצמך את תפקיד המנהל. לאחר השמירה לא תוכל עוד לגשת לדף זה. להמשיך?",
@@ -537,6 +541,7 @@
       "createdAtColumn": "תאריך הרשמה",
       "lastSignInColumn": "כניסה אחרונה",
       "rolesColumn": "תפקידים",
+      "scopeColumn": "סביבה",
       "actionsColumn": "פעולות",
       "noName": "לא הוזן שם",
       "neverSignedIn": "לא התחבר עדיין",
@@ -596,7 +601,8 @@
       "roleFieldLabel": "תפקיד במערכת",
       "roleRequired": "נא לבחור תפקיד",
       "rolePlaceholder": "בחר תפקיד למשתמש",
-      "submitButton": "אשר משתמש"
+      "submitButton": "אשר משתמש",
+      "scopeHelp": "משתמש בדיקות לא יוצג בסביבת מערכת"
     },
     "childLink": {
       "title": "קישור לרשומת תלמיד",

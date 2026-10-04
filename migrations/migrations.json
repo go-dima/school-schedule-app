@@ -393,14 +393,22 @@
       "dependencies": ["048_set_track_draft"]
     },
     {
-      "id": "050_create_profile_on_signup",
-      "name": "Create Profile On Signup",
-      "description": "Create the public.users profile and a pending user_roles request in the database when an auth account is confirmed, so a user whose client never runs ensureUserProfile (#200/#201) still reaches Pending Approvals. private.handle_new_auth_user() (SECURITY DEFINER, empty search_path, EXECUTE revoked) runs from on_auth_user_created (AFTER INSERT, email already confirmed) and on_auth_user_email_confirmed (AFTER UPDATE, email_confirmed_at NULL -> set). It never fails signup: untargeted ON CONFLICT DO NOTHING and an exception guard that logs a WARNING. The role is the metadata requested_role when parent/staff/child, else parent. Drops the unused 003 public.handle_new_user(). Adds request_signup_role(p_role): a caller with no approved role replaces their pending request(s) with one pending parent/staff/child request (the Google signup choice). Backfills confirmed auth users that have no profile.",
-      "file": "050_create_profile_on_signup.sql",
+      "id": "050_add_scope_to_users",
+      "name": "Add Scope To Users",
+      "description": "Issue #108: users.scope ('test' | 'prod', NOT NULL, default 'prod', CHECK) so test accounts can be hidden in prod; a guard_user_scope BEFORE INSERT/UPDATE trigger so only admins may set or change scope (users has an own-row UPDATE policy); admin_set_user_scope() RPC for admins; get_staff_directory recreated with p_scopes text[] (old no-arg signature dropped first).",
+      "file": "050_add_scope_to_users.sql",
       "created_at": "2026-10-04T00:00:00Z",
       "dependencies": ["049_allow_multiple_parents"]
+    },
+    {
+      "id": "051_create_profile_on_signup",
+      "name": "Create Profile On Signup",
+      "description": "Create the public.users profile and a pending user_roles request in the database when an auth account is confirmed, so a user whose client never runs ensureUserProfile (#200/#201) still reaches Pending Approvals. private.handle_new_auth_user() (SECURITY DEFINER, empty search_path, EXECUTE revoked) runs from on_auth_user_created (AFTER INSERT, email already confirmed) and on_auth_user_email_confirmed (AFTER UPDATE, email_confirmed_at NULL -> set). It never fails signup: untargeted ON CONFLICT DO NOTHING and an exception guard that logs a WARNING. The role is the metadata requested_role when parent/staff/child, else parent. Drops the unused 003 public.handle_new_user(). Adds request_signup_role(p_role): a caller with no approved role replaces their pending request(s) with one pending parent/staff/child request (the Google signup choice). Backfills confirmed auth users that have no profile.",
+      "file": "051_create_profile_on_signup.sql",
+      "created_at": "2026-10-04T00:00:00Z",
+      "dependencies": ["050_add_scope_to_users"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 50
+  "schema_version": 51
 }

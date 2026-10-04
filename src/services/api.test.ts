@@ -1936,7 +1936,10 @@ describe("staff directory and display names", () => {
     await expect(staffApi.getStaffDirectory()).resolves.toEqual([
       { id: "user-1", displayName: "אורית שמש" },
     ]);
-    expect(supabase.rpc).toHaveBeenCalledWith("get_staff_directory");
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "get_staff_directory",
+      expect.anything()
+    );
   });
 
   it("usersApi.adminSetDisplayName calls the admin RPC and keeps the SQLSTATE", async () => {
@@ -2006,5 +2009,225 @@ describe("childrenApi.getAllChildren creator name", () => {
       "Orit Shemesh",
       "tal@example.com",
     ]);
+  });
+});
+
+describe("user scope (#108)", () => {
+  const userRow = (id: string, scope: string) => ({
+    id,
+    email: `${id}@example.com`,
+    first_name: "דנה",
+    last_name: "לוי",
+    display_name: null,
+    scope,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-02T00:00:00Z",
+    last_sign_in_at: "2026-01-03T00:00:00Z",
+  });
+
+  const roleRow = (id: string, userId: string) => ({
+    id,
+    user_id: userId,
+    role: "parent",
+    approved: false,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+  });
+
+  // Per-table results, since getPendingApprovalsWithUsers reads user_roles
+  // and then users through two separate chains.
+  function mockTables(results: Record<string, { data: any; error: any }>) {
+    (supabase.from as any).mockImplementation((table: string) => {
+      const chain = defaultFromImpl();
+      chain.then = (resolve: any, reject: any) =>
+        Promise.resolve(results[table] ?? { data: [], error: null }).then(
+          resolve,
+          reject
+        );
+      return chain;
+    });
+  }
+
+  beforeEach(() => {
+    (supabase.from as any).mockClear();
+    (supabase.rpc as any).mockClear();
+  });
+
+  afterEach(() => {
+    envState.isProduction = false;
+    mockFromResult = { data: [], error: null };
+    mockRpcResult = { data: [], error: null };
+    (supabase.from as any).mockImplementation(defaultFromImpl);
+  });
+
+  describe("usersApi.getAllUsersWithRoles", () => {
+    it("reads only prod users in production", async () => {
+      envState.isProduction = true;
+
+      await usersApi.getAllUsersWithRoles();
+
+      expect(fromChainFor("users").in).toHaveBeenCalledWith("scope", ["prod"]);
+    });
+
+    it("reads both scopes outside production", async () => {
+      envState.isProduction = false;
+
+      await usersApi.getAllUsersWithRoles();
+
+      expect(fromChainFor("users").in).toHaveBeenCalledWith("scope", [
+        "prod",
+        "test",
+      ]);
+    });
+
+    it("maps rows to users with their scope and roles", async () => {
+      mockFromResult = {
+        data: [
+          {
+            ...userRow("user-1", "test"),
+            display_name: "אורית",
+            user_roles: [
+              {
+                id: "role-1",
+                role: "staff",
+                approved: true,
+                created_at: "2026-01-01T00:00:00Z",
+                updated_at: "2026-01-01T00:00:00Z",
+              },
+            ],
+          },
+        ],
+        error: null,
+      };
+
+      await expect(usersApi.getAllUsersWithRoles()).resolves.toEqual([
+        {
+          id: "user-1",
+          email: "user-1@example.com",
+          firstName: "דנה",
+          lastName: "לוי",
+          displayName: "אורית",
+          scope: "test",
+          createdAt: "2026-01-01T00:00:00Z",
+          lastSignInAt: "2026-01-03T00:00:00Z",
+          roles: [
+            {
+              id: "role-1",
+              userId: "user-1",
+              role: "staff",
+              approved: true,
+              createdAt: "2026-01-01T00:00:00Z",
+              updatedAt: "2026-01-01T00:00:00Z",
+            },
+          ],
+        },
+      ]);
+    });
+  });
+
+  describe("usersApi.getPendingApprovalsWithUsers", () => {
+    it("reads only prod users in production", async () => {
+      envState.isProduction = true;
+      mockTables({
+        user_roles: { data: [roleRow("role-1", "user-1")], error: null },
+        users: { data: [userRow("user-1", "prod")], error: null },
+      });
+
+      await usersApi.getPendingApprovalsWithUsers();
+
+      expect(fromChainFor("users").in).toHaveBeenCalledWith("scope", ["prod"]);
+    });
+
+    it("reads both scopes outside production", async () => {
+      envState.isProduction = false;
+      mockTables({
+        user_roles: { data: [roleRow("role-1", "user-1")], error: null },
+        users: { data: [userRow("user-1", "test")], error: null },
+      });
+
+      await usersApi.getPendingApprovalsWithUsers();
+
+      expect(fromChainFor("users").in).toHaveBeenCalledWith("scope", [
+        "prod",
+        "test",
+      ]);
+    });
+
+    it("skips a role whose user was filtered out instead of throwing", async () => {
+      envState.isProduction = true;
+      mockTables({
+        user_roles: {
+          data: [roleRow("role-1", "user-1"), roleRow("role-2", "test-user")],
+          error: null,
+        },
+        // The test-scope user is dropped by the scope filter.
+        users: { data: [userRow("user-1", "prod")], error: null },
+      });
+
+      const approvals = await usersApi.getPendingApprovalsWithUsers();
+
+      expect(approvals.map(a => a.id)).toEqual(["role-1"]);
+      expect(approvals[0].user).toMatchObject({
+        id: "user-1",
+        email: "user-1@example.com",
+        scope: "prod",
+      });
+    });
+  });
+
+  describe("usersApi.adminSetUserScope", () => {
+    it("rejects scope: test in production without calling the RPC", async () => {
+      envState.isProduction = true;
+
+      await expect(
+        usersApi.adminSetUserScope("user-1", "test")
+      ).rejects.toThrow();
+      expect(supabase.rpc).not.toHaveBeenCalled();
+    });
+
+    it("calls the admin RPC outside production", async () => {
+      envState.isProduction = false;
+      mockRpcResult = { data: null, error: null };
+
+      await usersApi.adminSetUserScope("user-1", "test");
+
+      expect(supabase.rpc).toHaveBeenCalledWith("admin_set_user_scope", {
+        p_user_id: "user-1",
+        p_scope: "test",
+      });
+    });
+
+    it("keeps the SQLSTATE when the RPC fails", async () => {
+      mockRpcResult = {
+        data: null,
+        error: { message: "Not allowed", code: "42501" },
+      };
+
+      await expect(
+        usersApi.adminSetUserScope("user-1", "prod")
+      ).rejects.toMatchObject({ code: "42501" });
+    });
+  });
+
+  describe("staffApi.getStaffDirectory", () => {
+    it("passes only the prod scope in production", async () => {
+      envState.isProduction = true;
+
+      await staffApi.getStaffDirectory();
+
+      expect(supabase.rpc).toHaveBeenCalledWith("get_staff_directory", {
+        p_scopes: ["prod"],
+      });
+    });
+
+    it("passes both scopes outside production", async () => {
+      envState.isProduction = false;
+
+      await staffApi.getStaffDirectory();
+
+      expect(supabase.rpc).toHaveBeenCalledWith("get_staff_directory", {
+        p_scopes: ["prod", "test"],
+      });
+    });
   });
 });
