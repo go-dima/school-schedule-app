@@ -6,7 +6,8 @@ import { ChildForm } from "./ChildForm";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import { useAuth } from "../contexts/AuthContext";
 import { GetGradeName } from "@/utils/grades";
-import { matchesStudentName } from "@/utils/studentNameSearch";
+import { matchesName } from "@/utils/nameSearch";
+import { studentName } from "@/utils/personName";
 import type { Child } from "../types";
 
 interface StudentSearchSelectorProps {
@@ -77,7 +78,7 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
 
     // Filter children by search term (show all if no search term)
     const filteredChildren = children.filter(child =>
-      matchesStudentName(child, searchTerm)
+      matchesName(studentName(child), searchTerm)
     );
 
     // Generate matching children options

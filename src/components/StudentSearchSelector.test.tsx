@@ -135,12 +135,12 @@ describe("StudentSearchSelector (current behavior)", () => {
       expect(visibleOptions()).toEqual([`Dana Levi - ${GetGradeName(2)}`]);
     });
 
-    it("does not trim the typed text", () => {
+    it("trims the typed text", () => {
       render(<Picker />);
       open();
       type(" נועה");
 
-      expect(visibleOptions()).toEqual([addRowText(" נועה")]);
+      expect(visibleOptions()).toEqual([`נועה כהן - ${GetGradeName(3)}`]);
     });
 
     it("selects the clicked student and shows their name", () => {
