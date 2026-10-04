@@ -1,7 +1,7 @@
 import React from "react";
-import { Select } from "antd";
 import { staffKeyToParam } from "../services/staffScheduleService";
 import type { StaffMember } from "../services/staffScheduleService";
+import { NameSearch } from "./NameSearch";
 import "./StaffPicker.css";
 
 interface StaffPickerProps {
@@ -25,21 +25,27 @@ export const StaffPicker: React.FC<StaffPickerProps> = ({
   placeholder,
   style,
 }) => (
-  <Select
-    showSearch
-    allowClear
+  <NameSearch<StaffMember>
+    mode="pick"
+    items={members}
+    getName={member => member.label}
+    getKey={member => staffKeyToParam(member.key)}
+    // No regular lessons: listed last (service order), grayed in the
+    // dropdown only -- the selected name itself stays plain.
+    renderOption={member =>
+      member.teaches ? (
+        member.label
+      ) : (
+        <span className="staff-option--no-lessons">{member.label}</span>
+      )
+    }
     value={value}
-    onChange={onChange}
+    onSelect={member =>
+      onChange(member ? staffKeyToParam(member.key) : undefined)
+    }
     placeholder={placeholder}
     style={style}
     loading={loading}
     disabled={disabled}
-    optionFilterProp="label"
-    options={members.map(({ key, label, teaches }) => ({
-      value: staffKeyToParam(key),
-      label,
-      // No regular lessons: listed last (service order), grayed.
-      className: teaches ? undefined : "staff-option--no-lessons",
-    }))}
   />
 );

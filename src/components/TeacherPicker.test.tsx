@@ -69,13 +69,13 @@ describe("TeacherPicker", () => {
     expect(visibleOptions()).toEqual(["מירב אלון"]);
   });
 
-  it("matches case-sensitively", () => {
+  it("matches case-insensitively", () => {
     render(<Controlled />);
     const input = screen.getByRole("combobox");
 
     fireEvent.change(input, { target: { value: "dana" } });
 
-    expect(visibleOptions()).toEqual([]);
+    expect(visibleOptions()).toEqual(["Dana Levi"]);
   });
 
   it("fills in the picked suggestion's name", () => {

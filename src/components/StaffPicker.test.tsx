@@ -52,7 +52,7 @@ const isGrayed = (option: HTMLElement) =>
   option.classList.contains("staff-option--no-lessons") ||
   !!option.querySelector(".staff-option--no-lessons");
 
-describe("StaffPicker (current behavior)", () => {
+describe("StaffPicker", () => {
   beforeAll(stubMatchMedia);
 
   it("lists every member on open, grayed no-lesson staff last", () => {
@@ -79,12 +79,12 @@ describe("StaffPicker (current behavior)", () => {
     expect(visibleOptions()).toEqual(["Dana Levi"]);
   });
 
-  it("does not trim the typed text", () => {
+  it("trims the typed text", () => {
     render(<Controlled />);
     fireEvent.mouseDown(input());
-    type(" dana");
+    type(" dana ");
 
-    expect(visibleOptions()).toEqual([]);
+    expect(visibleOptions()).toEqual(["Dana Levi"]);
   });
 
   it("selects the clicked member and reports its param", () => {
