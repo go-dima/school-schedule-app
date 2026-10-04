@@ -71,11 +71,9 @@ const addRowText = (name: string) =>
 const Picker = ({
   initial,
   onChildSelect,
-  isCreateAllowed = true,
 }: {
   initial?: string;
   onChildSelect?: (id: string | undefined) => void;
-  isCreateAllowed?: boolean;
 }) => {
   const [selected, setSelected] = useState<string | undefined>(initial);
   return (
@@ -86,8 +84,7 @@ const Picker = ({
         setSelected(id);
         onChildSelect?.(id);
       }}
-      mode="select"
-      isCreateAllowed={isCreateAllowed}
+      mode="pick"
     />
   );
 };
@@ -98,7 +95,7 @@ const Filter = ({ onSearch }: { onSearch?: (v: string) => void }) => {
   return (
     <StudentSearchSelector
       children={children}
-      mode="search"
+      mode="filter"
       value={text}
       onSearchChange={v => {
         setText(v);
@@ -108,14 +105,14 @@ const Filter = ({ onSearch }: { onSearch?: (v: string) => void }) => {
   );
 };
 
-describe("StudentSearchSelector (current behavior)", () => {
+describe("StudentSearchSelector", () => {
   beforeAll(stubMatchMedia);
   beforeEach(() => {
     auth.isAdmin = false;
     createChild.mockReset();
   });
 
-  describe('mode="select" (pick)', () => {
+  describe('mode="pick"', () => {
     it("lists every student with their grade on focus", () => {
       render(<Picker />);
       fireEvent.mouseDown(input());
@@ -154,17 +151,17 @@ describe("StudentSearchSelector (current behavior)", () => {
       expect(shownText()).toBe("יואב לוי");
     });
 
-    it("does not pick the first match on Enter", () => {
+    it("picks the highlighted match on Enter", () => {
       const onChildSelect = vi.fn();
       render(<Picker onChildSelect={onChildSelect} />);
       open();
       type("יואב");
       pressEnter(input());
 
-      expect(onChildSelect).not.toHaveBeenCalled();
+      expect(onChildSelect).toHaveBeenLastCalledWith("c2");
     });
 
-    it("clears the selection as soon as the text differs from the name", () => {
+    it("keeps the selection while typing", () => {
       const onChildSelect = vi.fn();
       render(<Picker initial="c1" onChildSelect={onChildSelect} />);
       expect(shownText()).toBe("נועה כהן");
@@ -172,16 +169,16 @@ describe("StudentSearchSelector (current behavior)", () => {
       open();
       type("נועה כה");
 
-      expect(onChildSelect).toHaveBeenLastCalledWith(undefined);
+      expect(onChildSelect).not.toHaveBeenCalled();
     });
 
-    it("keeps the typed text, not the name, on blur", () => {
+    it("puts the selected name back on blur", () => {
       render(<Picker initial="c1" />);
       open();
       type("נועה כה");
       fireEvent.blur(input());
 
-      expect(shownText()).toBe("נועה כה");
+      expect(shownText()).toBe("נועה כהן");
     });
 
     it("clears to undefined with the clear button", () => {
@@ -200,18 +197,9 @@ describe("StudentSearchSelector (current behavior)", () => {
 
       expect(visibleOptions()).toEqual([addRowText("שירה גל")]);
     });
-
-    it("hides the add row when creating isn't allowed", () => {
-      render(<Picker isCreateAllowed={false} />);
-      open();
-      type("שירה גל");
-
-      // jsdom never finishes the close animation, so check for the row only.
-      expect(visibleOptions()).not.toContain(addRowText("שירה גל"));
-    });
   });
 
-  describe('mode="search" (filter)', () => {
+  describe('mode="filter"', () => {
     it("lists every student without a grade on focus", () => {
       render(<Filter />);
       fireEvent.mouseDown(input());

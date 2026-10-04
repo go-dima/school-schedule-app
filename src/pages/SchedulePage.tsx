@@ -1053,8 +1053,7 @@ const SchedulePageContent: React.FC = () => {
                 style={{ minWidth: 200 }}
                 disabled={refreshing || allChildrenLoading}
                 defaultGrade={selectedGrade || 1}
-                mode="select"
-                isCreateAllowed={isStaff}
+                mode="pick"
               />
             </FilterField>
           </>

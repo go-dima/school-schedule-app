@@ -1,138 +1,97 @@
-import React, { useState, useMemo } from "react";
-import { AutoComplete, Modal, message } from "antd";
+import React, { useState } from "react";
+import { Modal, message } from "antd";
 import { PlusOutlined, UserOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { ChildForm } from "./ChildForm";
+import { NameSearch } from "./NameSearch";
+import type { NameSearchExtraOption } from "./NameSearch";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import { useAuth } from "../contexts/AuthContext";
 import { GetGradeName } from "@/utils/grades";
-import { matchesName } from "@/utils/nameSearch";
 import { studentName } from "@/utils/personName";
 import type { Child } from "../types";
 
-interface StudentSearchSelectorProps {
+interface StudentSearchSelectorCommonProps {
   children: Child[];
-  selectedChildId?: string | null;
-  onChildSelect?: (childId: string | undefined) => void;
   onChildAdded?: (child: Child) => void;
-  onSearchChange?: (searchTerm: string) => void;
   placeholder?: string;
   style?: React.CSSProperties;
   disabled?: boolean;
-  allowClear?: boolean;
+  /** Grade prefilled in the add-student form. */
   defaultGrade?: number;
-  isCreateAllowed?: boolean;
-  mode?: "select" | "search"; // 'select' for SchedulePage, 'search' for StudentsPage
-  value?: string; // For controlled input in search mode
-  // Show matching students as a dropdown under the input. Turn off when the
-  // caller already renders the filtered results itself (e.g. a roster list),
-  // so the input acts as a plain filter box.
-  showSuggestions?: boolean;
 }
 
-export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
-  children,
-  selectedChildId,
-  onChildSelect,
-  onChildAdded,
-  onSearchChange,
-  placeholder,
-  style,
-  disabled = false,
-  allowClear = true,
-  defaultGrade = 1,
-  isCreateAllowed = true,
-  mode = "select",
-  value,
-  showSuggestions = true,
-}) => {
+/** SchedulePage: pick one student; the value is their id. */
+interface StudentSearchSelectorPickProps
+  extends StudentSearchSelectorCommonProps {
+  mode: "pick";
+  selectedChildId?: string | null;
+  onChildSelect: (childId: string | undefined) => void;
+}
+
+/** StudentsPage: the typed text filters the caller's list. */
+interface StudentSearchSelectorFilterProps
+  extends StudentSearchSelectorCommonProps {
+  mode: "filter";
+  value: string;
+  onSearchChange: (searchTerm: string) => void;
+}
+
+type StudentSearchSelectorProps =
+  | StudentSearchSelectorPickProps
+  | StudentSearchSelectorFilterProps;
+
+/**
+ * NameSearch over students, plus the "add student" row for a name nothing
+ * matches, which opens ChildForm prefilled with that name.
+ */
+export const StudentSearchSelector: React.FC<
+  StudentSearchSelectorProps
+> = props => {
+  const {
+    children,
+    onChildAdded,
+    placeholder,
+    style,
+    disabled = false,
+    defaultGrade = 1,
+  } = props;
   const { t } = useTranslation();
   const { roleFlags } = useAuth();
   const isAdmin = roleFlags.isAdmin;
   const { createChild } = useAllChildrenContext();
-  const [internalSearchTerm, setInternalSearchTerm] = useState<string>("");
-
-  // Use controlled value if provided (search mode), otherwise internal state (select mode)
-  // In select mode, show selected child name only if user hasn't started typing
-  const searchTerm =
-    mode === "search"
-      ? value || ""
-      : internalSearchTerm ||
-        (selectedChildId && mode === "select"
-          ? (() => {
-              const selectedChild = children.find(
-                c => c.id === selectedChildId
-              );
-              return selectedChild
-                ? `${selectedChild.firstName} ${selectedChild.lastName}`
-                : "";
-            })()
-          : "");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Child | undefined>();
   const [addLoading, setAddLoading] = useState(false);
 
-  // Generate search options with add student functionality
-  const searchOptions = useMemo(() => {
-    if (!showSuggestions) return [];
+  const renderStudent = (child: Child) => (
+    <div style={{ display: "flex", alignItems: "center" }}>
+      <UserOutlined style={{ marginInlineEnd: 8, color: "#1890ff" }} />
+      {studentName(child)}
+      {props.mode === "pick" && ` - ${GetGradeName(child.grade)}`}
+    </div>
+  );
 
-    // Filter children by search term (show all if no search term)
-    const filteredChildren = children.filter(child =>
-      matchesName(studentName(child), searchTerm)
-    );
-
-    // Generate matching children options
-    const matchingChildren = filteredChildren.map(child => {
-      const displayValue =
-        mode === "search" ? `${child.firstName} ${child.lastName}` : child.id;
-
-      return {
-        value: displayValue,
-        label: (
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <UserOutlined style={{ marginRight: 8, color: "#1890ff" }} />
-            {`${child.firstName} ${child.lastName}`}
-            {mode === "select" && ` - ${GetGradeName(child.grade)}`}
-          </div>
-        ),
-      };
-    });
-
-    // If no matches and search term is not empty, add "Add Student" option
-    if (matchingChildren.length === 0 && searchTerm.trim() && isCreateAllowed) {
-      return [
-        {
-          value: `__ADD_STUDENT__${searchTerm}`,
-          label: (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                color: "#52c41a",
-                cursor: "pointer",
-                padding: "4px 0",
-              }}>
-              <PlusOutlined style={{ marginRight: 8 }} />
-              {t("students.search.addStudent", { name: searchTerm })}
-            </div>
-          ),
-        },
-      ];
-    }
-
-    return matchingChildren;
-  }, [searchTerm, children, t, mode, isCreateAllowed, showSuggestions]);
-
-  const handleSearchSelect = (value: string) => {
-    if (value.startsWith("__ADD_STUDENT__")) {
-      const searchName = value.replace("__ADD_STUDENT__", "");
-      const [firstName, ...lastNameParts] = searchName.trim().split(/\s+/);
-      const lastName = lastNameParts.join(" ");
-
+  const addStudentOption: NameSearchExtraOption = {
+    label: query => (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          color: "#52c41a",
+          cursor: "pointer",
+          padding: "4px 0",
+        }}>
+        <PlusOutlined style={{ marginInlineEnd: 8 }} />
+        {t("students.search.addStudent", { name: query })}
+      </div>
+    ),
+    onSelect: query => {
+      const [firstName, ...lastNameParts] = query.split(/\s+/);
       setEditingStudent({
         id: "",
         firstName: firstName || "",
-        lastName: lastName || "",
+        lastName: lastNameParts.join(" "),
         grade: defaultGrade,
         groupNumber: 1,
         trackNumber: null,
@@ -141,61 +100,7 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
         updatedAt: "",
       } as Child);
       setIsAddModalOpen(true);
-
-      if (mode === "search") {
-        // In search mode, notify parent about search clear
-        onSearchChange?.("");
-      } else {
-        // In select mode, clear internal state
-        setInternalSearchTerm("");
-      }
-    } else {
-      if (mode === "select") {
-        // Regular selection - find the child by name and get ID
-        const selectedChild = children.find(
-          child =>
-            `${child.firstName} ${child.lastName}` === value ||
-            child.id === value
-        );
-        if (selectedChild && onChildSelect) {
-          onChildSelect(selectedChild.id);
-          // AutoComplete's onChange fires with the raw option value (this
-          // option's `value` is the child's id in select mode) right before
-          // onSelect, landing that id in internalSearchTerm. searchTerm's
-          // ternary prefers internalSearchTerm over the selectedChildId-
-          // derived name, so leaving it set here would permanently display
-          // the raw id instead of the name. Clear it so the display falls
-          // back to computing the name from selectedChildId.
-          setInternalSearchTerm("");
-        }
-      } else {
-        // In search mode, just update the search term
-        onSearchChange?.(value);
-      }
-    }
-  };
-
-  const handleSearchChange = (value: string) => {
-    if (mode === "search") {
-      onSearchChange?.(value);
-    } else {
-      setInternalSearchTerm(value);
-      // Handle clear selection when value is empty (user clicked X button or cleared manually)
-      if (!value && selectedChildId && onChildSelect) {
-        onChildSelect(undefined);
-      }
-      // If user starts typing and there's a selected child, clear the selection
-      else if (value && selectedChildId && onChildSelect) {
-        const selectedChild = children.find(c => c.id === selectedChildId);
-        const selectedChildName = selectedChild
-          ? `${selectedChild.firstName} ${selectedChild.lastName}`
-          : "";
-        // Only clear if the typed value is different from the selected child's name
-        if (value !== selectedChildName) {
-          onChildSelect(undefined);
-        }
-      }
-    }
+    },
   };
 
   // ChildForm already runs the Task 6 local-duplicate check (via
@@ -240,30 +145,34 @@ export const StudentSearchSelector: React.FC<StudentSearchSelectorProps> = ({
     setEditingStudent(undefined);
   };
 
+  const common = {
+    items: children,
+    getName: studentName,
+    renderOption: renderStudent,
+    extraOption: addStudentOption,
+    placeholder,
+    style,
+    disabled,
+  };
+
   return (
     <>
-      <AutoComplete
-        value={searchTerm}
-        options={searchOptions}
-        onSelect={handleSearchSelect}
-        onChange={handleSearchChange}
-        onFocus={() => {
-          // When user focuses on the input, prepare for searching
-          if (mode === "select") {
-            // If a child is selected and user focuses, allow them to start typing immediately
-            if (selectedChildId && !internalSearchTerm) {
-              // Don't clear the selection yet, but prepare for typing
-              setInternalSearchTerm("");
-            }
-          }
-        }}
-        placeholder={placeholder}
-        style={style}
-        allowClear={allowClear}
-        filterOption={false}
-        disabled={disabled}
-        defaultActiveFirstOption={false}
-      />
+      {props.mode === "pick" ? (
+        <NameSearch<Child>
+          {...common}
+          mode="pick"
+          getKey={child => child.id}
+          value={props.selectedChildId}
+          onSelect={child => props.onChildSelect(child?.id)}
+        />
+      ) : (
+        <NameSearch<Child>
+          {...common}
+          mode="filter"
+          value={props.value}
+          onChange={props.onSearchChange}
+        />
+      )}
 
       <Modal
         title={t("students.page.addModalTitle")}

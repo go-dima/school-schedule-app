@@ -175,7 +175,7 @@ describe("ClassEnrollmentDrawer roster search", () => {
     expect(rosterNames()).toEqual(["נועה כהן", "נועם פרץ"]);
   });
 
-  it("filters the list in place without a suggestions dropdown", async () => {
+  it("suggests the matching names in a dropdown", async () => {
     renderDrawer();
     await screen.findByText(
       i18n.t("schedule.enrollment.students", { count: 3 })
@@ -184,9 +184,26 @@ describe("ClassEnrollmentDrawer roster search", () => {
     fireEvent.mouseDown(searchBox());
     typeSearch("נוע");
 
-    expect(document.querySelectorAll(".ant-select-item-option")).toHaveLength(
-      0
+    expect(
+      Array.from(document.querySelectorAll(".ant-select-item-option")).map(
+        o => o.textContent
+      )
+    ).toEqual(["נועה כהן", "נועם פרץ"]);
+  });
+
+  it("offers no add-student row", async () => {
+    renderDrawer();
+    await screen.findByText(
+      i18n.t("schedule.enrollment.students", { count: 3 })
     );
+
+    typeSearch("שירה גל");
+
+    expect(
+      screen.queryByText(
+        i18n.t("students.search.addStudent", { name: "שירה גל" })
+      )
+    ).toBeNull();
   });
 
   it("keeps the search visible and shows an empty state when nothing matches", async () => {
