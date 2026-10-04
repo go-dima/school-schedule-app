@@ -403,23 +403,6 @@ export const usersApi = {
     return data[0];
   },
 
-  async getPendingApprovals(): Promise<UserRoleData[]> {
-    const { data, error } = await supabase
-      .from("user_roles")
-      .select("*")
-      .eq("approved", false);
-
-    if (error) throw new ApiError(error.message);
-    return data.map(role => ({
-      id: role.id,
-      userId: role.user_id,
-      role: role.role as UserRole,
-      approved: role.approved,
-      createdAt: role.created_at,
-      updatedAt: role.updated_at,
-    }));
-  },
-
   async getPendingApprovalsWithUsers(): Promise<PendingApproval[]> {
     // First get pending user roles
     const { data: userRoles, error: rolesError } = await supabase
