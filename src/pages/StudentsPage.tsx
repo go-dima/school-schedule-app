@@ -40,6 +40,7 @@ type ChildWithParent = Child & { assignedParent: boolean };
 
 const ALL_SCOPES: Scope[] = ["prod", "test"];
 import { GetGradeName } from "@/utils/grades";
+import { filterByStudentName } from "@/utils/studentNameSearch";
 
 const { Text } = Typography;
 
@@ -168,17 +169,7 @@ const StudentsPage: React.FC = () => {
     let filtered = children as ChildWithParent[];
 
     // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter(child => {
-        const fullName = `${child.firstName} ${child.lastName}`.toLowerCase();
-        const search = searchTerm.toLowerCase();
-        return (
-          fullName.includes(search) ||
-          child.firstName.toLowerCase().includes(search) ||
-          child.lastName.toLowerCase().includes(search)
-        );
-      });
-    }
+    filtered = filterByStudentName(filtered, searchTerm);
 
     // Apply grade filter
     if (selectedGrade !== undefined) {
