@@ -164,15 +164,15 @@ describe("ClassEnrollmentDrawer roster search", () => {
     ).toBeTruthy();
   });
 
-  it("does not trim the search", async () => {
+  it("trims the search", async () => {
     renderDrawer();
     await screen.findByText(
       i18n.t("schedule.enrollment.students", { count: 3 })
     );
 
-    typeSearch(" נוע");
+    typeSearch(" נוע ");
 
-    expect(rosterNames()).toEqual([]);
+    expect(rosterNames()).toEqual(["נועה כהן", "נועם פרץ"]);
   });
 
   it("filters the list in place without a suggestions dropdown", async () => {

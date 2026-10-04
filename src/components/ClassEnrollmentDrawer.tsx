@@ -40,7 +40,8 @@ import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 import { GroupTrackTags } from "./GroupTrackTags";
 import { TeacherPicker } from "./TeacherPicker";
 import { StudentSearchSelector } from "./StudentSearchSelector";
-import { filterByStudentName } from "@/utils/studentNameSearch";
+import { filterByName } from "@/utils/nameSearch";
+import { studentName } from "@/utils/personName";
 import "./ClassEnrollmentDrawer.css";
 import { ScopeTag } from "./ScopeTag";
 import { isTestScopeEnabled } from "../utils/env";
@@ -252,7 +253,7 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
     saveField({ grades: sortedGrades });
   };
 
-  const visibleChildren = filterByStudentName(children, rosterSearch);
+  const visibleChildren = filterByName(children, rosterSearch, studentName);
   const isFiltering = visibleChildren.length !== children.length;
 
   const handlePrint = async () => {

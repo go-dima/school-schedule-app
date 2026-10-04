@@ -107,12 +107,12 @@ describe("StudentsPage name search (current behavior)", () => {
     expect(tableNames()).toEqual(["Dana Levi"]);
   });
 
-  it("does not trim the search", () => {
+  it("trims the search", () => {
     render(<StudentsPage />);
 
-    typeSearch(" נוע");
+    typeSearch(" נוע ");
 
-    expect(tableNames()).toEqual([]);
+    expect(tableNames()).toEqual(["נועה כהן", "נועם לוי"]);
   });
 
   it("combines the name search with the grade filter", () => {

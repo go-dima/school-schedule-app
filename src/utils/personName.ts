@@ -17,3 +17,9 @@ export function formatPersonName(person: {
       .join(" ") || null
   );
 }
+
+/** A student's (child's) full name as listed and searched: "first last". */
+export const studentName = (child: {
+  firstName: string;
+  lastName: string;
+}): string => `${child.firstName} ${child.lastName}`;

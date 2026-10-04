@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatPersonName } from "./personName";
+import { formatPersonName, studentName } from "./personName";
 
 describe("formatPersonName", () => {
   it("prefers the display name", () => {
@@ -30,5 +30,13 @@ describe("formatPersonName", () => {
     expect(
       formatPersonName({ displayName: null, firstName: "", lastName: null })
     ).toBeNull();
+  });
+});
+
+describe("studentName", () => {
+  it("joins first and last name with a space", () => {
+    expect(studentName({ firstName: "נועה", lastName: "כהן" })).toBe(
+      "נועה כהן"
+    );
   });
 });
