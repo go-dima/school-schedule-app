@@ -184,8 +184,11 @@ async function ensureUserProfile(user: any) {
       },
     ]);
 
+    // Without a profile row the role insert can only fail on the
+    // user_roles -> users foreign key, which hides this error behind it.
     if (profileError) {
       log.error("User profile creation failed", { error: profileError });
+      return;
     }
   }
 
