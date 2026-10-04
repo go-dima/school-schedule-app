@@ -358,11 +358,9 @@ const StudentsPage: React.FC = () => {
             onSearchChange={setSearchTerm}
             placeholder={t("students.search.placeholder")}
             style={{ minWidth: 250 }}
-            allowClear
-            mode="search"
+            mode="filter"
             value={searchTerm}
             defaultGrade={selectedGrade || 1}
-            isCreateAllowed={permissions.canManageRoster}
           />
           <Select
             value={selectedGrade}

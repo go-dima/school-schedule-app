@@ -39,7 +39,7 @@ import { printClassRoster } from "@/utils/printClassRoster";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 import { GroupTrackTags } from "./GroupTrackTags";
 import { TeacherPicker } from "./TeacherPicker";
-import { StudentSearchSelector } from "./StudentSearchSelector";
+import { NameSearch } from "./NameSearch";
 import { filterByName } from "@/utils/nameSearch";
 import { studentName } from "@/utils/personName";
 import "./ClassEnrollmentDrawer.css";
@@ -525,16 +525,14 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
                     count: children.length,
                   })}
             </Text>
-            <StudentSearchSelector
-              children={children}
-              mode="search"
+            <NameSearch
+              mode="filter"
+              items={children}
+              getName={studentName}
               value={rosterSearch}
-              onSearchChange={setRosterSearch}
+              onChange={setRosterSearch}
               placeholder={t("students.search.placeholder")}
               style={{ width: 180 }}
-              allowClear
-              isCreateAllowed={false}
-              showSuggestions={false}
             />
           </div>
           <List
