@@ -40,6 +40,7 @@ import { ScopeTag } from "../components/ScopeTag";
 import { ScopeFilter } from "../components/ScopeSelector";
 import { ALL_SCOPES } from "../constants/scopes";
 import { filterByStudentName } from "@/utils/studentNameSearch";
+import { isTestScopeEnabled } from "../utils/env";
 
 const { Text } = Typography;
 
@@ -229,13 +230,18 @@ const StudentsPage: React.FC = () => {
         />
       ),
     },
-    {
-      title: t("students.table.scope"),
-      dataIndex: "scope",
-      key: "scope",
-      width: 100,
-      render: (scope: Scope) => <ScopeTag scope={scope} />,
-    },
+    // Production loads prod data only, so the column would always read prod.
+    ...(isTestScopeEnabled()
+      ? [
+          {
+            title: t("students.table.scope"),
+            dataIndex: "scope",
+            key: "scope",
+            width: 100,
+            render: (scope: Scope) => <ScopeTag scope={scope} />,
+          },
+        ]
+      : []),
     {
       title: t("students.table.createdDate"),
       dataIndex: "createdAt",

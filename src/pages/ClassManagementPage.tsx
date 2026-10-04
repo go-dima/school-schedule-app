@@ -42,6 +42,7 @@ import ClassEnrollmentDrawer from "../components/ClassEnrollmentDrawer";
 import { ScopeTag } from "../components/ScopeTag";
 import { ScopeFilter } from "../components/ScopeSelector";
 import { ALL_SCOPES } from "../constants/scopes";
+import { isTestScopeEnabled } from "../utils/env";
 
 const { Title } = Typography;
 
@@ -453,13 +454,18 @@ const ClassManagementPage: React.FC = () => {
         </Space>
       ),
     },
-    {
-      title: t("classManagement.table.environmentColumn"),
-      dataIndex: "scope",
-      key: "scope",
-      width: 100,
-      render: (scope: Scope) => <ScopeTag scope={scope} />,
-    },
+    // Production loads prod data only, so the column would always read prod.
+    ...(isTestScopeEnabled()
+      ? [
+          {
+            title: t("classManagement.table.environmentColumn"),
+            dataIndex: "scope",
+            key: "scope",
+            width: 100,
+            render: (scope: Scope) => <ScopeTag scope={scope} />,
+          },
+        ]
+      : []),
     {
       title: t("classManagement.table.actionsColumn"),
       key: "actions",

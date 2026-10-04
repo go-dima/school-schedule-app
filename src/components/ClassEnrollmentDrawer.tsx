@@ -43,6 +43,7 @@ import { StudentSearchSelector } from "./StudentSearchSelector";
 import { filterByStudentName } from "@/utils/studentNameSearch";
 import "./ClassEnrollmentDrawer.css";
 import { ScopeTag } from "./ScopeTag";
+import { isTestScopeEnabled } from "../utils/env";
 
 const { Title, Text } = Typography;
 
@@ -470,11 +471,15 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
                   </Space>
                 ),
               },
-              {
-                key: "scope",
-                label: t("classManagement.table.environmentColumn"),
-                children: <ScopeTag scope={localClassInfo.scope} />,
-              },
+              ...(isTestScopeEnabled()
+                ? [
+                    {
+                      key: "scope",
+                      label: t("classManagement.table.environmentColumn"),
+                      children: <ScopeTag scope={localClassInfo.scope} />,
+                    },
+                  ]
+                : []),
             ]}
           />
           <Divider style={{ margin: "16px 0" }} />
