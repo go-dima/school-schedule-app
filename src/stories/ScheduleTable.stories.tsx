@@ -10,6 +10,8 @@ import {
   conflictingUserSelections,
   mockOverrides,
 } from "./fixtures/scheduleFixtures";
+import { ScheduleService } from "../services/scheduleService";
+import { isMeetingTimeSlot } from "../utils/timeSlots";
 
 const meta: Meta<typeof ScheduleTable> = {
   title: "Components/ScheduleTable",
@@ -109,6 +111,48 @@ export const StaffOverrides: Story = {
       console.log("Create override:", { timeSlotId, dayOfWeek }),
     onOverrideClick: override => console.log("Edit override:", override),
     onOverrideDelete: override => console.log("Delete override:", override),
+    onClassSelect: (classId: string) => console.log("Select class:", classId),
+    onClassUnselect: (classId: string) =>
+      console.log("Unselect class:", classId),
+  },
+};
+
+// A Class on a meeting slot (מפגש בוקר), selected for the child by staff on
+// Sunday: the class card replaces the slot's label there and the row grows
+// to fit it, while the other days keep the compact label. Staff can click
+// any מפגש בוקר cell to select or deselect.
+const morningMeeting = mockTimeSlots.find(isMeetingTimeSlot)!;
+const morningMeetingClass = {
+  ...mockClasses[0],
+  id: "morning-meeting-group",
+  title: "מפגש בוקר – קבוצת נועה",
+  teacher: "מורה נועה",
+  isDouble: false,
+  slots: [
+    { dayOfWeek: 0, timeSlotId: morningMeeting.id, timeSlot: morningMeeting },
+  ],
+};
+const withMorningMeeting = [...mockClasses, morningMeetingClass];
+const morningMeetingSelected = [...selectedClassIds, morningMeetingClass.id];
+
+export const MeetingSlotClass: Story = {
+  args: {
+    timeSlots: mockTimeSlots,
+    classes: withMorningMeeting,
+    weeklySchedule: ScheduleService.buildWeeklySchedule(withMorningMeeting),
+    selectedClasses: morningMeetingSelected,
+    userSelections: [
+      ...mockUserSelections,
+      {
+        ...mockUserSelections[0],
+        id: `selection-${morningMeetingClass.id}`,
+        classId: morningMeetingClass.id,
+        class: morningMeetingClass,
+      },
+    ],
+    canSelectClasses: true,
+    canViewClasses: true,
+    canAssignNonLessonSlots: true,
     onClassSelect: (classId: string) => console.log("Select class:", classId),
     onClassUnselect: (classId: string) =>
       console.log("Unselect class:", classId),

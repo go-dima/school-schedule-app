@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import "../utils/i18n";
 import type {
@@ -150,5 +150,109 @@ describe("ScheduleTable double-lesson continuation cell", () => {
 
     expect(screen.getAllByText("חשבון")).toHaveLength(2);
     expect(container.querySelectorAll(".conflict")).toHaveLength(0);
+  });
+});
+
+describe("ScheduleTable meeting and break slots", () => {
+  beforeAll(() => {
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: (query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false,
+      }),
+    });
+  });
+
+  const meeting = timeSlot("ts-meeting", "מפגש בוקר", "08:30", "09:00");
+  const meetingGroup = makeClass({
+    id: "meeting-group",
+    title: "קבוצת נועה",
+    slots: [{ dayOfWeek: 0, timeSlotId: meeting.id, timeSlot: meeting }],
+  });
+
+  const renderMeeting = ({
+    selected,
+    canAssignNonLessonSlots,
+  }: {
+    selected: boolean;
+    canAssignNonLessonSlots: boolean;
+  }) =>
+    render(
+      <ScheduleTable
+        timeSlots={[meeting, first]}
+        classes={[meetingGroup]}
+        weeklySchedule={ScheduleService.buildWeeklySchedule([meetingGroup])}
+        selectedClasses={selected ? [meetingGroup.id] : []}
+        userSelections={selected ? [asSelection(meetingGroup)] : []}
+        canSelectClasses
+        canViewClasses
+        canAssignNonLessonSlots={canAssignNonLessonSlots}
+      />
+    );
+
+  const meetingCell = (container: HTMLElement) =>
+    container.querySelector(
+      "tr[data-row-key^='08:30'] td.day-column"
+    ) as HTMLElement;
+
+  it("shows a selected class in place of the slot label", () => {
+    const { container } = renderMeeting({
+      selected: true,
+      canAssignNonLessonSlots: false,
+    });
+
+    const sunday = meetingCell(container);
+    expect(sunday.textContent).toContain("קבוצת נועה");
+    expect(sunday.textContent).not.toContain("מפגש בוקר");
+    // The row grows to fit the card, so the time column names the slot.
+    const row = sunday.closest("tr") as HTMLElement;
+    expect(row.classList.contains("compact-row")).toBe(false);
+    expect(row.querySelector(".time-name")?.textContent).toBe("מפגש בוקר");
+  });
+
+  it("keeps the label when the slot's class isn't selected", () => {
+    const { container } = renderMeeting({
+      selected: false,
+      canAssignNonLessonSlots: true,
+    });
+
+    expect(screen.queryByText("קבוצת נועה")).toBeNull();
+    expect(screen.getAllByText("מפגש בוקר")).toHaveLength(5);
+    expect(
+      meetingCell(container).closest("tr")?.classList.contains("compact-row")
+    ).toBe(true);
+  });
+
+  it("opens the drawer on a meeting cell for staff", () => {
+    const { container } = renderMeeting({
+      selected: false,
+      canAssignNonLessonSlots: true,
+    });
+
+    fireEvent.click(
+      meetingCell(container).querySelector(".schedule-cell") as HTMLElement
+    );
+    expect(screen.getByText("קבוצת נועה")).toBeTruthy();
+  });
+
+  it("keeps a meeting cell closed for parents", () => {
+    const { container } = renderMeeting({
+      selected: true,
+      canAssignNonLessonSlots: false,
+    });
+
+    const cell = meetingCell(container).querySelector(
+      ".schedule-cell"
+    ) as HTMLElement;
+    expect(cell.classList.contains("clickable")).toBe(false);
+    fireEvent.click(cell);
+    expect(document.querySelector(".ant-drawer")).toBeNull();
   });
 });

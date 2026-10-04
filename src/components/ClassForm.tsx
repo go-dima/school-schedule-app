@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { ScheduleService } from "../services/scheduleService";
 import { StaffScheduleService } from "../services/staffScheduleService";
 import { useStaffMembers } from "../hooks/useStaffMembers";
-import { getLessonTimeSlots } from "../utils/timeSlots";
 import type { Class, ClassSlot, ClassWithTimeSlot, TimeSlot } from "../types";
 import { GRADES, DAYS_OF_WEEK } from "../types";
 import { GetGradeName } from "@/utils/grades";
@@ -42,9 +41,12 @@ const ClassForm: React.FC<ClassFormProps> = ({
   const { members: staffMembers, loading: staffMembersLoading } =
     useStaffMembers();
 
-  // Time slots are day-independent, so the same lesson-slot list applies to
-  // every day and every row in the slot picker.
-  const availableTimeSlots = getLessonTimeSlots(timeSlots);
+  // Time slots are day-independent, so the same list applies to every day
+  // and every row in the slot picker. Break and meeting slots are offered
+  // too: Classes there are selected for Children by staff only.
+  const availableTimeSlots = [...timeSlots].sort((a, b) =>
+    a.startTime.localeCompare(b.startTime)
+  );
 
   const isDoubleValue = Form.useWatch("isDouble", form);
   const slotsValue = Form.useWatch("slots", form) as
@@ -399,19 +401,15 @@ const ClassForm: React.FC<ClassFormProps> = ({
                             ?.toLowerCase()
                             .includes(input.toLowerCase())
                         }>
-                        {availableTimeSlots
-                          .sort((a, b) =>
-                            a.startTime.localeCompare(b.startTime)
-                          )
-                          .map(slot => (
-                            <Option key={slot.id} value={slot.id}>
-                              {slot.name} -{" "}
-                              {ScheduleService.formatTimeRange(
-                                slot.startTime,
-                                slot.endTime
-                              )}
-                            </Option>
-                          ))}
+                        {availableTimeSlots.map(slot => (
+                          <Option key={slot.id} value={slot.id}>
+                            {slot.name} -{" "}
+                            {ScheduleService.formatTimeRange(
+                              slot.startTime,
+                              slot.endTime
+                            )}
+                          </Option>
+                        ))}
                       </Select>
                     </Form.Item>
                   </Col>

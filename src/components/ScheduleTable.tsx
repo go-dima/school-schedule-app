@@ -10,6 +10,7 @@ import {
   isLessonTimeSlot,
   isBreakTimeSlot,
   isMeetingTimeSlot,
+  isNonLessonTimeSlot,
 } from "../utils/timeSlots";
 import type {
   TimeSlot,
@@ -38,6 +39,9 @@ interface ScheduleTableProps {
   onClassUnselect?: (classId: string) => void;
   canSelectClasses?: boolean;
   canViewClasses?: boolean;
+  // Staff only: break and meeting cells open the drawer, so staff can
+  // select or deselect the Classes held there.
+  canAssignNonLessonSlots?: boolean;
   isAdmin?: boolean;
   showEnrollmentCount?: boolean;
   // Counts for ids the enrollment RPC doesn't know (e.g. Staff View's
@@ -72,6 +76,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
   onClassUnselect,
   canSelectClasses = false,
   canViewClasses = false,
+  canAssignNonLessonSlots = false,
   isAdmin = false,
   showEnrollmentCount = false,
   extraEnrollmentCounts,
@@ -113,12 +118,14 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     }
   }, [classes, showEnrollmentCount]);
 
-  const handleCellClick = (timeSlot: TimeSlot, dayOfWeek: number) => {
-    if (!canViewClasses) return;
+  const canOpenSlot = (timeSlot: TimeSlot) =>
+    ScheduleService.canOpenSlot(timeSlot, {
+      canViewClasses,
+      canAssignNonLessonSlots,
+    });
 
-    // Only allow drawer opening for lesson time slots
-    const displayInfo = getTimeSlotDisplayInfo(timeSlot);
-    if (!displayInfo.isSelectable) return;
+  const handleCellClick = (timeSlot: TimeSlot, dayOfWeek: number) => {
+    if (!canOpenSlot(timeSlot)) return;
 
     setSelectedTimeSlot(timeSlot);
     setSelectedDayOfWeek(dayOfWeek);
@@ -214,7 +221,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     );
 
     const displayInfo = getTimeSlotDisplayInfo(timeSlot);
-    const isSelectableSlot = displayInfo.isSelectable && canViewClasses;
+    const isSelectableSlot = canOpenSlot(timeSlot);
     const isHighlighted = shouldHighlightTimeSlot(timeSlot, dayOfWeek);
     const highlightClass = isHighlighted ? "search-highlighted" : "";
 
@@ -303,13 +310,24 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
       );
     }
 
-    // Handle non-lesson time slots (breaks, meetings). (Any override here
-    // was already handled by the cellOverrides short-circuit above.)
-    if (!isLessonTimeSlot(timeSlot)) {
+    // Check for selected classes to display individually
+    const selectedPrimaryClasses = primaryClasses.filter(cls =>
+      selectedClasses.includes(cls.id)
+    );
+
+    // Handle non-lesson time slots (breaks, meetings): a selected Class
+    // replaces the slot's label like any lesson below; otherwise the label
+    // stays, and unselected Classes are reachable only through the drawer.
+    // (Any override here was already handled by the cellOverrides
+    // short-circuit above.)
+    if (!isLessonTimeSlot(timeSlot) && selectedPrimaryClasses.length === 0) {
       return (
         <div
-          className={`schedule-cell ${displayInfo.cssClass} ${highlightClass}`}
-          title={displayInfo.description}>
+          className={`schedule-cell ${displayInfo.cssClass} ${
+            isSelectableSlot ? "clickable" : ""
+          } ${highlightClass}`}
+          title={displayInfo.description}
+          onClick={() => handleCellClick(timeSlot, dayOfWeek)}>
           <Card size="small" className="non-lesson-card">
             <div className="non-lesson-content">
               <div className="slot-name">{timeSlot.name}</div>
@@ -340,11 +358,6 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
         </div>
       );
     }
-
-    // Check for selected classes to display individually
-    const selectedPrimaryClasses = primaryClasses.filter(cls =>
-      selectedClasses.includes(cls.id)
-    );
 
     // If there are selected classes, show them individually
     if (selectedPrimaryClasses.length > 0) {
@@ -446,6 +459,16 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     );
   };
 
+  // A break/meeting row stays compact (label only) unless a selected Class
+  // on some day needs the full class-card height.
+  const isCompactSlot = (timeSlot: TimeSlot) =>
+    isNonLessonTimeSlot(timeSlot) &&
+    !ScheduleService.hasSelectedClassInSlot(
+      weeklySchedule,
+      timeSlot.id,
+      selectedClasses
+    );
+
   const createScheduleData = (): ScheduleRow[] => {
     // Get unique time periods (start-end-name combinations) since time slots are now day-independent
     const uniqueTimePeriods = timeSlots.reduce((acc, slot) => {
@@ -467,14 +490,12 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
 
         if (!representativeSlot) return null;
 
-        const isBreakOrMeeting =
-          isBreakTimeSlot(representativeSlot) ||
-          isMeetingTimeSlot(representativeSlot);
-
         const row: ScheduleRow = {
           key: timePeriod,
           timeSlot: representativeSlot,
-          className: isBreakOrMeeting ? "compact-row" : undefined,
+          className: isCompactSlot(representativeSlot)
+            ? "compact-row"
+            : undefined,
         };
 
         DAYS_OF_WEEK.forEach(day => {
@@ -500,16 +521,12 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           timeSlot.startTime,
           timeSlot.endTime
         );
-        const isBreakOrMeeting =
-          isBreakTimeSlot(timeSlot) || isMeetingTimeSlot(timeSlot);
+        const isCompact = isCompactSlot(timeSlot);
 
         return (
-          <div
-            className={`time-cell ${isBreakOrMeeting ? "compact-time-cell" : ""}`}>
+          <div className={`time-cell ${isCompact ? "compact-time-cell" : ""}`}>
             {timeRange && <div className="time-range">{timeRange}</div>}
-            {!isBreakOrMeeting && (
-              <div className="time-name">{timeSlot.name}</div>
-            )}
+            {!isCompact && <div className="time-name">{timeSlot.name}</div>}
           </div>
         );
       },

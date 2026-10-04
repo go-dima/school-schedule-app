@@ -90,3 +90,33 @@ describe("ClassForm scope on edit", () => {
     expect((await submitEdit(true)).scope).toBe("test");
   });
 });
+
+describe("ClassForm time slot picker", () => {
+  const meeting: TimeSlot = {
+    id: "slot-meeting",
+    name: "מפגש בוקר",
+    startTime: "07:30",
+    endTime: "08:00",
+    createdAt: "",
+    updatedAt: "",
+  };
+
+  // Break and meeting slots can hold Classes too (#213), so the picker
+  // offers every time slot, not only lessons.
+  it("offers meeting slots alongside lesson slots", async () => {
+    render(
+      <ClassForm
+        timeSlots={[slot, meeting]}
+        onSubmit={vi.fn()}
+        onCancel={() => {}}
+        isNewLesson
+      />
+    );
+    const timeSelect = screen
+      .getByText(i18n.t("form.class.timePlaceholder"))
+      .closest(".ant-select") as HTMLElement;
+    fireEvent.mouseDown(timeSelect.querySelector("input") as HTMLElement);
+    expect(await screen.findByText(/מפגש בוקר/)).toBeTruthy();
+    expect(screen.getByText(/שיעור ראשון/)).toBeTruthy();
+  });
+});

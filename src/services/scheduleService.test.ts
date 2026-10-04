@@ -848,3 +848,68 @@ describe("ScheduleService.getOverridesForCell", () => {
     ).toEqual([]);
   });
 });
+
+describe("ScheduleService.canOpenSlot", () => {
+  const lesson = { ...tsFirst, name: "שיעור ראשון" };
+  const meeting = { ...tsFirst, id: "ts-meeting", name: "מפגש בוקר" };
+  const recess = { ...tsFirst, id: "ts-recess", name: "הפסקה גדולה" };
+
+  it("opens a lesson slot for anyone who can view classes", () => {
+    expect(
+      ScheduleService.canOpenSlot(lesson, {
+        canViewClasses: true,
+        canAssignNonLessonSlots: false,
+      })
+    ).toBe(true);
+  });
+
+  it("never opens any slot without canViewClasses", () => {
+    for (const slot of [lesson, meeting]) {
+      expect(
+        ScheduleService.canOpenSlot(slot, {
+          canViewClasses: false,
+          canAssignNonLessonSlots: true,
+        })
+      ).toBe(false);
+    }
+  });
+
+  it("opens meeting and break slots only for staff who assign them", () => {
+    for (const slot of [meeting, recess]) {
+      expect(
+        ScheduleService.canOpenSlot(slot, {
+          canViewClasses: true,
+          canAssignNonLessonSlots: false,
+        })
+      ).toBe(false);
+      expect(
+        ScheduleService.canOpenSlot(slot, {
+          canViewClasses: true,
+          canAssignNonLessonSlots: true,
+        })
+      ).toBe(true);
+    }
+  });
+});
+
+describe("ScheduleService.hasSelectedClassInSlot", () => {
+  const cls = makeClass({
+    slots: [{ dayOfWeek: 3, timeSlotId: tsFirst.id, timeSlot: tsFirst }],
+  });
+  const weekly = ScheduleService.buildWeeklySchedule([cls]);
+
+  it("is true when any day holds a selected class in the slot", () => {
+    expect(
+      ScheduleService.hasSelectedClassInSlot(weekly, tsFirst.id, [cls.id])
+    ).toBe(true);
+  });
+
+  it("is false when the slot's classes aren't selected", () => {
+    expect(ScheduleService.hasSelectedClassInSlot(weekly, tsFirst.id, [])).toBe(
+      false
+    );
+    expect(
+      ScheduleService.hasSelectedClassInSlot(weekly, tsSecond.id, [cls.id])
+    ).toBe(false);
+  });
+});

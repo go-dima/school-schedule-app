@@ -8,8 +8,8 @@ interface OverrideSuffixButtonProps {
 }
 
 // A narrow, full-height strip revealed on hover -- staff's entry point into
-// override creation for fixed slots (breaks/meetings, which never open the
-// normal selection drawer) via a "+" icon, and into editing an existing
+// override creation for fixed slots (breaks/meetings, whose drawer opens
+// for staff only when they pick a Class there) via a "+" icon, and into editing an existing
 // override directly from the grid (any slot type) via an edit icon, so a
 // break-slot override -- which has no other UI path once the slot's create
 // button disappears -- stays reachable. Kept narrow rather than spanning

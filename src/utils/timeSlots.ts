@@ -63,6 +63,14 @@ export function isMeetingTimeSlot(timeSlot: TimeSlot): boolean {
 }
 
 /**
+ * Check if a time slot is a break or a meeting -- the slots that hold
+ * Classes only when staff assign them
+ */
+export function isNonLessonTimeSlot(timeSlot: TimeSlot): boolean {
+  return isBreakTimeSlot(timeSlot) || isMeetingTimeSlot(timeSlot);
+}
+
+/**
  * Filter time slots by category
  */
 export function filterTimeSlotsByCategory(
