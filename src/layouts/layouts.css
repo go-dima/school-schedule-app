@@ -597,3 +597,10 @@
     font-size: 11px;
   }
 }
+
+.by-ui-mode-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}

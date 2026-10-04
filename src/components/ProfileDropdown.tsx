@@ -5,10 +5,13 @@ import {
   EditOutlined,
   LogoutOutlined,
   DownOutlined,
+  DesktopOutlined,
+  MobileOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useUiMode } from "../contexts/UiModeContext";
 import { ROUTES } from "../routes/paths";
 import { ROLE_SOLID_COLORS } from "../constants/roleColors";
 import type { MenuProps } from "antd";
@@ -19,6 +22,7 @@ const ProfileDropdown: React.FC = () => {
   const { t } = useTranslation();
   const { user, signOut, currentRole } = useAuth();
   const navigate = useNavigate();
+  const { mode, detected, setOverride } = useUiMode();
 
   const handleEditProfile = () => {
     navigate(ROUTES.PROFILE_SETTINGS);
@@ -73,6 +77,24 @@ const ProfileDropdown: React.FC = () => {
       ),
       onClick: handleEditProfile,
     },
+    // Only phones can switch: a desktop never gets the mobile UI. Switching
+    // back to the detected mode clears the override rather than pinning it.
+    ...(detected === "mobile"
+      ? [
+          {
+            key: "switch-ui-mode",
+            label: (
+              <Space>
+                {mode === "mobile" ? <DesktopOutlined /> : <MobileOutlined />}
+                {mode === "mobile"
+                  ? t("profile.dropdown.switchToDesktop")
+                  : t("profile.dropdown.switchToMobile")}
+              </Space>
+            ),
+            onClick: () => setOverride(mode === "mobile" ? "desktop" : null),
+          },
+        ]
+      : []),
     {
       type: "divider",
     },

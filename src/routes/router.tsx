@@ -1,3 +1,4 @@
+import { lazy } from "react";
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import AppLayout from "../layouts/AppLayout";
 import LoginPage from "../pages/LoginPage";
@@ -24,6 +25,10 @@ import {
 } from "./guards";
 import { ROUTES } from "./paths";
 import { RouteErrorFallback } from "../components/ErrorBoundary";
+import { ByUiMode } from "./ByUiMode";
+
+// Mobile-only components load on demand, so desktop never downloads them.
+const MobileAppLayout = lazy(() => import("../layouts/MobileAppLayout"));
 
 export const router = createBrowserRouter([
   {
@@ -62,7 +67,9 @@ export const router = createBrowserRouter([
         element: <AuthGate />,
         children: [
           {
-            element: <AppLayout />,
+            element: (
+              <ByUiMode desktop={<AppLayout />} mobile={<MobileAppLayout />} />
+            ),
             children: [
               {
                 index: true,
