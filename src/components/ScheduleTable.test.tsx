@@ -7,6 +7,7 @@ import type {
   ScheduleSelectionWithClass,
   TimeSlot,
 } from "../types";
+import { stubMatchMedia } from "../testUtils/antdDom";
 
 vi.mock("../services/supabase", () => ({ supabase: {} }));
 vi.mock("../services/enrollmentService", () => ({
@@ -254,5 +255,59 @@ describe("ScheduleTable meeting and break slots", () => {
     expect(cell.classList.contains("clickable")).toBe(false);
     fireEvent.click(cell);
     expect(document.querySelector(".ant-drawer")).toBeNull();
+  });
+});
+
+describe("ScheduleTable class search highlight", () => {
+  beforeAll(stubMatchMedia);
+
+  const onDay = (id: string, title: string, day: number, grade: number) =>
+    makeClass({
+      id,
+      title,
+      grades: [grade],
+      slots: [{ dayOfWeek: day, timeSlotId: first.id, timeSlot: first }],
+    });
+  // Sunday and Tuesday in grade 4, Monday in grade 5.
+  const week = [
+    onDay("drama-4", "Drama", 0, 4),
+    onDay("drama-5", "Drama Club", 1, 5),
+    onDay("math-4", "חשבון", 2, 4),
+  ];
+
+  // The days (0 = Sunday) whose first-slot cell is highlighted.
+  const highlightedDays = (searchTerm: string, userGrade?: number) => {
+    const { container } = render(
+      <ScheduleTable
+        timeSlots={timeSlots}
+        classes={week}
+        weeklySchedule={ScheduleService.buildWeeklySchedule(week)}
+        userGrade={userGrade}
+        canSelectClasses
+        canViewClasses
+        searchTerm={searchTerm}
+      />
+    );
+    const cells = container.querySelectorAll<HTMLElement>(
+      "tr[data-row-key^='09:10'] td.day-column"
+    );
+    return [...cells].flatMap((cell, day) =>
+      cell.querySelector(".search-highlighted") ? [day] : []
+    );
+  };
+
+  it("highlights nothing for an empty or all-space search", () => {
+    expect(highlightedDays("", 4)).toEqual([]);
+    expect(highlightedDays("   ", 4)).toEqual([]);
+  });
+
+  it("highlights the cells whose class title matches, case-insensitively", () => {
+    expect(highlightedDays("drama")).toEqual([0, 1]);
+    expect(highlightedDays("חשב")).toEqual([2]);
+  });
+
+  it("only matches classes in the shown grade", () => {
+    expect(highlightedDays("drama", 4)).toEqual([0]);
+    expect(highlightedDays("drama", 5)).toEqual([1]);
   });
 });

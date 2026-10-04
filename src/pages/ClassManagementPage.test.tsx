@@ -41,12 +41,14 @@ const makeClass = (
   updatedAt: "",
 });
 
-// Titles sort the table (default ascending), so rows come out א..ה.
+// Titles sort the table (default ascending), so rows come out א..ד; two
+// classes share "ב ביולוגיה".
 const classes = [
   makeClass("k1", "א אמנות", "מירב אלון"),
   makeClass("k2", "ב ביולוגיה", "אורית שמש"),
   makeClass("k3", "ג גיאוגרפיה", "מירב אלון"),
-  makeClass("k4", "ד דרמה", "Dana Levi"),
+  makeClass("k4", "ד Drama", "Dana Levi"),
+  makeClass("k5", "ב ביולוגיה", "Dana Levi"),
 ];
 
 vi.mock("../services/api", () => ({
@@ -90,21 +92,23 @@ const rowTitles = () =>
   );
 
 // Found by its placeholder while it's still empty, then reused.
-const renderPage = async () => {
-  render(<ClassManagementPage />);
-  await waitFor(() => expect(rowTitles()).toHaveLength(4));
-  const teacherBox = screen
+const searchBox = (placeholderKey: string) =>
+  screen
     .getAllByRole("combobox")
     .find(el =>
-      el
-        .closest(".ant-select")
-        ?.textContent?.includes(
-          i18n.t("classManagement.page.searchTeacherPlaceholder")
-        )
+      el.closest(".ant-select")?.textContent?.includes(i18n.t(placeholderKey))
     ) as HTMLInputElement;
+
+const renderPage = async () => {
+  render(<ClassManagementPage />);
+  await waitFor(() => expect(rowTitles()).toHaveLength(classes.length));
+  const teacherBox = searchBox("classManagement.page.searchTeacherPlaceholder");
+  const titleBox = searchBox("classManagement.page.searchPlaceholder");
   const typeTeacher = (value: string) =>
     fireEvent.change(teacherBox, { target: { value } });
-  return { teacherBox, typeTeacher };
+  const typeTitle = (value: string) =>
+    fireEvent.change(titleBox, { target: { value } });
+  return { teacherBox, typeTeacher, titleBox, typeTitle };
 };
 
 describe("ClassManagementPage teacher filter", () => {
@@ -124,7 +128,7 @@ describe("ClassManagementPage teacher filter", () => {
     expect(rowTitles()).toEqual(["א אמנות", "ג גיאוגרפיה"]);
 
     typeTeacher("dana");
-    expect(rowTitles()).toEqual(["ד דרמה"]);
+    expect(rowTitles()).toEqual(["ב ביולוגיה", "ד Drama"]);
   });
 
   it("trims the typed text", async () => {
@@ -151,6 +155,47 @@ describe("ClassManagementPage teacher filter", () => {
     fireEvent.click(visibleOptionElements()[0]);
 
     expect(teacherBox.value).toBe("אורית שמש");
+    expect(rowTitles()).toEqual(["ב ביולוגיה"]);
+  });
+});
+
+describe("ClassManagementPage title filter", () => {
+  beforeAll(stubMatchMedia);
+
+  it("filters the table by title, case-insensitively", async () => {
+    const { typeTitle } = await renderPage();
+
+    typeTitle("ביו");
+    expect(rowTitles()).toEqual(["ב ביולוגיה", "ב ביולוגיה"]);
+
+    typeTitle("DRAMA");
+    expect(rowTitles()).toEqual(["ד Drama"]);
+  });
+
+  it("suggests each matching title once, sorted", async () => {
+    const { typeTitle } = await renderPage();
+
+    typeTitle("ו");
+
+    expect(visibleOptions()).toEqual(["א אמנות", "ב ביולוגיה", "ג גיאוגרפיה"]);
+  });
+
+  it("fills in a picked suggestion and filters to it", async () => {
+    const { titleBox, typeTitle } = await renderPage();
+    typeTitle("גיא");
+
+    fireEvent.click(visibleOptionElements()[0]);
+
+    expect(titleBox.value).toBe("ג גיאוגרפיה");
+    expect(rowTitles()).toEqual(["ג גיאוגרפיה"]);
+  });
+
+  it("combines with the teacher filter", async () => {
+    const { typeTeacher, typeTitle } = await renderPage();
+
+    typeTitle("ביו");
+    typeTeacher("dana");
+
     expect(rowTitles()).toEqual(["ב ביולוגיה"]);
   });
 });
