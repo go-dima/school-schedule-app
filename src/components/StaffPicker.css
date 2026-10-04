@@ -1,0 +1,4 @@
+/* Staff View dropdown: staff with no regular lessons, listed last. */
+.staff-option--no-lessons {
+  color: rgba(0, 0, 0, 0.45);
+}

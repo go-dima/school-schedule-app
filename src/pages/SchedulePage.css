@@ -173,8 +173,3 @@
 .draft-committed-toggle .ant-radio-button-wrapper-checked:hover {
   background: #d6ecff;
 }
-
-/* Staff View dropdown: staff with no regular lessons, listed last. */
-.staff-option--no-lessons {
-  color: rgba(0, 0, 0, 0.45);
-}

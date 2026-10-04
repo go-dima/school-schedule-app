@@ -43,6 +43,7 @@ import { ChildTabs } from "../components/ChildTabs";
 import { ScheduleTabsBar } from "../components/ScheduleTabsBar";
 import { AddChildButton } from "../components/AddChildButton";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
+import { StaffPicker } from "../components/StaffPicker";
 import { ChildGroupTrackSelector } from "../components/ChildGroupTrackSelector";
 import type { SelectionField } from "../components/ChildGroupTrackSelector";
 import { classesApi, timeSlotsApi } from "../services/api";
@@ -965,22 +966,14 @@ const SchedulePageContent: React.FC = () => {
         }>
         {isStaffTab && (
           <FilterField label={t("schedule.page.labels.selectStaff")}>
-            <Select
-              showSearch
-              allowClear
+            <StaffPicker
+              members={staffMembers}
+              loading={staffMembersLoading}
               value={selectedStaffParam}
               onChange={handleStaffSelect}
+              disabled={refreshing}
               placeholder={t("schedule.page.placeholders.selectStaff")}
               style={{ minWidth: 200 }}
-              loading={staffMembersLoading}
-              disabled={refreshing}
-              optionFilterProp="label"
-              options={staffMembers.map(({ key, label, teaches }) => ({
-                value: staffKeyToParam(key),
-                label,
-                // No regular lessons: listed last (service order), grayed.
-                className: teaches ? undefined : "staff-option--no-lessons",
-              }))}
             />
           </FilterField>
         )}
