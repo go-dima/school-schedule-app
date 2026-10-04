@@ -31,8 +31,6 @@ import { DAYS_OF_WEEK, GRADES } from "../types";
 import ClassForm from "../components/ClassForm";
 import { GroupTrackTags } from "../components/GroupTrackTags";
 import { FilterSelect } from "../components/FilterSelect";
-import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
-import { isTestScopeEnabled } from "../utils/env";
 import { trackEvent, trackWithActor, AnalyticsEvent } from "../utils/analytics";
 import "./ClassManagementPage.css";
 import { GetGradeName } from "@/utils/grades";
@@ -41,14 +39,15 @@ import { EnrollmentCount } from "@/elements/EnrollmentCount";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
 import { EnrollmentService } from "../services/enrollmentService";
 import ClassEnrollmentDrawer from "../components/ClassEnrollmentDrawer";
+import { ScopeTag } from "../components/ScopeTag";
+import { ScopeFilter } from "../components/ScopeSelector";
+import { ALL_SCOPES } from "../constants/scopes";
 
 const { Title } = Typography;
 
 // Sentinel track filter value meaning "classes with no track", distinct from
 // `null` which means the track filter is not applied.
 const NO_TRACK_FILTER = 0;
-
-const ALL_SCOPES: Scope[] = ["prod", "test"];
 
 const ClassManagementPage: React.FC = () => {
   const { t } = useTranslation();
@@ -84,7 +83,9 @@ const ClassManagementPage: React.FC = () => {
   const [selectedTrack, setSelectedTrack] = useState<number | null>(null);
   // Admin-only (see the ToggleFilterGroup below) -- staff never see this
   // filter. Both scopes start ON, equivalent to "no filter".
-  const [selectedScopes, setSelectedScopes] = useState<Scope[]>(ALL_SCOPES);
+  const [selectedScopes, setSelectedScopes] = useState<Scope[]>([
+    ...ALL_SCOPES,
+  ]);
 
   useEffect(() => {
     loadData();
@@ -457,11 +458,7 @@ const ClassManagementPage: React.FC = () => {
       dataIndex: "scope",
       key: "scope",
       width: 100,
-      render: (scope: Scope) => (
-        <Tag color={scope === "prod" ? "green" : "orange"}>
-          {t(`scope.${scope}`)}
-        </Tag>
-      ),
+      render: (scope: Scope) => <ScopeTag scope={scope} />,
     },
     {
       title: t("classManagement.table.actionsColumn"),
@@ -590,7 +587,7 @@ const ClassManagementPage: React.FC = () => {
                     setSelectedDay(null);
                     setSelectedGrade(null);
                     setSelectedTrack(null);
-                    setSelectedScopes(ALL_SCOPES);
+                    setSelectedScopes([...ALL_SCOPES]);
                   }}>
                   {t("classManagement.page.clearFiltersButton")}
                 </Button>
@@ -705,15 +702,10 @@ const ClassManagementPage: React.FC = () => {
                 </Space>
               </Space>
 
-              {roleFlags.isAdmin && isTestScopeEnabled() && (
-                <ToggleFilterGroup<Scope>
+              {roleFlags.isAdmin && (
+                <ScopeFilter
                   value={selectedScopes}
                   onChange={setSelectedScopes}
-                  options={ALL_SCOPES.map(scope => ({
-                    value: scope,
-                    label: t(`scope.${scope}`),
-                  }))}
-                  doubleClickToIsolate={false}
                 />
               )}
             </div>

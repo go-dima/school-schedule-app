@@ -10,7 +10,6 @@ import {
   Divider,
   Modal,
   Alert,
-  Select,
 } from "antd";
 import { UserOutlined, SettingOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
@@ -39,6 +38,8 @@ import { validateRoleSet, type RoleSetError } from "../services/roleRules";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 import { isTestScopeEnabled } from "../utils/env";
 import "./UserManagementPage.css";
+import { ScopeFilter, ScopeSelect } from "../components/ScopeSelector";
+import { ALL_SCOPES } from "../constants/scopes";
 
 const ROLE_SET_ERROR_KEYS: Record<RoleSetError, string> = {
   noRoles: "userManagement.page.noRolesValidationError",
@@ -53,13 +54,6 @@ const STAFF_ROLES: UserRole[] = ["admin", "staff", "moderator"];
 
 // Postgres unique_violation: the display name belongs to someone else.
 const UNIQUE_VIOLATION = "23505";
-
-const ALL_SCOPES: Scope[] = ["prod", "test"];
-
-const SCOPE_TAG_COLORS: Record<Scope, "green" | "orange"> = {
-  prod: "green",
-  test: "orange",
-};
 
 interface UserManagementPageProps {}
 
@@ -81,7 +75,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
   // shows each role's on/off state instead of hiding it behind a dropdown.
   const [roleFilter, setRoleFilter] = useState<UserRole[]>(ALL_ROLES);
   // Both scopes start ON, equivalent to "no filter" (as on StudentsPage).
-  const [scopeFilter, setScopeFilter] = useState<Scope[]>(ALL_SCOPES);
+  const [scopeFilter, setScopeFilter] = useState<Scope[]>([...ALL_SCOPES]);
   // Granting child needs a student record to link, as at approval.
   const [childLink, setChildLink] = useState<ChildLinkDraft>(
     EMPTY_CHILD_LINK_DRAFT
@@ -487,20 +481,12 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
             sorter: (a: UserWithRoles, b: UserWithRoles) =>
               a.scope.localeCompare(b.scope),
             render: (_: unknown, record: UserWithRoles) => (
-              <Select<Scope>
+              <ScopeSelect
                 size="small"
                 variant="borderless"
                 value={record.scope}
                 onChange={scope => handleScopeChange(record, scope)}
                 popupMatchSelectWidth={false}
-                options={ALL_SCOPES.map(scope => ({
-                  value: scope,
-                  label: (
-                    <Tag color={SCOPE_TAG_COLORS[scope]}>
-                      {t(`scope.${scope}`)}
-                    </Tag>
-                  ),
-                }))}
               />
             ),
           },
@@ -551,16 +537,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
           }))}
         />
         {showScope && (
-          <ToggleFilterGroup<Scope>
-            value={scopeFilter}
-            onChange={setScopeFilter}
-            options={ALL_SCOPES.map(scope => ({
-              value: scope,
-              label: t(`scope.${scope}`),
-              color: SCOPE_TAG_COLORS[scope],
-            }))}
-            doubleClickToIsolate={false}
-          />
+          <ScopeFilter value={scopeFilter} onChange={setScopeFilter} />
         )}
       </FiltersBar>
 

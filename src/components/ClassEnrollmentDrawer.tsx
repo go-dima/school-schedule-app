@@ -40,6 +40,7 @@ import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 import { GroupTrackTags } from "./GroupTrackTags";
 import { TeacherPicker } from "./TeacherPicker";
 import "./ClassEnrollmentDrawer.css";
+import { ScopeTag } from "./ScopeTag";
 
 const { Title, Text } = Typography;
 
@@ -462,14 +463,7 @@ const ClassEnrollmentDrawer: React.FC<ClassEnrollmentDrawerProps> = ({
               {
                 key: "scope",
                 label: t("classManagement.table.environmentColumn"),
-                children: (
-                  <Tag
-                    color={
-                      localClassInfo.scope === "prod" ? "green" : "orange"
-                    }>
-                    {t(`scope.${localClassInfo.scope}`)}
-                  </Tag>
-                ),
+                children: <ScopeTag scope={localClassInfo.scope} />,
               },
             ]}
           />

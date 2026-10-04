@@ -42,10 +42,9 @@ import { ROLE_TAG_COLORS } from "../constants/roleColors";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 import { isTestScopeEnabled } from "../utils/env";
 import "./PendingApprovalsPage.css";
+import { ScopeSelector } from "../components/ScopeSelector";
 
 const { Title, Text } = Typography;
-
-const ALL_SCOPES: Scope[] = ["prod", "test"];
 
 interface ApprovalFormValues {
   role: UserRole;
@@ -553,21 +552,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
               </Form.Item>
 
               {canChooseScope && (
-                <Form.Item
-                  name="scope"
-                  label={t("pendingApprovals.modal.scopeFieldLabel")}
-                  extra={t("pendingApprovals.modal.scopeHelp")}>
-                  <Select<Scope>
-                    options={ALL_SCOPES.map(scope => ({
-                      value: scope,
-                      label: (
-                        <Tag color={scope === "prod" ? "green" : "orange"}>
-                          {t(`scope.${scope}`)}
-                        </Tag>
-                      ),
-                    }))}
-                  />
-                </Form.Item>
+                <ScopeSelector extra={t("pendingApprovals.modal.scopeHelp")} />
               )}
 
               {needsChildLink && (
