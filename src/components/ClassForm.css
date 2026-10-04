@@ -1,0 +1,15 @@
+/* Time slot picker: an icon per slot type, with break and meeting slots
+   muted so lesson slots stand out. A selected break/meeting reads normally. */
+.time-slot-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-slot-option.non-lesson {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.ant-select-item-option-selected .time-slot-option.non-lesson {
+  color: inherit;
+}
