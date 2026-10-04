@@ -31,7 +31,7 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import { useAuth } from "../contexts/AuthContext";
 import { childrenApi, usersApi } from "../services/api";
-import type { Child, PendingApproval, UserRole } from "../types";
+import type { Child, PendingApproval, Scope, UserRole } from "../types";
 import { ChildAccountLinkPicker } from "../components/ChildAccountLinkPicker";
 import {
   EMPTY_CHILD_LINK_DRAFT,
@@ -40,9 +40,19 @@ import {
 } from "../components/childAccountLink";
 import { ROLE_TAG_COLORS } from "../constants/roleColors";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
+import { isTestScopeEnabled } from "../utils/env";
 import "./PendingApprovalsPage.css";
 
 const { Title, Text } = Typography;
+
+const ALL_SCOPES: Scope[] = ["prod", "test"];
+
+interface ApprovalFormValues {
+  role: UserRole;
+  // Only present when the scope field is shown (non-prod); new users are
+  // always approved as "prod" otherwise.
+  scope?: Scope;
+}
 
 interface PendingApprovalsPageProps {}
 
@@ -74,6 +84,8 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
   const [unlinkedLoading, setUnlinkedLoading] = useState(false);
   const needsChildLink = chosenRole === "child";
   const childLinkComplete = childLinkValue(childLink) !== undefined;
+  // Admin-only (this page is admin-gated) and never in production.
+  const canChooseScope = permissions.canApproveSignups && isTestScopeEnabled();
 
   useEffect(() => {
     if (!roleModalVisible || !needsChildLink) return;
@@ -134,11 +146,12 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
 
   const handleApproveWithRole = (approval: PendingApproval) => {
     setSelectedApproval(approval);
-    form.setFieldsValue({ role: approval.role }); // Set default role
+    // Default to the requested role; new users are always "prod" by default.
+    form.setFieldsValue({ role: approval.role, scope: "prod" });
     setRoleModalVisible(true);
   };
 
-  const handleConfirmApproval = async (values: { role: UserRole }) => {
+  const handleConfirmApproval = async (values: ApprovalFormValues) => {
     if (!selectedApproval) return;
 
     const link = childLinkValue(childLink);
@@ -146,6 +159,11 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
 
     setActionLoading(selectedApproval.id);
     try {
+      // Set the scope first: if it fails, nothing has been approved yet and
+      // the admin can simply retry.
+      if (canChooseScope && values.scope === "test") {
+        await usersApi.adminSetUserScope(selectedApproval.userId, "test");
+      }
       if (values.role === "child" && link) {
         await usersApi.approveChildUser(selectedApproval.userId, link);
       } else {
@@ -533,6 +551,24 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
                   options={getRoleOptions()}
                 />
               </Form.Item>
+
+              {canChooseScope && (
+                <Form.Item
+                  name="scope"
+                  label={t("pendingApprovals.modal.scopeFieldLabel")}
+                  extra={t("pendingApprovals.modal.scopeHelp")}>
+                  <Select<Scope>
+                    options={ALL_SCOPES.map(scope => ({
+                      value: scope,
+                      label: (
+                        <Tag color={scope === "prod" ? "green" : "orange"}>
+                          {t(`scope.${scope}`)}
+                        </Tag>
+                      ),
+                    }))}
+                  />
+                </Form.Item>
+              )}
 
               {needsChildLink && (
                 <div style={{ marginBottom: 24 }}>

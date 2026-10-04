@@ -10,6 +10,7 @@ import {
   Divider,
   Modal,
   Alert,
+  Select,
 } from "antd";
 import { UserOutlined, SettingOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
@@ -18,7 +19,14 @@ import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
 import { RoleTagPicker } from "../components/RoleTagPicker";
 import { useAuth } from "../contexts/AuthContext";
 import { ApiError, childrenApi, usersApi } from "../services/api";
-import type { Child, ChildAccountLink, UserRoleData, UserRole } from "../types";
+import type {
+  Child,
+  ChildAccountLink,
+  Scope,
+  UserRoleData,
+  UserRole,
+  UserWithRoles,
+} from "../types";
 import { ChildAccountLinkPicker } from "../components/ChildAccountLinkPicker";
 import {
   EMPTY_CHILD_LINK_DRAFT,
@@ -29,6 +37,7 @@ import { ROLE_TAG_COLORS } from "../constants/roleColors";
 import { ALL_ROLES } from "../constants/roles";
 import { validateRoleSet, type RoleSetError } from "../services/roleRules";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
+import { isTestScopeEnabled } from "../utils/env";
 import "./UserManagementPage.css";
 
 const ROLE_SET_ERROR_KEYS: Record<RoleSetError, string> = {
@@ -45,22 +54,21 @@ const STAFF_ROLES: UserRole[] = ["admin", "staff", "moderator"];
 // Postgres unique_violation: the display name belongs to someone else.
 const UNIQUE_VIOLATION = "23505";
 
-interface UserManagementPageProps {}
+const ALL_SCOPES: Scope[] = ["prod", "test"];
 
-interface UserWithRoles {
-  id: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  displayName?: string;
-  createdAt: string;
-  lastSignInAt?: string;
-  roles: UserRoleData[];
-}
+const SCOPE_TAG_COLORS: Record<Scope, "green" | "orange"> = {
+  prod: "green",
+  test: "orange",
+};
+
+interface UserManagementPageProps {}
 
 const UserManagementPage: React.FC<UserManagementPageProps> = () => {
   const { t } = useTranslation();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, roleFlags } = useAuth();
+  // Scope (test/prod) is admin-only and hidden in production, where test
+  // users aren't fetched at all.
+  const showScope = roleFlags.isAdmin && isTestScopeEnabled();
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
@@ -72,6 +80,8 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
   // equivalent to the old empty-array "no filter" default, but the UI always
   // shows each role's on/off state instead of hiding it behind a dropdown.
   const [roleFilter, setRoleFilter] = useState<UserRole[]>(ALL_ROLES);
+  // Both scopes start ON, equivalent to "no filter" (as on StudentsPage).
+  const [scopeFilter, setScopeFilter] = useState<Scope[]>(ALL_SCOPES);
   // Granting child needs a student record to link, as at approval.
   const [childLink, setChildLink] = useState<ChildLinkDraft>(
     EMPTY_CHILD_LINK_DRAFT
@@ -114,27 +124,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const usersData = await usersApi.getAllUsersWithRoles();
-
-      const transformedUsers: UserWithRoles[] = usersData.map(user => ({
-        id: user.id,
-        email: user.email,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        displayName: user.display_name ?? undefined,
-        createdAt: user.created_at,
-        lastSignInAt: user.last_sign_in_at,
-        roles: user.user_roles.map((role: any) => ({
-          id: role.id,
-          userId: user.id,
-          role: role.role,
-          approved: role.approved,
-          createdAt: role.created_at,
-          updatedAt: role.updated_at,
-        })),
-      }));
-
-      setUsers(transformedUsers);
+      setUsers(await usersApi.getAllUsersWithRoles());
     } catch (error) {
       message.error(t("userManagement.page.loadError"));
     } finally {
@@ -162,6 +152,19 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
           ? t("profile.page.displayNameTaken")
           : t("userManagement.page.displayNameError")
       );
+    }
+  };
+
+  // Admin-only RPC (admin_set_user_scope): admins can't UPDATE other users'
+  // rows directly, and a trigger stops anyone else from changing scope.
+  const handleScopeChange = async (user: UserWithRoles, scope: Scope) => {
+    if (scope === user.scope) return;
+    try {
+      await usersApi.adminSetUserScope(user.id, scope);
+      setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, scope } : u)));
+      message.success(t("userManagement.page.scopeUpdated"));
+    } catch (error) {
+      message.error(t("userManagement.page.scopeError"));
     }
   };
 
@@ -309,10 +312,12 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
   }, []);
 
   const filteredUsers = useMemo(() => {
-    return users.filter(user =>
-      user.roles.some(role => roleFilter.includes(role.role))
+    return users.filter(
+      user =>
+        user.roles.some(role => roleFilter.includes(role.role)) &&
+        scopeFilter.includes(user.scope)
     );
-  }, [users, roleFilter]);
+  }, [users, roleFilter, scopeFilter]);
 
   const columns: ColumnsType<UserWithRoles> = [
     {
@@ -473,6 +478,34 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         </Space>
       ),
     },
+    ...(showScope
+      ? [
+          {
+            title: t("userManagement.table.scopeColumn"),
+            key: "scope",
+            width: 60,
+            sorter: (a: UserWithRoles, b: UserWithRoles) =>
+              a.scope.localeCompare(b.scope),
+            render: (_: unknown, record: UserWithRoles) => (
+              <Select<Scope>
+                size="small"
+                variant="borderless"
+                value={record.scope}
+                onChange={scope => handleScopeChange(record, scope)}
+                popupMatchSelectWidth={false}
+                options={ALL_SCOPES.map(scope => ({
+                  value: scope,
+                  label: (
+                    <Tag color={SCOPE_TAG_COLORS[scope]}>
+                      {t(`scope.${scope}`)}
+                    </Tag>
+                  ),
+                }))}
+              />
+            ),
+          },
+        ]
+      : []),
     {
       title: t("userManagement.table.actionsColumn"),
       key: "actions",
@@ -506,6 +539,8 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         onRefresh={loadUsers}
         refreshing={loading}
         disabled={loading}>
+        {/* Order-sensitive: RTL renders the first filter rightmost -- roles
+            on the right, scope to their left. */}
         <ToggleFilterGroup<UserRole>
           value={roleFilter}
           onChange={setRoleFilter}
@@ -515,6 +550,18 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
             color: ROLE_TAG_COLORS[role],
           }))}
         />
+        {showScope && (
+          <ToggleFilterGroup<Scope>
+            value={scopeFilter}
+            onChange={setScopeFilter}
+            options={ALL_SCOPES.map(scope => ({
+              value: scope,
+              label: t(`scope.${scope}`),
+              color: SCOPE_TAG_COLORS[scope],
+            }))}
+            doubleClickToIsolate={false}
+          />
+        )}
       </FiltersBar>
 
       <Table<UserWithRoles>

@@ -391,8 +391,16 @@
       "file": "049_allow_multiple_parents.sql",
       "created_at": "2026-10-03T00:00:00Z",
       "dependencies": ["048_set_track_draft"]
+    },
+    {
+      "id": "050_add_scope_to_users",
+      "name": "Add Scope To Users",
+      "description": "Issue #108: users.scope ('test' | 'prod', NOT NULL, default 'prod', CHECK) so test accounts can be hidden in prod; a guard_user_scope BEFORE INSERT/UPDATE trigger so only admins may set or change scope (users has an own-row UPDATE policy); admin_set_user_scope() RPC for admins; get_staff_directory recreated with p_scopes text[] (old no-arg signature dropped first).",
+      "file": "050_add_scope_to_users.sql",
+      "created_at": "2026-10-04T00:00:00Z",
+      "dependencies": ["049_allow_multiple_parents"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 49
+  "schema_version": 50
 }
