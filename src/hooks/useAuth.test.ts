@@ -41,12 +41,36 @@ describe("useAuth", () => {
     vi.useRealTimers();
   });
 
+  it("stays loading until supabase-js delivers its first auth event", async () => {
+    const { result } = renderHook(() => useAuth());
+
+    // supabase-js reads an OAuth callback's #access_token only during its
+    // async initialization; until its first event arrives, the app must not
+    // render routes that could redirect the token away.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10000);
+    });
+    expect(result.current.loading).toBe(true);
+    expect(result.current.user).toBeNull();
+
+    const handler = authCallbacks[authCallbacks.length - 1];
+    await act(async () => {
+      handler(null);
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.user).toBeNull();
+  });
+
   it("clears loading instead of hanging forever when the profile lookup never resolves", async () => {
     const { result } = renderHook(() => useAuth());
 
+    const handler = authCallbacks[authCallbacks.length - 1];
+    await act(async () => {
+      handler(null);
+    });
     expect(result.current.loading).toBe(false);
 
-    const handler = authCallbacks[authCallbacks.length - 1];
     act(() => {
       handler({ id: "user-1" });
     });
