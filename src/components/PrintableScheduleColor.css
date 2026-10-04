@@ -157,8 +157,7 @@
 .print-schedule-cell.break-slot {
   background: var(--schedule-selected-bg) !important;
   min-height: 30px !important;
-  max-height: 30px !important;
-  height: 30px !important;
+  height: 100% !important;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -166,8 +165,7 @@
 .print-schedule-cell.meeting-slot {
   background: var(--schedule-meeting-bg) !important;
   min-height: 30px !important;
-  max-height: 30px !important;
-  height: 30px !important;
+  height: 100% !important;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }

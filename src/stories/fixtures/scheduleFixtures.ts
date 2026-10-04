@@ -1,5 +1,9 @@
 import { ScheduleService } from "../../services/scheduleService";
-import { getDefaultTimeSlots, isLessonTimeSlot } from "../../utils/timeSlots";
+import {
+  getDefaultTimeSlots,
+  isLessonTimeSlot,
+  isMeetingTimeSlot,
+} from "../../utils/timeSlots";
 import { DAYS_OF_WEEK } from "../../types";
 import type {
   TimeSlot,
@@ -310,4 +314,27 @@ export const mockOverrides: ScheduleOverrideWithTimeSlot[] = [
     updatedAt: "2024-01-01T00:00:00Z",
     timeSlot: mandatorySlot,
   },
+];
+
+// A Class on a meeting slot (מפגש בוקר), selected for the child on Sunday
+// only: that cell shows the class instead of the label and the row grows to
+// fit it, while the other days keep the label.
+const morningMeeting = mockTimeSlots.find(isMeetingTimeSlot)!;
+export const morningMeetingClass: ClassWithTimeSlot = {
+  ...mockClasses[0],
+  id: "morning-meeting-group",
+  title: "מפגש בוקר – קבוצת נועה",
+  teacher: "מורה נועה",
+  grades: [1, 2, 3, 4, 5, 6],
+  isDouble: false,
+  slots: [
+    { dayOfWeek: 0, timeSlotId: morningMeeting.id, timeSlot: morningMeeting },
+  ],
+};
+export const withMorningMeeting = [...mockClasses, morningMeetingClass];
+export const withMorningMeetingWeeklySchedule =
+  ScheduleService.buildWeeklySchedule(withMorningMeeting);
+export const morningMeetingSelected = [
+  ...selectedClassIds,
+  morningMeetingClass.id,
 ];

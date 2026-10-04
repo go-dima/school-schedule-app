@@ -4,6 +4,8 @@ import {
   mockTimeSlots,
   mockWeeklySchedule,
   selectedClassIds,
+  withMorningMeetingWeeklySchedule,
+  morningMeetingSelected,
 } from "./fixtures/scheduleFixtures";
 import { GetGradeName } from "../utils/grades";
 
@@ -15,6 +17,8 @@ const childTitle = `מערכת של נועה כהן - ${GetGradeName(4)}`;
 const meta: Meta<typeof PrintableSchedule> = {
   title: "Components/PrintableSchedule",
   component: PrintableSchedule,
+  // Required by every story; none of them shows overrides.
+  args: { overrides: [] },
   parameters: {
     layout: "fullscreen",
   },
@@ -51,5 +55,17 @@ export const StaffView: Story = {
     timeSlots: mockTimeSlots,
     weeklySchedule: mockWeeklySchedule,
     selectedClasses: selectedClassIds,
+  },
+};
+
+// A selected Class on Sunday's מפגש בוקר grows that row; the other days'
+// label cells stretch to fill it instead of sitting at the top.
+export const MeetingSlotClass: Story = {
+  args: {
+    title: childTitle,
+    grade: 4,
+    timeSlots: mockTimeSlots,
+    weeklySchedule: withMorningMeetingWeeklySchedule,
+    selectedClasses: morningMeetingSelected,
   },
 };

@@ -132,12 +132,14 @@
   background: transparent;
 }
 
+/* Fills its <td> (height: 100%, not a fixed 30px) so a break/meeting label
+   stretches with a row that a selected Class on another day has grown;
+   compact rows still pin it to 30px below. */
 .print-schedule-cell.break-slot,
 .print-schedule-cell.meeting-slot {
   background: #f2f2f2 !important;
   min-height: 30px !important;
-  max-height: 30px !important;
-  height: 30px !important;
+  height: 100% !important;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
