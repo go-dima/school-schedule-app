@@ -35,7 +35,6 @@ const mockAuthValue: AuthContextType = {
     isParent: false,
     isChild: false,
   },
-  clearApplicationState: () => {},
 };
 
 function MockAuthProvider({ children }: { children: React.ReactNode }) {

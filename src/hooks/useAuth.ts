@@ -207,34 +207,6 @@ export function useAuth() {
     }
   };
 
-  const clearApplicationState = () => {
-    // Abort any ongoing operations
-    if (activeOperationRef.current.authStateChange) {
-      activeOperationRef.current.authStateChange.abort();
-      activeOperationRef.current.authStateChange = null;
-    }
-
-    // Clear all state
-    setUser(null);
-    setUserRoles([]);
-    setCurrentRole(null);
-    setLoading(false);
-    setError(null);
-
-    // Clear browser storage
-    try {
-      localStorage.clear();
-      sessionStorage.clear();
-
-      // Clear Supabase session if available
-      authApi.signOut().catch(() => {
-        // Ignore errors during emergency cleanup
-      });
-    } catch (err) {
-      console.warn("🧹 useAuth: Error during storage cleanup:", err);
-    }
-  };
-
   return {
     user,
     userRoles,
@@ -250,6 +222,5 @@ export function useAuth() {
     hasRole,
     permissions,
     roleFlags,
-    clearApplicationState,
   };
 }

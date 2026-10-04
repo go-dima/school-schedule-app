@@ -25,7 +25,6 @@ export interface AuthContextType {
   hasRole: (role: UserRole) => boolean;
   permissions: PermissionsState;
   roleFlags: RoleFlags;
-  clearApplicationState: () => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(
