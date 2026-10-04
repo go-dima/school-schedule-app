@@ -1,6 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import ClassManagementPage from "../pages/ClassManagementPage";
-import { AuthContext, type AuthContextType } from "../contexts/AuthContext";
+import {
+  AuthContext,
+  type AuthContextType,
+} from "../contexts/AuthContextObject";
 import type { UserRoleData } from "../types";
 
 // Note: ClassManagementPage fetches its data internally via classesApi,
