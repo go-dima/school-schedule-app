@@ -524,9 +524,13 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         canRefresh
         onRefresh={loadUsers}
         refreshing={loading}
-        disabled={loading}>
-        {/* Order-sensitive: RTL renders the first filter rightmost -- roles
-            on the right, scope to their left. */}
+        disabled={loading}
+        // Scope sits on the actions side, beside the refresh button.
+        actions={
+          showScope && (
+            <ScopeFilter value={scopeFilter} onChange={setScopeFilter} />
+          )
+        }>
         <ToggleFilterGroup<UserRole>
           value={roleFilter}
           onChange={setRoleFilter}
@@ -536,9 +540,6 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
             color: ROLE_TAG_COLORS[role],
           }))}
         />
-        {showScope && (
-          <ScopeFilter value={scopeFilter} onChange={setScopeFilter} />
-        )}
       </FiltersBar>
 
       <Table<UserWithRoles>

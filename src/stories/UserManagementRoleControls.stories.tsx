@@ -4,6 +4,9 @@ import { Button, Modal, Typography } from "antd";
 
 const { Text } = Typography;
 import { ToggleFilterGroup } from "../components/ToggleFilterGroup";
+import { FiltersBar } from "../components/FiltersBar";
+import { ScopeFilter } from "../components/ScopeSelector";
+import { ALL_SCOPES } from "../constants/scopes";
 import { RoleTagPicker } from "../components/RoleTagPicker";
 import { ChildAccountLinkPicker } from "../components/ChildAccountLinkPicker";
 import {
@@ -14,7 +17,7 @@ import {
 import { ROLE_TAG_COLORS } from "../constants/roleColors";
 import { ALL_ROLES } from "../constants/roles";
 import { validateRoleSet, type RoleSetError } from "../services/roleRules";
-import type { Child, UserRole } from "../types";
+import type { Child, Scope, UserRole } from "../types";
 
 // UserManagementPage's role filter bar and role-edit modal both need real
 // Supabase data to render via the full page, so these stories exercise the
@@ -53,19 +56,27 @@ const meta: Meta = {
 export default meta;
 type Story = StoryObj;
 
+// Mirrors the page's FiltersBar: roles on the filters side, scope beside
+// the refresh button on the actions side.
 function FilterBarDemo() {
   const [roleFilter, setRoleFilter] = useState<UserRole[]>(ALL_ROLES);
+  const [scopeFilter, setScopeFilter] = useState<Scope[]>([...ALL_SCOPES]);
 
   return (
-    <ToggleFilterGroup<UserRole>
-      value={roleFilter}
-      onChange={setRoleFilter}
-      options={ALL_ROLES.map(role => ({
-        value: role,
-        label: ROLE_LABELS[role],
-        color: ROLE_TAG_COLORS[role],
-      }))}
-    />
+    <FiltersBar
+      canRefresh
+      onRefresh={() => {}}
+      actions={<ScopeFilter value={scopeFilter} onChange={setScopeFilter} />}>
+      <ToggleFilterGroup<UserRole>
+        value={roleFilter}
+        onChange={setRoleFilter}
+        options={ALL_ROLES.map(role => ({
+          value: role,
+          label: ROLE_LABELS[role],
+          color: ROLE_TAG_COLORS[role],
+        }))}
+      />
+    </FiltersBar>
   );
 }
 
