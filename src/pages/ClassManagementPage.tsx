@@ -41,6 +41,8 @@ import { EnrollmentService } from "../services/enrollmentService";
 import ClassEnrollmentDrawer from "../components/ClassEnrollmentDrawer";
 import { ScopeTag } from "../components/ScopeTag";
 import { ScopeFilter } from "../components/ScopeSelector";
+import { NameSearch } from "../components/NameSearch";
+import { filterByName } from "@/utils/nameSearch";
 import { ALL_SCOPES } from "../constants/scopes";
 import { isTestScopeEnabled } from "../utils/env";
 
@@ -103,12 +105,7 @@ const ClassManagementPage: React.FC = () => {
       );
     }
 
-    if (teacherSearchTerm) {
-      const lowerTeacherSearchTerm = teacherSearchTerm.toLowerCase();
-      filtered = filtered.filter(cls =>
-        cls.teacher.toLowerCase().includes(lowerTeacherSearchTerm)
-      );
-    }
+    filtered = filterByName(filtered, teacherSearchTerm, cls => cls.teacher);
 
     if (selectedDay !== null) {
       filtered = filtered.filter(cls =>
@@ -140,6 +137,15 @@ const ClassManagementPage: React.FC = () => {
     selectedTrack,
     selectedScopes,
   ]);
+
+  // The teacher filter's suggestions: each class's teacher text, once.
+  const teacherNames = useMemo(
+    () =>
+      Array.from(
+        new Set(classes.map(cls => cls.teacher).filter(Boolean))
+      ).sort(),
+    [classes]
+  );
 
   const loadData = async () => {
     setLoading(true);
@@ -643,36 +649,16 @@ const ClassManagementPage: React.FC = () => {
                 />
 
                 <Space size={4} align="center">
-                  <AutoComplete
+                  <NameSearch<string>
+                    mode="filter"
+                    items={teacherNames}
+                    getName={teacher => teacher}
                     value={teacherSearchTerm}
                     onChange={setTeacherSearchTerm}
-                    options={(() => {
-                      if (!teacherSearchTerm) return [];
-
-                      const lowerTeacherSearchTerm =
-                        teacherSearchTerm.toLowerCase();
-                      const uniqueTeacherNames = Array.from(
-                        new Set(
-                          classes
-                            .filter(cls =>
-                              cls.teacher
-                                .toLowerCase()
-                                .includes(lowerTeacherSearchTerm)
-                            )
-                            .map(cls => cls.teacher)
-                        )
-                      ).sort();
-
-                      return uniqueTeacherNames.map(teacher => ({
-                        value: teacher,
-                      }));
-                    })()}
                     placeholder={t(
                       "classManagement.page.searchTeacherPlaceholder"
                     )}
                     style={{ width: 200 }}
-                    allowClear
-                    filterOption={false}
                     disabled={loading}
                   />
                   <label>{t("classManagement.page.searchTeacherLabel")}</label>

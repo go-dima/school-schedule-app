@@ -107,14 +107,14 @@ const renderPage = async () => {
   return { teacherBox, typeTeacher };
 };
 
-describe("ClassManagementPage teacher filter (current behavior)", () => {
+describe("ClassManagementPage teacher filter", () => {
   beforeAll(stubMatchMedia);
 
-  it("shows no suggestions before typing", async () => {
+  it("lists every teacher, once and sorted, before typing", async () => {
     const { teacherBox } = await renderPage();
     fireEvent.mouseDown(teacherBox);
 
-    expect(visibleOptions()).toEqual([]);
+    expect(visibleOptions()).toEqual(["Dana Levi", "אורית שמש", "מירב אלון"]);
   });
 
   it("filters the table by teacher, case-insensitively", async () => {
@@ -127,13 +127,13 @@ describe("ClassManagementPage teacher filter (current behavior)", () => {
     expect(rowTitles()).toEqual(["ד דרמה"]);
   });
 
-  it("does not trim the typed text", async () => {
+  it("trims the typed text", async () => {
     const { typeTeacher } = await renderPage();
 
-    typeTeacher(" מירב");
+    typeTeacher(" מירב ");
 
-    expect(rowTitles()).toEqual([]);
-    expect(visibleOptions()).toEqual([]);
+    expect(rowTitles()).toEqual(["א אמנות", "ג גיאוגרפיה"]);
+    expect(visibleOptions()).toEqual(["מירב אלון"]);
   });
 
   it("suggests each matching teacher once, sorted", async () => {

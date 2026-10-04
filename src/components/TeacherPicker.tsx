@@ -1,6 +1,6 @@
 import React from "react";
-import { AutoComplete } from "antd";
 import type { StaffMember } from "../services/staffScheduleService";
+import { NameSearch } from "./NameSearch";
 
 interface TeacherPickerProps {
   value?: string;
@@ -27,18 +27,16 @@ export const TeacherPicker: React.FC<TeacherPickerProps> = ({
   autoFocus,
   onBlur,
 }) => (
-  <AutoComplete
-    value={value}
-    onChange={onChange}
-    onBlur={onBlur}
-    autoFocus={autoFocus}
-    style={{ width: "100%" }}
+  <NameSearch<StaffMember>
+    mode="filter"
+    items={members}
+    getName={member => member.label}
+    value={value ?? ""}
+    onChange={text => onChange?.(text)}
+    loading={loading}
     placeholder={placeholder}
-    allowClear
-    notFoundContent={loading ? undefined : null}
-    options={members.map(m => ({ value: m.label }))}
-    filterOption={(input, option) =>
-      (option?.value ?? "").toString().includes(input.trim())
-    }
+    autoFocus={autoFocus}
+    onBlur={onBlur}
+    style={{ width: "100%" }}
   />
 );
