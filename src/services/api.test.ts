@@ -168,24 +168,31 @@ describe("authApi.onAuthStateChange", () => {
   });
 
   // Records each table's insert rows; user_roles lookups resolve to
-  // `existingRoles`.
-  function trackInserts(existingRoles: { id: string }[]) {
+  // `existingRoles`, and a table's insert fails with `insertErrors[table]`.
+  function trackInserts(
+    existingRoles: { id: string }[],
+    insertErrors: Record<string, { code: string; message: string }> = {}
+  ) {
     const inserts: Record<string, any[]> = {};
     (supabase.from as any).mockImplementation((table: string) => {
       const chain: any = {};
+      let inserting = false;
       chain.select = vi.fn(() => chain);
       chain.eq = vi.fn(() => chain);
       chain.limit = vi.fn(() => chain);
       chain.insert = vi.fn((rows: any[]) => {
         inserts[table] = rows;
+        inserting = true;
         return chain;
       });
       chain.single = vi.fn(() => Promise.resolve(mockSingleResult));
       chain.then = (resolve: any, reject: any) =>
         Promise.resolve(
-          table === "user_roles"
-            ? { data: existingRoles, error: null }
-            : { data: null, error: null }
+          inserting && insertErrors[table]
+            ? { data: null, error: insertErrors[table] }
+            : table === "user_roles"
+              ? { data: existingRoles, error: null }
+              : { data: null, error: null }
         ).then(resolve, reject);
       return chain;
     });
@@ -220,6 +227,22 @@ describe("authApi.onAuthStateChange", () => {
     expect(inserts.user_roles).toEqual([
       { user_id: "user-1", role: "parent", approved: false },
     ]);
+  });
+
+  it("requests no role when the profile insert fails", async () => {
+    mockSingleResult = { data: null, error: { message: "no rows found" } };
+    const inserts = trackInserts([], {
+      users: {
+        code: "23505",
+        message:
+          'duplicate key value violates unique constraint "users_email_key"',
+      },
+    });
+
+    await signIn({ id: "user-1", email: "a@b.com" });
+
+    expect(inserts.users).toBeDefined();
+    expect(inserts.user_roles).toBeUndefined();
   });
 
   it("requests the role chosen at email signup", async () => {
