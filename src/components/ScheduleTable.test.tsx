@@ -306,6 +306,10 @@ describe("ScheduleTable class search highlight", () => {
     expect(highlightedDays("חשב")).toEqual([2]);
   });
 
+  it("trims the search, like its suggestions", () => {
+    expect(highlightedDays(" חשבון ")).toEqual([2]);
+  });
+
   it("only matches classes in the shown grade", () => {
     expect(highlightedDays("drama", 4)).toEqual([0]);
     expect(highlightedDays("drama", 5)).toEqual([1]);

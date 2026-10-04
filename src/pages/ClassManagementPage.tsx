@@ -10,7 +10,6 @@ import {
   Modal,
   message,
   Tag,
-  AutoComplete,
   Dropdown,
   MenuProps,
 } from "antd";
@@ -98,13 +97,7 @@ const ClassManagementPage: React.FC = () => {
   const filteredClasses = useMemo(() => {
     let filtered = classes;
 
-    if (searchTerm) {
-      const lowerSearchTerm = searchTerm.toLowerCase();
-      filtered = filtered.filter(cls =>
-        cls.title.toLowerCase().includes(lowerSearchTerm)
-      );
-    }
-
+    filtered = filterByName(filtered, searchTerm, cls => cls.title);
     filtered = filterByName(filtered, teacherSearchTerm, cls => cls.teacher);
 
     if (selectedDay !== null) {
@@ -137,6 +130,12 @@ const ClassManagementPage: React.FC = () => {
     selectedTrack,
     selectedScopes,
   ]);
+
+  // The title filter's suggestions: each class title, once.
+  const classTitles = useMemo(
+    () => ScheduleService.classTitles(classes),
+    [classes]
+  );
 
   // The teacher filter's suggestions: each class's teacher text, once.
   const teacherNames = useMemo(
@@ -665,29 +664,14 @@ const ClassManagementPage: React.FC = () => {
                 </Space>
 
                 <Space size={4} align="center">
-                  <AutoComplete
+                  <NameSearch<string>
+                    mode="filter"
+                    items={classTitles}
+                    getName={title => title}
                     value={searchTerm}
                     onChange={setSearchTerm}
-                    options={(() => {
-                      if (!searchTerm) return [];
-
-                      const lowerSearchTerm = searchTerm.toLowerCase();
-                      const uniqueClassNames = Array.from(
-                        new Set(
-                          classes
-                            .filter(cls =>
-                              cls.title.toLowerCase().includes(lowerSearchTerm)
-                            )
-                            .map(cls => cls.title)
-                        )
-                      ).sort();
-
-                      return uniqueClassNames.map(title => ({ value: title }));
-                    })()}
                     placeholder={t("classManagement.page.searchPlaceholder")}
                     style={{ width: 200 }}
-                    allowClear
-                    filterOption={false}
                     disabled={loading}
                   />
                   <label>{t("classManagement.page.searchLabel")}</label>

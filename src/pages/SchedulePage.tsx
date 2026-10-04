@@ -8,7 +8,6 @@ import {
   Alert,
   Spin,
   message,
-  AutoComplete,
   Tooltip,
   Radio,
 } from "antd";
@@ -44,6 +43,7 @@ import { ScheduleTabsBar } from "../components/ScheduleTabsBar";
 import { AddChildButton } from "../components/AddChildButton";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { StaffPicker } from "../components/StaffPicker";
+import { NameSearch } from "../components/NameSearch";
 import { ChildGroupTrackSelector } from "../components/ChildGroupTrackSelector";
 import type { SelectionField } from "../components/ChildGroupTrackSelector";
 import { classesApi, timeSlotsApi } from "../services/api";
@@ -294,6 +294,15 @@ const SchedulePageContent: React.FC = () => {
         selectedWeeklySchedule
       ),
     [weeklySchedule, selectedWeeklySchedule]
+  );
+
+  // The class search's suggestions, narrowed to the shown grade: the
+  // selected student's for staff, else the grade filter's.
+  const searchGrade =
+    isStaff && staffSelectedChild ? staffSelectedChild.grade : selectedGrade;
+  const classTitles = React.useMemo(
+    () => ScheduleService.classTitles(classes, searchGrade),
+    [classes, searchGrade]
   );
 
   const makeFieldChangeHandler =
@@ -981,45 +990,14 @@ const SchedulePageContent: React.FC = () => {
             rightmost); the draft/committed toggle is on the actions side. */}
         {!isStaffView && (
           <FilterField label={t("schedule.page.labels.searchClass")}>
-            <AutoComplete
+            <NameSearch<string>
+              mode="filter"
+              items={classTitles}
+              getName={title => title}
               value={searchTerm}
               onChange={setSearchTerm}
-              options={(() => {
-                if (!searchTerm) return [];
-
-                const uniqueClassNames = Array.from(
-                  new Set(
-                    classes
-                      .filter(cls => {
-                        // For staff with selected child, filter by child's grade only
-                        if (isStaff && staffSelectedChild) {
-                          if (!cls.grades?.includes(staffSelectedChild.grade)) {
-                            return false;
-                          }
-                        } else {
-                          // Apply grade filter if set
-                          if (
-                            selectedGrade &&
-                            !cls.grades?.includes(selectedGrade)
-                          ) {
-                            return false;
-                          }
-                        }
-                        // Apply class name filter
-                        return cls.title
-                          .toLowerCase()
-                          .includes(searchTerm.toLowerCase());
-                      })
-                      .map(cls => cls.title)
-                  )
-                ).sort();
-
-                return uniqueClassNames.map(title => ({ value: title }));
-              })()}
               placeholder={t("schedule.page.placeholders.searchClass")}
               style={{ minWidth: 200 }}
-              allowClear
-              filterOption={false}
               disabled={refreshing}
             />
           </FilterField>

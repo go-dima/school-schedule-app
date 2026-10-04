@@ -162,6 +162,27 @@ describe("ClassManagementPage teacher filter", () => {
 describe("ClassManagementPage title filter", () => {
   beforeAll(stubMatchMedia);
 
+  it("lists every title, once and sorted, before typing", async () => {
+    const { titleBox } = await renderPage();
+    fireEvent.mouseDown(titleBox);
+
+    expect(visibleOptions()).toEqual([
+      "א אמנות",
+      "ב ביולוגיה",
+      "ג גיאוגרפיה",
+      "ד Drama",
+    ]);
+  });
+
+  it("trims the typed text", async () => {
+    const { typeTitle } = await renderPage();
+
+    typeTitle(" גיא ");
+
+    expect(rowTitles()).toEqual(["ג גיאוגרפיה"]);
+    expect(visibleOptions()).toEqual(["ג גיאוגרפיה"]);
+  });
+
   it("filters the table by title, case-insensitively", async () => {
     const { typeTitle } = await renderPage();
 
