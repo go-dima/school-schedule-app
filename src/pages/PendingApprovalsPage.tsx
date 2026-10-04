@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import {
   Card,
@@ -9,13 +9,9 @@ import {
   Alert,
   Spin,
   Tag,
-  message,
   Popconfirm,
   Badge,
-  Select,
   Modal,
-  Form,
-  Divider,
 } from "antd";
 import {
   CheckOutlined,
@@ -23,258 +19,36 @@ import {
   ReloadOutlined,
   UserOutlined,
   ClockCircleOutlined,
-  TeamOutlined,
-  HomeOutlined,
-  CrownOutlined,
-  SafetyCertificateOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
-import { useAuth } from "../contexts/AuthContext";
-import { childrenApi, usersApi } from "../services/api";
-import type { Child, PendingApproval, Scope, UserRole } from "../types";
-import { ChildAccountLinkPicker } from "../components/ChildAccountLinkPicker";
-import {
-  EMPTY_CHILD_LINK_DRAFT,
-  childLinkValue,
-  type ChildLinkDraft,
-} from "../components/childAccountLink";
+import type { PendingApproval, UserRole } from "../types";
 import { ROLE_TAG_COLORS } from "../constants/roleColors";
-import { trackEvent, AnalyticsEvent } from "../utils/analytics";
-import { isTestScopeEnabled } from "../utils/env";
+import {
+  formatApprovalDate,
+  usePendingApprovalsController,
+} from "../hooks/usePendingApprovalsController";
+import { PendingApprovalForm } from "../components/PendingApprovalForm";
 import "./PendingApprovalsPage.css";
-import { ScopeSelector } from "../components/ScopeSelector";
 
 const { Title, Text } = Typography;
-
-interface ApprovalFormValues {
-  role: UserRole;
-  // Only present when the scope field is shown (non-prod); new users are
-  // always approved as "prod" otherwise.
-  scope?: Scope;
-}
 
 interface PendingApprovalsPageProps {}
 
 const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
   const { t } = useTranslation();
-  const { permissions } = useAuth();
-  const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>(
-    []
-  );
-  const [loading, setLoading] = useState(true);
-  // True only until the first load resolves. Gates the full-page spinner;
-  // subsequent reloads (refresh button, after approve/reject) use `loading`
-  // to show a local Table overlay and lock the header instead of unmounting
-  // the whole page.
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  const [roleModalVisible, setRoleModalVisible] = useState(false);
-  const [selectedApproval, setSelectedApproval] =
-    useState<PendingApproval | null>(null);
-  const [form] = Form.useForm();
-  const chosenRole = Form.useWatch<UserRole | undefined>("role", form);
-  // A child account must be linked to a student record at approval.
-  const [childLink, setChildLink] = useState<ChildLinkDraft>(
-    EMPTY_CHILD_LINK_DRAFT
-  );
-  const [unlinkedStudents, setUnlinkedStudents] = useState<Child[]>([]);
-  const [unlinkedLoading, setUnlinkedLoading] = useState(false);
-  const needsChildLink = chosenRole === "child";
-  const childLinkComplete = childLinkValue(childLink) !== undefined;
-  // Admin-only (this page is admin-gated) and never in production.
-  const canChooseScope = permissions.canApproveSignups && isTestScopeEnabled();
-
-  useEffect(() => {
-    if (!roleModalVisible || !needsChildLink) return;
-    let cancelled = false;
-    setUnlinkedLoading(true);
-    childrenApi
-      .getUnlinkedChildren()
-      .then(students => {
-        if (!cancelled) setUnlinkedStudents(students);
-      })
-      .catch(err => {
-        if (!cancelled) {
-          message.error(
-            err instanceof Error
-              ? err.message
-              : t("pendingApprovals.childLink.loadError")
-          );
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setUnlinkedLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [roleModalVisible, needsChildLink, t]);
-
-  const closeRoleModal = () => {
-    setRoleModalVisible(false);
-    setSelectedApproval(null);
-    setChildLink(EMPTY_CHILD_LINK_DRAFT);
-    form.resetFields();
-  };
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const data = await usersApi.getPendingApprovalsWithUsers();
-      setPendingApprovals(data);
-      setLastRefresh(new Date());
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t("pendingApprovals.page.loadErrorFallback")
-      );
-    } finally {
-      setLoading(false);
-      setInitialLoading(false);
-    }
-  };
-
-  const handleApproveWithRole = (approval: PendingApproval) => {
-    setSelectedApproval(approval);
-    // Default to the requested role; new users are always "prod" by default.
-    form.setFieldsValue({ role: approval.role, scope: "prod" });
-    setRoleModalVisible(true);
-  };
-
-  const handleConfirmApproval = async (values: ApprovalFormValues) => {
-    if (!selectedApproval) return;
-
-    const link = childLinkValue(childLink);
-    if (values.role === "child" && !link) return;
-
-    setActionLoading(selectedApproval.id);
-    try {
-      // Set the scope first: if it fails, nothing has been approved yet and
-      // the admin can simply retry.
-      if (canChooseScope && values.scope === "test") {
-        await usersApi.adminSetUserScope(selectedApproval.userId, "test");
-      }
-      if (values.role === "child" && link) {
-        await usersApi.approveChildUser(selectedApproval.userId, link);
-      } else {
-        await usersApi.approveUserWithRole(
-          selectedApproval.userId,
-          values.role
-        );
-      }
-      message.success(
-        t("pendingApprovals.page.approveSuccess", {
-          email: selectedApproval.user.email,
-          role: t(`roles.${values.role}`, values.role),
-        })
-      );
-      trackEvent(AnalyticsEvent.SignupApproved, { role: values.role });
-      await loadData();
-      closeRoleModal();
-    } catch (err) {
-      message.error(
-        err instanceof Error
-          ? err.message
-          : t("pendingApprovals.page.approveError")
-      );
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleReject = async (
-    approvalId: string,
-    userEmail: string,
-    role: UserRole
-  ) => {
-    setActionLoading(approvalId);
-    try {
-      await usersApi.rejectRole(approvalId);
-      message.success(
-        t("pendingApprovals.page.rejectSuccess", {
-          role: t(`roles.${role}`, role),
-          email: userEmail,
-        })
-      );
-      trackEvent(AnalyticsEvent.SignupRejected, { role });
-      await loadData();
-    } catch (err) {
-      message.error(
-        err instanceof Error
-          ? err.message
-          : t("pendingApprovals.page.rejectError")
-      );
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const getRoleOptions = () => [
-    {
-      value: "parent" as UserRole,
-      label: (
-        <Space>
-          <HomeOutlined />
-          {t("roles.parent")}
-        </Space>
-      ),
-    },
-    {
-      value: "staff" as UserRole,
-      label: (
-        <Space>
-          <TeamOutlined />
-          {t("roles.staff")}
-        </Space>
-      ),
-    },
-    {
-      value: "child" as UserRole,
-      label: (
-        <Space>
-          <UserOutlined />
-          {t("roles.child")}
-        </Space>
-      ),
-    },
-    {
-      value: "admin" as UserRole,
-      label: (
-        <Space>
-          <CrownOutlined />
-          {t("roles.admin")}
-        </Space>
-      ),
-    },
-    {
-      value: "moderator" as UserRole,
-      label: (
-        <Space>
-          <SafetyCertificateOutlined />
-          {t("roles.moderator")}
-        </Space>
-      ),
-    },
-  ];
-
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString("he-IL", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const {
+    canApproveSignups,
+    pendingApprovals,
+    loading,
+    initialLoading,
+    error,
+    actionLoading,
+    lastRefresh,
+    loadData,
+    startApproval,
+    reject,
+    approvalForm,
+  } = usePendingApprovalsController();
 
   const columns: ColumnsType<PendingApproval> = [
     {
@@ -326,7 +100,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
       render: (date: string) => (
         <Space>
           <ClockCircleOutlined />
-          <Text>{formatDate(date)}</Text>
+          <Text>{formatApprovalDate(date)}</Text>
         </Space>
       ),
     },
@@ -341,7 +115,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
             icon={<CheckOutlined />}
             loading={actionLoading === record.id}
             size="small"
-            onClick={() => handleApproveWithRole(record)}>
+            onClick={() => startApproval(record)}>
             {t("pendingApprovals.table.approveButton")}
           </Button>
           <Popconfirm
@@ -349,9 +123,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
             description={t("pendingApprovals.table.rejectConfirmDescription", {
               email: record.user.email,
             })}
-            onConfirm={() =>
-              handleReject(record.id, record.user.email, record.role)
-            }
+            onConfirm={() => reject(record)}
             okText={t("pendingApprovals.table.rejectButton")}
             cancelText={t("common.buttons.cancel")}
             placement="topRight">
@@ -368,7 +140,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
     },
   ];
 
-  if (!permissions.canApproveSignups) {
+  if (!canApproveSignups) {
     return (
       <div className="page-content">
         <Alert
@@ -499,107 +271,11 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
             {t("pendingApprovals.modal.title")}
           </Space>
         }
-        open={roleModalVisible}
-        onCancel={closeRoleModal}
+        open={approvalForm.open}
+        onCancel={approvalForm.close}
         footer={null}
         width={500}>
-        {selectedApproval && (
-          <>
-            <Alert
-              message={t("pendingApprovals.modal.userAlertMessage", {
-                email: selectedApproval.user.email,
-              })}
-              description={
-                <div>
-                  <p>
-                    <strong>{t("pendingApprovals.modal.nameLabel")}</strong>{" "}
-                    {`${selectedApproval.user.firstName || ""} ${
-                      selectedApproval.user.lastName || ""
-                    }`.trim() || t("pendingApprovals.modal.noNameFallback")}
-                  </p>
-                  <p>
-                    <strong>
-                      {t("pendingApprovals.modal.originalRoleLabel")}
-                    </strong>{" "}
-                    {t(`roles.${selectedApproval.role}`, selectedApproval.role)}
-                  </p>
-                  <p>{t("pendingApprovals.modal.chooseFinalRolePrompt")}</p>
-                </div>
-              }
-              type="info"
-              showIcon
-              style={{ marginBottom: 24 }}
-            />
-
-            <Form
-              form={form}
-              onFinish={handleConfirmApproval}
-              layout="vertical">
-              <Form.Item
-                name="role"
-                label={t("pendingApprovals.modal.roleFieldLabel")}
-                rules={[
-                  {
-                    required: true,
-                    message: t("pendingApprovals.modal.roleRequired"),
-                  },
-                ]}>
-                <Select
-                  size="large"
-                  placeholder={t("pendingApprovals.modal.rolePlaceholder")}
-                  options={getRoleOptions()}
-                />
-              </Form.Item>
-
-              {canChooseScope && (
-                <ScopeSelector extra={t("pendingApprovals.modal.scopeHelp")} />
-              )}
-
-              {needsChildLink && (
-                <div style={{ marginBottom: 24 }}>
-                  <Divider orientation="right" plain>
-                    <Text strong>{t("pendingApprovals.childLink.title")}</Text>
-                  </Divider>
-                  <Text
-                    type="secondary"
-                    style={{ display: "block", marginBottom: 12 }}>
-                    {t("pendingApprovals.childLink.description")}
-                  </Text>
-                  <ChildAccountLinkPicker
-                    students={unlinkedStudents}
-                    value={childLink}
-                    onChange={setChildLink}
-                    loading={unlinkedLoading}
-                    disabled={actionLoading === selectedApproval.id}
-                  />
-                </div>
-              )}
-
-              <Form.Item style={{ marginBottom: 0, textAlign: "left" }}>
-                <Space>
-                  {needsChildLink && !childLinkComplete && (
-                    <Text type="danger" style={{ fontSize: 13 }}>
-                      {t("pendingApprovals.childLink.incomplete")}
-                    </Text>
-                  )}
-                  <Button
-                    onClick={closeRoleModal}
-                    disabled={actionLoading === selectedApproval?.id}>
-                    {t("common.buttons.cancel")}
-                  </Button>
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    disabled={needsChildLink && !childLinkComplete}
-                    loading={actionLoading === selectedApproval?.id}
-                    icon={<CheckOutlined />}>
-                    {t("pendingApprovals.modal.submitButton")}
-                  </Button>
-                </Space>
-              </Form.Item>
-            </Form>
-          </>
-        )}
+        <PendingApprovalForm controller={approvalForm} />
       </Modal>
     </div>
   );
