@@ -720,6 +720,7 @@ const ClassManagementPage: React.FC = () => {
           </Card>
         </fieldset>
       </div>
+
       {error && (
         <Alert
           message={t("classManagement.page.dataLoadingError")}
