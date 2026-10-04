@@ -1,7 +1,6 @@
 import React from "react";
 import { Alert, Button, Form, Input, Modal, Select, Space } from "antd";
 import { useTranslation } from "react-i18next";
-import { ScheduleService } from "../services/scheduleService";
 import { StaffScheduleService } from "../services/staffScheduleService";
 import { useStaffMembers } from "../hooks/useStaffMembers";
 import type {
@@ -12,6 +11,7 @@ import type {
 import { DAYS_OF_WEEK } from "../types";
 import { ScopeSelector } from "./ScopeSelector";
 import { TeacherPicker } from "./TeacherPicker";
+import { renderTimeSlotOption } from "./TimeSlotOption";
 
 const { Option } = Select;
 
@@ -164,20 +164,11 @@ const ScheduleOverrideForm: React.FC<ScheduleOverrideFormProps> = ({
         <Select
           placeholder={t("schedule.override.timePlaceholder")}
           showSearch
-          optionFilterProp="children"
-          filterOption={(input, option) =>
-            (option?.children as unknown as string)
-              ?.toLowerCase()
-              .includes(input.toLowerCase())
-          }>
+          optionFilterProp="label"
+          optionLabelProp="label">
           {[...availableTimeSlots]
             .sort((a, b) => a.startTime.localeCompare(b.startTime))
-            .map(slot => (
-              <Option key={slot.id} value={slot.id}>
-                {slot.name} -{" "}
-                {ScheduleService.formatTimeRange(slot.startTime, slot.endTime)}
-              </Option>
-            ))}
+            .map(renderTimeSlotOption)}
         </Select>
       </Form.Item>
 
