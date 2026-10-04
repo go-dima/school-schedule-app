@@ -25,6 +25,8 @@ export const AnalyticsEvent = {
   SignupRejected: "signup_rejected",
   StaffViewToggled: "staff_view_toggled",
   StaffViewStaffSelected: "staff_view_staff_selected",
+  UiModeResolved: "ui_mode_resolved",
+  UiModeSwitched: "ui_mode_switched",
 } as const;
 
 export type AnalyticsEventName =
