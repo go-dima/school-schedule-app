@@ -43,10 +43,11 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
   const { t } = useTranslation();
 
   return (
-    <div
+    <fieldset
       className={`filters-section filters-section--${variant}${
         disabled ? " filters-section--disabled" : ""
       }`}
+      disabled={disabled}
       aria-disabled={disabled}>
       <div className="filters-row">
         <Space wrap>{children}</Space>
@@ -65,6 +66,6 @@ export const FiltersBar: React.FC<FiltersBarProps> = ({
           </Space>
         )}
       </div>
-    </div>
+    </fieldset>
   );
 };

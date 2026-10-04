@@ -380,10 +380,11 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
   return (
     <div className="page-content">
       <div className="pending-approvals-header">
-        <div
+        <fieldset
           className={`pending-approvals-controls${
             loading ? " pending-approvals-controls--disabled" : ""
           }`}
+          disabled={loading}
           aria-disabled={loading}>
           <div className="header-main">
             <Title level={2}>
@@ -404,7 +405,7 @@ const PendingApprovalsPage: React.FC<PendingApprovalsPageProps> = () => {
               </Button>
             </Space>
           </div>
-        </div>
+        </fieldset>
 
         <Alert
           message={t("pendingApprovals.page.alertMessage")}
