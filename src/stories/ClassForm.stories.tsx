@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import ClassForm from "../components/ClassForm";
 import type { ClassWithTimeSlot, TimeSlot } from "../types";
+import { mockTimeSlots as fullDayTimeSlots } from "./fixtures/scheduleFixtures";
 
 const meta: Meta<typeof ClassForm> = {
   title: "Components/ClassForm",
@@ -84,6 +85,17 @@ const mockMultiSlotClass: ClassWithTimeSlot = {
 export const NewClass: Story = {
   args: {
     timeSlots: mockTimeSlots,
+    onSubmit: async values => console.log("Submit new class:", values),
+    onCancel: () => console.log("Cancelled"),
+    isNewLesson: true,
+  },
+};
+
+// The full school day, so the slot picker shows break and meeting slots:
+// each slot type has its own icon, and breaks/meetings are muted.
+export const NewClassFullDay: Story = {
+  args: {
+    timeSlots: fullDayTimeSlots,
     onSubmit: async values => console.log("Submit new class:", values),
     onCancel: () => console.log("Cancelled"),
     isNewLesson: true,

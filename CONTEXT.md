@@ -7,6 +7,10 @@ Elementary school (grades 1–6) weekly class scheduling. Children select from c
 **Time Slot**:
 A time-of-day period (e.g. 08:00–08:45), independent of day.
 
+**Break / Meeting Slot**:
+A Time Slot that isn't a lesson (ארוחת בוקר, הפסקה, מפגש בוקר, ...). It can hold Classes like any Time Slot, but only staff select or deselect them for a Child. A selected Class replaces the slot's label; with none, the cell shows the slot's name.
+_Avoid_: Locked slot (a Locked Selection is a different thing)
+
 **Class Slot**:
 A (Day, Time Slot) pair occupied by a Class. A Class has one or more Class Slots; most have one, some have several.
 

@@ -90,3 +90,82 @@ describe("ClassForm scope on edit", () => {
     expect((await submitEdit(true)).scope).toBe("test");
   });
 });
+
+describe("ClassForm time slot picker", () => {
+  const meeting: TimeSlot = {
+    id: "slot-meeting",
+    name: "מפגש בוקר",
+    startTime: "07:30",
+    endTime: "08:00",
+    createdAt: "",
+    updatedAt: "",
+  };
+
+  // Break and meeting slots can hold Classes too (#213), so the picker
+  // offers every time slot, not only lessons.
+  it("offers meeting slots alongside lesson slots", async () => {
+    render(
+      <ClassForm
+        timeSlots={[slot, meeting]}
+        onSubmit={vi.fn()}
+        onCancel={() => {}}
+        isNewLesson
+      />
+    );
+    const timeSelect = screen
+      .getByText(i18n.t("form.class.timePlaceholder"))
+      .closest(".ant-select") as HTMLElement;
+    fireEvent.mouseDown(timeSelect.querySelector("input") as HTMLElement);
+    expect(await screen.findByText(/מפגש בוקר/)).toBeTruthy();
+    expect(screen.getByText(/שיעור ראשון/)).toBeTruthy();
+  });
+
+  // Lessons, breaks and meetings each get an icon; breaks and meetings are
+  // also muted so lessons stand out.
+  it("marks meeting slots with an icon and muted text", async () => {
+    render(
+      <ClassForm
+        timeSlots={[slot, meeting]}
+        onSubmit={vi.fn()}
+        onCancel={() => {}}
+        isNewLesson
+      />
+    );
+    const timeSelect = screen
+      .getByText(i18n.t("form.class.timePlaceholder"))
+      .closest(".ant-select") as HTMLElement;
+    fireEvent.mouseDown(timeSelect.querySelector("input") as HTMLElement);
+
+    const meetingOption = (await screen.findByText(/מפגש בוקר/)).closest(
+      ".time-slot-option"
+    ) as HTMLElement;
+    expect(meetingOption.classList.contains("non-lesson")).toBe(true);
+    expect(meetingOption.querySelector(".anticon-team")).toBeTruthy();
+
+    const lessonOption = screen
+      .getByText(/שיעור ראשון/)
+      .closest(".time-slot-option") as HTMLElement;
+    expect(lessonOption.classList.contains("non-lesson")).toBe(false);
+    expect(lessonOption.querySelector(".anticon-read")).toBeTruthy();
+  });
+
+  it("filters slots by name when searching", async () => {
+    render(
+      <ClassForm
+        timeSlots={[slot, meeting]}
+        onSubmit={vi.fn()}
+        onCancel={() => {}}
+        isNewLesson
+      />
+    );
+    const input = screen
+      .getByText(i18n.t("form.class.timePlaceholder"))
+      .closest(".ant-select")
+      ?.querySelector("input") as HTMLElement;
+    fireEvent.mouseDown(input);
+    fireEvent.change(input, { target: { value: "מפגש" } });
+
+    expect(await screen.findByText(/מפגש בוקר/)).toBeTruthy();
+    expect(screen.queryByText(/שיעור ראשון/)).toBeNull();
+  });
+});

@@ -7,8 +7,7 @@ import { ScheduleService } from "../services/scheduleService";
 import {
   getTimeSlotDisplayInfo,
   isLessonTimeSlot,
-  isBreakTimeSlot,
-  isMeetingTimeSlot,
+  isNonLessonTimeSlot,
 } from "../utils/timeSlots";
 import type {
   TimeSlot,
@@ -106,8 +105,14 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
       );
     }
 
-    // Handle non-lesson time slots (breaks, meetings)
-    if (!isLessonTimeSlot(timeSlot)) {
+    // Check for selected classes to display
+    const selectedPrimaryClasses = primaryClasses.filter(cls =>
+      selectedClasses.includes(cls.id)
+    );
+
+    // Handle non-lesson time slots (breaks, meetings): a selected Class
+    // replaces the slot's label, mirroring ScheduleTable.
+    if (!isLessonTimeSlot(timeSlot) && selectedPrimaryClasses.length === 0) {
       return (
         <div className={`print-schedule-cell ${displayInfo.cssClass}`}>
           <div className="print-non-lesson-content">
@@ -120,11 +125,6 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
     if (primaryClasses.length === 0) {
       return <div className="print-schedule-cell" />;
     }
-
-    // Check for selected classes to display
-    const selectedPrimaryClasses = primaryClasses.filter(cls =>
-      selectedClasses.includes(cls.id)
-    );
 
     // If there are selected classes, show them
     if (selectedPrimaryClasses.length > 0) {
@@ -142,6 +142,16 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
     // No selected classes for this slot - leave empty
     return <div className="print-schedule-cell" />;
   };
+
+  // A break/meeting row stays compact (label only) unless a selected Class
+  // on some day needs the full class-card height.
+  const isCompactSlot = (timeSlot: TimeSlot) =>
+    isNonLessonTimeSlot(timeSlot) &&
+    !ScheduleService.hasSelectedClassInSlot(
+      weeklySchedule,
+      timeSlot.id,
+      selectedClasses
+    );
 
   const createScheduleData = (): ScheduleRow[] => {
     // Get unique time periods
@@ -162,14 +172,12 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
 
         if (!representativeSlot) return null;
 
-        const isBreakOrMeeting =
-          isBreakTimeSlot(representativeSlot) ||
-          isMeetingTimeSlot(representativeSlot);
-
         const row: ScheduleRow = {
           key: timePeriod,
           timeSlot: representativeSlot,
-          className: isBreakOrMeeting ? "compact-row" : undefined,
+          className: isCompactSlot(representativeSlot)
+            ? "compact-row"
+            : undefined,
         };
 
         DAYS_OF_WEEK.forEach(day => {
@@ -194,14 +202,12 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
           timeSlot.startTime,
           timeSlot.endTime
         );
-        const isBreakOrMeeting =
-          isBreakTimeSlot(timeSlot) || isMeetingTimeSlot(timeSlot);
+        const isCompact = isCompactSlot(timeSlot);
 
         return (
-          <div
-            className={`print-time-cell ${isBreakOrMeeting ? "compact" : ""}`}>
+          <div className={`print-time-cell ${isCompact ? "compact" : ""}`}>
             {timeRange && <div className="print-time-range">{timeRange}</div>}
-            {!isBreakOrMeeting && (
+            {!isCompact && (
               <div className="print-time-name">{timeSlot.name}</div>
             )}
           </div>

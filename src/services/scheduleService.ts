@@ -9,7 +9,7 @@ import type {
   UserRole,
   WeeklySchedule,
 } from "../types";
-import { isLessonTimeSlot } from "../utils/timeSlots";
+import { isLessonTimeSlot, isNonLessonTimeSlot } from "../utils/timeSlots";
 
 // Placeholder "all option" classes that only staff/admin may select; hidden
 // entirely from the schedule catalog for everyone else.
@@ -214,6 +214,23 @@ export class ScheduleService {
     });
   }
 
+  /**
+   * Whether a schedule cell in this time slot opens the class drawer.
+   * Lesson slots open for anyone who can view classes; break and meeting
+   * slots only for staff, since only staff select or deselect Classes there.
+   */
+  static canOpenSlot(
+    timeSlot: TimeSlot,
+    {
+      canViewClasses,
+      canAssignNonLessonSlots,
+    }: { canViewClasses: boolean; canAssignNonLessonSlots: boolean }
+  ): boolean {
+    if (!canViewClasses) return false;
+    if (isLessonTimeSlot(timeSlot)) return true;
+    return isNonLessonTimeSlot(timeSlot) && canAssignNonLessonSlots;
+  }
+
   static getNextConsecutiveTimeSlot(
     currentTimeSlot: TimeSlot,
     allTimeSlots: TimeSlot[]
@@ -376,6 +393,21 @@ export class ScheduleService {
    */
   static isSpecialClass(cls: Pick<ClassWithTimeSlot, "title">): boolean {
     return SPECIAL_CLASS_TITLES.has(cls.title.trim());
+  }
+
+  /**
+   * True when some day holds a selected Class in this time slot. A break or
+   * meeting row stays compact (label only) unless this holds.
+   */
+  static hasSelectedClassInSlot(
+    weeklySchedule: WeeklySchedule,
+    timeSlotId: string,
+    selectedClasses: string[]
+  ): boolean {
+    const days: WeeklySchedule[number][] = Object.values(weeklySchedule);
+    return days.some(day =>
+      (day[timeSlotId] || []).some(cls => selectedClasses.includes(cls.id))
+    );
   }
 
   /**

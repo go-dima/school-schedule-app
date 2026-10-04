@@ -1,20 +1,40 @@
 import React, { useEffect, useRef } from "react";
 import { Form, Input, Select, Button, Space, Switch, Row, Col } from "antd";
-import { PlusOutlined, MinusCircleOutlined } from "@ant-design/icons";
+import {
+  PlusOutlined,
+  MinusCircleOutlined,
+  ReadOutlined,
+  CoffeeOutlined,
+  TeamOutlined,
+} from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { ScheduleService } from "../services/scheduleService";
 import { StaffScheduleService } from "../services/staffScheduleService";
 import { useStaffMembers } from "../hooks/useStaffMembers";
-import { getLessonTimeSlots } from "../utils/timeSlots";
 import type { Class, ClassSlot, ClassWithTimeSlot, TimeSlot } from "../types";
 import { GRADES, DAYS_OF_WEEK } from "../types";
 import { GetGradeName } from "@/utils/grades";
 import { ScopeSelector } from "./ScopeSelector";
 import { GroupTrackSelect } from "./GroupTrackSelect";
 import { TeacherPicker } from "./TeacherPicker";
+import {
+  isBreakTimeSlot,
+  isMeetingTimeSlot,
+  isNonLessonTimeSlot,
+} from "../utils/timeSlots";
+import "./ClassForm.css";
 
 const { TextArea } = Input;
 const { Option } = Select;
+
+const timeSlotIcon = (slot: TimeSlot) =>
+  isBreakTimeSlot(slot) ? (
+    <CoffeeOutlined />
+  ) : isMeetingTimeSlot(slot) ? (
+    <TeamOutlined />
+  ) : (
+    <ReadOutlined />
+  );
 
 interface ClassFormProps {
   initialValues?: ClassWithTimeSlot | null;
@@ -42,9 +62,12 @@ const ClassForm: React.FC<ClassFormProps> = ({
   const { members: staffMembers, loading: staffMembersLoading } =
     useStaffMembers();
 
-  // Time slots are day-independent, so the same lesson-slot list applies to
-  // every day and every row in the slot picker.
-  const availableTimeSlots = getLessonTimeSlots(timeSlots);
+  // Time slots are day-independent, so the same list applies to every day
+  // and every row in the slot picker. Break and meeting slots are offered
+  // too: Classes there are selected for Children by staff only.
+  const availableTimeSlots = [...timeSlots].sort((a, b) =>
+    a.startTime.localeCompare(b.startTime)
+  );
 
   const isDoubleValue = Form.useWatch("isDouble", form);
   const slotsValue = Form.useWatch("slots", form) as
@@ -393,25 +416,25 @@ const ClassForm: React.FC<ClassFormProps> = ({
                       <Select
                         placeholder={t("form.class.timePlaceholder")}
                         showSearch
-                        optionFilterProp="children"
-                        filterOption={(input, option) =>
-                          (option?.children as unknown as string)
-                            ?.toLowerCase()
-                            .includes(input.toLowerCase())
-                        }>
-                        {availableTimeSlots
-                          .sort((a, b) =>
-                            a.startTime.localeCompare(b.startTime)
-                          )
-                          .map(slot => (
-                            <Option key={slot.id} value={slot.id}>
-                              {slot.name} -{" "}
-                              {ScheduleService.formatTimeRange(
-                                slot.startTime,
-                                slot.endTime
-                              )}
+                        optionFilterProp="label"
+                        optionLabelProp="label">
+                        {availableTimeSlots.map(slot => {
+                          const label = `${slot.name} - ${ScheduleService.formatTimeRange(
+                            slot.startTime,
+                            slot.endTime
+                          )}`;
+                          return (
+                            <Option key={slot.id} value={slot.id} label={label}>
+                              <span
+                                className={`time-slot-option ${
+                                  isNonLessonTimeSlot(slot) ? "non-lesson" : ""
+                                }`}>
+                                {timeSlotIcon(slot)}
+                                {label}
+                              </span>
                             </Option>
-                          ))}
+                          );
+                        })}
                       </Select>
                     </Form.Item>
                   </Col>

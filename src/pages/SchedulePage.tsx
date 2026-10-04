@@ -1208,6 +1208,7 @@ const SchedulePageContent: React.FC = () => {
               onClassUnselect={handleClassSelect}
               canSelectClasses={canSelectClasses}
               canViewClasses={canViewClasses}
+              canAssignNonLessonSlots={permissions.canManageRoster}
               isAdmin={permissions.canCreateClasses}
               showEnrollmentCount={isStaff || isAdmin}
               onCreateClass={handleCreateClass}
