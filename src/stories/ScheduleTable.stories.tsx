@@ -9,9 +9,11 @@ import {
   conflictingClassIds,
   conflictingUserSelections,
   mockOverrides,
+  morningMeetingClass,
+  withMorningMeeting,
+  withMorningMeetingWeeklySchedule,
+  morningMeetingSelected,
 } from "./fixtures/scheduleFixtures";
-import { ScheduleService } from "../services/scheduleService";
-import { isMeetingTimeSlot } from "../utils/timeSlots";
 
 const meta: Meta<typeof ScheduleTable> = {
   title: "Components/ScheduleTable",
@@ -121,25 +123,12 @@ export const StaffOverrides: Story = {
 // Sunday: the class card replaces the slot's label there and the row grows
 // to fit it, while the other days keep the compact label. Staff can click
 // any מפגש בוקר cell to select or deselect.
-const morningMeeting = mockTimeSlots.find(isMeetingTimeSlot)!;
-const morningMeetingClass = {
-  ...mockClasses[0],
-  id: "morning-meeting-group",
-  title: "מפגש בוקר – קבוצת נועה",
-  teacher: "מורה נועה",
-  isDouble: false,
-  slots: [
-    { dayOfWeek: 0, timeSlotId: morningMeeting.id, timeSlot: morningMeeting },
-  ],
-};
-const withMorningMeeting = [...mockClasses, morningMeetingClass];
-const morningMeetingSelected = [...selectedClassIds, morningMeetingClass.id];
 
 export const MeetingSlotClass: Story = {
   args: {
     timeSlots: mockTimeSlots,
     classes: withMorningMeeting,
-    weeklySchedule: ScheduleService.buildWeeklySchedule(withMorningMeeting),
+    weeklySchedule: withMorningMeetingWeeklySchedule,
     selectedClasses: morningMeetingSelected,
     userSelections: [
       ...mockUserSelections,
