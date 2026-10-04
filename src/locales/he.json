@@ -514,6 +514,9 @@
     }
   },
   "userManagement": {
+    "search": {
+      "placeholder": "חפש משתמש לפי שם..."
+    },
     "page": {
       "loadError": "שגיאה בטעינת המשתמשים",
       "noRolesValidationError": "יש לבחור לפחות תפקיד אחד",

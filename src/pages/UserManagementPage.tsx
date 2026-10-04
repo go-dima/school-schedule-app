@@ -40,6 +40,8 @@ import { isTestScopeEnabled } from "../utils/env";
 import "./UserManagementPage.css";
 import { ScopeFilter, ScopeSelect } from "../components/ScopeSelector";
 import { ALL_SCOPES } from "../constants/scopes";
+import { NameSearch } from "../components/NameSearch";
+import { filterByName } from "@/utils/nameSearch";
 
 const ROLE_SET_ERROR_KEYS: Record<RoleSetError, string> = {
   noRoles: "userManagement.page.noRolesValidationError",
@@ -51,6 +53,16 @@ const { Text } = Typography;
 
 // Roles that make a user staff (and so give them a display name).
 const STAFF_ROLES: UserRole[] = ["admin", "staff", "moderator"];
+
+// A user's searchable names: first + last, and the display name.
+const userNames = (user: UserWithRoles): string[] =>
+  [
+    [user.firstName, user.lastName].filter(Boolean).join(" "),
+    user.displayName,
+  ].filter((name): name is string => !!name);
+
+// Joined with "\n" so a query can't match across the two names.
+const userSearchName = (user: UserWithRoles) => userNames(user).join("\n");
 
 // Postgres unique_violation: the display name belongs to someone else.
 const UNIQUE_VIOLATION = "23505";
@@ -76,6 +88,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
   const [roleFilter, setRoleFilter] = useState<UserRole[]>(ALL_ROLES);
   // Both scopes start ON, equivalent to "no filter" (as on StudentsPage).
   const [scopeFilter, setScopeFilter] = useState<Scope[]>([...ALL_SCOPES]);
+  const [nameSearch, setNameSearch] = useState("");
   // Granting child needs a student record to link, as at approval.
   const [childLink, setChildLink] = useState<ChildLinkDraft>(
     EMPTY_CHILD_LINK_DRAFT
@@ -305,13 +318,27 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
     loadUsers();
   }, []);
 
-  const filteredUsers = useMemo(() => {
-    return users.filter(
-      user =>
-        user.roles.some(role => roleFilter.includes(role.role)) &&
-        scopeFilter.includes(user.scope)
-    );
-  }, [users, roleFilter, scopeFilter]);
+  // Role and scope filters first: the name suggestions come from these.
+  const roleScopeUsers = useMemo(
+    () =>
+      users.filter(
+        user =>
+          user.roles.some(role => roleFilter.includes(role.role)) &&
+          scopeFilter.includes(user.scope)
+      ),
+    [users, roleFilter, scopeFilter]
+  );
+
+  const filteredUsers = useMemo(
+    () => filterByName(roleScopeUsers, nameSearch, userSearchName),
+    [roleScopeUsers, nameSearch]
+  );
+
+  // Each name once, so a suggestion fills in a single name.
+  const nameSuggestions = useMemo(
+    () => Array.from(new Set(roleScopeUsers.flatMap(userNames))),
+    [roleScopeUsers]
+  );
 
   const columns: ColumnsType<UserWithRoles> = [
     {
@@ -531,6 +558,16 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
             <ScopeFilter value={scopeFilter} onChange={setScopeFilter} />
           )
         }>
+        {/* First child: rightmost in RTL, before the role toggles. */}
+        <NameSearch<string>
+          mode="filter"
+          items={nameSuggestions}
+          getName={name => name}
+          value={nameSearch}
+          onChange={setNameSearch}
+          placeholder={t("userManagement.search.placeholder")}
+          style={{ minWidth: 220 }}
+        />
         <ToggleFilterGroup<UserRole>
           value={roleFilter}
           onChange={setRoleFilter}
