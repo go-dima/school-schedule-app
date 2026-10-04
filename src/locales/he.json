@@ -601,7 +601,7 @@
       "rolePlaceholder": "בחר תפקיד למשתמש",
       "submitButton": "אשר משתמש",
       "scopeFieldLabel": "סביבה",
-      "scopeHelp": "משתמש בדיקות לא יוצג בסביבת הייצור"
+      "scopeHelp": "משתמש בדיקות לא יוצג בסביבת מערכת"
     },
     "childLink": {
       "title": "קישור לרשומת תלמיד",
