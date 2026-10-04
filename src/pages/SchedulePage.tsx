@@ -954,7 +954,7 @@ const SchedulePageContent: React.FC = () => {
                 optionType="button"
                 value={viewCommitted ? "committed" : "draft"}
                 onChange={e => setViewCommitted(e.target.value === "committed")}
-                disabled={!selectedChild}>
+                disabled={refreshing || !selectedChild}>
                 <Radio.Button value="draft">
                   {t("schedule.page.labels.draftView")}
                 </Radio.Button>
@@ -975,6 +975,7 @@ const SchedulePageContent: React.FC = () => {
               placeholder={t("schedule.page.placeholders.selectStaff")}
               style={{ minWidth: 200 }}
               loading={staffMembersLoading}
+              disabled={refreshing}
               optionFilterProp="label"
               options={staffMembers.map(({ key, label, teaches }) => ({
                 value: staffKeyToParam(key),
@@ -1028,6 +1029,7 @@ const SchedulePageContent: React.FC = () => {
               style={{ minWidth: 200 }}
               allowClear
               filterOption={false}
+              disabled={refreshing}
             />
           </FilterField>
         )}
@@ -1036,7 +1038,7 @@ const SchedulePageContent: React.FC = () => {
             <ChildGroupTrackSelector
               child={selectedChild}
               onChange={handleParentFieldChange}
-              disabled={childrenLoading || !canEdit}
+              disabled={refreshing || childrenLoading || !canEdit}
               canEditGroup={canManageChildren}
             />
           </>
@@ -1046,7 +1048,7 @@ const SchedulePageContent: React.FC = () => {
             <ChildGroupTrackSelector
               child={staffSelectedChild}
               onChange={handleStaffFieldChange}
-              disabled={allChildrenLoading}
+              disabled={refreshing || allChildrenLoading}
             />
             <FilterField label={t("schedule.page.labels.selectChildForStaff")}>
               <StudentSearchSelector
@@ -1058,7 +1060,7 @@ const SchedulePageContent: React.FC = () => {
                   "schedule.page.placeholders.selectChildForStaff"
                 )}
                 style={{ minWidth: 200 }}
-                disabled={allChildrenLoading}
+                disabled={refreshing || allChildrenLoading}
                 defaultGrade={selectedGrade || 1}
                 mode="select"
                 isCreateAllowed={isStaff}
@@ -1074,7 +1076,7 @@ const SchedulePageContent: React.FC = () => {
               placeholder={t("schedule.page.placeholders.allGrades")}
               allowClear
               style={{ minWidth: 120 }}
-              disabled={isStaff && !!staffSelectedChild}>
+              disabled={refreshing || (isStaff && !!staffSelectedChild)}>
               {GRADES.map(grade => (
                 <Option key={grade} value={grade}>
                   {GetGradeName(grade)}
