@@ -1,12 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { Form, Input, Select, Button, Space, Switch, Row, Col } from "antd";
-import {
-  PlusOutlined,
-  MinusCircleOutlined,
-  ReadOutlined,
-  CoffeeOutlined,
-  TeamOutlined,
-} from "@ant-design/icons";
+import { PlusOutlined, MinusCircleOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { ScheduleService } from "../services/scheduleService";
 import { StaffScheduleService } from "../services/staffScheduleService";
@@ -17,24 +11,10 @@ import { GetGradeName } from "@/utils/grades";
 import { ScopeSelector } from "./ScopeSelector";
 import { GroupTrackSelect } from "./GroupTrackSelect";
 import { TeacherPicker } from "./TeacherPicker";
-import {
-  isBreakTimeSlot,
-  isMeetingTimeSlot,
-  isNonLessonTimeSlot,
-} from "../utils/timeSlots";
-import "./ClassForm.css";
+import { renderTimeSlotOption } from "./TimeSlotOption";
 
 const { TextArea } = Input;
 const { Option } = Select;
-
-const timeSlotIcon = (slot: TimeSlot) =>
-  isBreakTimeSlot(slot) ? (
-    <CoffeeOutlined />
-  ) : isMeetingTimeSlot(slot) ? (
-    <TeamOutlined />
-  ) : (
-    <ReadOutlined />
-  );
 
 interface ClassFormProps {
   initialValues?: ClassWithTimeSlot | null;
@@ -418,23 +398,7 @@ const ClassForm: React.FC<ClassFormProps> = ({
                         showSearch
                         optionFilterProp="label"
                         optionLabelProp="label">
-                        {availableTimeSlots.map(slot => {
-                          const label = `${slot.name} - ${ScheduleService.formatTimeRange(
-                            slot.startTime,
-                            slot.endTime
-                          )}`;
-                          return (
-                            <Option key={slot.id} value={slot.id} label={label}>
-                              <span
-                                className={`time-slot-option ${
-                                  isNonLessonTimeSlot(slot) ? "non-lesson" : ""
-                                }`}>
-                                {timeSlotIcon(slot)}
-                                {label}
-                              </span>
-                            </Option>
-                          );
-                        })}
+                        {availableTimeSlots.map(renderTimeSlotOption)}
                       </Select>
                     </Form.Item>
                   </Col>
