@@ -5,13 +5,26 @@ import { useTranslation } from "react-i18next";
 import "./FiltersBar.css";
 
 interface FiltersBarProps {
-  /** Filter controls, rendered on the wrap-capable start side of the row. */
+  /**
+   * Filter controls, on the right side of the row (it wraps). The group is
+   * pinned ltr, so the first child is leftmost and the last is rightmost.
+   */
   children: React.ReactNode;
-  /** Non-filter actions (export, role switch, ...), rendered on the end side. */
+  /**
+   * Non-filter actions (add, scope, print, ...), on the left side. Also
+   * ltr: the first action is leftmost of the group.
+   */
   actions?: React.ReactNode;
-  /** Boxed (card) look, or flat/unboxed row. Defaults to "boxed". */
+  /**
+   * "boxed" (default, gradient card) for the admin table pages: Students,
+   * Class Management, User Management. "flat" for Schedule, which sits
+   * under its tab bar.
+   */
   variant?: "boxed" | "flat";
-  /** When true, renders a built-in refresh button as the last action. */
+  /**
+   * When true, renders a built-in refresh button after the actions, which
+   * makes it the rightmost control of the actions group.
+   */
   canRefresh?: boolean;
   onRefresh?: () => void;
   refreshing?: boolean;
@@ -26,10 +39,12 @@ interface FiltersBarProps {
   disabled?: boolean;
 }
 
-// Shared filters-section/filters-row wrapper (see FiltersBar.css) so every
-// page that needs a filters row (Schedule, User Management, ...) gets the
-// same layout -- filters on one side, actions like refresh on the other --
-// without duplicating the wrapper markup per page.
+// The one filters/actions bar every list page uses (Schedule, Students,
+// Class Management, User Management). Layout and spacing live in
+// FiltersBar.css only; pages pass controls, never a style.
+// Both groups are ltr (first child leftmost), which keeps the bars'
+// long-standing on-screen order. Right to left: children last-to-first |
+// refresh, then actions last-to-first.
 export const FiltersBar: React.FC<FiltersBarProps> = ({
   children,
   actions,

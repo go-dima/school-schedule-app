@@ -9,46 +9,6 @@
   margin: 0 auto;
 }
 
-.class-management-header {
-  margin-bottom: 8px;
-}
-
-/* Wrapper is a <fieldset> (see ClassManagementPage's `loading` vs
-   `initialLoading` split) so the native `disabled` attribute cascades to
-   every real form control inside -- blocking keyboard activation, not just
-   pointer interaction, while a reload is in flight. Reset <fieldset>'s
-   default browser chrome (border, padding, quirky min-width) so it stays
-   an invisible, non-participating wrapper in this flex/block layout. */
-.class-management-controls {
-  display: block;
-  border: 0;
-  margin: 0;
-  padding: 0;
-  min-width: 0;
-}
-
-.class-management-controls--disabled {
-  opacity: 0.6;
-}
-
-.header-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-/* Page title lives in the app header; keep the action buttons at the
-   inline-end (visual left in RTL). */
-.class-management-controls .header-main {
-  justify-content: flex-end;
-}
-
-.header-main h2 {
-  margin: 0;
-  color: #1890ff;
-}
-
 .classes-table-card {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -154,15 +114,6 @@
 @media (max-width: 768px) {
   .class-management-content {
     padding: 16px;
-  }
-
-  .header-main {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .header-main h2 {
-    text-align: center;
   }
 
   .classes-table-card .ant-table {

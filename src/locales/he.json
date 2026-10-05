@@ -365,7 +365,6 @@
       "adminOnlyAccess": "רק מנהלים יכולים לגשת לדף זה",
       "managementAlertTitle": "ניהול שיעורים",
       "managementDescription": "כאן תוכל להוסיף, לערוך ולמחוק שיעורים. שים לב שמחיקת שיעור תמחק גם את כל הבחירות הקשורות אליו.",
-      "filtersTitle": "מסננים",
       "searchLabel": "חיפוש:",
       "searchPlaceholder": "חפש שיעור לפי שם",
       "searchTeacherLabel": "חיפוש מורה:",

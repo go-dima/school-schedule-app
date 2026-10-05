@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import "../utils/i18n";
 import i18n from "../utils/i18n";
 import type { ClassWithTimeSlot, TimeSlot } from "../types";
+import { DAYS_OF_WEEK } from "../types";
+import { GetGradeName } from "@/utils/grades";
 import {
   stubMatchMedia,
   visibleOptionElements,
@@ -22,7 +24,8 @@ const slot: TimeSlot = {
 const makeClass = (
   id: string,
   title: string,
-  teacher: string
+  teacher: string,
+  overrides: Partial<ClassWithTimeSlot> = {}
 ): ClassWithTimeSlot => ({
   id,
   title,
@@ -39,18 +42,26 @@ const makeClass = (
   scope: "prod",
   createdAt: "",
   updatedAt: "",
+  ...overrides,
 });
 
-// Titles sort the table (default ascending), so rows come out א..ה.
+// The table sorts by day, then title, so rows come out א, ב, ד, then ג
+// (the only Monday class).
+// Each class differs from k1 (grade 3, Sunday, no track) in at most one
+// filterable field, so each filter below narrows to a known set.
 const classes = [
   makeClass("k1", "א אמנות", "מירב אלון"),
-  makeClass("k2", "ב ביולוגיה", "אורית שמש"),
-  makeClass("k3", "ג גיאוגרפיה", "מירב אלון"),
-  makeClass("k4", "ד דרמה", "Dana Levi"),
+  makeClass("k2", "ב ביולוגיה", "אורית שמש", { grades: [4] }),
+  makeClass("k3", "ג גיאוגרפיה", "מירב אלון", {
+    slots: [{ dayOfWeek: 1, timeSlotId: slot.id, timeSlot: slot }],
+  }),
+  makeClass("k4", "ד דרמה", "Dana Levi", { trackNumber: 1 }),
 ];
 
+const { getClasses } = vi.hoisted(() => ({ getClasses: vi.fn() }));
+
 vi.mock("../services/api", () => ({
-  classesApi: { getClasses: () => Promise.resolve(classes) },
+  classesApi: { getClasses },
   timeSlotsApi: { getTimeSlots: () => Promise.resolve([slot]) },
 }));
 vi.mock("../services/enrollmentService", () => ({
@@ -108,6 +119,11 @@ const renderPage = async () => {
   return { teacherBox, typeTeacher };
 };
 
+beforeEach(() => {
+  getClasses.mockReset();
+  getClasses.mockImplementation(() => Promise.resolve(classes));
+});
+
 describe("ClassManagementPage teacher filter", () => {
   beforeAll(stubMatchMedia);
 
@@ -156,6 +172,178 @@ describe("ClassManagementPage teacher filter", () => {
   });
 });
 
+const t = (key: string, options?: Record<string, unknown>) =>
+  i18n.t(`classManagement.page.${key}`, options);
+
+// A filter's control, found through the label rendered beside it.
+const comboboxFor = (labelKey: string) => {
+  const label = Array.from(document.querySelectorAll("label")).find(
+    el => el.textContent === t(labelKey)
+  );
+  return label
+    ?.closest(".ant-space")
+    ?.querySelector("[role=combobox]") as HTMLInputElement;
+};
+
+const pick = (labelKey: string, optionText: string) => {
+  fireEvent.mouseDown(comboboxFor(labelKey));
+  const option = visibleOptionElements().find(
+    o => o.textContent === optionText
+  ) as HTMLElement;
+  fireEvent.click(option);
+};
+
+const typeTitle = (value: string) =>
+  fireEvent.change(comboboxFor("searchLabel"), { target: { value } });
+
+const clearFilters = () =>
+  fireEvent.click(
+    screen.getByRole("button", { name: t("clearFiltersButton") })
+  );
+
+const dayName = (key: number) =>
+  DAYS_OF_WEEK.find(day => day.key === key)?.name as string;
+
+const allTitles = ["א אמנות", "ב ביולוגיה", "ד דרמה", "ג גיאוגרפיה"];
+
+// Characterization: pins today's filter behaviour so the #174 layout move
+// can't change it.
+describe("ClassManagementPage filters (current behavior)", () => {
+  beforeAll(stubMatchMedia);
+
+  it("narrows by class title", async () => {
+    await renderPage();
+
+    typeTitle("ביו");
+
+    expect(rowTitles()).toEqual(["ב ביולוגיה"]);
+  });
+
+  it("narrows by grade", async () => {
+    await renderPage();
+
+    pick("gradeFilterLabel", GetGradeName(4));
+
+    expect(rowTitles()).toEqual(["ב ביולוגיה"]);
+  });
+
+  it("narrows by day", async () => {
+    await renderPage();
+
+    pick("dayFilterLabel", dayName(1));
+
+    expect(rowTitles()).toEqual(["ג גיאוגרפיה"]);
+  });
+
+  it("narrows by track, including 'no track'", async () => {
+    await renderPage();
+
+    pick("trackFilterLabel", t("trackFilterOptionNone"));
+    expect(rowTitles()).toEqual(["א אמנות", "ב ביולוגיה", "ג גיאוגרפיה"]);
+
+    pick("trackFilterLabel", t("trackFilterOption", { track: 1 }));
+    expect(rowTitles()).toEqual(["ד דרמה"]);
+  });
+
+  it("clear resets title, grade, day and track", async () => {
+    await renderPage();
+    pick("gradeFilterLabel", GetGradeName(3));
+    pick("dayFilterLabel", dayName(0));
+    pick("trackFilterLabel", t("trackFilterOptionNone"));
+    typeTitle("א");
+    expect(rowTitles()).toEqual(["א אמנות"]);
+
+    clearFilters();
+
+    expect(rowTitles()).toEqual(allTitles);
+    expect(comboboxFor("searchLabel").value).toBe("");
+  });
+
+  it("clear also resets the teacher search (#231)", async () => {
+    const { teacherBox, typeTeacher } = await renderPage();
+    typeTeacher("dana");
+    expect(rowTitles()).toEqual(["ד דרמה"]);
+
+    clearFilters();
+
+    expect(teacherBox.value).toBe("");
+    expect(rowTitles()).toEqual(allTitles);
+  });
+
+  it("refresh locks the controls while it refetches", async () => {
+    await renderPage();
+    let resolve: (value: ClassWithTimeSlot[]) => void = () => {};
+    getClasses.mockImplementationOnce(
+      () => new Promise<ClassWithTimeSlot[]>(r => (resolve = r))
+    );
+    const refresh = () =>
+      screen.getByRole("button", {
+        name: new RegExp(i18n.t("common.buttons.refresh")),
+      }) as HTMLButtonElement;
+
+    fireEvent.click(refresh());
+
+    await waitFor(() => expect(refresh().disabled).toBe(true));
+    expect(comboboxFor("gradeFilterLabel").disabled).toBe(true);
+    expect(getClasses).toHaveBeenCalledTimes(2);
+
+    resolve(classes);
+
+    await waitFor(() => expect(refresh().disabled).toBe(false));
+    expect(comboboxFor("gradeFilterLabel").disabled).toBe(false);
+  });
+});
+
+const filterGroups = () =>
+  Array.from(document.querySelectorAll(".filters-row > .ant-space"));
+
+const textsOf = (root: Element, selector: string) =>
+  Array.from(root.querySelectorAll(selector)).map(el => el.textContent?.trim());
+
+// Structural (#174): one shared FiltersBar holds every filter and action.
+describe("ClassManagementPage filters bar", () => {
+  beforeAll(stubMatchMedia);
+
+  it("renders a single FiltersBar with no caption or old wrappers", async () => {
+    await renderPage();
+
+    expect(document.querySelectorAll(".filters-section")).toHaveLength(1);
+    expect(screen.queryByText("מסננים")).toBeNull();
+    expect(document.querySelector(".header-main")).toBeNull();
+    expect(document.querySelector(".class-management-controls")).toBeNull();
+  });
+
+  // DOM order. The bar's groups are ltr, so the first child is leftmost:
+  // on screen, right to left, class search ... track, then clear.
+  it("puts clear first and the class search last (DOM order)", async () => {
+    await renderPage();
+    const [filters] = filterGroups();
+
+    expect(filters.firstElementChild?.textContent?.trim()).toBe(
+      t("clearFiltersButton")
+    );
+    expect(textsOf(filters, "label")).toEqual([
+      t("trackFilterLabel"),
+      t("dayFilterLabel"),
+      t("gradeFilterLabel"),
+      t("searchTeacherLabel"),
+      t("searchLabel"),
+    ]);
+  });
+
+  // Refresh last in the DOM is rightmost of the ltr actions group.
+  it("puts Add, then refresh last, in the actions group (DOM order)", async () => {
+    await renderPage();
+    const groups = filterGroups();
+
+    expect(groups).toHaveLength(2);
+    expect(textsOf(groups[1], "button")).toEqual([
+      t("addNewClass"),
+      i18n.t("common.buttons.refresh"),
+    ]);
+  });
+});
+
 describe("ClassManagementPage clear filters", () => {
   beforeAll(stubMatchMedia);
 
@@ -163,12 +351,10 @@ describe("ClassManagementPage clear filters", () => {
     fireEvent.mouseDown(box);
     fireEvent.click(visibleOptionElements()[0]);
   };
-  // Picked values in the filters card only -- the table's page-size Select
+  // Picked values in the filters bar only -- the table's page-size Select
   // also shows a selection item once rows are back.
   const selectedItems = () =>
-    document.querySelectorAll(
-      ".ant-card:not(.classes-table-card) .ant-select-selection-item"
-    );
+    document.querySelectorAll(".filters-section .ant-select-selection-item");
 
   it("resets every filter and shows every class again", async () => {
     const { teacherBox, typeTeacher } = await renderPage();
@@ -196,11 +382,6 @@ describe("ClassManagementPage clear filters", () => {
     expect(teacherBox.value).toBe("");
     expect(titleBox.value).toBe("");
     expect(selectedItems()).toHaveLength(0);
-    expect(rowTitles()).toEqual([
-      "א אמנות",
-      "ב ביולוגיה",
-      "ג גיאוגרפיה",
-      "ד דרמה",
-    ]);
+    expect(rowTitles()).toEqual(allTitles);
   });
 });
