@@ -313,23 +313,25 @@ describe("ClassManagementPage filters bar", () => {
     expect(document.querySelector(".class-management-controls")).toBeNull();
   });
 
-  // DOM order. The bar's groups are rtl, so the first child is rightmost.
-  it("puts the filters first and clear last (DOM order)", async () => {
+  // DOM order. The bar's groups are ltr, so the first child is leftmost:
+  // on screen, right to left, class search ... track, then clear.
+  it("puts clear first and the class search last (DOM order)", async () => {
     await renderPage();
     const [filters] = filterGroups();
 
-    expect(textsOf(filters, "label")).toEqual([
-      t("searchLabel"),
-      t("searchTeacherLabel"),
-      t("gradeFilterLabel"),
-      t("dayFilterLabel"),
-      t("trackFilterLabel"),
-    ]);
-    expect(filters.lastElementChild?.textContent?.trim()).toBe(
+    expect(filters.firstElementChild?.textContent?.trim()).toBe(
       t("clearFiltersButton")
     );
+    expect(textsOf(filters, "label")).toEqual([
+      t("trackFilterLabel"),
+      t("dayFilterLabel"),
+      t("gradeFilterLabel"),
+      t("searchTeacherLabel"),
+      t("searchLabel"),
+    ]);
   });
 
+  // Refresh last in the DOM is rightmost of the ltr actions group.
   it("puts Add, then refresh last, in the actions group (DOM order)", async () => {
     await renderPage();
     const groups = filterGroups();

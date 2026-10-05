@@ -173,6 +173,7 @@ describe("StudentsPage filters bar", () => {
     const sections = document.querySelectorAll(".filters-section");
     expect(sections).toHaveLength(1);
     // DOM order: search, then grade, in the filters group; Add in actions.
+    // The groups are ltr, so on screen grade is rightmost, then search.
     const [filters, actions] = Array.from(
       sections[0].querySelectorAll(".filters-row > .ant-space")
     );

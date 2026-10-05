@@ -14,10 +14,11 @@ import type { ClassWithTimeSlot, TimeSlot, UserRoleData } from "../types";
 // those three calls for fixtures while the story is mounted, so the story
 // shows a populated table instead of a failed Supabase fetch.
 //
-// Expected filters bar, right to left:
+// Expected filters bar, right to left (same order as on main; the buttons
+// that used to sit in the row above keep רענן rightmost, then הוסף):
 //   [חיפוש:][class search] · [חיפוש מורה:][teacher search] · [כיתה:][grade]
 //   · [יום בשבוע:][day] · [מסלול:][track] · נקה מסננים
-//   ‖ scope (admin) · הוסף שיעור חדש · רענן (leftmost).
+//   ‖ רענן · הוסף שיעור חדש · scope (admin, leftmost).
 // Inside each pair the label renders to the right of its control.
 const slot: TimeSlot = {
   id: "slot-1",

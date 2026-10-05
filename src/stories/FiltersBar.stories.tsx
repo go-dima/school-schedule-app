@@ -3,9 +3,11 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { Button, Input, Select, Space } from "antd";
 import { PlusOutlined, PrinterOutlined } from "@ant-design/icons";
 import { FiltersBar } from "../components/FiltersBar";
-// Reproduces the app-wide `.ant-space { direction: ltr }` rule. The router
-// imports this page eagerly, so every page in the app carries it; loading it
-// here makes the stories render the same order as the app.
+// Reproduces the app-wide `.ant-space { direction: ltr }` rule (#249). The
+// router imports this page eagerly, so every page in the app carries it. The
+// bar's own two groups are pinned ltr in FiltersBar.css and don't need it,
+// but the nested label pairs do: loading it here makes them render as in
+// the app.
 import "../pages/ClassManagementPage.css";
 
 const meta: Meta<typeof FiltersBar> = {
@@ -30,17 +32,19 @@ const labelled = (label: string, control: ReactNode) => (
   </Space>
 );
 
+// DOM order is the reverse of the on-screen right-to-left order: the bar's
+// groups are ltr, so the first child is leftmost.
 const boxedFilters = (
   <>
-    {labelled(
-      "חיפוש:",
-      <Input placeholder="חפש שיעור לפי שם" style={{ width: 200 }} />
-    )}
+    <Button>נקה מסננים</Button>
     {labelled(
       "כיתה:",
       <Select placeholder="בחר כיתה" style={{ width: 80 }} options={[]} />
     )}
-    <Button>נקה מסננים</Button>
+    {labelled(
+      "חיפוש:",
+      <Input placeholder="חפש שיעור לפי שם" style={{ width: 200 }} />
+    )}
   </>
 );
 
@@ -52,9 +56,9 @@ const boxedActions = (
 
 /**
  * Admin table pages (Students, Class Management, User Management).
- * Expected, right to left:
+ * Expected, right to left (same order as on main):
  *   [חיפוש: label][search] · [כיתה: label][grade] · נקה מסננים
- *   ‖ הוסף · רענן (leftmost).
+ *   ‖ רענן · הוסף (leftmost).
  */
 export const Boxed: Story = {
   args: {
@@ -79,8 +83,8 @@ export const BoxedDisabled: Story = {
 };
 
 /**
- * Schedule page, under the tab bar. Expected, right to left:
- *   search · [כיתה: label][grade] ‖ print · רענן (leftmost).
+ * Schedule page, under the tab bar. Expected, right to left (same order as
+ * on main): [כיתה: label][grade] · search ‖ רענן · print (leftmost).
  */
 export const Flat: Story = {
   args: {
