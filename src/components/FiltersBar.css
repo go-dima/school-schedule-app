@@ -23,6 +23,21 @@
   flex-wrap: wrap;
 }
 
+/* Both groups lay out right to left: the first child is rightmost, so the
+   built-in refresh (always the last action) ends up leftmost.
+   This has to be pinned here because two unscoped page stylesheets set
+   `.ant-space { direction: ltr }` (ClassManagementPage.css and
+   PendingApprovalsPage.css). Both pages are imported eagerly by the router,
+   so that rule applies on every page and beats antd's own `.ant-space-rtl`
+   (same specificity, and antd's runtime styles are injected first). The app
+   does set <ConfigProvider direction="rtl"> in main.tsx; the leak is what
+   overrides it. This selector is more specific, so the bar renders the same
+   in the app and in Storybook. Nested Spaces (label pairs, FilterSelect)
+   are left alone and still follow the global rule. */
+.filters-row > .ant-space {
+  direction: rtl;
+}
+
 .filters-row > .ant-space:first-child {
   flex: 1;
   min-width: 300px;
@@ -47,7 +62,12 @@
   }
 }
 
-/* Boxed variant: gradient "card" look (User Management) */
+/* Two deliberate variants:
+   - boxed (default): gradient "card" look for the admin table pages
+     (Students, Class Management, User Management);
+   - flat: unboxed row for Schedule, which sits under the tab bar. */
+
+/* Boxed variant */
 .filters-section--boxed {
   padding: 20px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
@@ -55,27 +75,15 @@
   border: 1px solid #e2e8f0;
 }
 
-/* The first Space's own internal packing ignores the page's RTL direction
-   (antd renders Space with an internal direction: ltr regardless of
-   ambient dir, unless the app wraps everything in
-   <ConfigProvider direction="rtl">, which this one doesn't) -- so its
-   content hugs the *left* of its flex:1 box, right next to the actions
-   group, instead of the box's own far edge. Pull it to the far edge
-   explicitly so filters and actions land at opposite ends of the bar. */
-.filters-section--boxed .filters-row > .ant-space:first-child {
-  justify-content: flex-end;
-}
-
 .filters-section--disabled {
   opacity: 0.6;
 }
 
-/* Flat variant: unboxed row (Schedule) */
+/* Flat variant. The 8px bottom margin comes from .filters-section. */
 .filters-section--flat {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 8px;
   padding: 8px 0;
 }
 

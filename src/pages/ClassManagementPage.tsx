@@ -18,7 +18,6 @@ import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
-  ReloadOutlined,
   MoreOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
@@ -31,6 +30,7 @@ import { DAYS_OF_WEEK, GRADES } from "../types";
 import ClassForm from "../components/ClassForm";
 import { GroupTrackTags } from "../components/GroupTrackTags";
 import { FilterSelect } from "../components/FilterSelect";
+import { FiltersBar } from "../components/FiltersBar";
 import { trackEvent, trackWithActor, AnalyticsEvent } from "../utils/analytics";
 import "./ClassManagementPage.css";
 import { GetGradeName } from "@/utils/grades";
@@ -549,161 +549,137 @@ const ClassManagementPage: React.FC = () => {
 
   return (
     <div className="page-content">
-      <div className="class-management-header">
-        <Alert
-          message={t("classManagement.page.managementAlertTitle")}
-          description={t("classManagement.page.managementDescription")}
-          type="info"
-          showIcon
-          style={{ marginBottom: 24 }}
+      <Alert
+        message={t("classManagement.page.managementAlertTitle")}
+        description={t("classManagement.page.managementDescription")}
+        type="info"
+        showIcon
+        style={{ marginBottom: 24 }}
+      />
+
+      {/* RTL, right to left: class search, teacher search, grade, day,
+          track, clear | scope (admin), Add, refresh (leftmost). */}
+      <FiltersBar
+        canRefresh
+        onRefresh={loadData}
+        refreshing={loading}
+        disabled={loading}
+        actions={
+          <>
+            {roleFlags.isAdmin && (
+              <ScopeFilter
+                value={selectedScopes}
+                onChange={setSelectedScopes}
+              />
+            )}
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              disabled={!permissions.canCreateClasses || loading}
+              onClick={handleAddClass}>
+              {t("classManagement.page.addNewClass")}
+            </Button>
+          </>
+        }>
+        {/* Label pairs: the label renders to the right of its control. */}
+        <Space size={4} align="center">
+          <AutoComplete
+            value={searchTerm}
+            onChange={setSearchTerm}
+            options={(() => {
+              if (!searchTerm) return [];
+
+              const lowerSearchTerm = searchTerm.toLowerCase();
+              const uniqueClassNames = Array.from(
+                new Set(
+                  classes
+                    .filter(cls =>
+                      cls.title.toLowerCase().includes(lowerSearchTerm)
+                    )
+                    .map(cls => cls.title)
+                )
+              ).sort();
+
+              return uniqueClassNames.map(title => ({ value: title }));
+            })()}
+            placeholder={t("classManagement.page.searchPlaceholder")}
+            style={{ width: 200 }}
+            allowClear
+            filterOption={false}
+            disabled={loading}
+          />
+          <label>{t("classManagement.page.searchLabel")}</label>
+        </Space>
+
+        <Space size={4} align="center">
+          <NameSearch<string>
+            mode="filter"
+            items={teacherNames}
+            getName={teacher => teacher}
+            value={teacherSearchTerm}
+            onChange={setTeacherSearchTerm}
+            placeholder={t("classManagement.page.searchTeacherPlaceholder")}
+            style={{ width: 200 }}
+            disabled={loading}
+          />
+          <label>{t("classManagement.page.searchTeacherLabel")}</label>
+        </Space>
+
+        <FilterSelect
+          label={t("classManagement.page.gradeFilterLabel")}
+          placeholder={t("classManagement.page.gradeFilterPlaceholder")}
+          value={selectedGrade}
+          onChange={setSelectedGrade}
+          options={GRADES.map(grade => ({
+            value: grade,
+            label: GetGradeName(grade),
+          }))}
+          disabled={loading}
         />
 
-        <fieldset
-          className={`class-management-controls${
-            loading ? " class-management-controls--disabled" : ""
-          }`}
+        <FilterSelect
+          label={t("classManagement.page.dayFilterLabel")}
+          placeholder={t("classManagement.page.dayFilterPlaceholder")}
+          value={selectedDay}
+          onChange={setSelectedDay}
+          options={DAYS_OF_WEEK.map(day => ({
+            value: day.key,
+            label: day.name,
+          }))}
           disabled={loading}
-          aria-disabled={loading}>
-          <div className="header-main">
-            <Space>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                disabled={!permissions.canCreateClasses || loading}
-                onClick={handleAddClass}>
-                {t("classManagement.page.addNewClass")}
-              </Button>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={loadData}
-                loading={loading}
-                disabled={loading}>
-                {t("common.buttons.refresh")}
-              </Button>
-            </Space>
-          </div>
+        />
 
-          {/* Filters */}
-          <Card title={t("classManagement.page.filtersTitle")}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: 16,
-              }}>
-              <Space size={16} align="end" wrap>
-                <Button
-                  onClick={() => {
-                    setSearchTerm("");
-                    setSelectedDay(null);
-                    setSelectedGrade(null);
-                    setSelectedTrack(null);
-                    setSelectedScopes([...ALL_SCOPES]);
-                  }}>
-                  {t("classManagement.page.clearFiltersButton")}
-                </Button>
+        <FilterSelect
+          label={t("classManagement.page.trackFilterLabel")}
+          placeholder={t("classManagement.page.trackFilterPlaceholder")}
+          value={selectedTrack}
+          onChange={setSelectedTrack}
+          options={[
+            ...[1, 2].map(track => ({
+              value: track,
+              label: t("classManagement.page.trackFilterOption", {
+                track,
+              }),
+            })),
+            {
+              value: NO_TRACK_FILTER,
+              label: t("classManagement.page.trackFilterOptionNone"),
+            },
+          ]}
+          disabled={loading}
+        />
 
-                <FilterSelect
-                  label={t("classManagement.page.trackFilterLabel")}
-                  placeholder={t("classManagement.page.trackFilterPlaceholder")}
-                  value={selectedTrack}
-                  onChange={setSelectedTrack}
-                  options={[
-                    ...[1, 2].map(track => ({
-                      value: track,
-                      label: t("classManagement.page.trackFilterOption", {
-                        track,
-                      }),
-                    })),
-                    {
-                      value: NO_TRACK_FILTER,
-                      label: t("classManagement.page.trackFilterOptionNone"),
-                    },
-                  ]}
-                  disabled={loading}
-                />
-
-                <FilterSelect
-                  label={t("classManagement.page.dayFilterLabel")}
-                  placeholder={t("classManagement.page.dayFilterPlaceholder")}
-                  value={selectedDay}
-                  onChange={setSelectedDay}
-                  options={DAYS_OF_WEEK.map(day => ({
-                    value: day.key,
-                    label: day.name,
-                  }))}
-                  disabled={loading}
-                />
-
-                <FilterSelect
-                  label={t("classManagement.page.gradeFilterLabel")}
-                  placeholder={t("classManagement.page.gradeFilterPlaceholder")}
-                  value={selectedGrade}
-                  onChange={setSelectedGrade}
-                  options={GRADES.map(grade => ({
-                    value: grade,
-                    label: GetGradeName(grade),
-                  }))}
-                  disabled={loading}
-                />
-
-                <Space size={4} align="center">
-                  <NameSearch<string>
-                    mode="filter"
-                    items={teacherNames}
-                    getName={teacher => teacher}
-                    value={teacherSearchTerm}
-                    onChange={setTeacherSearchTerm}
-                    placeholder={t(
-                      "classManagement.page.searchTeacherPlaceholder"
-                    )}
-                    style={{ width: 200 }}
-                    disabled={loading}
-                  />
-                  <label>{t("classManagement.page.searchTeacherLabel")}</label>
-                </Space>
-
-                <Space size={4} align="center">
-                  <AutoComplete
-                    value={searchTerm}
-                    onChange={setSearchTerm}
-                    options={(() => {
-                      if (!searchTerm) return [];
-
-                      const lowerSearchTerm = searchTerm.toLowerCase();
-                      const uniqueClassNames = Array.from(
-                        new Set(
-                          classes
-                            .filter(cls =>
-                              cls.title.toLowerCase().includes(lowerSearchTerm)
-                            )
-                            .map(cls => cls.title)
-                        )
-                      ).sort();
-
-                      return uniqueClassNames.map(title => ({ value: title }));
-                    })()}
-                    placeholder={t("classManagement.page.searchPlaceholder")}
-                    style={{ width: 200 }}
-                    allowClear
-                    filterOption={false}
-                    disabled={loading}
-                  />
-                  <label>{t("classManagement.page.searchLabel")}</label>
-                </Space>
-              </Space>
-
-              {roleFlags.isAdmin && (
-                <ScopeFilter
-                  value={selectedScopes}
-                  onChange={setSelectedScopes}
-                />
-              )}
-            </div>
-          </Card>
-        </fieldset>
-      </div>
+        <Button
+          onClick={() => {
+            setSearchTerm("");
+            setSelectedDay(null);
+            setSelectedGrade(null);
+            setSelectedTrack(null);
+            setSelectedScopes([...ALL_SCOPES]);
+          }}>
+          {t("classManagement.page.clearFiltersButton")}
+        </Button>
+      </FiltersBar>
 
       {error && (
         <Alert
