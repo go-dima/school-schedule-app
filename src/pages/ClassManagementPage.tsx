@@ -29,6 +29,7 @@ import type { ClassWithTimeSlot, TimeSlot, Class, Scope } from "../types";
 import { DAYS_OF_WEEK, GRADES } from "../types";
 import ClassForm from "../components/ClassForm";
 import { GroupTrackTags } from "../components/GroupTrackTags";
+import { FilterField } from "../components/FilterField";
 import { FilterSelect } from "../components/FilterSelect";
 import { FiltersBar } from "../components/FiltersBar";
 import { trackEvent, trackWithActor, AnalyticsEvent } from "../utils/analytics";
@@ -581,8 +582,10 @@ const ClassManagementPage: React.FC = () => {
             </Button>
           </>
         }>
-        {/* Label pairs: the label renders to the right of its control. */}
-        <Space size={4} align="center">
+        {/* Every filter is a FilterField pair (FilterSelect builds on it):
+            control, then label. The pair's Space follows the global ltr
+            rule, so the label renders to the right of its control. */}
+        <FilterField label={t("classManagement.page.searchLabel")}>
           <AutoComplete
             value={searchTerm}
             onChange={setSearchTerm}
@@ -608,10 +611,9 @@ const ClassManagementPage: React.FC = () => {
             filterOption={false}
             disabled={loading}
           />
-          <label>{t("classManagement.page.searchLabel")}</label>
-        </Space>
+        </FilterField>
 
-        <Space size={4} align="center">
+        <FilterField label={t("classManagement.page.searchTeacherLabel")}>
           <NameSearch<string>
             mode="filter"
             items={teacherNames}
@@ -622,8 +624,7 @@ const ClassManagementPage: React.FC = () => {
             style={{ width: 200 }}
             disabled={loading}
           />
-          <label>{t("classManagement.page.searchTeacherLabel")}</label>
-        </Space>
+        </FilterField>
 
         <FilterSelect
           label={t("classManagement.page.gradeFilterLabel")}

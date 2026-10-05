@@ -174,15 +174,36 @@ describe("ClassManagementPage teacher filter", () => {
 const t = (key: string, options?: Record<string, unknown>) =>
   i18n.t(`classManagement.page.${key}`, options);
 
-// A filter's control, found through the label rendered beside it.
-const comboboxFor = (labelKey: string) => {
-  const label = Array.from(document.querySelectorAll("label")).find(
-    el => el.textContent === t(labelKey)
+// A filter label as shown on screen: the text with exactly one trailing
+// colon, whether the colon comes from the i18n string or from FilterField.
+const shownLabel = (labelKey: string) => `${t(labelKey).replace(/:$/, "")}:`;
+
+// Each filter pair in the bar, in DOM order: a Space whose last item is the
+// label. The clear button isn't a pair, so it's skipped.
+const filterPairs = () =>
+  Array.from(
+    document.querySelectorAll(
+      ".filters-row > .ant-space:first-child > .ant-space-item > .ant-space"
+    )
   );
-  return label
-    ?.closest(".ant-space")
-    ?.querySelector("[role=combobox]") as HTMLInputElement;
-};
+
+const filterLabels = () =>
+  filterPairs().map(pair => pair.lastElementChild?.textContent?.trim() ?? "");
+
+// A filter's control, found through the label rendered beside it.
+const pairFor = (labelKey: string) =>
+  filterPairs().find(
+    pair => pair.lastElementChild?.textContent?.trim() === shownLabel(labelKey)
+  );
+
+const comboboxFor = (labelKey: string) =>
+  pairFor(labelKey)?.querySelector("[role=combobox]") as HTMLInputElement;
+
+// FilterSelect's visible clear (X) button, or null when it isn't rendered.
+const clearButtonFor = (labelKey: string) =>
+  pairFor(labelKey)?.querySelector<HTMLButtonElement>(
+    ":scope > .ant-space-item > button"
+  ) ?? null;
 
 const pick = (labelKey: string, optionText: string) => {
   fireEvent.mouseDown(comboboxFor(labelKey));
@@ -319,12 +340,12 @@ describe("ClassManagementPage filters bar", () => {
     await renderPage();
     const [filters] = filterGroups();
 
-    expect(textsOf(filters, "label")).toEqual([
-      t("searchLabel"),
-      t("searchTeacherLabel"),
-      t("gradeFilterLabel"),
-      t("dayFilterLabel"),
-      t("trackFilterLabel"),
+    expect(filterLabels()).toEqual([
+      shownLabel("searchLabel"),
+      shownLabel("searchTeacherLabel"),
+      shownLabel("gradeFilterLabel"),
+      shownLabel("dayFilterLabel"),
+      shownLabel("trackFilterLabel"),
     ]);
     expect(filters.lastElementChild?.textContent?.trim()).toBe(
       t("clearFiltersButton")
@@ -340,5 +361,69 @@ describe("ClassManagementPage filters bar", () => {
       t("addNewClass"),
       i18n.t("common.buttons.refresh"),
     ]);
+  });
+});
+
+// Characterization (#40): pins the grade filter's behaviour and the filter
+// labels, so moving FilterSelect onto FilterField can't change them.
+describe("ClassManagementPage grade filter", () => {
+  beforeAll(stubMatchMedia);
+
+  it("narrows to the picked grade", async () => {
+    await renderPage();
+
+    pick("gradeFilterLabel", GetGradeName(4));
+
+    expect(rowTitles()).toEqual(["ב ביולוגיה"]);
+  });
+
+  it("shows the X only while a grade is picked", async () => {
+    await renderPage();
+    expect(clearButtonFor("gradeFilterLabel")).toBeNull();
+
+    pick("gradeFilterLabel", GetGradeName(4));
+
+    expect(clearButtonFor("gradeFilterLabel")).not.toBeNull();
+  });
+
+  it("the X clears the grade and brings every row back", async () => {
+    await renderPage();
+    pick("gradeFilterLabel", GetGradeName(4));
+
+    fireEvent.click(clearButtonFor("gradeFilterLabel") as HTMLButtonElement);
+
+    expect(rowTitles()).toEqual(allTitles);
+    expect(clearButtonFor("gradeFilterLabel")).toBeNull();
+  });
+
+  it("the select's own clear icon brings every row back", async () => {
+    await renderPage();
+    pick("gradeFilterLabel", GetGradeName(4));
+    const clearIcon = pairFor("gradeFilterLabel")?.querySelector(
+      ".ant-select-clear"
+    ) as HTMLElement;
+
+    fireEvent.mouseDown(clearIcon);
+
+    expect(rowTitles()).toEqual(allTitles);
+  });
+
+  it("'clear filters' resets the grade", async () => {
+    await renderPage();
+    pick("gradeFilterLabel", GetGradeName(4));
+
+    clearFilters();
+
+    expect(rowTitles()).toEqual(allTitles);
+    expect(clearButtonFor("gradeFilterLabel")).toBeNull();
+  });
+
+  it("shows every filter label with a single colon", async () => {
+    await renderPage();
+
+    const labels = filterLabels();
+
+    expect(labels).toHaveLength(5);
+    labels.forEach(label => expect(label).toMatch(/[^:]:$/));
   });
 });
