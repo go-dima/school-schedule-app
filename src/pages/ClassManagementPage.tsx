@@ -595,6 +595,7 @@ const ClassManagementPage: React.FC = () => {
                 <Button
                   onClick={() => {
                     setSearchTerm("");
+                    setTeacherSearchTerm("");
                     setSelectedDay(null);
                     setSelectedGrade(null);
                     setSelectedTrack(null);

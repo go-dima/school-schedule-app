@@ -220,3 +220,50 @@ describe("ClassManagementPage title filter", () => {
     expect(rowTitles()).toEqual(["ב ביולוגיה"]);
   });
 });
+
+describe("ClassManagementPage clear filters", () => {
+  beforeAll(stubMatchMedia);
+
+  const pickFirstOption = (box: HTMLInputElement) => {
+    fireEvent.mouseDown(box);
+    fireEvent.click(visibleOptionElements()[0]);
+  };
+  // Picked values in the filters card only -- the table's page-size Select
+  // also shows a selection item once rows are back.
+  const selectedItems = () =>
+    document.querySelectorAll(
+      ".ant-card:not(.classes-table-card) .ant-select-selection-item"
+    );
+
+  it("resets every filter and shows every class again", async () => {
+    const { teacherBox, typeTeacher, titleBox } = await renderPage();
+    const selectBoxes = [
+      "classManagement.page.dayFilterPlaceholder",
+      "classManagement.page.gradeFilterPlaceholder",
+      "classManagement.page.trackFilterPlaceholder",
+    ].map(searchBox);
+
+    typeTeacher("מירב");
+    fireEvent.change(titleBox, { target: { value: "אמנות" } });
+    selectBoxes.forEach(pickFirstOption);
+    expect(rowTitles()).toEqual([]);
+    expect(selectedItems()).toHaveLength(3);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: i18n.t("classManagement.page.clearFiltersButton"),
+      })
+    );
+
+    expect(teacherBox.value).toBe("");
+    expect(titleBox.value).toBe("");
+    expect(selectedItems()).toHaveLength(0);
+    expect(rowTitles()).toEqual([
+      "א אמנות",
+      "ב ביולוגיה",
+      "ב ביולוגיה",
+      "ג גיאוגרפיה",
+      "ד Drama",
+    ]);
+  });
+});
