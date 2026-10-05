@@ -90,18 +90,19 @@ const rowTitles = () =>
   );
 
 // Found by its placeholder while it's still empty, then reused.
+const comboboxByPlaceholder = (key: string) =>
+  screen
+    .getAllByRole("combobox")
+    .find(el =>
+      el.closest(".ant-select")?.textContent?.includes(i18n.t(key))
+    ) as HTMLInputElement;
+
 const renderPage = async () => {
   render(<ClassManagementPage />);
   await waitFor(() => expect(rowTitles()).toHaveLength(4));
-  const teacherBox = screen
-    .getAllByRole("combobox")
-    .find(el =>
-      el
-        .closest(".ant-select")
-        ?.textContent?.includes(
-          i18n.t("classManagement.page.searchTeacherPlaceholder")
-        )
-    ) as HTMLInputElement;
+  const teacherBox = comboboxByPlaceholder(
+    "classManagement.page.searchTeacherPlaceholder"
+  );
   const typeTeacher = (value: string) =>
     fireEvent.change(teacherBox, { target: { value } });
   return { teacherBox, typeTeacher };
@@ -152,5 +153,54 @@ describe("ClassManagementPage teacher filter", () => {
 
     expect(teacherBox.value).toBe("אורית שמש");
     expect(rowTitles()).toEqual(["ב ביולוגיה"]);
+  });
+});
+
+describe("ClassManagementPage clear filters", () => {
+  beforeAll(stubMatchMedia);
+
+  const pickFirstOption = (box: HTMLInputElement) => {
+    fireEvent.mouseDown(box);
+    fireEvent.click(visibleOptionElements()[0]);
+  };
+  // Picked values in the filters card only -- the table's page-size Select
+  // also shows a selection item once rows are back.
+  const selectedItems = () =>
+    document.querySelectorAll(
+      ".ant-card:not(.classes-table-card) .ant-select-selection-item"
+    );
+
+  it("resets every filter and shows every class again", async () => {
+    const { teacherBox, typeTeacher } = await renderPage();
+    const titleBox = comboboxByPlaceholder(
+      "classManagement.page.searchPlaceholder"
+    );
+    const selectBoxes = [
+      "classManagement.page.dayFilterPlaceholder",
+      "classManagement.page.gradeFilterPlaceholder",
+      "classManagement.page.trackFilterPlaceholder",
+    ].map(comboboxByPlaceholder);
+
+    typeTeacher("מירב");
+    fireEvent.change(titleBox, { target: { value: "אמנות" } });
+    selectBoxes.forEach(pickFirstOption);
+    expect(rowTitles()).toEqual([]);
+    expect(selectedItems()).toHaveLength(3);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: i18n.t("classManagement.page.clearFiltersButton"),
+      })
+    );
+
+    expect(teacherBox.value).toBe("");
+    expect(titleBox.value).toBe("");
+    expect(selectedItems()).toHaveLength(0);
+    expect(rowTitles()).toEqual([
+      "א אמנות",
+      "ב ביולוגיה",
+      "ג גיאוגרפיה",
+      "ד דרמה",
+    ]);
   });
 });
