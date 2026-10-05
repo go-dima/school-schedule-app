@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { Button, Input, Select, Space } from "antd";
+import { Button, Input } from "antd";
 import { PlusOutlined, PrinterOutlined } from "@ant-design/icons";
 import { FiltersBar } from "../components/FiltersBar";
+import { FilterField } from "../components/FilterField";
+import { FilterSelect } from "../components/FilterSelect";
 // Reproduces the app-wide `.ant-space { direction: ltr }` rule (#249). The
 // router imports this page eagerly, so every page in the app carries it. The
 // bar's own two groups are pinned ltr in FiltersBar.css and don't need it,
@@ -22,14 +23,17 @@ const meta: Meta<typeof FiltersBar> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// A label pair as the pages build it: control, then label. The pair's own
-// Space follows the global ltr rule, so the label renders to the RIGHT of
-// its control.
-const labelled = (label: string, control: ReactNode) => (
-  <Space size={4} align="center">
-    {control}
-    <label>{label}</label>
-  </Space>
+// Label pairs as the pages build them: FilterField (control, then label) and
+// FilterSelect (Select, then label). A pair's own Space follows the global
+// ltr rule, so the label renders to the RIGHT of its control.
+const gradeFilter = (label: string, placeholder: string) => (
+  <FilterSelect<number>
+    label={label}
+    placeholder={placeholder}
+    value={null}
+    onChange={() => {}}
+    options={[]}
+  />
 );
 
 // DOM order is the reverse of the on-screen right-to-left order: the bar's
@@ -37,14 +41,10 @@ const labelled = (label: string, control: ReactNode) => (
 const boxedFilters = (
   <>
     <Button>נקה מסננים</Button>
-    {labelled(
-      "כיתה:",
-      <Select placeholder="בחר כיתה" style={{ width: 80 }} options={[]} />
-    )}
-    {labelled(
-      "חיפוש:",
+    {gradeFilter("כיתה", "בחר כיתה")}
+    <FilterField label="חיפוש">
       <Input placeholder="חפש שיעור לפי שם" style={{ width: 200 }} />
-    )}
+    </FilterField>
   </>
 );
 
@@ -84,7 +84,8 @@ export const BoxedDisabled: Story = {
 
 /**
  * Schedule page, under the tab bar. Expected, right to left (same order as
- * on main): [כיתה: label][grade] · search ‖ רענן · print (leftmost).
+ * on main; the grade filter is the last child, so it is rightmost):
+ *   [סנן לפי כיתה: label][grade] · search ‖ רענן · print (leftmost).
  */
 export const Flat: Story = {
   args: {
@@ -92,10 +93,7 @@ export const Flat: Story = {
     children: (
       <>
         <Input placeholder="חיפוש שיעור" style={{ width: 200 }} />
-        {labelled(
-          "כיתה:",
-          <Select placeholder="כל הכיתות" style={{ width: 80 }} options={[]} />
-        )}
+        {gradeFilter("סנן לפי כיתה", "כל הכיתות")}
       </>
     ),
     actions: <Button icon={<PrinterOutlined />}>הדפסה</Button>,

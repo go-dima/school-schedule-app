@@ -19,7 +19,9 @@ import type { ClassWithTimeSlot, TimeSlot, UserRoleData } from "../types";
 //   [חיפוש:][class search] · [חיפוש מורה:][teacher search] · [כיתה:][grade]
 //   · [יום בשבוע:][day] · [מסלול:][track] · נקה מסננים
 //   ‖ רענן · הוסף שיעור חדש · scope (admin, leftmost).
-// Inside each pair the label renders to the right of its control.
+// Inside each pair the label renders to the right of its control, with one
+// colon. Grade, day and track are FilterSelects, cleared with the Select's
+// own clear icon.
 const slot: TimeSlot = {
   id: "slot-1",
   name: "שיעור ראשון",

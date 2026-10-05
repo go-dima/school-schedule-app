@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   Card,
   Typography,
-  Select,
   Button,
   Space,
   Alert,
@@ -39,6 +38,7 @@ import { ScheduleOverrideModal } from "../components/ScheduleOverrideModal";
 import type { ScheduleOverrideFormValues } from "../components/ScheduleOverrideForm";
 import { FiltersBar } from "../components/FiltersBar";
 import { FilterField } from "../components/FilterField";
+import { FilterSelect } from "../components/FilterSelect";
 import { ChildTabs } from "../components/ChildTabs";
 import { ScheduleTabsBar } from "../components/ScheduleTabsBar";
 import { AddChildButton } from "../components/AddChildButton";
@@ -67,7 +67,6 @@ import { printSchedule } from "../utils/printSchedule";
 import { trackEvent, trackWithActor, AnalyticsEvent } from "../utils/analytics";
 
 const { Title } = Typography;
-const { Option } = Select;
 
 const SchedulePageContent: React.FC = () => {
   const { t } = useTranslation();
@@ -1061,22 +1060,21 @@ const SchedulePageContent: React.FC = () => {
             </FilterField>
           </>
         )}
+        {/* Last child, so the rightmost filter (the bar's groups are ltr).
+            Inside the pair the label is rightmost.
+            Clearing means "all grades" (undefined). */}
         {!isStaffView && (isStaff || isAdmin) && (
-          <FilterField label={t("schedule.page.labels.filterByGrade")}>
-            <Select
-              value={selectedGrade}
-              onChange={setSelectedGrade}
-              placeholder={t("schedule.page.placeholders.allGrades")}
-              allowClear
-              style={{ minWidth: 120 }}
-              disabled={refreshing || (isStaff && !!staffSelectedChild)}>
-              {GRADES.map(grade => (
-                <Option key={grade} value={grade}>
-                  {GetGradeName(grade)}
-                </Option>
-              ))}
-            </Select>
-          </FilterField>
+          <FilterSelect<number>
+            label={t("schedule.page.labels.filterByGrade")}
+            placeholder={t("schedule.page.placeholders.allGrades")}
+            value={selectedGrade ?? null}
+            onChange={grade => setSelectedGrade(grade ?? undefined)}
+            options={GRADES.map(grade => ({
+              value: grade,
+              label: GetGradeName(grade),
+            }))}
+            disabled={refreshing || (isStaff && !!staffSelectedChild)}
+          />
         )}
       </FiltersBar>
 

@@ -1,0 +1,6 @@
+/* FilterSelect: one narrow size shared by every closed-list filter
+   (Class Management grade/day/track, Schedule grade). A floor rather than a
+   fixed width: at 80px Schedule's "כל הכיתות" placeholder was clipped. */
+.filter-select {
+  min-width: 100px;
+}
