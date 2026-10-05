@@ -407,8 +407,16 @@
       "file": "051_create_profile_on_signup.sql",
       "created_at": "2026-10-04T00:00:00Z",
       "dependencies": ["050_add_scope_to_users"]
+    },
+    {
+      "id": "052_dedupe_children_roster",
+      "name": "Dedupe Children Roster",
+      "description": "get_children_with_parent_status computed has_parent via a LEFT JOIN on parent_child_relationships, returning a child once per linked parent (two rows since 049 allowed multiple parents), which duplicated students on the Students page and the schedule student search. has_parent is now an EXISTS subquery; signature unchanged, so CREATE OR REPLACE keeps the grants.",
+      "file": "052_dedupe_children_roster.sql",
+      "created_at": "2026-10-05T00:00:00Z",
+      "dependencies": ["051_create_profile_on_signup"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 51
+  "schema_version": 52
 }
