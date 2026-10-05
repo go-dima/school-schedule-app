@@ -6,13 +6,13 @@ import "./FiltersBar.css";
 
 interface FiltersBarProps {
   /**
-   * Filter controls, on the right side of the row (it wraps). In RTL the
-   * first child is rightmost.
+   * Filter controls, on the right side of the row (it wraps). The group is
+   * pinned ltr, so the first child is leftmost and the last is rightmost.
    */
   children: React.ReactNode;
   /**
-   * Non-filter actions (add, scope, print, ...), on the left side. The first
-   * action is rightmost of the group.
+   * Non-filter actions (add, scope, print, ...), on the left side. Also
+   * ltr: the first action is leftmost of the group.
    */
   actions?: React.ReactNode;
   /**
@@ -23,7 +23,7 @@ interface FiltersBarProps {
   variant?: "boxed" | "flat";
   /**
    * When true, renders a built-in refresh button after the actions, which
-   * makes it the leftmost control of the bar.
+   * makes it the rightmost control of the actions group.
    */
   canRefresh?: boolean;
   onRefresh?: () => void;
@@ -42,7 +42,9 @@ interface FiltersBarProps {
 // The one filters/actions bar every list page uses (Schedule, Students,
 // Class Management, User Management). Layout and spacing live in
 // FiltersBar.css only; pages pass controls, never a style.
-// RTL, right to left: children in order | actions in order, then refresh.
+// Both groups are ltr (first child leftmost), which keeps the bars'
+// long-standing on-screen order. Right to left: children last-to-first |
+// refresh, then actions last-to-first.
 export const FiltersBar: React.FC<FiltersBarProps> = ({
   children,
   actions,

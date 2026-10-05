@@ -976,8 +976,11 @@ const SchedulePageContent: React.FC = () => {
             />
           </FilterField>
         )}
-        {/* Class search sits next to the group/track dropdown (RTL: search
-            rightmost); the draft/committed toggle is on the actions side. */}
+        {/* The bar's groups are ltr: the first child is leftmost. On screen,
+            right to left: grade, student picker, group/track, class search
+            | refresh, draft/committed, print. Class search sits next to the
+            group/track dropdown; the draft/committed toggle is on the
+            actions side. */}
         {!isStaffView && (
           <FilterField label={t("schedule.page.labels.searchClass")}>
             <AutoComplete
@@ -1057,8 +1060,9 @@ const SchedulePageContent: React.FC = () => {
             </FilterField>
           </>
         )}
-        {/* Last child, so the leftmost filter. Inside the pair the label is
-            rightmost and the X (shown only while a grade is set) leftmost.
+        {/* Last child, so the rightmost filter (the bar's groups are ltr).
+            Inside the pair the label is rightmost and the X (shown only
+            while a grade is set) leftmost.
             Clearing means "all grades" (undefined). */}
         {!isStaffView && (isStaff || isAdmin) && (
           <FilterSelect<number>

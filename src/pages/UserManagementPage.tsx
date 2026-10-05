@@ -558,7 +558,8 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
             <ScopeFilter value={scopeFilter} onChange={setScopeFilter} />
           )
         }>
-        {/* First child: rightmost in RTL, before the role toggles. */}
+        {/* The bar's groups are ltr: the first child is leftmost. On screen,
+            right to left: role toggles, name search | refresh, scope. */}
         <NameSearch<string>
           mode="filter"
           items={nameSuggestions}

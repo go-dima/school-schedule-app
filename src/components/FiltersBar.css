@@ -23,19 +23,17 @@
   flex-wrap: wrap;
 }
 
-/* Both groups lay out right to left: the first child is rightmost, so the
-   built-in refresh (always the last action) ends up leftmost.
-   This has to be pinned here because two unscoped page stylesheets set
-   `.ant-space { direction: ltr }` (ClassManagementPage.css and
-   PendingApprovalsPage.css). Both pages are imported eagerly by the router,
-   so that rule applies on every page and beats antd's own `.ant-space-rtl`
-   (same specificity, and antd's runtime styles are injected first). The app
-   does set <ConfigProvider direction="rtl"> in main.tsx; the leak is what
-   overrides it. This selector is more specific, so the bar renders the same
-   in the app and in Storybook. Nested Spaces (label pairs, FilterSelect)
-   are left alone and still follow the global rule. */
+/* Both groups lay out left to right: the first child is leftmost, so the
+   built-in refresh (always the last action) ends up rightmost of the
+   actions group. This is the bars' long-standing on-screen order, and it is
+   pinned here on purpose so it no longer depends on the leaking global
+   `.ant-space { direction: ltr }` rule in ClassManagementPage.css and
+   PendingApprovalsPage.css (#249). This selector is more specific than both
+   that rule and antd's `.ant-space-rtl`, so the bar renders the same in the
+   app and in Storybook whether or not the leak is present. Nested Spaces
+   (label pairs, FilterSelect) are left alone. */
 .filters-row > .ant-space {
-  direction: rtl;
+  direction: ltr;
 }
 
 .filters-row > .ant-space:first-child {
@@ -69,10 +67,18 @@
 
 /* Boxed variant */
 .filters-section--boxed {
-  padding: 20px;
+  padding: 12px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-radius: 12px;
   border: 1px solid #e2e8f0;
+}
+
+/* The filters group is ltr (see above), so by default its content packs to
+   the *left* of its flex:1 box, right next to the actions group. Pull it to
+   the box's right edge so filters and actions land at opposite ends of the
+   bar, as they always have. */
+.filters-section--boxed .filters-row > .ant-space:first-child {
+  justify-content: flex-end;
 }
 
 .filters-section--disabled {

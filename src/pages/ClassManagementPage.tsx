@@ -558,8 +558,9 @@ const ClassManagementPage: React.FC = () => {
         style={{ marginBottom: 24 }}
       />
 
-      {/* RTL, right to left: class search, teacher search, grade, day,
-          track, clear | scope (admin), Add, refresh (leftmost). */}
+      {/* The bar's groups are ltr: the first child is leftmost. On screen,
+          right to left: class search, teacher search, grade, day, track,
+          clear | refresh, Add, scope (admin). */}
       <FiltersBar
         canRefresh
         onRefresh={loadData}
@@ -585,6 +586,75 @@ const ClassManagementPage: React.FC = () => {
         {/* Every filter is a FilterField pair (FilterSelect builds on it):
             control, then label. The pair's Space follows the global ltr
             rule, so the label renders to the right of its control. */}
+        <Button
+          onClick={() => {
+            setSearchTerm("");
+            setTeacherSearchTerm("");
+            setSelectedDay(null);
+            setSelectedGrade(null);
+            setSelectedTrack(null);
+            setSelectedScopes([...ALL_SCOPES]);
+          }}>
+          {t("classManagement.page.clearFiltersButton")}
+        </Button>
+
+        <FilterSelect
+          label={t("classManagement.page.trackFilterLabel")}
+          placeholder={t("classManagement.page.trackFilterPlaceholder")}
+          value={selectedTrack}
+          onChange={setSelectedTrack}
+          options={[
+            ...[1, 2].map(track => ({
+              value: track,
+              label: t("classManagement.page.trackFilterOption", {
+                track,
+              }),
+            })),
+            {
+              value: NO_TRACK_FILTER,
+              label: t("classManagement.page.trackFilterOptionNone"),
+            },
+          ]}
+          disabled={loading}
+        />
+
+        <FilterSelect
+          label={t("classManagement.page.dayFilterLabel")}
+          placeholder={t("classManagement.page.dayFilterPlaceholder")}
+          value={selectedDay}
+          onChange={setSelectedDay}
+          options={DAYS_OF_WEEK.map(day => ({
+            value: day.key,
+            label: day.name,
+          }))}
+          disabled={loading}
+        />
+
+        <FilterSelect
+          label={t("classManagement.page.gradeFilterLabel")}
+          placeholder={t("classManagement.page.gradeFilterPlaceholder")}
+          value={selectedGrade}
+          onChange={setSelectedGrade}
+          options={GRADES.map(grade => ({
+            value: grade,
+            label: GetGradeName(grade),
+          }))}
+          disabled={loading}
+        />
+
+        <FilterField label={t("classManagement.page.searchTeacherLabel")}>
+          <NameSearch<string>
+            mode="filter"
+            items={teacherNames}
+            getName={teacher => teacher}
+            value={teacherSearchTerm}
+            onChange={setTeacherSearchTerm}
+            placeholder={t("classManagement.page.searchTeacherPlaceholder")}
+            style={{ width: 200 }}
+            disabled={loading}
+          />
+        </FilterField>
+
         <FilterField label={t("classManagement.page.searchLabel")}>
           <AutoComplete
             value={searchTerm}
@@ -612,75 +682,6 @@ const ClassManagementPage: React.FC = () => {
             disabled={loading}
           />
         </FilterField>
-
-        <FilterField label={t("classManagement.page.searchTeacherLabel")}>
-          <NameSearch<string>
-            mode="filter"
-            items={teacherNames}
-            getName={teacher => teacher}
-            value={teacherSearchTerm}
-            onChange={setTeacherSearchTerm}
-            placeholder={t("classManagement.page.searchTeacherPlaceholder")}
-            style={{ width: 200 }}
-            disabled={loading}
-          />
-        </FilterField>
-
-        <FilterSelect
-          label={t("classManagement.page.gradeFilterLabel")}
-          placeholder={t("classManagement.page.gradeFilterPlaceholder")}
-          value={selectedGrade}
-          onChange={setSelectedGrade}
-          options={GRADES.map(grade => ({
-            value: grade,
-            label: GetGradeName(grade),
-          }))}
-          disabled={loading}
-        />
-
-        <FilterSelect
-          label={t("classManagement.page.dayFilterLabel")}
-          placeholder={t("classManagement.page.dayFilterPlaceholder")}
-          value={selectedDay}
-          onChange={setSelectedDay}
-          options={DAYS_OF_WEEK.map(day => ({
-            value: day.key,
-            label: day.name,
-          }))}
-          disabled={loading}
-        />
-
-        <FilterSelect
-          label={t("classManagement.page.trackFilterLabel")}
-          placeholder={t("classManagement.page.trackFilterPlaceholder")}
-          value={selectedTrack}
-          onChange={setSelectedTrack}
-          options={[
-            ...[1, 2].map(track => ({
-              value: track,
-              label: t("classManagement.page.trackFilterOption", {
-                track,
-              }),
-            })),
-            {
-              value: NO_TRACK_FILTER,
-              label: t("classManagement.page.trackFilterOptionNone"),
-            },
-          ]}
-          disabled={loading}
-        />
-
-        <Button
-          onClick={() => {
-            setSearchTerm("");
-            setTeacherSearchTerm("");
-            setSelectedDay(null);
-            setSelectedGrade(null);
-            setSelectedTrack(null);
-            setSelectedScopes([...ALL_SCOPES]);
-          }}>
-          {t("classManagement.page.clearFiltersButton")}
-        </Button>
       </FiltersBar>
 
       {error && (

@@ -340,8 +340,8 @@ const StudentsPage: React.FC = () => {
 
   return (
     <div className="page-content">
-      {/* RTL, right to left: name search, grade | scope (admin), Add
-          (leftmost). */}
+      {/* The bar's groups are ltr: the first child is leftmost. On screen,
+          right to left: grade, name search | Add, scope (admin). */}
       <FiltersBar
         actions={
           <>

@@ -4,9 +4,11 @@ import { PlusOutlined, PrinterOutlined } from "@ant-design/icons";
 import { FiltersBar } from "../components/FiltersBar";
 import { FilterField } from "../components/FilterField";
 import { FilterSelect } from "../components/FilterSelect";
-// Reproduces the app-wide `.ant-space { direction: ltr }` rule. The router
-// imports this page eagerly, so every page in the app carries it; loading it
-// here makes the stories render the same order as the app.
+// Reproduces the app-wide `.ant-space { direction: ltr }` rule (#249). The
+// router imports this page eagerly, so every page in the app carries it. The
+// bar's own two groups are pinned ltr in FiltersBar.css and don't need it,
+// but the nested label pairs do: loading it here makes them render as in
+// the app.
 import "../pages/ClassManagementPage.css";
 
 const meta: Meta<typeof FiltersBar> = {
@@ -34,13 +36,15 @@ const gradeFilter = (label: string, placeholder: string) => (
   />
 );
 
+// DOM order is the reverse of the on-screen right-to-left order: the bar's
+// groups are ltr, so the first child is leftmost.
 const boxedFilters = (
   <>
+    <Button>נקה מסננים</Button>
+    {gradeFilter("כיתה", "בחר כיתה")}
     <FilterField label="חיפוש">
       <Input placeholder="חפש שיעור לפי שם" style={{ width: 200 }} />
     </FilterField>
-    {gradeFilter("כיתה", "בחר כיתה")}
-    <Button>נקה מסננים</Button>
   </>
 );
 
@@ -52,9 +56,9 @@ const boxedActions = (
 
 /**
  * Admin table pages (Students, Class Management, User Management).
- * Expected, right to left:
+ * Expected, right to left (same order as on main):
  *   [חיפוש: label][search] · [כיתה: label][grade] · נקה מסננים
- *   ‖ הוסף · רענן (leftmost).
+ *   ‖ רענן · הוסף (leftmost).
  */
 export const Boxed: Story = {
   args: {
@@ -79,8 +83,9 @@ export const BoxedDisabled: Story = {
 };
 
 /**
- * Schedule page, under the tab bar. Expected, right to left:
- *   search · [סנן לפי כיתה: label][grade] ‖ print · רענן (leftmost).
+ * Schedule page, under the tab bar. Expected, right to left (same order as
+ * on main; the grade filter is the last child, so it is rightmost):
+ *   [סנן לפי כיתה: label][grade] · search ‖ רענן · print (leftmost).
  */
 export const Flat: Story = {
   args: {

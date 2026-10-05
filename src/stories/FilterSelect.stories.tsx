@@ -71,9 +71,10 @@ export const Disabled: Story = {
 };
 
 /**
- * The Schedule page's grade filter as the last child of the flat bar, so it's
- * the leftmost filter. Expected, right to left:
- *   [סנן לפי כיתה:] [ד׳ ▾] [X] ‖ רענן (leftmost).
+ * The Schedule page's grade filter as the last child of the flat bar. The
+ * bar's groups are ltr (first child leftmost), so it's the rightmost filter,
+ * as on main. The pair's own label/X order is unchanged. Expected, right to
+ * left: [סנן לפי כיתה:] [ד׳ ▾] [X] ‖ רענן (leftmost).
  */
 export const InFlatFiltersBar: Story = {
   args: { initial: 4 },

@@ -17,6 +17,8 @@ const refreshButton = () =>
 describe("FiltersBar", () => {
   beforeAll(stubMatchMedia);
 
+  // DOM order. Both groups are ltr, so refresh (last) is rightmost of the
+  // actions group.
   it("puts children in the first group and actions, then refresh, in the second (DOM order)", () => {
     render(
       <FiltersBar actions={<button>action</button>} canRefresh>
