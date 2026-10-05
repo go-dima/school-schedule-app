@@ -24,7 +24,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 // Label pairs as the pages build them: FilterField (control, then label) and
-// FilterSelect (X, Select, then label). A pair's own Space follows the global
+// FilterSelect (Select, then label). A pair's own Space follows the global
 // ltr rule, so the label renders to the RIGHT of its control.
 const gradeFilter = (label: string, placeholder: string) => (
   <FilterSelect<number>

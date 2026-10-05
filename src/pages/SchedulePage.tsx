@@ -1061,8 +1061,7 @@ const SchedulePageContent: React.FC = () => {
           </>
         )}
         {/* Last child, so the rightmost filter (the bar's groups are ltr).
-            Inside the pair the label is rightmost and the X (shown only
-            while a grade is set) leftmost.
+            Inside the pair the label is rightmost.
             Clearing means "all grades" (undefined). */}
         {!isStaffView && (isStaff || isAdmin) && (
           <FilterSelect<number>

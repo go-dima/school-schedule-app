@@ -33,7 +33,6 @@ const renderSelect = (
 };
 
 const combobox = () => screen.getByRole("combobox");
-const clearButton = () => screen.queryByRole("button");
 
 describe("FilterSelect", () => {
   beforeAll(stubMatchMedia);
@@ -90,33 +89,20 @@ describe("FilterSelect", () => {
     expect(onChange).toHaveBeenCalledWith(4);
   });
 
-  it("shows the placeholder and no X when the value is null", () => {
+  it("shows the placeholder when the value is null", () => {
     renderSelect();
 
     expect(screen.getByText("כל הכיתות")).toBeTruthy();
-    expect(clearButton()).toBeNull();
   });
 
-  it("shows the X when a value is set, and the X clears to null", () => {
-    const { onChange } = renderSelect({ value: 2 });
-
-    fireEvent.click(clearButton() as HTMLElement);
-
-    expect(onChange).toHaveBeenCalledWith(null);
-  });
-
-  it("puts the X before the select, with no inline style (DOM order)", () => {
+  // The Select's own clear icon is the only clear; there's no separate X.
+  it("renders no separate clear button", () => {
     renderSelect({ value: 2 });
-    const x = clearButton() as HTMLElement;
 
-    expect(x.classList).toContain("filter-select__clear");
-    expect(x.getAttribute("style")).toBeNull();
-    expect(
-      x.compareDocumentPosition(combobox()) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
+    expect(screen.queryByRole("button")).toBeNull();
   });
 
-  it("the select's own clear icon also clears to null", () => {
+  it("the select's own clear icon clears to null", () => {
     const { onChange } = renderSelect({ value: 2 });
 
     fireEvent.mouseDown(
@@ -126,13 +112,12 @@ describe("FilterSelect", () => {
     expect(onChange).toHaveBeenCalledWith(null);
   });
 
-  it("blocks the select and the X when disabled", () => {
+  it("blocks the select when disabled", () => {
     renderSelect({ value: 2, disabled: true });
 
     fireEvent.mouseDown(combobox());
 
     expect(visibleOptionElements()).toEqual([]);
-    expect((clearButton() as HTMLButtonElement).disabled).toBe(true);
     expect((combobox() as HTMLInputElement).disabled).toBe(true);
   });
 });

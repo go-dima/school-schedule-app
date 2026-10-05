@@ -20,8 +20,8 @@ import type { ClassWithTimeSlot, TimeSlot, UserRoleData } from "../types";
 //   · [יום בשבוע:][day] · [מסלול:][track] · נקה מסננים
 //   ‖ רענן · הוסף שיעור חדש · scope (admin, leftmost).
 // Inside each pair the label renders to the right of its control, with one
-// colon. Grade, day and track are FilterSelects: their X shows only while a
-// value is set, leftmost in the pair.
+// colon. Grade, day and track are FilterSelects, cleared with the Select's
+// own clear icon.
 const slot: TimeSlot = {
   id: "slot-1",
   name: "שיעור ראשון",

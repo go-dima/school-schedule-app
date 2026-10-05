@@ -14,8 +14,8 @@ const gradeOptions = GRADES.map(grade => ({
   label: GetGradeName(grade),
 }));
 
-// Holds the value in state so picking, the X and the Select's own clear
-// icon all work in the story.
+// Holds the value in state so picking and the Select's own clear icon
+// work in the story.
 const Controlled = ({
   initial,
   disabled,
@@ -50,7 +50,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * No value: placeholder, no X. Expected, right to left:
+ * No value: placeholder. Expected, right to left:
  *   [סנן לפי כיתה:] [כל הכיתות ▾].
  */
 export const Empty: Story = {
@@ -58,14 +58,14 @@ export const Empty: Story = {
 };
 
 /**
- * A grade is set, so the X shows. Expected, right to left:
- *   [סנן לפי כיתה:] [ד׳ ▾] [X] (X leftmost).
+ * A grade is set; hovering the Select shows its clear icon. Expected, right
+ * to left: [סנן לפי כיתה:] [ד׳ ▾].
  */
 export const Selected: Story = {
   args: { initial: 4 },
 };
 
-/** As Selected, but the Select and the X are both disabled. */
+/** As Selected, but disabled. */
 export const Disabled: Story = {
   args: { initial: 4, disabled: true },
 };
@@ -73,8 +73,8 @@ export const Disabled: Story = {
 /**
  * The Schedule page's grade filter as the last child of the flat bar. The
  * bar's groups are ltr (first child leftmost), so it's the rightmost filter,
- * as on main. The pair's own label/X order is unchanged. Expected, right to
- * left: [סנן לפי כיתה:] [ד׳ ▾] [X] ‖ רענן (leftmost).
+ * as on main. Inside the pair the label is rightmost. Expected, right to
+ * left: [סנן לפי כיתה:] [ד׳ ▾] ‖ רענן (leftmost).
  */
 export const InFlatFiltersBar: Story = {
   args: { initial: 4 },

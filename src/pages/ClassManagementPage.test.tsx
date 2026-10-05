@@ -200,12 +200,6 @@ const pairFor = (labelKey: string) =>
 const comboboxFor = (labelKey: string) =>
   pairFor(labelKey)?.querySelector("[role=combobox]") as HTMLInputElement;
 
-// FilterSelect's visible clear (X) button, or null when it isn't rendered.
-const clearButtonFor = (labelKey: string) =>
-  pairFor(labelKey)?.querySelector<HTMLButtonElement>(
-    ":scope > .ant-space-item > button"
-  ) ?? null;
-
 const pick = (labelKey: string, optionText: string) => {
   fireEvent.mouseDown(comboboxFor(labelKey));
   const option = visibleOptionElements().find(
@@ -378,25 +372,6 @@ describe("ClassManagementPage grade filter", () => {
     expect(rowTitles()).toEqual(["ב ביולוגיה"]);
   });
 
-  it("shows the X only while a grade is picked", async () => {
-    await renderPage();
-    expect(clearButtonFor("gradeFilterLabel")).toBeNull();
-
-    pick("gradeFilterLabel", GetGradeName(4));
-
-    expect(clearButtonFor("gradeFilterLabel")).not.toBeNull();
-  });
-
-  it("the X clears the grade and brings every row back", async () => {
-    await renderPage();
-    pick("gradeFilterLabel", GetGradeName(4));
-
-    fireEvent.click(clearButtonFor("gradeFilterLabel") as HTMLButtonElement);
-
-    expect(rowTitles()).toEqual(allTitles);
-    expect(clearButtonFor("gradeFilterLabel")).toBeNull();
-  });
-
   it("the select's own clear icon brings every row back", async () => {
     await renderPage();
     pick("gradeFilterLabel", GetGradeName(4));
@@ -416,7 +391,9 @@ describe("ClassManagementPage grade filter", () => {
     clearFilters();
 
     expect(rowTitles()).toEqual(allTitles);
-    expect(clearButtonFor("gradeFilterLabel")).toBeNull();
+    expect(
+      pairFor("gradeFilterLabel")?.querySelector(".ant-select-selection-item")
+    ).toBeNull();
   });
 
   it("shows every filter label with a single colon", async () => {

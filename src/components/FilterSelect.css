@@ -4,8 +4,3 @@
 .filter-select {
   min-width: 100px;
 }
-
-/* The X sits flush against the Select. */
-.filter-select__clear {
-  padding: 0;
-}
