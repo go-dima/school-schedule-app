@@ -101,18 +101,19 @@ const rowTitles = () =>
   );
 
 // Found by its placeholder while it's still empty, then reused.
+const comboboxByPlaceholder = (key: string) =>
+  screen
+    .getAllByRole("combobox")
+    .find(el =>
+      el.closest(".ant-select")?.textContent?.includes(i18n.t(key))
+    ) as HTMLInputElement;
+
 const renderPage = async () => {
   render(<ClassManagementPage />);
   await waitFor(() => expect(rowTitles()).toHaveLength(4));
-  const teacherBox = screen
-    .getAllByRole("combobox")
-    .find(el =>
-      el
-        .closest(".ant-select")
-        ?.textContent?.includes(
-          i18n.t("classManagement.page.searchTeacherPlaceholder")
-        )
-    ) as HTMLInputElement;
+  const teacherBox = comboboxByPlaceholder(
+    "classManagement.page.searchTeacherPlaceholder"
+  );
   const typeTeacher = (value: string) =>
     fireEvent.change(teacherBox, { target: { value } });
   return { teacherBox, typeTeacher };
@@ -279,17 +280,15 @@ describe("ClassManagementPage filters (current behavior)", () => {
     expect(comboboxFor("searchLabel").value).toBe("");
   });
 
-  // Current behaviour, kept as is: the clear button doesn't touch the
-  // teacher search.
-  it("clear leaves the teacher search in place", async () => {
+  it("clear also resets the teacher search (#231)", async () => {
     const { teacherBox, typeTeacher } = await renderPage();
     typeTeacher("dana");
     expect(rowTitles()).toEqual(["ד דרמה"]);
 
     clearFilters();
 
-    expect(teacherBox.value).toBe("dana");
-    expect(rowTitles()).toEqual(["ד דרמה"]);
+    expect(teacherBox.value).toBe("");
+    expect(rowTitles()).toEqual(allTitles);
   });
 
   it("refresh locks the controls while it refetches", async () => {
@@ -425,5 +424,47 @@ describe("ClassManagementPage grade filter", () => {
 
     expect(labels).toHaveLength(5);
     labels.forEach(label => expect(label).toMatch(/[^:]:$/));
+  });
+});
+
+describe("ClassManagementPage clear filters", () => {
+  beforeAll(stubMatchMedia);
+
+  const pickFirstOption = (box: HTMLInputElement) => {
+    fireEvent.mouseDown(box);
+    fireEvent.click(visibleOptionElements()[0]);
+  };
+  // Picked values in the filters bar only -- the table's page-size Select
+  // also shows a selection item once rows are back.
+  const selectedItems = () =>
+    document.querySelectorAll(".filters-section .ant-select-selection-item");
+
+  it("resets every filter and shows every class again", async () => {
+    const { teacherBox, typeTeacher } = await renderPage();
+    const titleBox = comboboxByPlaceholder(
+      "classManagement.page.searchPlaceholder"
+    );
+    const selectBoxes = [
+      "classManagement.page.dayFilterPlaceholder",
+      "classManagement.page.gradeFilterPlaceholder",
+      "classManagement.page.trackFilterPlaceholder",
+    ].map(comboboxByPlaceholder);
+
+    typeTeacher("מירב");
+    fireEvent.change(titleBox, { target: { value: "אמנות" } });
+    selectBoxes.forEach(pickFirstOption);
+    expect(rowTitles()).toEqual([]);
+    expect(selectedItems()).toHaveLength(3);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: i18n.t("classManagement.page.clearFiltersButton"),
+      })
+    );
+
+    expect(teacherBox.value).toBe("");
+    expect(titleBox.value).toBe("");
+    expect(selectedItems()).toHaveLength(0);
+    expect(rowTitles()).toEqual(allTitles);
   });
 });
