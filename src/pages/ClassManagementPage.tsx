@@ -10,7 +10,6 @@ import {
   Modal,
   message,
   Tag,
-  AutoComplete,
   Dropdown,
   MenuProps,
 } from "antd";
@@ -42,8 +41,8 @@ import { EnrollmentService } from "../services/enrollmentService";
 import ClassEnrollmentDrawer from "../components/ClassEnrollmentDrawer";
 import { ScopeTag } from "../components/ScopeTag";
 import { ScopeFilter } from "../components/ScopeSelector";
-import { NameSearch } from "../components/NameSearch";
-import { filterByName } from "@/utils/nameSearch";
+import { TextSearch } from "../components/TextSearch";
+import { filterByText } from "@/utils/textSearch";
 import { ALL_SCOPES } from "../constants/scopes";
 import { isTestScopeEnabled } from "../utils/env";
 
@@ -99,14 +98,8 @@ const ClassManagementPage: React.FC = () => {
   const filteredClasses = useMemo(() => {
     let filtered = classes;
 
-    if (searchTerm) {
-      const lowerSearchTerm = searchTerm.toLowerCase();
-      filtered = filtered.filter(cls =>
-        cls.title.toLowerCase().includes(lowerSearchTerm)
-      );
-    }
-
-    filtered = filterByName(filtered, teacherSearchTerm, cls => cls.teacher);
+    filtered = filterByText(filtered, searchTerm, cls => cls.title);
+    filtered = filterByText(filtered, teacherSearchTerm, cls => cls.teacher);
 
     if (selectedDay !== null) {
       filtered = filtered.filter(cls =>
@@ -138,6 +131,12 @@ const ClassManagementPage: React.FC = () => {
     selectedTrack,
     selectedScopes,
   ]);
+
+  // The title filter's suggestions: each class title, once.
+  const classTitles = useMemo(
+    () => ScheduleService.classTitles(classes),
+    [classes]
+  );
 
   // The teacher filter's suggestions: each class's teacher text, once.
   const teacherNames = useMemo(
@@ -643,10 +642,10 @@ const ClassManagementPage: React.FC = () => {
         />
 
         <FilterField label={t("classManagement.page.searchTeacherLabel")}>
-          <NameSearch<string>
+          <TextSearch<string>
             mode="filter"
             items={teacherNames}
-            getName={teacher => teacher}
+            getText={teacher => teacher}
             value={teacherSearchTerm}
             onChange={setTeacherSearchTerm}
             placeholder={t("classManagement.page.searchTeacherPlaceholder")}
@@ -656,29 +655,14 @@ const ClassManagementPage: React.FC = () => {
         </FilterField>
 
         <FilterField label={t("classManagement.page.searchLabel")}>
-          <AutoComplete
+          <TextSearch<string>
+            mode="filter"
+            items={classTitles}
+            getText={title => title}
             value={searchTerm}
             onChange={setSearchTerm}
-            options={(() => {
-              if (!searchTerm) return [];
-
-              const lowerSearchTerm = searchTerm.toLowerCase();
-              const uniqueClassNames = Array.from(
-                new Set(
-                  classes
-                    .filter(cls =>
-                      cls.title.toLowerCase().includes(lowerSearchTerm)
-                    )
-                    .map(cls => cls.title)
-                )
-              ).sort();
-
-              return uniqueClassNames.map(title => ({ value: title }));
-            })()}
             placeholder={t("classManagement.page.searchPlaceholder")}
             style={{ width: 200 }}
-            allowClear
-            filterOption={false}
             disabled={loading}
           />
         </FilterField>

@@ -381,6 +381,20 @@ export class ScheduleService {
     return classes.filter(cls => !STAFF_ONLY_CLASS_TITLES.has(cls.title));
   }
 
+  /**
+   * The class-title searches' suggestions: each title once, sorted. With a
+   * grade, only the titles of classes taught in that grade.
+   */
+  static classTitles(
+    classes: Pick<ClassWithTimeSlot, "title" | "grades">[],
+    grade?: number
+  ): string[] {
+    const inGrade = grade
+      ? classes.filter(cls => cls.grades?.includes(grade))
+      : classes;
+    return Array.from(new Set(inGrade.map(cls => cls.title))).sort();
+  }
+
   /** True for staff-only placeholder classes (e.g. "חונכות", "שילוב"). */
   static isStaffOnlyClass(cls: ClassWithTimeSlot): boolean {
     return STAFF_ONLY_CLASS_TITLES.has(cls.title);

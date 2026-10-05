@@ -913,3 +913,26 @@ describe("ScheduleService.hasSelectedClassInSlot", () => {
     ).toBe(false);
   });
 });
+
+describe("ScheduleService.classTitles", () => {
+  const classes = [
+    makeClass({ id: "a", title: "חשבון", grades: [3, 4] }),
+    makeClass({ id: "b", title: "אמנות", grades: [4] }),
+    makeClass({ id: "c", title: "חשבון", grades: [5] }),
+    makeClass({ id: "d", title: "Drama", grades: [5] }),
+  ];
+
+  it("lists every title once, sorted", () => {
+    expect(ScheduleService.classTitles(classes)).toEqual([
+      "Drama",
+      "אמנות",
+      "חשבון",
+    ]);
+  });
+
+  it("keeps only the titles of classes in the given grade", () => {
+    expect(ScheduleService.classTitles(classes, 4)).toEqual(["אמנות", "חשבון"]);
+    expect(ScheduleService.classTitles(classes, 5)).toEqual(["Drama", "חשבון"]);
+    expect(ScheduleService.classTitles(classes, 1)).toEqual([]);
+  });
+});

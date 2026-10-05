@@ -40,8 +40,8 @@ import { isTestScopeEnabled } from "../utils/env";
 import "./UserManagementPage.css";
 import { ScopeFilter, ScopeSelect } from "../components/ScopeSelector";
 import { ALL_SCOPES } from "../constants/scopes";
-import { NameSearch } from "../components/NameSearch";
-import { filterByName } from "@/utils/nameSearch";
+import { TextSearch } from "../components/TextSearch";
+import { filterByText } from "@/utils/textSearch";
 
 const ROLE_SET_ERROR_KEYS: Record<RoleSetError, string> = {
   noRoles: "userManagement.page.noRolesValidationError",
@@ -330,7 +330,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
   );
 
   const filteredUsers = useMemo(
-    () => filterByName(roleScopeUsers, nameSearch, userSearchName),
+    () => filterByText(roleScopeUsers, nameSearch, userSearchName),
     [roleScopeUsers, nameSearch]
   );
 
@@ -560,10 +560,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = () => {
         }>
         {/* The bar's groups are ltr: the first child is leftmost. On screen,
             right to left: role toggles, name search | refresh, scope. */}
-        <NameSearch<string>
+        <TextSearch<string>
           mode="filter"
           items={nameSuggestions}
-          getName={name => name}
+          getText={name => name}
           value={nameSearch}
           onChange={setNameSearch}
           placeholder={t("userManagement.search.placeholder")}

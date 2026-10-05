@@ -1,20 +1,20 @@
 import React, { useState } from "react";
 import { AutoComplete, Select } from "antd";
-import { filterByName } from "@/utils/nameSearch";
+import { filterByText } from "@/utils/textSearch";
 
 /** An extra dropdown row (e.g. "add student") for a query nothing matches. */
-export interface NameSearchExtraOption {
+export interface TextSearchExtraOption {
   label: (query: string) => React.ReactNode;
   onSelect: (query: string) => void;
 }
 
-interface NameSearchCommonProps<T> {
+interface TextSearchCommonProps<T> {
   items: T[];
-  getName: (item: T) => string;
-  /** Dropdown row content; defaults to the name. */
+  getText: (item: T) => string;
+  /** Dropdown row content; defaults to the text. */
   renderOption?: (item: T) => React.ReactNode;
   /** Shown only when the trimmed query is non-empty and nothing matches. */
-  extraOption?: NameSearchExtraOption;
+  extraOption?: TextSearchExtraOption;
   placeholder?: string;
   style?: React.CSSProperties;
   disabled?: boolean;
@@ -24,7 +24,7 @@ interface NameSearchCommonProps<T> {
 }
 
 /** Pick one item: the value is its key. */
-export interface NameSearchPickProps<T> extends NameSearchCommonProps<T> {
+export interface TextSearchPickProps<T> extends TextSearchCommonProps<T> {
   mode: "pick";
   value: string | null | undefined;
   getKey: (item: T) => string;
@@ -33,8 +33,8 @@ export interface NameSearchPickProps<T> extends NameSearchCommonProps<T> {
   onChange?: never;
 }
 
-/** Free text: the value is what was typed; a picked suggestion fills in its name. */
-export interface NameSearchFilterProps<T> extends NameSearchCommonProps<T> {
+/** Free text: the value is what was typed; a picked suggestion fills in its text. */
+export interface TextSearchFilterProps<T> extends TextSearchCommonProps<T> {
   mode: "filter";
   value: string;
   onChange: (text: string) => void;
@@ -42,30 +42,30 @@ export interface NameSearchFilterProps<T> extends NameSearchCommonProps<T> {
   onSelect?: never;
 }
 
-export type NameSearchProps<T> =
-  | NameSearchPickProps<T>
-  | NameSearchFilterProps<T>;
+export type TextSearchProps<T> =
+  | TextSearchPickProps<T>
+  | TextSearchFilterProps<T>;
 
 // Pick-mode value of the extra row; never a real key.
-const EXTRA_VALUE = "\u0000name-search-extra";
+const EXTRA_VALUE = "\u0000text-search-extra";
 
-interface NameOption {
+interface TextOption {
   key: string;
   value: string;
   label: React.ReactNode;
-  /** Dropdown row content (pick mode keeps `label` as the plain name). */
+  /** Dropdown row content (pick mode keeps `label` as the plain text). */
   content: React.ReactNode;
   isExtra?: boolean;
 }
 
 function buildOptions<T>(
-  { items, getName, renderOption, extraOption }: NameSearchCommonProps<T>,
+  { items, getText, renderOption, extraOption }: TextSearchCommonProps<T>,
   query: string,
   valueOf: (item: T) => string,
   keyOf: (item: T, index: number) => string,
   extraValue: string
-): NameOption[] {
-  const matches = filterByName(items, query, getName);
+): TextOption[] {
+  const matches = filterByText(items, query, getText);
   const trimmed = query.trim();
   if (matches.length === 0 && trimmed && extraOption) {
     const label = extraOption.label(trimmed);
@@ -82,31 +82,31 @@ function buildOptions<T>(
   return matches.map((item, index) => ({
     key: keyOf(item, index),
     value: valueOf(item),
-    label: getName(item),
-    content: renderOption ? renderOption(item) : getName(item),
+    label: getText(item),
+    content: renderOption ? renderOption(item) : getText(item),
   }));
 }
 
 /**
- * The one search box for people's names (students, staff, teachers, users).
- * Matching always goes through `matchesName` (trimmed, case-insensitive
+ * The one search box over a closed list (people's names, class titles).
+ * Matching always goes through `matchesText` (trimmed, case-insensitive
  * substring), and every mode shows the matches as a dropdown.
  *
  * - `mode="pick"` (antd Select): keeps the selection while typing, puts the
- *   selected name back on blur, Enter picks the highlighted row, clear
+ *   selected text back on blur, Enter picks the highlighted row, clear
  *   reports undefined.
  * - `mode="filter"` (antd AutoComplete): the value is the typed text; picking
- *   a suggestion fills in its name. Enter keeps the typed text.
+ *   a suggestion fills in its text. Enter keeps the typed text.
  */
-export function NameSearch<T>(props: NameSearchProps<T>) {
+export function TextSearch<T>(props: TextSearchProps<T>) {
   return props.mode === "pick" ? (
-    <PickNameSearch {...props} />
+    <PickTextSearch {...props} />
   ) : (
-    <FilterNameSearch {...props} />
+    <FilterTextSearch {...props} />
   );
 }
 
-function PickNameSearch<T>(props: NameSearchPickProps<T>) {
+function PickTextSearch<T>(props: TextSearchPickProps<T>) {
   const {
     items,
     getKey,
@@ -136,14 +136,14 @@ function PickNameSearch<T>(props: NameSearchPickProps<T>) {
   };
 
   return (
-    <Select<string, NameOption>
+    <Select<string, TextOption>
       showSearch
       allowClear
       value={value ?? undefined}
       searchValue={query}
       onSearch={setQuery}
       // Closing (blur, Escape, a pick) drops the typed text so the selected
-      // name shows again; rc-select doesn't report this to onSearch.
+      // text shows again; rc-select doesn't report this to onSearch.
       onOpenChange={open => {
         if (!open) setQuery("");
       }}
@@ -161,9 +161,9 @@ function PickNameSearch<T>(props: NameSearchPickProps<T>) {
   );
 }
 
-function FilterNameSearch<T>(props: NameSearchFilterProps<T>) {
+function FilterTextSearch<T>(props: TextSearchFilterProps<T>) {
   const {
-    getName,
+    getText,
     extraOption,
     value,
     onChange,
@@ -180,7 +180,7 @@ function FilterNameSearch<T>(props: NameSearchFilterProps<T>) {
   const options = buildOptions(
     props,
     value,
-    getName,
+    getText,
     (_item, index) => String(index),
     value.trim()
   ).map(({ content, ...option }) => ({ ...option, label: content }));

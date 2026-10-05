@@ -2,8 +2,8 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
 import { Space, Typography } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
-import { NameSearch } from "../components/NameSearch";
-import { filterByName } from "../utils/nameSearch";
+import { TextSearch } from "../components/TextSearch";
+import { filterByText } from "../utils/textSearch";
 
 interface Person {
   id: string;
@@ -30,10 +30,10 @@ const PickDemo = () => {
   const [value, setValue] = useState<string | undefined>();
   return (
     <Space direction="vertical">
-      <NameSearch
+      <TextSearch
         mode="pick"
         items={PEOPLE}
-        getName={p => p.name}
+        getText={p => p.name}
         getKey={p => p.id}
         renderOption={renderPerson}
         value={value}
@@ -51,17 +51,17 @@ const FilterDemo = () => {
   const [text, setText] = useState("");
   return (
     <Space direction="vertical">
-      <NameSearch
+      <TextSearch
         mode="filter"
         items={PEOPLE}
-        getName={p => p.name}
+        getText={p => p.name}
         value={text}
         onChange={setText}
         placeholder="חפש לפי שם..."
         style={{ minWidth: 220 }}
       />
       <ul>
-        {filterByName(PEOPLE, text, p => p.name).map(p => (
+        {filterByText(PEOPLE, text, p => p.name).map(p => (
           <li key={p.id}>{p.name}</li>
         ))}
       </ul>
@@ -78,10 +78,10 @@ const ExtraOptionDemo = () => {
   ];
   return (
     <Space direction="vertical">
-      <NameSearch
+      <TextSearch
         mode="pick"
         items={items}
-        getName={p => p.name}
+        getText={p => p.name}
         getKey={p => p.id}
         value={value}
         onSelect={p => setValue(p?.id)}
@@ -106,7 +106,7 @@ const ExtraOptionDemo = () => {
 };
 
 const meta: Meta = {
-  title: "Components/NameSearch",
+  title: "Components/TextSearch",
   parameters: { layout: "padded" },
 };
 

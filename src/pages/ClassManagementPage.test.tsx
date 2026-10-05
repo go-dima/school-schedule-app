@@ -447,3 +447,95 @@ describe("ClassManagementPage clear filters", () => {
     expect(rowTitles()).toEqual(allTitles);
   });
 });
+
+// #229: the title filter runs on the shared TextSearch. Its own data adds a
+// Latin title (case-insensitivity) and a repeated title (suggested once).
+// Rows sort by day, then title; all of these are Sunday.
+const titleClasses = [
+  makeClass("t1", "א אמנות", "מירב אלון"),
+  makeClass("t2", "ב ביולוגיה", "אורית שמש"),
+  makeClass("t3", "ג גיאוגרפיה", "מירב אלון"),
+  makeClass("t4", "ד Drama", "Dana Levi"),
+  makeClass("t5", "ב ביולוגיה", "Dana Levi"),
+];
+
+describe("ClassManagementPage title filter", () => {
+  beforeAll(stubMatchMedia);
+  beforeEach(() => {
+    getClasses.mockImplementation(() => Promise.resolve(titleClasses));
+  });
+
+  const renderTitlePage = async () => {
+    render(<ClassManagementPage />);
+    await waitFor(() => expect(rowTitles()).toHaveLength(titleClasses.length));
+    const titleBox = comboboxByPlaceholder(
+      "classManagement.page.searchPlaceholder"
+    );
+    const typeTitle = (value: string) =>
+      fireEvent.change(titleBox, { target: { value } });
+    const typeTeacher = (value: string) =>
+      fireEvent.change(
+        comboboxByPlaceholder("classManagement.page.searchTeacherPlaceholder"),
+        { target: { value } }
+      );
+    return { titleBox, typeTitle, typeTeacher };
+  };
+
+  it("lists every title, once and sorted, before typing", async () => {
+    const { titleBox } = await renderTitlePage();
+    fireEvent.mouseDown(titleBox);
+
+    expect(visibleOptions()).toEqual([
+      "א אמנות",
+      "ב ביולוגיה",
+      "ג גיאוגרפיה",
+      "ד Drama",
+    ]);
+  });
+
+  it("trims the typed text", async () => {
+    const { typeTitle } = await renderTitlePage();
+
+    typeTitle(" גיא ");
+
+    expect(rowTitles()).toEqual(["ג גיאוגרפיה"]);
+    expect(visibleOptions()).toEqual(["ג גיאוגרפיה"]);
+  });
+
+  it("filters the table by title, case-insensitively", async () => {
+    const { typeTitle } = await renderTitlePage();
+
+    typeTitle("ביו");
+    expect(rowTitles()).toEqual(["ב ביולוגיה", "ב ביולוגיה"]);
+
+    typeTitle("DRAMA");
+    expect(rowTitles()).toEqual(["ד Drama"]);
+  });
+
+  it("suggests each matching title once, sorted", async () => {
+    const { typeTitle } = await renderTitlePage();
+
+    typeTitle("ו");
+
+    expect(visibleOptions()).toEqual(["א אמנות", "ב ביולוגיה", "ג גיאוגרפיה"]);
+  });
+
+  it("fills in a picked suggestion and filters to it", async () => {
+    const { titleBox, typeTitle } = await renderTitlePage();
+    typeTitle("גיא");
+
+    fireEvent.click(visibleOptionElements()[0]);
+
+    expect(titleBox.value).toBe("ג גיאוגרפיה");
+    expect(rowTitles()).toEqual(["ג גיאוגרפיה"]);
+  });
+
+  it("combines with the teacher filter", async () => {
+    const { typeTeacher, typeTitle } = await renderTitlePage();
+
+    typeTitle("ביו");
+    typeTeacher("dana");
+
+    expect(rowTitles()).toEqual(["ב ביולוגיה"]);
+  });
+});

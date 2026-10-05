@@ -9,8 +9,8 @@ import {
   visibleOptionElements,
   visibleOptions,
 } from "../testUtils/antdDom";
-import { NameSearch } from "./NameSearch";
-import type { NameSearchExtraOption } from "./NameSearch";
+import { TextSearch } from "./TextSearch";
+import type { TextSearchExtraOption } from "./TextSearch";
 
 interface Person {
   id: string;
@@ -36,14 +36,14 @@ const Pick = ({
 }: {
   initial?: string;
   onSelect?: (p: Person | undefined) => void;
-  extraOption?: NameSearchExtraOption;
+  extraOption?: TextSearchExtraOption;
 }) => {
   const [value, setValue] = useState<string | undefined>(initial);
   return (
-    <NameSearch
+    <TextSearch
       mode="pick"
       items={people}
-      getName={p => p.name}
+      getText={p => p.name}
       getKey={p => p.id}
       renderOption={p =>
         p.grayed ? <span className="grayed">{p.name}</span> : p.name
@@ -63,14 +63,14 @@ const Filter = ({
   extraOption,
 }: {
   onChange?: (text: string) => void;
-  extraOption?: NameSearchExtraOption;
+  extraOption?: TextSearchExtraOption;
 }) => {
   const [text, setText] = useState("");
   return (
-    <NameSearch
+    <TextSearch
       mode="filter"
       items={people}
-      getName={p => p.name}
+      getText={p => p.name}
       extraOption={extraOption}
       value={text}
       onChange={t => {
@@ -81,7 +81,7 @@ const Filter = ({
   );
 };
 
-describe("NameSearch", () => {
+describe("TextSearch", () => {
   beforeAll(stubMatchMedia);
 
   describe('mode="pick"', () => {
