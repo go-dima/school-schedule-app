@@ -10,7 +10,7 @@ import SchedulePage from "../pages/SchedulePage";
 import ClassManagementPage from "../pages/ClassManagementPage";
 import StudentsPage from "../pages/StudentsPage";
 import UserListPage from "../pages/UserListPage";
-import PendingApprovalsPage from "../pages/PendingApprovalsPage";
+import PendingApprovalsPage from "../pages/pendingApprovals/PendingApprovalsPage";
 import ProfileSettingsPage from "../pages/ProfileSettingsPage";
 import {
   AuthGate,
@@ -29,6 +29,9 @@ import { ByUiMode } from "./ByUiMode";
 
 // Mobile-only components load on demand, so desktop never downloads them.
 const MobileAppLayout = lazy(() => import("../layouts/MobileAppLayout"));
+const MobilePendingApprovalsPage = lazy(
+  () => import("../pages/pendingApprovals/MobilePendingApprovalsPage")
+);
 
 export const router = createBrowserRouter([
   {
@@ -106,7 +109,12 @@ export const router = createBrowserRouter([
                   { path: "list", element: <UserListPage /> },
                   {
                     path: "pending-approvals",
-                    element: <PendingApprovalsPage />,
+                    element: (
+                      <ByUiMode
+                        desktop={<PendingApprovalsPage />}
+                        mobile={<MobilePendingApprovalsPage />}
+                      />
+                    ),
                   },
                 ],
               },

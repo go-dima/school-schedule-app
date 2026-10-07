@@ -23,6 +23,16 @@ This is a school schedule management application for elementary school (grades 1
 - Keep business logic in service layer (not components) for future backend migration
 - RTL layout support for Hebrew interface
 
+### Page folders (desktop + mobile)
+
+A page with both a desktop and a mobile view (UI Mode, see `docs/adr/0001-device-based-ui-mode.md`) gets its own folder, `src/pages/<pageName>/`, holding:
+
+- the desktop page and the mobile page (`<Page>.tsx`, `Mobile<Page>.tsx`);
+- the page's controller hook (`use<Page>Controller.ts`, with its tests): the state and actions both views render from, so no logic is duplicated between them;
+- components used only by that page.
+
+Shared components stay in `src/components/` and app-wide hooks in `src/hooks/`. Pages with a single view stay flat in `src/pages/`. Example: `src/pages/pendingApprovals/`.
+
 ## User Roles & Authentication
 
 - **Authentication**: Supabase built-in auth with email/password and OAuth (Google)
