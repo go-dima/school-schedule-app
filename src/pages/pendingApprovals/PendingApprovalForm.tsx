@@ -9,10 +9,10 @@ import {
   TeamOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import type { UserRole } from "../types";
-import { ChildAccountLinkPicker } from "./ChildAccountLinkPicker";
-import { ScopeSelector } from "./ScopeSelector";
-import type { ApprovalFormController } from "../hooks/usePendingApprovalsController";
+import type { UserRole } from "../../types";
+import { ChildAccountLinkPicker } from "../../components/ChildAccountLinkPicker";
+import { ScopeSelector } from "../../components/ScopeSelector";
+import type { ApprovalFormController } from "./usePendingApprovalsController";
 
 const { Text } = Typography;
 

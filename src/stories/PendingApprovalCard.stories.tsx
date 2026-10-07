@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { PendingApprovalCard } from "../components/PendingApprovalCard";
+import { PendingApprovalCard } from "../pages/pendingApprovals/PendingApprovalCard";
 import type { PendingApproval, UserRole } from "../types";
 
 const approval = (

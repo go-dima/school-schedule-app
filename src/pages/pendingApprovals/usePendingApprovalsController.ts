@@ -2,16 +2,16 @@ import { useEffect, useState } from "react";
 import { Form, message } from "antd";
 import type { FormInstance } from "antd";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "../contexts/AuthContext";
-import { childrenApi, usersApi } from "../services/api";
-import type { Child, PendingApproval, Scope, UserRole } from "../types";
+import { useAuth } from "../../contexts/AuthContext";
+import { childrenApi, usersApi } from "../../services/api";
+import type { Child, PendingApproval, Scope, UserRole } from "../../types";
 import {
   EMPTY_CHILD_LINK_DRAFT,
   childLinkValue,
   type ChildLinkDraft,
-} from "../components/childAccountLink";
-import { trackEvent, AnalyticsEvent } from "../utils/analytics";
-import { isTestScopeEnabled } from "../utils/env";
+} from "../../components/childAccountLink";
+import { trackEvent, AnalyticsEvent } from "../../utils/analytics";
+import { isTestScopeEnabled } from "../../utils/env";
 
 export interface ApprovalFormValues {
   role: UserRole;

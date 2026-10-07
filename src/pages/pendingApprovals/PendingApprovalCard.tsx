@@ -6,9 +6,9 @@ import {
   ClockCircleOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
-import type { PendingApproval } from "../types";
-import { ROLE_TAG_COLORS } from "../constants/roleColors";
-import { formatApprovalDate } from "../hooks/usePendingApprovalsController";
+import type { PendingApproval } from "../../types";
+import { ROLE_TAG_COLORS } from "../../constants/roleColors";
+import { formatApprovalDate } from "./usePendingApprovalsController";
 import "./PendingApprovalCard.css";
 
 const { Text } = Typography;

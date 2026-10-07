@@ -21,13 +21,13 @@ import {
   ClockCircleOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
-import type { PendingApproval, UserRole } from "../types";
-import { ROLE_TAG_COLORS } from "../constants/roleColors";
+import type { PendingApproval, UserRole } from "../../types";
+import { ROLE_TAG_COLORS } from "../../constants/roleColors";
 import {
   formatApprovalDate,
   usePendingApprovalsController,
-} from "../hooks/usePendingApprovalsController";
-import { PendingApprovalForm } from "../components/PendingApprovalForm";
+} from "./usePendingApprovalsController";
+import { PendingApprovalForm } from "./PendingApprovalForm";
 import "./PendingApprovalsPage.css";
 
 const { Title, Text } = Typography;

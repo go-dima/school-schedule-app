@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { PendingApproval } from "../types";
-import { stubMatchMedia } from "../testUtils/antdDom";
+import type { PendingApproval } from "../../types";
+import { stubMatchMedia } from "../../testUtils/antdDom";
 
 const api = {
   getPendingApprovalsWithUsers: vi.fn(),
@@ -14,7 +14,7 @@ const api = {
 };
 const trackEvent = vi.fn();
 
-vi.mock("../services/api", () => ({
+vi.mock("../../services/api", () => ({
   usersApi: {
     getPendingApprovalsWithUsers: () => api.getPendingApprovalsWithUsers(),
     approveUserWithRole: (...a: unknown[]) => api.approveUserWithRole(...a),
@@ -24,11 +24,11 @@ vi.mock("../services/api", () => ({
   },
   childrenApi: { getUnlinkedChildren: () => api.getUnlinkedChildren() },
 }));
-vi.mock("../contexts/AuthContext", () => ({
+vi.mock("../../contexts/AuthContext", () => ({
   useAuth: () => ({ permissions: { canApproveSignups: true } }),
 }));
-vi.mock("../utils/env", () => ({ isTestScopeEnabled: () => true }));
-vi.mock("../utils/analytics", () => ({
+vi.mock("../../utils/env", () => ({ isTestScopeEnabled: () => true }));
+vi.mock("../../utils/analytics", () => ({
   AnalyticsEvent: {
     SignupApproved: "signup_approved",
     SignupRejected: "signup_rejected",

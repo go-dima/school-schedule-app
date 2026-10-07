@@ -2,9 +2,9 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Alert, Badge, Button, Modal, Space, Spin, Typography } from "antd";
 import { ReloadOutlined, UserOutlined } from "@ant-design/icons";
-import { usePendingApprovalsController } from "../hooks/usePendingApprovalsController";
-import { PendingApprovalCard } from "../components/PendingApprovalCard";
-import { PendingApprovalForm } from "../components/PendingApprovalForm";
+import { usePendingApprovalsController } from "./usePendingApprovalsController";
+import { PendingApprovalCard } from "./PendingApprovalCard";
+import { PendingApprovalForm } from "./PendingApprovalForm";
 import "./MobilePendingApprovalsPage.css";
 
 const { Title, Text } = Typography;
