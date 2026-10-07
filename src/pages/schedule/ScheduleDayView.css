@@ -1,8 +1,10 @@
 /* Stays under the app header while the day scrolls. */
 .mobile-schedule-strip {
   position: sticky;
-  /* Below the mobile app header; stories without a header set it to 0. */
-  top: var(--schedule-strip-top, calc(56px + env(safe-area-inset-top)));
+  /* Right under the app header: the top of the mobile shell's scrolling
+     content area, minus its 12px top padding (sticky offsets are measured
+     inside it). */
+  top: -12px;
   z-index: 10;
   margin: 0 -12px;
   padding: 2px 12px;

@@ -44,16 +44,7 @@ const meta: Meta<typeof ScheduleDayView> = {
   },
   decorators: [
     Story => (
-      <div
-        style={
-          {
-            padding: 12,
-            background: "#f8fafc",
-            minHeight: "100vh",
-            // No app header above the strip in Storybook.
-            "--schedule-strip-top": "0px",
-          } as React.CSSProperties
-        }>
+      <div style={{ padding: 12, background: "#f8fafc", minHeight: "100vh" }}>
         <Story />
       </div>
     ),
