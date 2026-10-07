@@ -936,3 +936,19 @@ describe("ScheduleService.classTitles", () => {
     expect(ScheduleService.classTitles(classes, 1)).toEqual([]);
   });
 });
+
+describe("ScheduleService.actsAsStaffInStudentView", () => {
+  it.each([
+    { isStaff: true, canPickSchedule: false, expected: true }, // staff only
+    { isStaff: true, canPickSchedule: true, expected: false }, // staff + parent (#192)
+    { isStaff: false, canPickSchedule: true, expected: false }, // parent / child
+    { isStaff: false, canPickSchedule: false, expected: false }, // admin only
+  ])(
+    "isStaff=$isStaff canPickSchedule=$canPickSchedule -> $expected",
+    ({ isStaff, canPickSchedule, expected }) => {
+      expect(
+        ScheduleService.actsAsStaffInStudentView({ isStaff, canPickSchedule })
+      ).toBe(expected);
+    }
+  );
+});

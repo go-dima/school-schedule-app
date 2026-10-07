@@ -93,6 +93,12 @@ const SchedulePageContent: React.FC = () => {
   // Parent and child both pick for `selectedChild` (ChildContext); only a
   // parent has several children to switch between or add.
   const { canPickSchedule, canManageChildren } = permissions;
+  // The student view's staff paths. False for a staff+parent user, who acts
+  // as a parent here (#192); `isStaff` alone means "holds the role".
+  const actsAsStaff = ScheduleService.actsAsStaffInStudentView({
+    isStaff,
+    canPickSchedule,
+  });
 
   // Staff View: one staff member's week instead of a student's. URL-backed
   // so it survives refresh and can be linked:
@@ -243,7 +249,7 @@ const SchedulePageContent: React.FC = () => {
   const target: ScheduleTarget | undefined =
     canPickSchedule && selectedChild
       ? { childId: selectedChild.id }
-      : isStaff && staffSelectedChild
+      : actsAsStaff && staffSelectedChild
         ? { childId: staffSelectedChild.id }
         : undefined;
 
@@ -298,7 +304,9 @@ const SchedulePageContent: React.FC = () => {
   // The class search's suggestions, narrowed to the shown grade: the
   // selected student's for staff, else the grade filter's.
   const searchGrade =
-    isStaff && staffSelectedChild ? staffSelectedChild.grade : selectedGrade;
+    actsAsStaff && staffSelectedChild
+      ? staffSelectedChild.grade
+      : selectedGrade;
   const classTitles = React.useMemo(
     () => ScheduleService.classTitles(classes, searchGrade),
     [classes, searchGrade]
@@ -395,7 +403,11 @@ const SchedulePageContent: React.FC = () => {
   // refreshing the schedule grid. See `scheduleGridLoading` below.
   const pageLoading =
     scheduleLoading ||
-    (canPickSchedule ? childrenLoading : isStaff ? allChildrenLoading : false);
+    (canPickSchedule
+      ? childrenLoading
+      : actsAsStaff
+        ? allChildrenLoading
+        : false);
   // Scoped to the schedule grid + selected-classes summary, so switching
   // child/toggle only shows a local loading state over that section.
   const scheduleGridLoading = selectedScheduleLoading;
@@ -406,7 +418,7 @@ const SchedulePageContent: React.FC = () => {
 
   // Classes auto-selected by the active child's track can't be picked apart
   // one at a time -- only changing the track (which re-syncs them) can.
-  const currentTrackChild = isStaff ? staffSelectedChild : selectedChild;
+  const currentTrackChild = actsAsStaff ? staffSelectedChild : selectedChild;
   const lockedClassIds = new Set([
     ...(currentTrackChild?.trackNumber
       ? classes
@@ -481,15 +493,11 @@ const SchedulePageContent: React.FC = () => {
     // wrong data and would violate RLS (parents may only write draft rows).
     if (!canEdit) return;
 
-    // `target` (parent-role precedence) and `currentTrackChild` (staff-role
-    // precedence) can disagree for a user who holds BOTH the parent and staff
-    // roles: ChildContext auto-selects their own first child, so `target`
-    // stays on that child while `currentTrackChild` follows the staff student
-    // selector. Track only ever read `currentTrackChild`, so the divergence was
-    // harmless there -- but this effect WRITES for `currentTrackChild` while
-    // reading `selectedSchedule`/`refetchSelectedSchedule`, which belong to
-    // `target`. Mismatched, computeChanges would never see its own writes land,
-    // looping writes against the wrong child forever. Only sync when both
+    // This effect WRITES for `currentTrackChild` while reading
+    // `selectedSchedule`/`refetchSelectedSchedule`, which belong to `target`.
+    // Both now resolve through `actsAsStaff` and so name the same child, but
+    // if they ever disagreed, computeChanges would never see its own writes
+    // land and would loop writes against the wrong child. Only sync when both
     // agree on the same child.
     if (!target || target.childId !== currentTrackChild?.id) {
       return;
@@ -835,7 +843,7 @@ const SchedulePageContent: React.FC = () => {
   const selectedClasses = selectedSchedule.map(selection => selection.classId);
   const hasSelectableTarget =
     (canPickSchedule && !!selectedChild) ||
-    (isStaff && staffSelectedChild !== null);
+    (actsAsStaff && staffSelectedChild !== null);
 
   // A parent viewing the read-only committed schedule gets no interaction at
   // all -- cells don't open the drawer, not just "opens read-only" -- so
@@ -869,7 +877,7 @@ const SchedulePageContent: React.FC = () => {
         </Button>
       )
     : ((canPickSchedule && selectedChild) ||
-        (isStaff && staffSelectedChild)) && (
+        (actsAsStaff && staffSelectedChild)) && (
         <Button
           icon={<PrinterOutlined />}
           onClick={handleExportSchedule}
@@ -1014,7 +1022,7 @@ const SchedulePageContent: React.FC = () => {
             />
           </>
         )}
-        {!isStaffView && isStaff && (
+        {!isStaffView && actsAsStaff && (
           <>
             <ChildGroupTrackSelector
               child={staffSelectedChild}
@@ -1041,7 +1049,7 @@ const SchedulePageContent: React.FC = () => {
         {/* Last child, so the rightmost filter (the bar's groups are ltr).
             Inside the pair the label is rightmost.
             Clearing means "all grades" (undefined). */}
-        {!isStaffView && (isStaff || isAdmin) && (
+        {!isStaffView && (actsAsStaff || isAdmin) && (
           <FilterSelect<number>
             label={t("schedule.page.labels.filterByGrade")}
             placeholder={t("schedule.page.placeholders.allGrades")}
@@ -1051,7 +1059,7 @@ const SchedulePageContent: React.FC = () => {
               value: grade,
               label: GetGradeName(grade),
             }))}
-            disabled={refreshing || (isStaff && !!staffSelectedChild)}
+            disabled={refreshing || (actsAsStaff && !!staffSelectedChild)}
           />
         )}
       </FiltersBar>
@@ -1179,7 +1187,7 @@ const SchedulePageContent: React.FC = () => {
               canViewClasses={canViewClasses}
               canAssignNonLessonSlots={permissions.canManageRoster}
               isAdmin={permissions.canCreateClasses}
-              showEnrollmentCount={isStaff || isAdmin}
+              showEnrollmentCount={actsAsStaff || isAdmin}
               onCreateClass={handleCreateClass}
               searchTerm={searchTerm}
               childGroupNumber={currentTrackChild?.groupNumber}
@@ -1187,9 +1195,11 @@ const SchedulePageContent: React.FC = () => {
               overrides={overrides}
               canCreateOverride={canCreateOverride}
               onCreateOverride={handleCreateOverride}
-              onOverrideClick={isStaff ? handleOverrideCardClick : undefined}
+              onOverrideClick={
+                actsAsStaff ? handleOverrideCardClick : undefined
+              }
               onOverrideDelete={
-                isStaff ? handleDrawerOverrideDelete : undefined
+                actsAsStaff ? handleDrawerOverrideDelete : undefined
               }
             />
           )}
