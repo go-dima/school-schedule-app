@@ -1,5 +1,5 @@
 import React from "react";
-import { Dropdown, Avatar, Typography, Space } from "antd";
+import { Dropdown, Avatar, Typography, Space, Switch } from "antd";
 import {
   UserOutlined,
   EditOutlined,
@@ -77,24 +77,42 @@ const ProfileDropdown: React.FC = () => {
       ),
       onClick: handleEditProfile,
     },
-    // Only phones can switch: a desktop never gets the mobile UI. Switching
-    // back to the detected mode clears the override rather than pinning it.
-    ...(detected === "mobile"
-      ? [
-          {
-            key: "switch-ui-mode",
-            label: (
-              <Space>
-                {mode === "mobile" ? <DesktopOutlined /> : <MobileOutlined />}
-                {mode === "mobile"
-                  ? t("profile.dropdown.switchToDesktop")
-                  : t("profile.dropdown.switchToMobile")}
-              </Space>
-            ),
-            onClick: () => setOverride(mode === "mobile" ? "desktop" : null),
-          },
-        ]
-      : []),
+    // An on/off switch for the other UI Mode than the device's: "mobile
+    // view" on a computer, "desktop view" on a phone. Off (the default)
+    // follows the device; on pins the other mode.
+    {
+      key: "switch-ui-mode",
+      label: (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+          }}>
+          <Space>
+            {detected === "mobile" ? <DesktopOutlined /> : <MobileOutlined />}
+            {detected === "mobile"
+              ? t("profile.dropdown.desktopView")
+              : t("profile.dropdown.mobileView")}
+          </Space>
+          {/* Display only: the click lands on the menu item. */}
+          <Switch
+            size="small"
+            checked={mode !== detected}
+            style={{ flexShrink: 0 }}
+          />
+        </div>
+      ),
+      onClick: () =>
+        setOverride(
+          mode !== detected
+            ? null
+            : detected === "mobile"
+              ? "desktop"
+              : "mobile"
+        ),
+    },
     {
       type: "divider",
     },

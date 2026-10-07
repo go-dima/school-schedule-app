@@ -482,8 +482,8 @@
       "anonymous": "משתמש אלמוני",
       "editProfile": "ערוך פרופיל",
       "logout": "התנתק",
-      "switchToDesktop": "מעבר לתצוגת מחשב",
-      "switchToMobile": "מעבר לתצוגת נייד"
+      "desktopView": "תצוגת שולחן עבודה",
+      "mobileView": "תצוגת נייד"
     },
     "page": {
       "title": "הגדרות פרופיל",

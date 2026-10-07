@@ -57,12 +57,12 @@ const meta: Meta<typeof MobileAppLayout> = {
   title: "Layouts/MobileAppLayout",
   component: MobileAppLayout,
   decorators: [
-    Story => (
+    (Story, context) => (
       <AuthContext.Provider value={mockAuthValue}>
         <UiModeContext.Provider
           value={{
             mode: "mobile",
-            detected: "mobile",
+            detected: context.parameters.detected ?? "mobile",
             override: null,
             setOverride: () => {},
           }}>
@@ -88,3 +88,8 @@ export default meta;
 type Story = StoryObj<typeof MobileAppLayout>;
 
 export const Parent: Story = {};
+
+// A computer with "mobile view" switched on in the profile menu.
+export const ComputerWithMobileViewOn: Story = {
+  parameters: { detected: "desktop" },
+};
