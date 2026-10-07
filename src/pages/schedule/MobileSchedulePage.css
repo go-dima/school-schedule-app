@@ -34,3 +34,9 @@
   gap: 16px;
   padding: 64px 0;
 }
+
+/* The week strip sits right under the child tabs: cancel the column gap
+   between them (the gap below the strip stays). */
+.mobile-schedule > .schedule-tabs + .mobile-schedule-strip {
+  margin-top: -12px;
+}
