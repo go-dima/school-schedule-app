@@ -1,0 +1,51 @@
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  direction: rtl;
+}
+
+.week-strip-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: 6px 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #475569;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.week-strip-name {
+  font-size: 13px;
+}
+
+.week-strip-date {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.week-strip-day.is-today .week-strip-date {
+  color: #1677ff;
+}
+
+.week-strip-day.is-selected .week-strip-date {
+  background: #1677ff;
+  color: #ffffff;
+}
+
+.week-strip-day.is-selected .week-strip-name {
+  color: #1677ff;
+  font-weight: 600;
+}
