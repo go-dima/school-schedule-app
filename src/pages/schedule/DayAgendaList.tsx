@@ -15,7 +15,7 @@ import "./DayAgendaList.css";
 
 // One school day as a vertical list: the time on the right (RTL), and
 // beside it the same cell the desktop grid shows for that day and slot.
-// Read only, so no lock marks: they only matter when editing (#241).
+// Read only. Like the desktop grid, cards carry no lock marks.
 export const DayAgendaList: React.FC<{ entries: AgendaEntry[] }> = ({
   entries,
 }) => {
