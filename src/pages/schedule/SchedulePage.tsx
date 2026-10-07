@@ -52,9 +52,7 @@ import type {
 import "./SchedulePage.css";
 import { useChildScheduleController } from "./useChildScheduleController";
 import { scheduleCapabilities } from "./scheduleCapabilities";
-
-// The desktop page offers every control; see MobileSchedulePage for mobile.
-const caps = scheduleCapabilities("desktop");
+import { useUiMode } from "../../contexts/UiModeContext";
 import { GetGradeName } from "@/utils/grades";
 import { printSchedule } from "../../utils/printSchedule";
 import {
@@ -72,6 +70,9 @@ const SchedulePageContent: React.FC = () => {
   const { isAdmin } = roleFlags;
   const { child, staffStudent, view, catalog, selection, overrides, status } =
     useChildScheduleController();
+  // Controls by platform, the same for every role: staff and admins get this
+  // page in the mobile shell too, with the mobile capabilities.
+  const caps = scheduleCapabilities(useUiMode().mode);
 
   // Staff View: one staff member's week instead of a student's. URL-backed
   // so it survives refresh and can be linked:
@@ -410,28 +411,30 @@ const SchedulePageContent: React.FC = () => {
   const refreshing = isStaffView ? staffViewLoading : status.loading;
 
   // Names whose schedule it prints: the chosen staff member, or the child.
-  const printButton = isStaffView
-    ? staffName && (
-        <Button
-          icon={<PrinterOutlined />}
-          onClick={handleExportStaffSchedule}
-          disabled={staffViewLoading}>
-          {isMyView
-            ? t("schedule.page.exportMyButton")
-            : t("schedule.page.exportButtonFor", { name: staffName })}
-        </Button>
-      )
-    : ((child.canPick && child.selected) ||
-        (staffStudent.active && staffStudent.selected)) && (
-        <Button
-          icon={<PrinterOutlined />}
-          onClick={handleExportSchedule}
-          disabled={status.loading}>
-          {t("schedule.page.exportButtonFor", {
-            name: selection.shownChildName,
-          })}
-        </Button>
-      );
+  const printButton = !caps.canPrint
+    ? null
+    : isStaffView
+      ? staffName && (
+          <Button
+            icon={<PrinterOutlined />}
+            onClick={handleExportStaffSchedule}
+            disabled={staffViewLoading}>
+            {isMyView
+              ? t("schedule.page.exportMyButton")
+              : t("schedule.page.exportButtonFor", { name: staffName })}
+          </Button>
+        )
+      : ((child.canPick && child.selected) ||
+          (staffStudent.active && staffStudent.selected)) && (
+          <Button
+            icon={<PrinterOutlined />}
+            onClick={handleExportSchedule}
+            disabled={status.loading}>
+            {t("schedule.page.exportButtonFor", {
+              name: selection.shownChildName,
+            })}
+          </Button>
+        );
 
   // Which tab bars show, top to bottom. Each is hidden when it would offer
   // only one choice (e.g. no staff/student tabs for non-managers).

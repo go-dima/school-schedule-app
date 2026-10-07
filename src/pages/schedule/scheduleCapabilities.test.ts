@@ -7,6 +7,7 @@ describe("scheduleCapabilities", () => {
       canChooseDraft: true,
       canPickView: true,
       canRefresh: true,
+      canPrint: true,
       canAddChild: true,
       showReadOnlyNotice: true,
     });
