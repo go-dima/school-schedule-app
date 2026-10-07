@@ -1,61 +1,114 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Tooltip, Typography } from "antd";
-import { LockOutlined, WarningOutlined } from "@ant-design/icons";
+import { Card, Empty, Tooltip } from "antd";
+import { LockOutlined } from "@ant-design/icons";
 import ClassCard from "../../components/ClassCard";
 import OverrideCard from "../../components/OverrideCard";
+import {
+  getTimeSlotDisplayInfo,
+  isBreakTimeSlot,
+  isMeetingTimeSlot,
+} from "../../utils/timeSlots";
 import type { AgendaEntry } from "./dayAgenda";
+// Same cell and card styles as the desktop grid.
+import "../../components/ScheduleTable.css";
 import "./DayAgendaList.css";
 
-const { Text } = Typography;
-
-// One school day as a vertical list: the time on the right (RTL), the
-// slot's content beside it. Read only.
+// One school day as a vertical list: the time on the right (RTL), and
+// beside it the same cell the desktop grid shows for that day and slot.
+// Read only.
 export const DayAgendaList: React.FC<{
   entries: AgendaEntry[];
   lockedClassIds: Set<string>;
 }> = ({ entries, lockedClassIds }) => {
   const { t } = useTranslation();
 
-  const content = (entry: AgendaEntry) => {
+  const cell = (entry: AgendaEntry) => {
     switch (entry.kind) {
       case "overrides":
-        return entry.overrides.map(o => (
-          <OverrideCard key={o.id} override={o} />
-        ));
-      case "selected":
-        return entry.classes.map(cls => (
-          <div key={cls.id} className="day-agenda-class">
-            <ClassCard
-              cls={cls}
-              isContinuation={entry.continuationIds.includes(cls.id)}
-            />
-            {lockedClassIds.has(cls.id) && (
-              <Tooltip title={t("schedule.drawer.lockedClassTooltip")}>
-                <LockOutlined className="day-agenda-lock" />
-              </Tooltip>
-            )}
+        return (
+          <div className="schedule-cell selected-classes">
+            {entry.overrides.map(o => (
+              <OverrideCard key={o.id} override={o} />
+            ))}
           </div>
-        ));
-      case "nonLesson":
-        return <Text type="secondary">{entry.timeSlot.name}</Text>;
-      // A lesson slot with nothing selected: its name and what's on offer.
+        );
+      case "selected": {
+        const continuation = entry.classes.some(cls =>
+          entry.continuationIds.includes(cls.id)
+        );
+        const mandatory = entry.classes.some(cls => cls.isMandatory);
+        return (
+          <div
+            className={`schedule-cell selected-classes${
+              continuation ? " double-continuation selected" : ""
+            }${mandatory ? " mandatory-cell" : ""}${
+              entry.hasConflict ? " conflict" : ""
+            }`}
+            title={
+              entry.hasConflict
+                ? t("schedule.table.conflictTooltip")
+                : undefined
+            }>
+            {entry.classes.map(cls => (
+              <div key={cls.id} className="day-agenda-class">
+                <ClassCard
+                  cls={cls}
+                  isContinuation={entry.continuationIds.includes(cls.id)}
+                />
+                {lockedClassIds.has(cls.id) && (
+                  <Tooltip title={t("schedule.drawer.lockedClassTooltip")}>
+                    <LockOutlined className="day-agenda-lock" />
+                  </Tooltip>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      }
+      case "nonLesson": {
+        const info = getTimeSlotDisplayInfo(entry.timeSlot);
+        return (
+          <div
+            className={`schedule-cell ${info.cssClass}`}
+            title={info.description}>
+            <Card size="small" className="non-lesson-card">
+              <div className="non-lesson-content">
+                <div className="slot-name">{entry.timeSlot.name}</div>
+                {!isBreakTimeSlot(entry.timeSlot) &&
+                  !isMeetingTimeSlot(entry.timeSlot) && (
+                    <div className="slot-description">{info.description}</div>
+                  )}
+              </div>
+            </Card>
+          </div>
+        );
+      }
       case "unselected":
         return (
-          <Text type="secondary">
-            {entry.timeSlot.name} ·{" "}
-            {entry.optionCount === 1
-              ? t("schedule.table.oneClass")
-              : t("schedule.table.multipleClasses", {
-                  count: entry.optionCount,
-                })}
-          </Text>
+          <div className="schedule-cell multiple">
+            <Card size="small" className="class-card">
+              <div className="multiple-classes">
+                <div className="class-count">
+                  {entry.optionCount === 1
+                    ? t("schedule.table.oneClass")
+                    : t("schedule.table.multipleClasses", {
+                        count: entry.optionCount,
+                      })}
+                </div>
+              </div>
+            </Card>
+          </div>
         );
       case "empty":
         return (
-          <Text type="secondary">
-            {entry.timeSlot.name} · {t("schedule.table.noClasses")}
-          </Text>
+          <div className="schedule-cell empty">
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={t("schedule.table.noClasses")}
+              style={{ margin: "8px 0" }}
+            />
+          </div>
         );
     }
   };
@@ -63,17 +116,11 @@ export const DayAgendaList: React.FC<{
   return (
     <ol className="day-agenda">
       {entries.map(entry => {
-        const compact =
-          entry.kind === "nonLesson" ||
-          entry.kind === "unselected" ||
-          entry.kind === "empty";
-        const conflict = entry.kind === "selected" && entry.hasConflict;
+        const compact = entry.kind === "nonLesson";
         return (
           <li
             key={entry.timeSlot.id}
-            className={`day-agenda-row${compact ? " is-compact" : ""}${
-              conflict ? " is-conflict" : ""
-            }`}>
+            className={`day-agenda-row${compact ? " is-compact" : ""}`}>
             <div className="day-agenda-time">
               <span>{entry.timeSlot.startTime.slice(0, 5)}</span>
               {!compact && (
@@ -82,19 +129,7 @@ export const DayAgendaList: React.FC<{
                 </span>
               )}
             </div>
-            <div className="day-agenda-content">
-              {!compact && (
-                <Text type="secondary" className="day-agenda-slot-name">
-                  {entry.timeSlot.name}
-                  {conflict && (
-                    <Tooltip title={t("schedule.table.conflictTooltip")}>
-                      <WarningOutlined className="day-agenda-conflict-icon" />
-                    </Tooltip>
-                  )}
-                </Text>
-              )}
-              {content(entry)}
-            </div>
+            <div className="day-agenda-cell">{cell(entry)}</div>
           </li>
         );
       })}

@@ -12,7 +12,11 @@ import SchedulePage from "./SchedulePage";
 import { useChildScheduleController } from "./useChildScheduleController";
 import { buildDayAgenda } from "./dayAgenda";
 import { ScheduleDayView } from "./ScheduleDayView";
+import { scheduleCapabilities } from "./scheduleCapabilities";
 import "./MobileSchedulePage.css";
+
+// The mobile page's controls: a read-only view of the committed schedule.
+const caps = scheduleCapabilities("mobile");
 
 // One school day at a time, for parents and children (incl. staff+parent
 // users) in mobile UI Mode: a week strip, then the day's slots as a list.
@@ -92,47 +96,59 @@ const MobileScheduleContent: React.FC = () => {
   const error = scheduleError || selectedScheduleError || childrenError;
   const hasChildren = userChildren.length > 0;
 
+  const childTabs = (onAddClick?: () => void) => (
+    <ChildTabs
+      childList={userChildren}
+      selectedChildId={selectedChild?.id}
+      onSelect={handleParentChildSelect}
+      onAddClick={onAddClick}
+      disabled={childrenLoading}
+    />
+  );
+
   return (
     <div className="mobile-schedule">
-      {canManageChildren && hasChildren && (
-        <AddChildButton
-          onAdded={handleParentChildAdded}
-          renderTrigger={open => (
-            <ChildTabs
-              childList={userChildren}
-              selectedChildId={selectedChild?.id}
-              onSelect={handleParentChildSelect}
-              onAddClick={open}
-              disabled={childrenLoading}
-            />
-          )}
-        />
-      )}
-
-      {canPickSchedule && hasChildren && (
-        <div className="mobile-schedule-toolbar">
-          <Radio.Group
-            className="draft-committed-toggle"
-            optionType="button"
-            value={viewCommitted ? "committed" : "draft"}
-            onChange={e => setViewCommitted(e.target.value === "committed")}
-            disabled={loading || !selectedChild}>
-            <Radio.Button value="draft">
-              {t("schedule.page.labels.draftView")}
-            </Radio.Button>
-            <Radio.Button value="committed">
-              {t("schedule.page.labels.committedView")}
-            </Radio.Button>
-          </Radio.Group>
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={handleRefresh}
-            loading={loading}
-            aria-label={t("common.buttons.refresh")}
-            className="mobile-schedule-refresh"
+      {canManageChildren &&
+        hasChildren &&
+        (caps.canAddChild ? (
+          <AddChildButton
+            onAdded={handleParentChildAdded}
+            renderTrigger={open => childTabs(open)}
           />
-        </div>
-      )}
+        ) : (
+          childTabs()
+        ))}
+
+      {canPickSchedule &&
+        hasChildren &&
+        (caps.canChooseDraft || caps.canRefresh) && (
+          <div className="mobile-schedule-toolbar">
+            {caps.canChooseDraft && (
+              <Radio.Group
+                className="draft-committed-toggle"
+                optionType="button"
+                value={viewCommitted ? "committed" : "draft"}
+                onChange={e => setViewCommitted(e.target.value === "committed")}
+                disabled={loading || !selectedChild}>
+                <Radio.Button value="draft">
+                  {t("schedule.page.labels.draftView")}
+                </Radio.Button>
+                <Radio.Button value="committed">
+                  {t("schedule.page.labels.committedView")}
+                </Radio.Button>
+              </Radio.Group>
+            )}
+            {caps.canRefresh && (
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={handleRefresh}
+                loading={loading}
+                aria-label={t("common.buttons.refresh")}
+                className="mobile-schedule-refresh"
+              />
+            )}
+          </div>
+        )}
 
       {canManageChildren && !hasChildren && (
         <Alert
@@ -140,18 +156,20 @@ const MobileScheduleContent: React.FC = () => {
           showIcon
           message={t("schedule.page.alerts.noChildrenFound.title")}
           description={
-            <>
-              {t("schedule.page.alerts.noChildrenFound.descriptionPrefix")}
-              <AddChildButton
-                onAdded={handleParentChildAdded}
-                renderTrigger={open => (
-                  <Typography.Link onClick={open}>
-                    {t("schedule.page.addChildButton")}
-                  </Typography.Link>
-                )}
-              />
-              {t("schedule.page.alerts.noChildrenFound.descriptionSuffix")}
-            </>
+            caps.canAddChild ? (
+              <>
+                {t("schedule.page.alerts.noChildrenFound.descriptionPrefix")}
+                <AddChildButton
+                  onAdded={handleParentChildAdded}
+                  renderTrigger={open => (
+                    <Typography.Link onClick={open}>
+                      {t("schedule.page.addChildButton")}
+                    </Typography.Link>
+                  )}
+                />
+                {t("schedule.page.alerts.noChildrenFound.descriptionSuffix")}
+              </>
+            ) : undefined
           }
         />
       )}
@@ -183,12 +201,10 @@ const MobileScheduleContent: React.FC = () => {
 
       {selectedChild && (
         <>
-          {viewStatus === "draft" ? (
-            <DraftBanner />
-          ) : (
+          {viewStatus === "draft" && <DraftBanner />}
+          {viewStatus === "committed" && caps.showReadOnlyNotice && (
             <CommittedReadOnlyBanner />
           )}
-
           <ScheduleDayView
             now={now}
             entriesForDay={entriesForDay}

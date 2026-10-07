@@ -3,24 +3,22 @@
   margin: 0;
   padding: 0;
   direction: rtl;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .day-agenda-row {
   display: grid;
-  grid-template-columns: 52px 1fr;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid #eef2f7;
-}
-
-.day-agenda-row.is-compact {
-  padding: 6px 0;
-  align-items: center;
+  grid-template-columns: 48px 1fr;
+  gap: 8px;
+  align-items: stretch;
 }
 
 .day-agenda-time {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   font-size: 14px;
   font-weight: 600;
   color: #334155;
@@ -29,8 +27,8 @@
 
 .day-agenda-row.is-compact .day-agenda-time {
   font-weight: 400;
-  color: #94a3b8;
   font-size: 13px;
+  color: #94a3b8;
 }
 
 .day-agenda-time-end {
@@ -39,19 +37,16 @@
   color: #94a3b8;
 }
 
-.day-agenda-content {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.day-agenda-cell {
   min-width: 0;
-}
-
-.day-agenda-slot-name {
-  font-size: 12px;
+  display: flex;
 }
 
 .day-agenda-class {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .day-agenda-lock {
@@ -59,15 +54,6 @@
   top: 8px;
   left: 8px;
   color: #94a3b8;
-}
-
-.day-agenda-row.is-conflict .day-agenda-content .class-card {
-  border-color: #ff4d4f;
-}
-
-.day-agenda-conflict-icon {
-  color: #ff4d4f;
-  margin-inline-start: 6px;
 }
 
 /* Day change: the new day slides in from the side it came from. */

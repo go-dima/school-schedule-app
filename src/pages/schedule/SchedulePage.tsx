@@ -51,6 +51,10 @@ import type {
 } from "../../types";
 import "./SchedulePage.css";
 import { useChildScheduleController } from "./useChildScheduleController";
+import { scheduleCapabilities } from "./scheduleCapabilities";
+
+// The desktop page offers every control; see MobileSchedulePage for mobile.
+const caps = scheduleCapabilities("desktop");
 import { GetGradeName } from "@/utils/grades";
 import { printSchedule } from "../../utils/printSchedule";
 import {
@@ -431,18 +435,20 @@ const SchedulePageContent: React.FC = () => {
 
   // Which tab bars show, top to bottom. Each is hidden when it would offer
   // only one choice (e.g. no staff/student tabs for non-managers).
-  const showViewTabs = canUseStaffView;
+  const showViewTabs = canUseStaffView && caps.canPickView;
   const showChildTabs = !isStaffView && child.canManage;
   const hasTabBar = showViewTabs || showChildTabs;
   const tabBarActions = (
     <Space>
-      <Button
-        icon={<ReloadOutlined />}
-        onClick={handleRefresh}
-        loading={refreshing}
-        disabled={refreshing}>
-        {t("common.buttons.refresh")}
-      </Button>
+      {caps.canRefresh && (
+        <Button
+          icon={<ReloadOutlined />}
+          onClick={handleRefresh}
+          loading={refreshing}
+          disabled={refreshing}>
+          {t("common.buttons.refresh")}
+        </Button>
+      )}
       {printButton}
     </Space>
   );
@@ -489,7 +495,7 @@ const SchedulePageContent: React.FC = () => {
               childList={child.list}
               selectedChildId={child.selected?.id}
               onSelect={child.select}
-              onAddClick={open}
+              onAddClick={caps.canAddChild ? open : undefined}
               disabled={child.loading}
               extra={showViewTabs ? undefined : tabBarActions}
             />
@@ -499,30 +505,33 @@ const SchedulePageContent: React.FC = () => {
 
       <FiltersBar
         variant="flat"
-        canRefresh={!hasTabBar}
+        canRefresh={!hasTabBar && caps.canRefresh}
         onRefresh={handleRefresh}
         refreshing={refreshing}
         disabled={refreshing}
         actions={
           <>
             {!hasTabBar && printButton}
-            {!isStaffView && child.canPick && child.list.length > 0 && (
-              <Radio.Group
-                className="draft-committed-toggle"
-                optionType="button"
-                value={view.committed ? "committed" : "draft"}
-                onChange={e =>
-                  view.setCommitted(e.target.value === "committed")
-                }
-                disabled={refreshing || !child.selected}>
-                <Radio.Button value="draft">
-                  {t("schedule.page.labels.draftView")}
-                </Radio.Button>
-                <Radio.Button value="committed">
-                  {t("schedule.page.labels.committedView")}
-                </Radio.Button>
-              </Radio.Group>
-            )}
+            {!isStaffView &&
+              caps.canChooseDraft &&
+              child.canPick &&
+              child.list.length > 0 && (
+                <Radio.Group
+                  className="draft-committed-toggle"
+                  optionType="button"
+                  value={view.committed ? "committed" : "draft"}
+                  onChange={e =>
+                    view.setCommitted(e.target.value === "committed")
+                  }
+                  disabled={refreshing || !child.selected}>
+                  <Radio.Button value="draft">
+                    {t("schedule.page.labels.draftView")}
+                  </Radio.Button>
+                  <Radio.Button value="committed">
+                    {t("schedule.page.labels.committedView")}
+                  </Radio.Button>
+                </Radio.Group>
+              )}
           </>
         }>
         {isStaffTab && (
@@ -699,9 +708,10 @@ const SchedulePageContent: React.FC = () => {
       )}
 
       {!isStaffView && view.status === "draft" && <DraftBanner />}
-      {!isStaffView && child.canPick && view.committed && (
-        <CommittedReadOnlyBanner />
-      )}
+      {!isStaffView &&
+        caps.showReadOnlyNotice &&
+        child.canPick &&
+        view.committed && <CommittedReadOnlyBanner />}
 
       <Spin spinning={isStaffView ? staffViewLoading : status.gridLoading}>
         <Card className="schedule-card">
