@@ -1,10 +1,10 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, Badge, Button, Modal, Space, Spin, Typography } from "antd";
+import { Alert, Badge, Button, Space, Spin, Typography } from "antd";
 import { ReloadOutlined, UserOutlined } from "@ant-design/icons";
 import { usePendingApprovalsController } from "./usePendingApprovalsController";
 import { PendingApprovalCard } from "./PendingApprovalCard";
-import { PendingApprovalForm } from "./PendingApprovalForm";
+import { PendingApprovalSheet } from "./PendingApprovalSheet";
 import "./MobilePendingApprovalsPage.css";
 
 const { Title, Text } = Typography;
@@ -109,18 +109,7 @@ const MobilePendingApprovalsPage: React.FC = () => {
         )}
       </Spin>
 
-      <Modal
-        title={
-          <Space>
-            <UserOutlined />
-            {t("pendingApprovals.modal.title")}
-          </Space>
-        }
-        open={approvalForm.open}
-        onCancel={approvalForm.close}
-        footer={null}>
-        <PendingApprovalForm controller={approvalForm} />
-      </Modal>
+      <PendingApprovalSheet controller={approvalForm} />
     </div>
   );
 };
