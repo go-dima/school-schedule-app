@@ -42,20 +42,6 @@
   display: flex;
 }
 
-.day-agenda-class {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.day-agenda-lock {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  color: #94a3b8;
-}
-
 /* Day change: the new day slides in from the side it came from. */
 @keyframes day-agenda-from-left {
   from {

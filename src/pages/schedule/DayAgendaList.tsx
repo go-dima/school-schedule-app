@@ -1,7 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Card, Empty, Tooltip } from "antd";
-import { LockOutlined } from "@ant-design/icons";
+import { Card, Empty } from "antd";
 import ClassCard from "../../components/ClassCard";
 import OverrideCard from "../../components/OverrideCard";
 import {
@@ -16,11 +15,10 @@ import "./DayAgendaList.css";
 
 // One school day as a vertical list: the time on the right (RTL), and
 // beside it the same cell the desktop grid shows for that day and slot.
-// Read only.
-export const DayAgendaList: React.FC<{
-  entries: AgendaEntry[];
-  lockedClassIds: Set<string>;
-}> = ({ entries, lockedClassIds }) => {
+// Read only, so no lock marks: they only matter when editing (#241).
+export const DayAgendaList: React.FC<{ entries: AgendaEntry[] }> = ({
+  entries,
+}) => {
   const { t } = useTranslation();
 
   const cell = (entry: AgendaEntry) => {
@@ -51,17 +49,11 @@ export const DayAgendaList: React.FC<{
                 : undefined
             }>
             {entry.classes.map(cls => (
-              <div key={cls.id} className="day-agenda-class">
-                <ClassCard
-                  cls={cls}
-                  isContinuation={entry.continuationIds.includes(cls.id)}
-                />
-                {lockedClassIds.has(cls.id) && (
-                  <Tooltip title={t("schedule.drawer.lockedClassTooltip")}>
-                    <LockOutlined className="day-agenda-lock" />
-                  </Tooltip>
-                )}
-              </div>
+              <ClassCard
+                key={cls.id}
+                cls={cls}
+                isContinuation={entry.continuationIds.includes(cls.id)}
+              />
             ))}
           </div>
         );

@@ -11,8 +11,6 @@ import {
   selectedClassIds,
 } from "./fixtures/scheduleFixtures";
 
-const lockedClassIds = new Set(["class-1-1"]);
-
 const entriesForDay =
   (opts: {
     selected?: string[];
@@ -39,7 +37,6 @@ const meta: Meta<typeof ScheduleDayView> = {
   args: {
     now: tuesday,
     entriesForDay: entriesForDay({}),
-    lockedClassIds,
   },
   parameters: {
     layout: "fullscreen",

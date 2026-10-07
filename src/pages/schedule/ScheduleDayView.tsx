@@ -18,9 +18,8 @@ export const ScheduleDayView: React.FC<{
   /** The current time; a prop so stories and tests can pin the week. */
   now: Date;
   entriesForDay: (day: number) => AgendaEntry[];
-  lockedClassIds: Set<string>;
   loading?: boolean;
-}> = ({ now, entriesForDay, lockedClassIds, loading = false }) => {
+}> = ({ now, entriesForDay, loading = false }) => {
   const weekDates = useMemo(() => schoolWeekDates(now), [now]);
   const today = now.getDay() <= LAST_SCHOOL_DAY ? now.getDay() : null;
   const [day, setDay] = useState(() => initialScheduleDay(now));
@@ -57,10 +56,7 @@ export const ScheduleDayView: React.FC<{
             className={
               slideFrom ? `day-agenda-slide-from-${slideFrom}` : undefined
             }>
-            <DayAgendaList
-              entries={entriesForDay(day)}
-              lockedClassIds={lockedClassIds}
-            />
+            <DayAgendaList entries={entriesForDay(day)} />
           </div>
         </div>
       </Spin>

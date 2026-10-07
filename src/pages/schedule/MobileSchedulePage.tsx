@@ -40,7 +40,6 @@ const MobileScheduleContent: React.FC = () => {
     overrides,
     selectedGrade,
     currentTrackChild,
-    lockedClassIds,
     pageLoading,
     scheduleGridLoading,
     loading,
@@ -208,7 +207,6 @@ const MobileScheduleContent: React.FC = () => {
           <ScheduleDayView
             now={now}
             entriesForDay={entriesForDay}
-            lockedClassIds={lockedClassIds}
             loading={scheduleGridLoading}
           />
         </>
