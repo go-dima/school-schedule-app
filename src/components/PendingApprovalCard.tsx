@@ -27,8 +27,8 @@ export const PendingApprovalCard: React.FC<{
 
   return (
     <Card size="small" className="pending-approval-card">
-      {/* Name then email on one line (RTL: name rightmost), the request
-          date and requested role below. */}
+      {/* Name, email and requested role on one line (RTL: name rightmost,
+          role tag leftmost), the request date below. */}
       <div className="pending-approval-card-head">
         {fullName ? (
           <Text strong className="pending-approval-card-name">
@@ -45,15 +45,13 @@ export const PendingApprovalCard: React.FC<{
           title={email}>
           {email}
         </Text>
-      </div>
-      <div className="pending-approval-card-meta">
-        <Text type="secondary" className="pending-approval-card-date">
-          <ClockCircleOutlined /> {formatApprovalDate(approval.createdAt)}
-        </Text>
         <Tag color={ROLE_TAG_COLORS[approval.role]}>
           {t(`roles.${approval.role}`, approval.role)}
         </Tag>
       </div>
+      <Text type="secondary" className="pending-approval-card-date">
+        <ClockCircleOutlined /> {formatApprovalDate(approval.createdAt)}
+      </Text>
 
       {/* RTL: approve renders rightmost (first), reject leftmost. */}
       <div className="pending-approval-card-actions">
