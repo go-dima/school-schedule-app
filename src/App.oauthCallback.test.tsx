@@ -62,7 +62,7 @@ vi.mock("./pages/ProfileSetupPage", () => ({ default: () => null }));
 vi.mock("./pages/PendingApprovalPage", () => ({
   default: () => <div>pending approval page</div>,
 }));
-vi.mock("./pages/SchedulePage", () => ({
+vi.mock("./pages/schedule/SchedulePage", () => ({
   default: () => <div>schedule page</div>,
 }));
 vi.mock("./pages/ClassManagementPage", () => ({ default: () => null }));
