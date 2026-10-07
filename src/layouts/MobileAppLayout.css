@@ -1,0 +1,71 @@
+.mobile-app-layout {
+  min-height: 100vh;
+  min-height: 100dvh;
+  direction: rtl;
+  background: #f8fafc;
+}
+
+.mobile-app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: calc(56px + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) calc(8px + env(safe-area-inset-right)) 0
+    calc(8px + env(safe-area-inset-left));
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(148, 163, 184, 0.12);
+}
+
+.mobile-app-menu-button {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+}
+
+.mobile-app-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  color: #64748b;
+}
+
+.mobile-app-title-text {
+  margin: 0 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Avatar only: the name doesn't fit next to the page title. */
+.mobile-app-header .profile-dropdown-name {
+  display: none;
+}
+
+.mobile-app-menu .ant-drawer-body {
+  padding: 8px 0;
+}
+
+.mobile-app-menu .ant-menu-inline {
+  border-inline-end: none;
+}
+
+.mobile-app-menu .ant-menu-item,
+.mobile-app-menu .ant-menu-submenu-title {
+  height: 48px;
+  line-height: 48px;
+}
+
+.mobile-app-content {
+  padding: 12px calc(12px + env(safe-area-inset-right))
+    calc(12px + env(safe-area-inset-bottom))
+    calc(12px + env(safe-area-inset-left));
+  min-width: 0;
+  overflow-x: auto;
+}
