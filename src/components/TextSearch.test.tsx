@@ -30,10 +30,12 @@ const type = (value: string) =>
   fireEvent.change(input(), { target: { value } });
 
 const Pick = ({
+  items = people,
   initial,
   onSelect,
   extraOption,
 }: {
+  items?: Person[];
   initial?: string;
   onSelect?: (p: Person | undefined) => void;
   extraOption?: TextSearchExtraOption;
@@ -42,7 +44,7 @@ const Pick = ({
   return (
     <TextSearch
       mode="pick"
-      items={people}
+      items={items}
       getText={p => p.name}
       getKey={p => p.id}
       renderOption={p =>
@@ -59,9 +61,11 @@ const Pick = ({
 };
 
 const Filter = ({
+  items = people,
   onChange,
   extraOption,
 }: {
+  items?: Person[];
   onChange?: (text: string) => void;
   extraOption?: TextSearchExtraOption;
 }) => {
@@ -69,7 +73,7 @@ const Filter = ({
   return (
     <TextSearch
       mode="filter"
-      items={people}
+      items={items}
       getText={p => p.name}
       extraOption={extraOption}
       value={text}
@@ -163,6 +167,15 @@ describe("TextSearch", () => {
       expect(onSelect).not.toHaveBeenCalled();
     });
 
+    // A child linked to two parents came back twice from the roster RPC;
+    // the repeated key left stale, duplicated rows in the dropdown.
+    it("lists an item whose key repeats only once", () => {
+      render(<Pick items={[...people, people[0]]} />);
+      open();
+
+      expect(visibleOptions()).toEqual(["נועה כהן", "Dana Levi", "נועם לוי"]);
+    });
+
     it("hides the extra row while something matches", () => {
       const extra = { label: (q: string) => `הוסף: ${q}`, onSelect: vi.fn() };
       render(<Pick extraOption={extra} />);
@@ -188,6 +201,13 @@ describe("TextSearch", () => {
 
       expect(onChange).toHaveBeenLastCalledWith(" dana");
       expect(visibleOptions()).toEqual(["Dana Levi"]);
+    });
+
+    it("suggests a repeated text only once", () => {
+      render(<Filter items={[...people, { id: "p4", name: "Dana Levi" }]} />);
+      open();
+
+      expect(visibleOptions()).toEqual(["נועה כהן", "Dana Levi", "נועם לוי"]);
     });
 
     it("fills in a picked suggestion's name", () => {
