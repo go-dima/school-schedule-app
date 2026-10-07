@@ -14,7 +14,7 @@ import {
 } from "../utils/timeSlots";
 import type { TimeSlot, WeeklySchedule, Child } from "../types";
 import { GetGradeName } from "../utils/grades";
-import ClassCardHeader from "./ClassCardHeader";
+import ClassCardHeader from "./lessonCard/ClassCardHeader";
 import "./PrintableScheduleColor.css";
 
 interface PrintableScheduleColorProps {
