@@ -409,11 +409,11 @@
       "dependencies": ["050_add_scope_to_users"]
     },
     {
-      "id": "052_dedupe_children_roster",
-      "name": "Dedupe Children Roster",
-      "description": "get_children_with_parent_status computed has_parent via a LEFT JOIN on parent_child_relationships, returning a child once per linked parent (two rows since 049 allowed multiple parents), which duplicated students on the Students page and the schedule student search. has_parent is now an EXISTS subquery; signature unchanged, so CREATE OR REPLACE keeps the grants.",
-      "file": "052_dedupe_children_roster.sql",
-      "created_at": "2026-10-05T00:00:00Z",
+      "id": "052_dedupe_children_with_parent_status",
+      "name": "Dedupe Children With Parent Status",
+      "description": "get_children_with_parent_status returned a child once per parent link (LEFT JOIN on parent_child_relationships), so a child with two parents appeared twice and broke the Schedule page's student search. has_parent is now an EXISTS check; signature unchanged.",
+      "file": "052_dedupe_children_with_parent_status.sql",
+      "created_at": "2026-10-07T00:00:00Z",
       "dependencies": ["051_create_profile_on_signup"]
     }
   ],

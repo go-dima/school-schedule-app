@@ -2,13 +2,11 @@ import React, { useEffect, useState } from "react";
 import {
   Card,
   Typography,
-  Select,
   Button,
   Space,
   Alert,
   Spin,
   message,
-  AutoComplete,
   Tooltip,
   Radio,
 } from "antd";
@@ -39,11 +37,13 @@ import { ScheduleOverrideModal } from "../components/ScheduleOverrideModal";
 import type { ScheduleOverrideFormValues } from "../components/ScheduleOverrideForm";
 import { FiltersBar } from "../components/FiltersBar";
 import { FilterField } from "../components/FilterField";
+import { FilterSelect } from "../components/FilterSelect";
 import { ChildTabs } from "../components/ChildTabs";
 import { ScheduleTabsBar } from "../components/ScheduleTabsBar";
 import { AddChildButton } from "../components/AddChildButton";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
 import { StaffPicker } from "../components/StaffPicker";
+import { TextSearch } from "../components/TextSearch";
 import { ChildGroupTrackSelector } from "../components/ChildGroupTrackSelector";
 import type { SelectionField } from "../components/ChildGroupTrackSelector";
 import { classesApi, timeSlotsApi } from "../services/api";
@@ -67,7 +67,6 @@ import { printSchedule } from "../utils/printSchedule";
 import { trackEvent, trackWithActor, AnalyticsEvent } from "../utils/analytics";
 
 const { Title } = Typography;
-const { Option } = Select;
 
 const SchedulePageContent: React.FC = () => {
   const { t } = useTranslation();
@@ -294,6 +293,15 @@ const SchedulePageContent: React.FC = () => {
         selectedWeeklySchedule
       ),
     [weeklySchedule, selectedWeeklySchedule]
+  );
+
+  // The class search's suggestions, narrowed to the shown grade: the
+  // selected student's for staff, else the grade filter's.
+  const searchGrade =
+    isStaff && staffSelectedChild ? staffSelectedChild.grade : selectedGrade;
+  const classTitles = React.useMemo(
+    () => ScheduleService.classTitles(classes, searchGrade),
+    [classes, searchGrade]
   );
 
   const makeFieldChangeHandler =
@@ -977,49 +985,21 @@ const SchedulePageContent: React.FC = () => {
             />
           </FilterField>
         )}
-        {/* Class search sits next to the group/track dropdown (RTL: search
-            rightmost); the draft/committed toggle is on the actions side. */}
+        {/* The bar's groups are ltr: the first child is leftmost. On screen,
+            right to left: grade, student picker, group/track, class search
+            | refresh, draft/committed, print. Class search sits next to the
+            group/track dropdown; the draft/committed toggle is on the
+            actions side. */}
         {!isStaffView && (
           <FilterField label={t("schedule.page.labels.searchClass")}>
-            <AutoComplete
+            <TextSearch<string>
+              mode="filter"
+              items={classTitles}
+              getText={title => title}
               value={searchTerm}
               onChange={setSearchTerm}
-              options={(() => {
-                if (!searchTerm) return [];
-
-                const uniqueClassNames = Array.from(
-                  new Set(
-                    classes
-                      .filter(cls => {
-                        // For staff with selected child, filter by child's grade only
-                        if (isStaff && staffSelectedChild) {
-                          if (!cls.grades?.includes(staffSelectedChild.grade)) {
-                            return false;
-                          }
-                        } else {
-                          // Apply grade filter if set
-                          if (
-                            selectedGrade &&
-                            !cls.grades?.includes(selectedGrade)
-                          ) {
-                            return false;
-                          }
-                        }
-                        // Apply class name filter
-                        return cls.title
-                          .toLowerCase()
-                          .includes(searchTerm.toLowerCase());
-                      })
-                      .map(cls => cls.title)
-                  )
-                ).sort();
-
-                return uniqueClassNames.map(title => ({ value: title }));
-              })()}
               placeholder={t("schedule.page.placeholders.searchClass")}
               style={{ minWidth: 200 }}
-              allowClear
-              filterOption={false}
               disabled={refreshing}
             />
           </FilterField>
@@ -1058,22 +1038,21 @@ const SchedulePageContent: React.FC = () => {
             </FilterField>
           </>
         )}
+        {/* Last child, so the rightmost filter (the bar's groups are ltr).
+            Inside the pair the label is rightmost.
+            Clearing means "all grades" (undefined). */}
         {!isStaffView && (isStaff || isAdmin) && (
-          <FilterField label={t("schedule.page.labels.filterByGrade")}>
-            <Select
-              value={selectedGrade}
-              onChange={setSelectedGrade}
-              placeholder={t("schedule.page.placeholders.allGrades")}
-              allowClear
-              style={{ minWidth: 120 }}
-              disabled={refreshing || (isStaff && !!staffSelectedChild)}>
-              {GRADES.map(grade => (
-                <Option key={grade} value={grade}>
-                  {GetGradeName(grade)}
-                </Option>
-              ))}
-            </Select>
-          </FilterField>
+          <FilterSelect<number>
+            label={t("schedule.page.labels.filterByGrade")}
+            placeholder={t("schedule.page.placeholders.allGrades")}
+            value={selectedGrade ?? null}
+            onChange={grade => setSelectedGrade(grade ?? undefined)}
+            options={GRADES.map(grade => ({
+              value: grade,
+              label: GetGradeName(grade),
+            }))}
+            disabled={refreshing || (isStaff && !!staffSelectedChild)}
+          />
         )}
       </FiltersBar>
 

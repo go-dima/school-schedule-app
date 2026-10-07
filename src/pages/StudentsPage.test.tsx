@@ -162,3 +162,37 @@ describe("StudentsPage name search (current behavior)", () => {
     ]);
   });
 });
+
+// Structural (#174): the row is the shared FiltersBar, not a styled div.
+describe("StudentsPage filters bar", () => {
+  beforeAll(stubMatchMedia);
+
+  it("puts the filters and the Add button in one FiltersBar", () => {
+    render(<StudentsPage />);
+
+    const sections = document.querySelectorAll(".filters-section");
+    expect(sections).toHaveLength(1);
+    // DOM order: search, then grade, in the filters group; Add in actions.
+    // The groups are ltr, so on screen grade is rightmost, then search.
+    const [filters, actions] = Array.from(
+      sections[0].querySelectorAll(".filters-row > .ant-space")
+    );
+    expect(within(filters as HTMLElement).getAllByRole("combobox")).toEqual(
+      screen.getAllByRole("combobox").slice(0, 2)
+    );
+    expect(
+      within(actions as HTMLElement)
+        .getAllByRole("button")
+        .map(b => b.textContent?.trim())
+    ).toEqual([i18n.t("students.page.addButton")]);
+  });
+
+  it("has no inline style on the bar or its wrapper", () => {
+    render(<StudentsPage />);
+
+    const section = document.querySelector(".filters-section") as HTMLElement;
+    expect(section.hasAttribute("style")).toBe(false);
+    expect(section.parentElement?.hasAttribute("style")).toBe(false);
+    expect(document.querySelector(".page-content > [style]")).toBeNull();
+  });
+});

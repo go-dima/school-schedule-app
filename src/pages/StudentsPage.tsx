@@ -4,7 +4,6 @@ import {
   Button,
   Table,
   Modal,
-  Space,
   Typography,
   message,
   Spin,
@@ -25,6 +24,7 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import { ChildForm } from "../components/ChildForm";
 import { StudentSearchSelector } from "../components/StudentSearchSelector";
+import { FiltersBar } from "../components/FiltersBar";
 import { GroupTrackTags } from "../components/GroupTrackTags";
 import { useAuth } from "../contexts/AuthContext";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
@@ -39,7 +39,7 @@ import { GetGradeName } from "@/utils/grades";
 import { ScopeTag } from "../components/ScopeTag";
 import { ScopeFilter } from "../components/ScopeSelector";
 import { ALL_SCOPES } from "../constants/scopes";
-import { filterByName } from "@/utils/nameSearch";
+import { filterByText } from "@/utils/textSearch";
 import { studentName } from "@/utils/personName";
 import { isTestScopeEnabled } from "../utils/env";
 
@@ -172,7 +172,7 @@ const StudentsPage: React.FC = () => {
     let filtered = children as ChildWithParent[];
 
     // Apply search filter
-    filtered = filterByName(filtered, searchTerm, studentName);
+    filtered = filterByText(filtered, searchTerm, studentName);
 
     // Apply grade filter
     if (selectedGrade !== undefined) {
@@ -340,53 +340,48 @@ const StudentsPage: React.FC = () => {
 
   return (
     <div className="page-content">
-      {/* One row: search/filters on one side, scope toggle + add on the other
-          (RTL: filters on the right, add button at the far left). */}
-      <div
-        style={{
-          paddingTop: 12,
-          marginBottom: 8,
-          display: "flex",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 16,
-        }}>
-        <Space wrap>
-          <StudentSearchSelector
-            children={filteredChildren}
-            onChildAdded={handleChildAdded}
-            onSearchChange={setSearchTerm}
-            placeholder={t("students.search.placeholder")}
-            style={{ minWidth: 250 }}
-            mode="filter"
-            value={searchTerm}
-            defaultGrade={selectedGrade || 1}
-          />
-          <Select
-            value={selectedGrade}
-            onChange={setSelectedGrade}
-            placeholder={t("students.filter.allGrades")}
-            allowClear
-            style={{ minWidth: 120 }}>
-            {GRADES.map(grade => (
-              <Select.Option key={grade} value={grade}>
-                {GetGradeName(grade)}
-              </Select.Option>
-            ))}
-          </Select>
-        </Space>
-        <Space wrap>
-          {isAdmin && (
-            <ScopeFilter value={selectedScopes} onChange={setSelectedScopes} />
-          )}
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={openCreateModal}>
-            {t("students.page.addButton")}
-          </Button>
-        </Space>
-      </div>
+      {/* The bar's groups are ltr: the first child is leftmost. On screen,
+          right to left: grade, name search | Add, scope (admin). */}
+      <FiltersBar
+        actions={
+          <>
+            {isAdmin && (
+              <ScopeFilter
+                value={selectedScopes}
+                onChange={setSelectedScopes}
+              />
+            )}
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={openCreateModal}>
+              {t("students.page.addButton")}
+            </Button>
+          </>
+        }>
+        <StudentSearchSelector
+          children={filteredChildren}
+          onChildAdded={handleChildAdded}
+          onSearchChange={setSearchTerm}
+          placeholder={t("students.search.placeholder")}
+          style={{ minWidth: 250 }}
+          mode="filter"
+          value={searchTerm}
+          defaultGrade={selectedGrade || 1}
+        />
+        <Select
+          value={selectedGrade}
+          onChange={setSelectedGrade}
+          placeholder={t("students.filter.allGrades")}
+          allowClear
+          style={{ minWidth: 120 }}>
+          {GRADES.map(grade => (
+            <Select.Option key={grade} value={grade}>
+              {GetGradeName(grade)}
+            </Select.Option>
+          ))}
+        </Select>
+      </FiltersBar>
 
       {error && (
         <div style={{ marginBottom: 16 }}>

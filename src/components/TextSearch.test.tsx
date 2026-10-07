@@ -9,8 +9,8 @@ import {
   visibleOptionElements,
   visibleOptions,
 } from "../testUtils/antdDom";
-import { NameSearch } from "./NameSearch";
-import type { NameSearchExtraOption } from "./NameSearch";
+import { TextSearch } from "./TextSearch";
+import type { TextSearchExtraOption } from "./TextSearch";
 
 interface Person {
   id: string;
@@ -30,20 +30,22 @@ const type = (value: string) =>
   fireEvent.change(input(), { target: { value } });
 
 const Pick = ({
+  items = people,
   initial,
   onSelect,
   extraOption,
 }: {
+  items?: Person[];
   initial?: string;
   onSelect?: (p: Person | undefined) => void;
-  extraOption?: NameSearchExtraOption;
+  extraOption?: TextSearchExtraOption;
 }) => {
   const [value, setValue] = useState<string | undefined>(initial);
   return (
-    <NameSearch
+    <TextSearch
       mode="pick"
-      items={people}
-      getName={p => p.name}
+      items={items}
+      getText={p => p.name}
       getKey={p => p.id}
       renderOption={p =>
         p.grayed ? <span className="grayed">{p.name}</span> : p.name
@@ -59,18 +61,20 @@ const Pick = ({
 };
 
 const Filter = ({
+  items = people,
   onChange,
   extraOption,
 }: {
+  items?: Person[];
   onChange?: (text: string) => void;
-  extraOption?: NameSearchExtraOption;
+  extraOption?: TextSearchExtraOption;
 }) => {
   const [text, setText] = useState("");
   return (
-    <NameSearch
+    <TextSearch
       mode="filter"
-      items={people}
-      getName={p => p.name}
+      items={items}
+      getText={p => p.name}
       extraOption={extraOption}
       value={text}
       onChange={t => {
@@ -81,7 +85,7 @@ const Filter = ({
   );
 };
 
-describe("NameSearch", () => {
+describe("TextSearch", () => {
   beforeAll(stubMatchMedia);
 
   describe('mode="pick"', () => {
@@ -163,6 +167,15 @@ describe("NameSearch", () => {
       expect(onSelect).not.toHaveBeenCalled();
     });
 
+    // A child linked to two parents came back twice from the roster RPC;
+    // the repeated key left stale, duplicated rows in the dropdown.
+    it("lists an item whose key repeats only once", () => {
+      render(<Pick items={[...people, people[0]]} />);
+      open();
+
+      expect(visibleOptions()).toEqual(["נועה כהן", "Dana Levi", "נועם לוי"]);
+    });
+
     it("hides the extra row while something matches", () => {
       const extra = { label: (q: string) => `הוסף: ${q}`, onSelect: vi.fn() };
       render(<Pick extraOption={extra} />);
@@ -188,6 +201,13 @@ describe("NameSearch", () => {
 
       expect(onChange).toHaveBeenLastCalledWith(" dana");
       expect(visibleOptions()).toEqual(["Dana Levi"]);
+    });
+
+    it("suggests a repeated text only once", () => {
+      render(<Filter items={[...people, { id: "p4", name: "Dana Levi" }]} />);
+      open();
+
+      expect(visibleOptions()).toEqual(["נועה כהן", "Dana Levi", "נועם לוי"]);
     });
 
     it("fills in a picked suggestion's name", () => {

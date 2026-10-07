@@ -1,6 +1,6 @@
-import React from "react";
-import { Select, Space, Button } from "antd";
-import { CloseOutlined } from "@ant-design/icons";
+import { Select } from "antd";
+import { FilterField } from "./FilterField";
+import "./FilterSelect.css";
 
 interface FilterSelectOption<T extends string | number> {
   value: T;
@@ -8,43 +8,38 @@ interface FilterSelectOption<T extends string | number> {
 }
 
 interface FilterSelectProps<T extends string | number> {
+  /** Shown after the control. Pass it without a colon; FilterField adds one. */
   label: string;
   placeholder?: string;
   value: T | null;
   onChange: (value: T | null) => void;
   options: FilterSelectOption<T>[];
-  style?: React.CSSProperties;
   disabled?: boolean;
 }
 
-// Shared narrow Select + trailing label (+ clear button) used by all Class
-// Management filters (day, grade, track) so they share one consistent look,
-// matching the Schedule page's "element, then label" convention.
+// Shared narrow filter Select used by Class Management (grade, day, track)
+// and the Schedule page (grade), so every closed-list filter shares one look:
+// the Select, with its own clear icon (allowClear), then the trailing label
+// from FilterField.
+//
+// DOM order is [Select][label]. The pair is a nested Space, which follows
+// the app-wide `.ant-space { direction: ltr }` rule, so the label renders
+// rightmost.
 export function FilterSelect<T extends string | number>({
   label,
   placeholder,
   value,
   onChange,
   options,
-  style,
   disabled = false,
 }: FilterSelectProps<T>) {
   return (
-    <Space size={4} align="center">
-      {value !== null && (
-        <Button
-          type="text"
-          size="small"
-          icon={<CloseOutlined />}
-          onClick={() => onChange(null)}
-          disabled={disabled}
-          style={{ padding: 0 }}
-        />
-      )}
+    <FilterField label={label}>
       <Select
+        className="filter-select"
+        aria-label={label}
         placeholder={placeholder}
         allowClear
-        style={{ width: 80, ...style }}
         value={value ?? undefined}
         onChange={v => onChange(v ?? null)}
         disabled={disabled}>
@@ -54,7 +49,6 @@ export function FilterSelect<T extends string | number>({
           </Select.Option>
         ))}
       </Select>
-      <label>{label}</label>
-    </Space>
+    </FilterField>
   );
 }
