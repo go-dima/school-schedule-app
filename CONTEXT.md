@@ -55,3 +55,7 @@ _Avoid_: Teacher name (that is the free-text `teacher` label, which for a Linked
 
 **Linked Teacher**:
 A Class or Override whose teacher is a user account (`user_id`), not just a name. Its teacher label follows that user's Display Name. Teachers without an account stay name-only.
+
+**UI Mode**:
+Which UI a user gets: mobile or desktop. Decided by the device (a phone gets mobile; tablets and computers get desktop), unless the user switched it themselves from the profile menu. It applies to every role and never changes on window resize. Same URLs in both modes; pages without a mobile version render their desktop layout inside the mobile shell.
+_Avoid_: Responsive mode, mobile site (there is no separate site or route)
