@@ -19,7 +19,7 @@ const MobileAppLayout: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const items = useNavItems();
+  const items = useNavItems({ submenuTitleNavigates: false });
   const pageInfo = usePageInfo();
   const [menuOpen, setMenuOpen] = useState(false);
   const [openKeys, setOpenKeys] = useState<string[]>([]);

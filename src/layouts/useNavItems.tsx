@@ -20,7 +20,12 @@ export const USER_MANAGEMENT_SUBMENU_KEY = "user-management-submenu";
 // The app's navigation menu, shared by the desktop Sidebar and the mobile
 // drawer so both always offer the same pages under the same permissions.
 // Item keys are route paths: clicking an item navigates to its key.
-export function useNavItems(): MenuProps["items"] {
+// `submenuTitleNavigates`: on desktop, clicking the User Management title
+// also opens its list page; the mobile drawer only expands the submenu, so
+// a tap on the title (or its arrow) can reach Pending Approvals.
+export function useNavItems({
+  submenuTitleNavigates = true,
+}: { submenuTitleNavigates?: boolean } = {}): MenuProps["items"] {
   const { t } = useTranslation();
   const { roleFlags, permissions } = useAuth();
   const isAdmin = roleFlags.isAdmin;
@@ -50,7 +55,9 @@ export function useNavItems(): MenuProps["items"] {
           key: USER_MANAGEMENT_SUBMENU_KEY,
           icon: <TeamOutlined />,
           label: t("navigation.userManagement"),
-          onTitleClick: () => navigate(ROUTES.USER_MANAGEMENT_LIST),
+          onTitleClick: submenuTitleNavigates
+            ? () => navigate(ROUTES.USER_MANAGEMENT_LIST)
+            : undefined,
           children: [
             {
               key: ROUTES.USER_MANAGEMENT_LIST,
