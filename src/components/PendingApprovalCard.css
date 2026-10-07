@@ -10,12 +10,13 @@
 
 .pending-approval-card-head {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: baseline;
   gap: 8px;
+  min-width: 0;
 }
 
 .pending-approval-card-name {
+  flex: 0 1 auto;
   font-size: 16px;
   min-width: 0;
   overflow: hidden;
@@ -23,14 +24,30 @@
   white-space: nowrap;
 }
 
+/* The email takes the rest of the line and truncates at its end. */
 .pending-approval-card-email {
+  flex: 1 1 0;
+  min-width: 0;
   direction: ltr;
   text-align: right;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pending-approval-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .pending-approval-card-date {
   font-size: 13px;
+}
+
+.pending-approval-card-meta .ant-tag {
+  margin: 0;
 }
 
 .pending-approval-card-actions {
