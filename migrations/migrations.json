@@ -411,7 +411,7 @@
     {
       "id": "052_dedupe_children_with_parent_status",
       "name": "Dedupe Children With Parent Status",
-      "description": "get_children_with_parent_status returned a child once per parent link (LEFT JOIN on parent_child_relationships), so a child with two parents appeared twice and broke the Schedule page's student search. has_parent is now an EXISTS check; signature unchanged.",
+      "description": "get_children_with_parent_status returned a child once per parent link (LEFT JOIN on parent_child_relationships), so a child with two parents appeared twice and broke the Schedule page's student search. has_parent is now an EXISTS check. DROP + CREATE, so it applies even where 044 never landed.",
       "file": "052_dedupe_children_with_parent_status.sql",
       "created_at": "2026-10-07T00:00:00Z",
       "dependencies": ["051_create_profile_on_signup"]

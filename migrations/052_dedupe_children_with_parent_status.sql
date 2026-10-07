@@ -3,8 +3,10 @@
 --   link: its LEFT JOIN on parent_child_relationships repeated every child
 --   with two parents (possible since 049). The repeated id broke the
 --   Schedule page's student search (stale, duplicated rows). has_parent is
---   now an EXISTS check, so each child is one row. Signature and columns
---   are unchanged from 044, so CREATE OR REPLACE keeps the grants.
+--   now an EXISTS check, so each child is one row. Columns are 044's.
+--   DROP + CREATE (not CREATE OR REPLACE), so it also applies where 044's
+--   version never landed (14 columns): Postgres can't change a function's
+--   return type in place. REVOKE/GRANT are reissued (044 pattern).
 -- Author: System
 -- Date: 2026-10-07
 --
@@ -12,7 +14,9 @@
 
 BEGIN;
 
-CREATE OR REPLACE FUNCTION public.get_children_with_parent_status(production_only boolean DEFAULT false)
+DROP FUNCTION IF EXISTS public.get_children_with_parent_status(boolean);
+
+CREATE FUNCTION public.get_children_with_parent_status(production_only boolean DEFAULT false)
  RETURNS TABLE(
    id uuid, first_name text, last_name text, grade integer, group_number integer,
    scope text, created_at timestamptz, updated_at timestamptz, has_parent boolean,
@@ -51,5 +55,8 @@ BEGIN
   ORDER BY c.first_name ASC;
 END;
 $function$;
+
+REVOKE ALL ON FUNCTION public.get_children_with_parent_status(boolean) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_children_with_parent_status(boolean) TO authenticated;
 
 COMMIT;
