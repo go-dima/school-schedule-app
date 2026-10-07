@@ -1,8 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Card, Empty } from "antd";
-import ClassCard from "../../components/ClassCard";
-import OverrideCard from "../../components/OverrideCard";
+import { Card } from "antd";
+import { MobileLessonCard } from "./MobileLessonCard";
 import {
   getTimeSlotDisplayInfo,
   isBreakTimeSlot,
@@ -27,7 +26,12 @@ export const DayAgendaList: React.FC<{ entries: AgendaEntry[] }> = ({
         return (
           <div className="schedule-cell selected-classes">
             {entry.overrides.map(o => (
-              <OverrideCard key={o.id} override={o} />
+              <MobileLessonCard
+                key={o.id}
+                title={o.title}
+                teacher={o.teacher}
+                isOverride
+              />
             ))}
           </div>
         );
@@ -49,10 +53,13 @@ export const DayAgendaList: React.FC<{ entries: AgendaEntry[] }> = ({
                 : undefined
             }>
             {entry.classes.map(cls => (
-              <ClassCard
+              <MobileLessonCard
                 key={cls.id}
-                cls={cls}
+                title={cls.title}
+                teacher={cls.teacher}
                 isContinuation={entry.continuationIds.includes(cls.id)}
+                isDouble={cls.isDouble}
+                isMandatory={cls.isMandatory}
               />
             ))}
           </div>
@@ -95,11 +102,7 @@ export const DayAgendaList: React.FC<{ entries: AgendaEntry[] }> = ({
       case "empty":
         return (
           <div className="schedule-cell empty">
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description={t("schedule.table.noClasses")}
-              style={{ margin: "8px 0" }}
-            />
+            {t("schedule.table.noClasses")}
           </div>
         );
     }

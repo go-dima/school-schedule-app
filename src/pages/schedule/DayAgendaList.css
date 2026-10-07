@@ -5,7 +5,7 @@
   direction: rtl;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .day-agenda-row {
@@ -40,6 +40,31 @@
 .day-agenda-cell {
   min-width: 0;
   display: flex;
+}
+
+/* Compact cells: one line each, so a whole school day fits on a phone. The
+   desktop grid's cells keep their own heights. */
+.day-agenda .schedule-cell {
+  min-height: 0;
+  padding: 0;
+}
+
+.day-agenda .schedule-cell.break-slot,
+.day-agenda .schedule-cell.meeting-slot {
+  min-height: 28px;
+}
+
+.day-agenda .schedule-cell.multiple .class-card .ant-card-body {
+  padding: 6px 10px;
+}
+
+.day-agenda .schedule-cell.multiple .class-count {
+  margin-bottom: 0;
+}
+
+.day-agenda .schedule-cell.empty {
+  min-height: 28px;
+  font-size: 13px;
 }
 
 /* Day change: the new day slides in from the side it came from. */
