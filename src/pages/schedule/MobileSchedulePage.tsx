@@ -15,83 +15,58 @@ const caps = scheduleCapabilities("mobile");
 // Swipe or tap the strip to change day. Read only for now (#241 adds draft
 // selection).
 const MobileScheduleContent: React.FC = () => {
-  const {
-    selectedChild,
-    userChildren,
-    childrenLoading,
-    canManageChildren,
-    canPickSchedule,
-    viewCommitted,
-    setViewCommitted,
-    viewStatus,
-    timeSlots,
-    displayWeeklySchedule,
-    selectedClasses,
-    selectedSchedule,
-    overrides,
-    selectedGrade,
-    currentTrackChild,
-    pageLoading,
-    scheduleGridLoading,
-    loading,
-    scheduleError,
-    selectedScheduleError,
-    childrenError,
-    loadScheduleData,
-    refetchSelectedSchedule,
-    handleParentChildAdded,
-    handleParentChildSelect,
-  } = useChildScheduleController();
+  const { child, view, catalog, selection, overrides, status } =
+    useChildScheduleController();
 
   const [now] = useState(() => new Date());
   const entriesForDay = useCallback(
     (day: number) =>
       buildDayAgenda({
         day,
-        timeSlots,
-        weeklySchedule: displayWeeklySchedule,
-        selectedClassIds: selectedClasses,
-        userSelections: selectedSchedule,
-        overrides,
-        userGrade: selectedGrade,
-        childGroupNumber: currentTrackChild?.groupNumber,
+        timeSlots: catalog.timeSlots,
+        weeklySchedule: catalog.weekly,
+        selectedClassIds: selection.ids,
+        userSelections: selection.schedule,
+        overrides: overrides.list,
+        userGrade: view.grade,
+        childGroupNumber: selection.trackChild?.groupNumber,
       }),
     [
-      timeSlots,
-      displayWeeklySchedule,
-      selectedClasses,
-      selectedSchedule,
-      overrides,
-      selectedGrade,
-      currentTrackChild?.groupNumber,
+      catalog.timeSlots,
+      catalog.weekly,
+      selection.ids,
+      selection.schedule,
+      overrides.list,
+      view.grade,
+      selection.trackChild?.groupNumber,
     ]
   );
 
   const handleRefresh = () => {
-    loadScheduleData();
-    refetchSelectedSchedule();
+    catalog.reload();
+    selection.refetch();
   };
 
   return (
     <MobileScheduleView
       caps={caps}
       now={now}
-      userChildren={userChildren}
-      selectedChild={selectedChild}
-      childrenLoading={childrenLoading}
-      canManageChildren={canManageChildren}
-      canPickSchedule={canPickSchedule}
-      viewCommitted={viewCommitted}
-      viewStatus={viewStatus}
-      pageLoading={pageLoading}
-      scheduleGridLoading={scheduleGridLoading}
-      loading={loading}
-      error={scheduleError || selectedScheduleError || childrenError}
+      userChildren={child.list}
+      selectedChild={child.selected}
+      childrenLoading={child.loading}
+      canManageChildren={child.canManage}
+      canPickSchedule={child.canPick}
+      viewCommitted={view.committed}
+      viewStatus={view.status}
+      pageLoading={status.pageLoading}
+      scheduleGridLoading={status.gridLoading}
+      loading={status.loading}
+      error={status.error}
       entriesForDay={entriesForDay}
-      setViewCommitted={setViewCommitted}
+      setViewCommitted={view.setCommitted}
       handleRefresh={handleRefresh}
-      handleParentChildAdded={handleParentChildAdded}
-      handleParentChildSelect={handleParentChildSelect}
+      handleParentChildAdded={child.add}
+      handleParentChildSelect={child.select}
     />
   );
 };
