@@ -35,16 +35,12 @@ export const DayAgendaList: React.FC<{ entries: AgendaEntry[] }> = ({
             ))}
           </div>
         );
-      case "selected": {
-        const continuation = entry.classes.some(cls =>
-          entry.continuationIds.includes(cls.id)
-        );
-        const mandatory = entry.classes.some(cls => cls.isMandatory);
+      // A brief: no mandatory or double-lesson tint on the cell (the grid
+      // has it); only a conflict is marked.
+      case "selected":
         return (
           <div
             className={`schedule-cell selected-classes${
-              continuation ? " double-continuation selected" : ""
-            }${mandatory ? " mandatory-cell" : ""}${
               entry.hasConflict ? " conflict" : ""
             }`}
             title={
@@ -64,7 +60,6 @@ export const DayAgendaList: React.FC<{ entries: AgendaEntry[] }> = ({
             ))}
           </div>
         );
-      }
       case "nonLesson": {
         const info = getTimeSlotDisplayInfo(entry.timeSlot);
         return (
