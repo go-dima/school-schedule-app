@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { Child } from "../types";
 import { GetGradeName } from "@/utils/grades";
 import { ScheduleTabsBar } from "./ScheduleTabsBar";
+import "./ChildTabs.css";
 
 const { Text } = Typography;
 
@@ -20,11 +21,11 @@ interface ChildTabsProps {
 
 function ChildTabLabel({ child }: { child: Child }) {
   return (
-    <Space style={{ direction: "rtl" }}>
+    <Space className="child-tab-label">
       <span className="child-tab-name">
         {child.firstName} {child.lastName}
       </span>
-      <Text type="secondary" style={{ fontSize: 12 }}>
+      <Text type="secondary" className="child-tab-grade">
         ({GetGradeName(child.grade)}
         {child.groupNumber ? child.groupNumber : ""})
       </Text>
