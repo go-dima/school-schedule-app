@@ -1,5 +1,5 @@
 import React from "react";
-import { Dropdown, Avatar, Typography, Space, Switch } from "antd";
+import { Dropdown, Avatar, Typography, Space, Switch, Tag } from "antd";
 import {
   UserOutlined,
   EditOutlined,
@@ -13,8 +13,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useUiMode } from "../contexts/UiModeContext";
 import { ROUTES } from "../routes/paths";
-import { ROLE_SOLID_COLORS } from "../constants/roleColors";
+import { ROLE_TAG_COLORS } from "../constants/roleColors";
 import type { MenuProps } from "antd";
+import "./ProfileDropdown.css";
 
 const { Text } = Typography;
 
@@ -52,15 +53,20 @@ const ProfileDropdown: React.FC = () => {
     {
       key: "user-info",
       label: (
-        <div
-          style={{
-            padding: "8px 0",
-            borderBottom: "1px solid #f0f0f0",
-            marginBottom: 8,
-          }}>
-          <Text strong>{getFullName(user?.firstName, user?.lastName)}</Text>
-          <br />
-          <Text type="secondary" style={{ fontSize: "12px" }}>
+        <div className="profile-dropdown-info">
+          {/* Name on the right, the active role pill on the left (RTL), and
+              the email below. */}
+          <div className="profile-dropdown-info-row">
+            <Text strong>{getFullName(user?.firstName, user?.lastName)}</Text>
+            {currentRole && (
+              <Tag
+                className="profile-dropdown-role"
+                color={ROLE_TAG_COLORS[currentRole.role]}>
+                {t(`roles.${currentRole.role}`, currentRole.role)}
+              </Tag>
+            )}
+          </div>
+          <Text type="secondary" className="profile-dropdown-email">
             {user?.email}
           </Text>
         </div>
@@ -83,13 +89,7 @@ const ProfileDropdown: React.FC = () => {
     {
       key: "switch-ui-mode",
       label: (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 16,
-          }}>
+        <div className="profile-dropdown-ui-mode">
           <Space>
             {detected === "mobile" ? <DesktopOutlined /> : <MobileOutlined />}
             {detected === "mobile"
@@ -100,7 +100,7 @@ const ProfileDropdown: React.FC = () => {
           <Switch
             size="small"
             checked={mode !== detected}
-            style={{ flexShrink: 0 }}
+            className="profile-dropdown-ui-mode-switch"
           />
         </div>
       ),
@@ -136,13 +136,7 @@ const ProfileDropdown: React.FC = () => {
         placement="bottomLeft"
         trigger={["click"]}
         overlayClassName="profile-dropdown-overlay">
-        <div
-          className="profile-dropdown-trigger"
-          style={{
-            border: currentRole
-              ? `3px solid ${ROLE_SOLID_COLORS[currentRole.role]}`
-              : "none",
-          }}>
+        <div className="profile-dropdown-trigger">
           <div className="profile-dropdown-user">
             <Avatar
               className="profile-dropdown-avatar"
@@ -153,7 +147,7 @@ const ProfileDropdown: React.FC = () => {
             <Text className="profile-dropdown-name">
               {getFullName(user?.firstName, user?.lastName)}
             </Text>
-            <DownOutlined style={{ fontSize: "12px", color: "#8c8c8c" }} />
+            <DownOutlined className="profile-dropdown-arrow" />
           </div>
         </div>
       </Dropdown>

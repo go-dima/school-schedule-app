@@ -14,7 +14,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  height: calc(56px + env(safe-area-inset-top));
+  height: calc(36px + env(safe-area-inset-top));
   padding: env(safe-area-inset-top) calc(8px + env(safe-area-inset-right)) 0
     calc(8px + env(safe-area-inset-left));
   background: #ffffff;
@@ -22,11 +22,12 @@
   box-shadow: 0 2px 8px rgba(148, 163, 184, 0.12);
 }
 
+/* 36px bar: the buttons are 32px, under the usual 44px touch target. */
 .mobile-app-menu-button {
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
 }
 
 .mobile-app-title {
@@ -45,9 +46,25 @@
   text-overflow: ellipsis;
 }
 
-/* Avatar only: the name doesn't fit next to the page title. */
+/* The name next to the avatar, compact and truncated so the page title
+   keeps its room (overrides ProfileDropdown.css's narrow-screen hiding). */
 .mobile-app-header .profile-dropdown-name {
-  display: none;
+  display: block;
+  max-width: 110px;
+  font-size: 14px;
+}
+
+/* One line inside the 36px header: the desktop trigger's padding and
+   rounded panel would make it taller than the bar. */
+.mobile-app-header .profile-dropdown-trigger {
+  gap: 6px;
+  padding: 2px 4px;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.mobile-app-header .profile-dropdown-user {
+  gap: 6px;
 }
 
 .mobile-app-menu .ant-drawer-body {

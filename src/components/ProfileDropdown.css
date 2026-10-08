@@ -1,0 +1,125 @@
+/* ProfileDropdown: the profile menu trigger and its dropdown. Layouts only
+   adjust its size for their header (e.g. MobileAppLayout.css). */
+.profile-dropdown {
+  direction: rtl;
+}
+
+.profile-dropdown .ant-dropdown-menu {
+  min-width: 220px;
+  direction: rtl;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow:
+    0 20px 25px -5px rgba(148, 163, 184, 0.1),
+    0 10px 10px -5px rgba(148, 163, 184, 0.04);
+}
+
+.profile-dropdown .ant-dropdown-menu-item {
+  text-align: right;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 2px 0;
+  color: #64748b;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.profile-dropdown .ant-dropdown-menu-item:hover {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #2563eb;
+}
+
+.profile-dropdown .ant-dropdown-menu-item[data-menu-id$="logout"]:hover {
+  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+  color: #dc2626;
+}
+
+.profile-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 12px 16px;
+  border-radius: 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.profile-dropdown-trigger:hover {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-color: #bfdbfe;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1);
+}
+
+.profile-dropdown-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  direction: rtl;
+}
+
+.profile-dropdown-avatar {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: #ffffff;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+}
+
+.profile-dropdown-name {
+  font-weight: 600;
+  color: #334155;
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-dropdown-role {
+  margin: 0;
+}
+
+/* The dropdown's first row: name and role pill, then the email. RTL: the
+   name sits right, the pill left. */
+.profile-dropdown-info {
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 8px;
+}
+
+.profile-dropdown-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.profile-dropdown-info .profile-dropdown-email {
+  font-size: 12px;
+}
+
+/* The UI Mode item: label and its on/off switch on one row. */
+.profile-dropdown-ui-mode {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.profile-dropdown-ui-mode .profile-dropdown-ui-mode-switch {
+  flex-shrink: 0;
+}
+
+.profile-dropdown-user .profile-dropdown-arrow {
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
+@media (max-width: 768px) {
+  .profile-dropdown-name {
+    display: none;
+  }
+}
