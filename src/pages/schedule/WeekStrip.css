@@ -1,7 +1,6 @@
 .week-strip {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 4px;
   direction: rtl;
 }
 
@@ -14,11 +13,8 @@
   gap: 4px;
   min-height: 32px;
   padding: 2px 0;
-  /* A light rounded frame per day, like the schedule's card tabs
-     (antd's #f0f0f0, 8px radius), so the days read as separate. */
-  border: 2px solid #f0f0f0;
-  border-radius: 8px;
-  background: #ffffff;
+  border: 0;
+  background: transparent;
   color: #475569;
   font: inherit;
   cursor: pointer;
@@ -54,13 +50,16 @@
   font-weight: 600;
 }
 
-/* Narrow phones (e.g. 320px): each framed day is about 60px wide, so a
-   smaller number circle, name and gaps keep "חמישי" inside its frame. */
-@media (max-width: 360px) {
-  .week-strip {
-    gap: 2px;
-  }
+/* A thin divider between neighbouring days (not before the first): on the
+   start side, which is the right in RTL. Same colour as the line under the
+   strip. */
+.week-strip-day + .week-strip-day {
+  border-inline-start: 1px solid #e2e8f0;
+}
 
+/* Narrow phones (e.g. 320px): each day is about 64px wide, so a smaller
+   number circle, name and gap keep "חמישי" inside its column. */
+@media (max-width: 360px) {
   .week-strip-day {
     gap: 2px;
     min-width: 0;
