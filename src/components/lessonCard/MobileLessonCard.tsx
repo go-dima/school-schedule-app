@@ -6,9 +6,10 @@ import "./LessonCard.css";
 import "./MobileLessonCard.css";
 
 // The mobile day view's lesson card: the title (and continuation mark) on
-// one line, styled like the desktop card's title. Separate from ClassCard
-// because it changes on its own, like print; the model and the variant
-// classes are shared, so it matches the desktop grid.
+// one line, styled like the desktop card's title, in plain colours (no
+// mandatory/double/override tint): the mobile view is a brief of the
+// schedule. Separate from ClassCard because it changes on its own, like
+// print; the model and the base card classes are shared.
 export const MobileLessonCard: React.FC<{ lesson: LessonCardModel }> = ({
   lesson,
 }) => {
@@ -16,7 +17,10 @@ export const MobileLessonCard: React.FC<{ lesson: LessonCardModel }> = ({
   return (
     <Card
       size="small"
-      className={lessonCardClassName(lesson, "mobile-lesson-card")}>
+      className={lessonCardClassName(lesson, {
+        plain: true,
+        extra: "mobile-lesson-card",
+      })}>
       <div className="class-title mobile-lesson-title">
         {lesson.title}
         {lesson.isContinuation && (

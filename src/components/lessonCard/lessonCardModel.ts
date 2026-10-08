@@ -48,17 +48,19 @@ export function overrideLesson(
 }
 
 /** The card's CSS classes (LessonCard.css): the same variant classes on
- * every card, so desktop and mobile share colours and borders. */
+ * every card, so desktop and mobile share colours and borders. `plain`
+ * drops the variant colours (mandatory, double, override) and keeps the
+ * base card, for views that show the schedule as a brief. */
 export function lessonCardClassName(
   lesson: LessonCardModel,
-  extra?: string
+  { plain = false, extra }: { plain?: boolean; extra?: string } = {}
 ): string {
   return [
     "class-card",
     "selected-card",
-    lesson.isDouble && "double-card",
-    lesson.isMandatory && "mandatory-card",
-    lesson.isOverride && "override-card",
+    !plain && lesson.isDouble && "double-card",
+    !plain && lesson.isMandatory && "mandatory-card",
+    !plain && lesson.isOverride && "override-card",
     extra,
   ]
     .filter(Boolean)
