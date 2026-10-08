@@ -46,9 +46,12 @@
   text-overflow: ellipsis;
 }
 
-/* Avatar and role only: the name doesn't fit next to the page title. */
+/* The name next to the avatar, compact and truncated so the page title
+   keeps its room (overrides ProfileDropdown.css's narrow-screen hiding). */
 .mobile-app-header .profile-dropdown-name {
-  display: none;
+  display: block;
+  max-width: 110px;
+  font-size: 14px;
 }
 
 /* One line inside the 36px header: the desktop trigger's padding and
