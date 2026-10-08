@@ -18,6 +18,9 @@ vi.mock("../contexts/AuthContext", () => ({
     permissions: { canManageRoster: true },
   }),
 }));
+vi.mock("../contexts/UiModeContext", () => ({
+  useUiMode: () => ({ mode: "desktop" }),
+}));
 vi.mock("../services/api", () => ({ childrenApi: {} }));
 vi.mock("../utils/env", () => ({
   isTestScopeEnabled: () => false,

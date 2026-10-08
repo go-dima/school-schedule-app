@@ -15,6 +15,10 @@ import {
 } from "../testUtils/antdDom";
 
 const auth = { isAdmin: false };
+const ui = { mode: "desktop" as "desktop" | "mobile" };
+vi.mock("../contexts/UiModeContext", () => ({
+  useUiMode: () => ({ mode: ui.mode }),
+}));
 const createChild = vi.fn();
 
 vi.mock("../contexts/AuthContext", () => ({
@@ -109,6 +113,7 @@ describe("StudentSearchSelector", () => {
   beforeAll(stubMatchMedia);
   beforeEach(() => {
     auth.isAdmin = false;
+    ui.mode = "desktop";
     createChild.mockReset();
   });
 
@@ -272,6 +277,30 @@ describe("StudentSearchSelector", () => {
       await screen.findByText(i18n.t("students.page.addModalTitle"));
 
       expect(screen.getByText(i18n.t("scope.selector.label"))).toBeTruthy();
+    });
+  });
+
+  describe("mobile UI Mode", () => {
+    beforeEach(() => {
+      ui.mode = "mobile";
+    });
+
+    it("pick mode opens a bottom sheet instead of the dropdown", () => {
+      const onSelect = vi.fn();
+      render(<Picker onChildSelect={onSelect} />);
+      fireEvent.click(screen.getByRole("textbox"));
+
+      expect(document.querySelector(".ant-select")).toBeNull();
+      expect(screen.getAllByRole("option")).toHaveLength(3);
+      fireEvent.click(screen.getByRole("option", { name: /Dana Levi/ }));
+      expect(onSelect).toHaveBeenCalledWith("c3");
+    });
+
+    it("filter mode keeps the autocomplete", () => {
+      render(<Filter />);
+      expect(
+        document.querySelector(".ant-select-auto-complete")
+      ).not.toBeNull();
     });
   });
 });
