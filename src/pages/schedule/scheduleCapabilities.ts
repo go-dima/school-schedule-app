@@ -24,11 +24,12 @@ const DESKTOP: ScheduleCapabilities = {
   showReadOnlyNotice: true,
 };
 
-// Mobile is a read-only view for now, so it needs none of these. This also
-// applies to staff and admins, who get the desktop page in the mobile shell.
+// Mobile is a read-only view for now. Staff and admins get the desktop page
+// in the mobile shell, so the view tabs stay: they open on My Schedule and the
+// student picker is one tap away. Only class managers see the tabs.
 const MOBILE: ScheduleCapabilities = {
   canChooseDraft: false,
-  canPickView: false,
+  canPickView: true,
   canRefresh: false,
   canPrint: false,
   canAddChild: false,

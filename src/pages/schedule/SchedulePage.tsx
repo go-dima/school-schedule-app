@@ -52,6 +52,7 @@ import type {
 import "./SchedulePage.css";
 import { useChildScheduleController } from "./useChildScheduleController";
 import { scheduleCapabilities } from "./scheduleCapabilities";
+import { defaultScheduleView, resolveScheduleView } from "./scheduleView";
 import { useUiMode } from "../../contexts/UiModeContext";
 import { GetGradeName } from "@/utils/grades";
 import { printSchedule } from "../../utils/printSchedule";
@@ -72,7 +73,8 @@ const SchedulePageContent: React.FC = () => {
     useChildScheduleController();
   // Controls by platform, the same for every role: staff and admins get this
   // page in the mobile shell too, with the mobile capabilities.
-  const caps = scheduleCapabilities(useUiMode().mode);
+  const { mode: platform } = useUiMode();
+  const caps = scheduleCapabilities(platform);
 
   // Staff View: one staff member's week instead of a student's. URL-backed
   // so it survives refresh and can be linked:
@@ -85,8 +87,16 @@ const SchedulePageContent: React.FC = () => {
   const canUseStaffView = permissions.canManageClasses;
   const canUseMyView = canUseStaffView && !!user?.displayName;
   const viewParam = searchParams.get("view");
-  const isStaffTab = canUseStaffView && viewParam === "staff";
-  const isMyView = canUseMyView && viewParam === "mine";
+  // Staff on mobile land on My Schedule when the URL names no view.
+  const viewMode = resolveScheduleView({
+    platform,
+    viewParam,
+    canUseStaffView,
+    canUseMyView,
+    canPickSchedule: permissions.canPickSchedule,
+  });
+  const isStaffTab = viewMode === "staff";
+  const isMyView = viewMode === "mine";
   // Either tab shows one staff member's read-only week.
   const isStaffView = isStaffTab || isMyView;
   const selectedStaffParam = isStaffTab
@@ -113,7 +123,16 @@ const SchedulePageContent: React.FC = () => {
     setSearchParams(
       prev => {
         const next = new URLSearchParams(prev);
-        if (mode === "student") {
+        // The default view needs no param; anything else (incl. "student"
+        // on mobile, where the default is My Schedule) is named explicitly.
+        if (
+          mode ===
+          defaultScheduleView({
+            platform,
+            canUseMyView,
+            canPickSchedule: permissions.canPickSchedule,
+          })
+        ) {
           next.delete("view");
         } else {
           next.set("view", mode);

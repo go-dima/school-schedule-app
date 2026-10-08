@@ -13,7 +13,14 @@ describe("scheduleCapabilities", () => {
     });
   });
 
-  it("offers none on mobile (read-only committed view)", () => {
-    expect(Object.values(scheduleCapabilities("mobile"))).not.toContain(true);
+  it("offers only the view tabs on mobile (read-only committed view)", () => {
+    expect(scheduleCapabilities("mobile")).toEqual({
+      canChooseDraft: false,
+      canPickView: true,
+      canRefresh: false,
+      canPrint: false,
+      canAddChild: false,
+      showReadOnlyNotice: false,
+    });
   });
 });
