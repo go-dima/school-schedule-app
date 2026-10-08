@@ -5,7 +5,7 @@
   direction: rtl;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .day-agenda-row {
@@ -31,12 +31,6 @@
   color: #94a3b8;
 }
 
-.day-agenda-time-end {
-  font-size: 12px;
-  font-weight: 400;
-  color: #94a3b8;
-}
-
 .day-agenda-cell {
   min-width: 0;
   display: flex;
@@ -51,11 +45,11 @@
 
 .day-agenda .schedule-cell.break-slot,
 .day-agenda .schedule-cell.meeting-slot {
-  min-height: 28px;
+  min-height: 36px;
 }
 
 .day-agenda .schedule-cell.multiple .class-card .ant-card-body {
-  padding: 6px 10px;
+  padding: 10px;
 }
 
 .day-agenda .schedule-cell.multiple .class-count {
@@ -63,7 +57,7 @@
 }
 
 .day-agenda .schedule-cell.empty {
-  min-height: 28px;
+  min-height: 36px;
   font-size: 13px;
 }
 
@@ -95,4 +89,10 @@
   .day-agenda-slide-from-right {
     animation: none;
   }
+}
+
+/* Breaks and meetings read lighter than lessons: normal weight here (the
+   desktop grid keeps its bold labels); lesson titles stay bold. */
+.day-agenda .non-lesson-content .slot-name {
+  font-weight: 400;
 }

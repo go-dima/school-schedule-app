@@ -132,7 +132,7 @@ function ChildScheduleViewDemo({
 }
 
 const meta: Meta = {
-  title: "Pages/SchedulePage/ChildView",
+  title: "Pages/Schedule/Desktop Child View",
   parameters: { layout: "fullscreen" },
 };
 

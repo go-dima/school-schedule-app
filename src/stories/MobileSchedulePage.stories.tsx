@@ -5,12 +5,30 @@ import { scheduleCapabilities } from "../pages/schedule/scheduleCapabilities";
 import type { Child } from "../types";
 import { MobileShell } from "./fixtures/mobileShell";
 import {
+  buildUserSelections,
+  conflictingClassIds,
+  conflictingUserSelections,
+  mockClasses,
   mockOverrides,
   mockTimeSlots,
   mockUserSelections,
   mockWeeklySchedule,
   selectedClassIds,
 } from "./fixtures/scheduleFixtures";
+
+// One selected class in every lesson slot of every day (the first class
+// offered there), so each day shows a full column of class cards.
+const fullDayIds = (() => {
+  const seen = new Set<string>();
+  return mockClasses
+    .filter(cls => {
+      const keys = cls.slots.map(s => `${s.dayOfWeek}-${s.timeSlotId}`);
+      if (keys.some(k => seen.has(k))) return false;
+      keys.forEach(k => seen.add(k));
+      return true;
+    })
+    .map(cls => cls.id);
+})();
 
 const child = (id: string, firstName: string, grade: number): Child => ({
   id,
@@ -31,7 +49,7 @@ const children = [child("c1", "נועה", 2), child("c2", "איתי", 4)];
 // The real page layout (MobileScheduleView) inside the real mobile shell,
 // fed from fixtures instead of useChildScheduleController.
 const meta: Meta<typeof MobileScheduleView> = {
-  title: "Pages/Schedule/MobileSchedulePage",
+  title: "Pages/Schedule/Mobile",
   component: MobileScheduleView,
   args: {
     caps: scheduleCapabilities("mobile"),
@@ -84,3 +102,41 @@ export const SingleChild: Story = {
 export const NoChildSelected: Story = { args: { selectedChild: null } };
 
 export const Loading: Story = { args: { pageLoading: true } };
+
+/** A selected child with a class in every lesson slot: the card layout. */
+export const SelectedChildFullDay: Story = {
+  args: {
+    entriesForDay: day =>
+      buildDayAgenda({
+        day,
+        timeSlots: mockTimeSlots,
+        weeklySchedule: mockWeeklySchedule,
+        selectedClassIds: fullDayIds,
+        userSelections: buildUserSelections(fullDayIds),
+        overrides: [],
+      }),
+  },
+};
+
+/** On Friday (and Saturday) the page opens on the coming Sunday. */
+export const FridayOpensSunday: Story = {
+  // 2026-10-09 is a Friday.
+  args: { now: new Date(2026, 9, 9, 9, 0) },
+};
+
+/** Thursday has two selected classes in the same slot: a conflict. */
+export const Conflict: Story = {
+  args: {
+    // 2026-10-08 is a Thursday.
+    now: new Date(2026, 9, 8, 9, 0),
+    entriesForDay: day =>
+      buildDayAgenda({
+        day,
+        timeSlots: mockTimeSlots,
+        weeklySchedule: mockWeeklySchedule,
+        selectedClassIds: conflictingClassIds,
+        userSelections: conflictingUserSelections,
+        overrides: [],
+      }),
+  },
+};

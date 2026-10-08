@@ -117,12 +117,7 @@ export const DayAgendaList: React.FC<{ entries: AgendaEntry[] }> = ({
             key={entry.timeSlot.id}
             className={`day-agenda-row${compact ? " is-compact" : ""}`}>
             <div className="day-agenda-time">
-              <span>{entry.timeSlot.startTime.slice(0, 5)}</span>
-              {!compact && (
-                <span className="day-agenda-time-end">
-                  {entry.timeSlot.endTime.slice(0, 5)}
-                </span>
-              )}
+              {entry.timeSlot.startTime.slice(0, 5)}
             </div>
             <div className="day-agenda-cell">{cell(entry)}</div>
           </li>
