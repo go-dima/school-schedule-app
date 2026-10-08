@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Form, Input, Button, Card, Typography, Alert, Space } from "antd";
 import { UserOutlined, SaveOutlined } from "@ant-design/icons";
 import { useAuth } from "../contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 import { usersApi } from "../services/api";
 import "./AuthPages.css";
 
@@ -13,6 +14,7 @@ interface ProfileFormValues {
 }
 
 const ProfileSetupPage: React.FC = () => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +35,9 @@ const ProfileSetupPage: React.FC = () => {
       // Refresh user profile to trigger flow to pending approval page
       await refreshProfile();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "שגיאה בעדכון הפרופיל");
+      setError(
+        err instanceof Error ? err.message : t("profile.page.updateError")
+      );
     } finally {
       setLoading(false);
     }
@@ -46,14 +50,14 @@ const ProfileSetupPage: React.FC = () => {
           <div className="auth-header">
             <Space direction="vertical" size="large" style={{ width: "100%" }}>
               <UserOutlined style={{ fontSize: 64, color: "#1890ff" }} />
-              <Title level={2}>השלמת פרטים אישיים</Title>
-              <Text type="secondary">אנא הזן את הפרטים האישיים שלך</Text>
+              <Title level={2}>{t("profileSetup.title")}</Title>
+              <Text type="secondary">{t("profileSetup.subtitle")}</Text>
             </Space>
           </div>
 
           {error && (
             <Alert
-              message="שגיאה בעדכון הפרופיל"
+              message={t("profile.page.updateError")}
               description={error}
               type="error"
               showIcon
@@ -72,28 +76,31 @@ const ProfileSetupPage: React.FC = () => {
             className="auth-form">
             <Form.Item
               name="firstName"
-              label="שם פרטי"
+              label={t("profile.page.firstNameLabel")}
               rules={[
-                { required: true, message: "נא להזין שם פרטי" },
-                { min: 2, message: "שם פרטי חייב להכיל לפחות 2 תווים" },
+                {
+                  required: true,
+                  message: t("profile.page.firstNameRequired"),
+                },
+                { min: 2, message: t("profile.page.firstNameMinLength") },
               ]}>
               <Input
                 prefix={<UserOutlined />}
-                placeholder="הזן את השם הפרטי שלך"
+                placeholder={t("profile.page.firstNamePlaceholder")}
                 size="large"
               />
             </Form.Item>
 
             <Form.Item
               name="lastName"
-              label="שם משפחה"
+              label={t("profile.page.lastNameLabel")}
               rules={[
-                { required: true, message: "נא להזין שם משפחה" },
-                { min: 2, message: "שם משפחה חייב להכיל לפחות 2 תווים" },
+                { required: true, message: t("profile.page.lastNameRequired") },
+                { min: 2, message: t("profile.page.lastNameMinLength") },
               ]}>
               <Input
                 prefix={<UserOutlined />}
-                placeholder="הזן את שם המשפחה שלך"
+                placeholder={t("profile.page.lastNamePlaceholder")}
                 size="large"
               />
             </Form.Item>
@@ -107,15 +114,13 @@ const ProfileSetupPage: React.FC = () => {
                 icon={<SaveOutlined />}
                 block
                 className="auth-submit-btn">
-                שמור פרטים והמשך
+                {t("profileSetup.submitButton")}
               </Button>
             </Form.Item>
           </Form>
 
           <div className="auth-footer">
-            <Text type="secondary">
-              פרטים אלו יעזרו לנו לזהות אותך במערכת. חשבונך ממתין לאישור מנהל.
-            </Text>
+            <Text type="secondary">{t("profileSetup.footerNote")}</Text>
           </div>
         </Card>
       </div>

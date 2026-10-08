@@ -1,6 +1,9 @@
+import i18n from "./i18n";
+
 export const GetDayName = (dayOfWeek: number): string => {
-  const dayNames = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
-  return dayNames[dayOfWeek] || "";
+  return Number.isInteger(dayOfWeek) && dayOfWeek >= 0 && dayOfWeek <= 6
+    ? i18n.t(`days.short.${dayOfWeek}`)
+    : "";
 };
 
 export const IsWorkingDay = (dayOfWeek: number): boolean => {

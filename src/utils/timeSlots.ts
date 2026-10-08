@@ -4,6 +4,7 @@
  */
 
 import type { TimeSlot } from "../types";
+import i18n from "./i18n";
 
 // Time slot categories based on PRD requirements
 export const TIME_SLOT_CATEGORIES = {
@@ -138,28 +139,28 @@ export function getTimeSlotDisplayInfo(timeSlot: TimeSlot): {
         category,
         isSelectable: true,
         cssClass: "lesson-slot",
-        description: "זמן לימוד - ניתן לבחור שיעורים",
+        description: i18n.t("timeSlots.lessonDescription"),
       };
     case "BREAKS":
       return {
         category,
         isSelectable: false,
         cssClass: "break-slot",
-        description: "הפסקה",
+        description: i18n.t("timeSlots.breakDescription"),
       };
     case "MEETINGS":
       return {
         category,
         isSelectable: false,
         cssClass: "meeting-slot",
-        description: "מפגש כיתתי",
+        description: i18n.t("timeSlots.meetingDescription"),
       };
     default:
       return {
         category: null,
         isSelectable: false,
         cssClass: "unknown-slot",
-        description: "זמן לא מוגדר",
+        description: i18n.t("timeSlots.unknownDescription"),
       };
   }
 }
