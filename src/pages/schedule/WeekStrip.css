@@ -14,9 +14,11 @@
   gap: 4px;
   min-height: 32px;
   padding: 2px 0;
-  border: 0;
-  border-radius: 12px;
-  background: transparent;
+  /* A light rounded frame per day, like the schedule's card tabs
+     (antd's #f0f0f0, 8px radius), so the days read as separate. */
+  border: 2px solid #f0f0f0;
+  border-radius: 8px;
+  background: #ffffff;
   color: #475569;
   font: inherit;
   cursor: pointer;
@@ -50,4 +52,27 @@
 .week-strip-day.is-selected .week-strip-name {
   color: #1677ff;
   font-weight: 600;
+}
+
+/* Narrow phones (e.g. 320px): each framed day is about 60px wide, so a
+   smaller number circle, name and gaps keep "חמישי" inside its frame. */
+@media (max-width: 360px) {
+  .week-strip {
+    gap: 2px;
+  }
+
+  .week-strip-day {
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .week-strip-name {
+    font-size: 11px;
+  }
+
+  .week-strip-date {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+  }
 }
