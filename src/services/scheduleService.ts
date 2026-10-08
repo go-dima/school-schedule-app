@@ -301,6 +301,22 @@ export class ScheduleService {
   }
 
   /**
+   * Whether the Schedule page's student view runs its staff paths (the
+   * staff student picker and group/track selector, locks and auto-sync for
+   * the staff-selected student, enrollment counts, override editing).
+   * A user who can pick a schedule (parent or child) never does, even if
+   * they also hold the staff role: a staff+parent user acts as a parent
+   * here (#192). The read-only Staff View tabs are separate and unaffected.
+   */
+  static actsAsStaffInStudentView(input: {
+    isStaff: boolean;
+    /** permissions.canPickSchedule: parent or child. */
+    canPickSchedule: boolean;
+  }): boolean {
+    return input.isStaff && !input.canPickSchedule;
+  }
+
+  /**
    * The single decision point for schedule_overrides visibility/edit rights,
    * collapsing what used to be three separately-reasoned-about inputs
    * (role, the parent's draft/committed toggle, which child is selected)
