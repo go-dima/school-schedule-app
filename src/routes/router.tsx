@@ -29,6 +29,9 @@ import { ByUiMode } from "./ByUiMode";
 
 // Mobile-only components load on demand, so desktop never downloads them.
 const MobileAppLayout = lazy(() => import("../layouts/MobileAppLayout"));
+const MobileSchedulePage = lazy(
+  () => import("../pages/schedule/MobileSchedulePage")
+);
 const MobilePendingApprovalsPage = lazy(
   () => import("../pages/pendingApprovals/MobilePendingApprovalsPage")
 );
@@ -78,7 +81,15 @@ export const router = createBrowserRouter([
                 index: true,
                 element: <Navigate to={ROUTES.SCHEDULE} replace />,
               },
-              { path: ROUTES.SCHEDULE, element: <SchedulePage /> },
+              {
+                path: ROUTES.SCHEDULE,
+                element: (
+                  <ByUiMode
+                    desktop={<SchedulePage />}
+                    mobile={<MobileSchedulePage />}
+                  />
+                ),
+              },
               {
                 element: <RequireClassManager />,
                 children: [

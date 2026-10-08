@@ -1,0 +1,98 @@
+.day-agenda {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  direction: rtl;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.day-agenda-row {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.day-agenda-time {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  font-variant-numeric: tabular-nums;
+}
+
+.day-agenda-row.is-compact .day-agenda-time {
+  font-weight: 400;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.day-agenda-cell {
+  min-width: 0;
+  display: flex;
+}
+
+/* Compact cells: one line each, so a whole school day fits on a phone. The
+   desktop grid's cells keep their own heights. */
+.day-agenda .schedule-cell {
+  min-height: 0;
+  padding: 0;
+}
+
+.day-agenda .schedule-cell.break-slot,
+.day-agenda .schedule-cell.meeting-slot {
+  min-height: 36px;
+}
+
+.day-agenda .schedule-cell.multiple .class-card .ant-card-body {
+  padding: 10px;
+}
+
+.day-agenda .schedule-cell.multiple .class-count {
+  margin-bottom: 0;
+}
+
+.day-agenda .schedule-cell.empty {
+  min-height: 36px;
+  font-size: 13px;
+}
+
+/* Day change: the new day slides in from the side it came from. */
+@keyframes day-agenda-from-left {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+}
+
+@keyframes day-agenda-from-right {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+.day-agenda-slide-from-left {
+  animation: day-agenda-from-left 180ms ease-out;
+}
+
+.day-agenda-slide-from-right {
+  animation: day-agenda-from-right 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .day-agenda-slide-from-left,
+  .day-agenda-slide-from-right {
+    animation: none;
+  }
+}
+
+/* Breaks and meetings read lighter than lessons: normal weight here (the
+   desktop grid keeps its bold labels); lesson titles stay bold. */
+.day-agenda .non-lesson-content .slot-name {
+  font-weight: 400;
+}
