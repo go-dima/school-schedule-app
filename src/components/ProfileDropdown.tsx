@@ -15,6 +15,7 @@ import { useUiMode } from "../contexts/UiModeContext";
 import { ROUTES } from "../routes/paths";
 import { ROLE_TAG_COLORS } from "../constants/roleColors";
 import type { MenuProps } from "antd";
+import "./ProfileDropdown.css";
 
 const { Text } = Typography;
 
@@ -52,21 +53,10 @@ const ProfileDropdown: React.FC = () => {
     {
       key: "user-info",
       label: (
-        <div
-          style={{
-            padding: "8px 0",
-            borderBottom: "1px solid #f0f0f0",
-            marginBottom: 8,
-          }}>
+        <div className="profile-dropdown-info">
           {/* Name on the right, the active role pill on the left (RTL), and
               the email below. */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-            }}>
+          <div className="profile-dropdown-info-row">
             <Text strong>{getFullName(user?.firstName, user?.lastName)}</Text>
             {currentRole && (
               <Tag
@@ -76,7 +66,7 @@ const ProfileDropdown: React.FC = () => {
               </Tag>
             )}
           </div>
-          <Text type="secondary" style={{ fontSize: "12px" }}>
+          <Text type="secondary" className="profile-dropdown-email">
             {user?.email}
           </Text>
         </div>
@@ -99,13 +89,7 @@ const ProfileDropdown: React.FC = () => {
     {
       key: "switch-ui-mode",
       label: (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 16,
-          }}>
+        <div className="profile-dropdown-ui-mode">
           <Space>
             {detected === "mobile" ? <DesktopOutlined /> : <MobileOutlined />}
             {detected === "mobile"
@@ -116,7 +100,7 @@ const ProfileDropdown: React.FC = () => {
           <Switch
             size="small"
             checked={mode !== detected}
-            style={{ flexShrink: 0 }}
+            className="profile-dropdown-ui-mode-switch"
           />
         </div>
       ),
@@ -163,7 +147,7 @@ const ProfileDropdown: React.FC = () => {
             <Text className="profile-dropdown-name">
               {getFullName(user?.firstName, user?.lastName)}
             </Text>
-            <DownOutlined style={{ fontSize: "12px", color: "#8c8c8c" }} />
+            <DownOutlined className="profile-dropdown-arrow" />
           </div>
         </div>
       </Dropdown>
