@@ -12,12 +12,7 @@
 
 Keep the order the bars already had on screen. Each `FiltersBar` group renders **first child leftmost**, pinned explicitly in `FiltersBar.css` rather than relying on the global leak.
 
-Right to left on screen:
-
-- **Schedule:** grade · student picker · class search ‖ refresh · draft/committed · print
-- **User Management:** roles · name search ‖ refresh · scope
-- **Students:** grade · search ‖ Add · scope
-- **Class Management:** search … clear
+Each page states its on-screen order, right to left, in a comment above its `<FiltersBar>`. That comment is the source of truth for the page's order.
 
 ## Alternatives rejected
 
@@ -26,4 +21,4 @@ Right to left on screen:
 ## Consequences
 
 - Comments beside `FiltersBar` children say "first child leftmost".
-- Any change that touches bar order shows the before/after order, or screenshots.
+- Any change that touches bar order updates the page's comment and shows the before/after order, or screenshots.

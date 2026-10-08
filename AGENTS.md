@@ -13,7 +13,7 @@ Weekly class scheduling for an elementary school (grades 1–6). The UI is Hebre
 
 ## Roles
 
-Admin, Staff, Parent and Child. New signups wait for admin approval. One user can hold several roles. A user who is both staff and parent uses the Schedule page as a parent (ADR 0004).
+Admin, Staff, Parent and Child. New signups wait for admin approval. One user can hold several roles. A user who is both staff and parent should use the Schedule page as a parent (ADR 0004, not built yet).
 
 ## Workflow
 
