@@ -13,7 +13,7 @@ Weekly class scheduling for an elementary school (grades 1–6). The UI is Hebre
 
 ## Roles
 
-Admin, Staff, Parent and Child. New signups wait for admin approval. One user can hold several roles. A user who is both staff and parent should use the Schedule page as a parent (ADR 0004, not built yet).
+Admin, Staff, Parent and Child. New signups wait for admin approval. One user can hold several roles. A user who is both staff and parent uses the Schedule page as a parent (ADR 0004).
 
 ## Workflow
 
@@ -40,7 +40,7 @@ Changes to logic in services, utils and controller hooks come with vitest tests 
 - Business logic lives in the service layer (`src/services/`), so it can move to a backend later. Components render and dispatch.
 - **Reuse first.** Before building UI, grep for an existing component and existing i18n keys that do the job. If one almost fits, extend it with a small backward-compatible change.
 - **Unify only if they change together.** Before merging similar code into one shared piece, ask: will these places always behave the same and change together? If yes, share. If no, keep them separate. Schedule print and schedule display are deliberately separate. State the answer when you propose the refactor.
-- New user-facing strings get a key in `src/locales/he.json`, reusing an existing key where one fits. Leave existing hardcoded Hebrew alone unless your change already touches it.
+- New user-facing strings get a key in `src/locales/he.json`, reusing an existing key where one fits. Leave existing hardcoded Hebrew alone unless your change already touches it. Hebrew that is matched against stored data, such as time slot names in `src/utils/timeSlots.ts`, stays literal.
 
 ### Page folders (desktop + mobile)
 
@@ -48,9 +48,10 @@ A page with both a desktop and a mobile view (UI Mode, see ADR 0001) gets its ow
 
 - the desktop page and the mobile page (`<Page>.tsx`, `Mobile<Page>.tsx`);
 - the page's controller hook (`use<Page>Controller.ts`, with its tests): the state and actions both views render from, so no logic is duplicated between them;
+- when the views offer different controls, one capabilities object per platform (`<page>Capabilities.ts`) that says which;
 - components used only by that page.
 
-Shared components stay in `src/components/` and app-wide hooks in `src/hooks/`. Pages with a single view stay flat in `src/pages/`. Example: `src/pages/pendingApprovals/`.
+Shared components stay in `src/components/` and app-wide hooks in `src/hooks/`. A family of shared components built on one model and one stylesheet gets a subfolder there, e.g. `src/components/lessonCard/`. Pages with a single view stay flat in `src/pages/`. Examples: `src/pages/pendingApprovals/`, `src/pages/schedule/`.
 
 ## UI and RTL
 
