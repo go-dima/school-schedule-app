@@ -462,6 +462,7 @@
     }
   },
   "navigation": {
+    "openMenu": "פתיחת תפריט",
     "schedule": "מערכת שעות",
     "classManagement": "ניהול שיעורים",
     "students": "תלמידים",
@@ -489,7 +490,9 @@
     "dropdown": {
       "anonymous": "משתמש אלמוני",
       "editProfile": "ערוך פרופיל",
-      "logout": "התנתק"
+      "logout": "התנתק",
+      "desktopView": "תצוגת שולחן עבודה",
+      "mobileView": "תצוגת נייד"
     },
     "page": {
       "title": "הגדרות פרופיל",

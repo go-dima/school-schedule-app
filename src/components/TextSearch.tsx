@@ -79,7 +79,16 @@ function buildOptions<T>(
       },
     ];
   }
-  return matches.map((item, index) => ({
+  // One row per value: a repeated pick key breaks the dropdown's row
+  // identity (stale, duplicated rows), and a repeated text is noise.
+  const seen = new Set<string>();
+  const unique = matches.filter(item => {
+    const value = valueOf(item);
+    if (seen.has(value)) return false;
+    seen.add(value);
+    return true;
+  });
+  return unique.map((item, index) => ({
     key: keyOf(item, index),
     value: valueOf(item),
     label: getText(item),

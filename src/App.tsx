@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ChildProvider } from "./contexts/ChildContext";
 import { AllChildrenProvider } from "./contexts/AllChildrenContext";
 import { ContextErrorBoundary } from "./components/ErrorBoundary";
+import { UiModeProvider } from "./contexts/UiModeContext";
 import { router } from "./routes/router";
 import { Spin, Button, Result } from "antd";
 import { useTranslation } from "react-i18next";
@@ -60,13 +61,15 @@ function AppContent() {
 function App() {
   return (
     <ContextErrorBoundary>
-      <AuthProvider>
-        <ChildProvider>
-          <AllChildrenProvider>
-            <AppContent />
-          </AllChildrenProvider>
-        </ChildProvider>
-      </AuthProvider>
+      <UiModeProvider>
+        <AuthProvider>
+          <ChildProvider>
+            <AllChildrenProvider>
+              <AppContent />
+            </AllChildrenProvider>
+          </ChildProvider>
+        </AuthProvider>
+      </UiModeProvider>
     </ContextErrorBoundary>
   );
 }

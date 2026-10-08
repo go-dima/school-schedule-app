@@ -1401,7 +1401,13 @@ export const childrenApi = {
 
     if (error) throw new ApiError(error.message);
 
-    return data.map((child: any) => {
+    // Before migration 052 the RPC returned one row per parent link, so a
+    // child with two parents came back twice; ids are React keys downstream.
+    const uniqueRows = [
+      ...new Map(data.map((child: any) => [child.id, child])).values(),
+    ];
+
+    return uniqueRows.map((child: any) => {
       const creatorName =
         formatPersonName({
           // Absent until migration 044 is applied -> falls back to the name.

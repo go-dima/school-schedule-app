@@ -1963,8 +1963,8 @@ describe("childrenApi.getAllChildren creator name", () => {
     mockRpcResult = { data: [], error: null };
   });
 
-  const row = (creator: Record<string, string | null>) => ({
-    id: "child-1",
+  const row = (creator: Record<string, string | null>, id = "child-1") => ({
+    id,
     first_name: "נועה",
     last_name: "לוי",
     grade: 3,
@@ -1987,17 +1987,23 @@ describe("childrenApi.getAllChildren creator name", () => {
           creator_last_name: "Shemesh",
           creator_email: "tal@example.com",
         }),
-        row({
-          creator_display_name: null,
-          creator_first_name: "Orit",
-          creator_last_name: "Shemesh",
-          creator_email: "tal@example.com",
-        }),
-        row({
-          creator_first_name: null,
-          creator_last_name: null,
-          creator_email: "tal@example.com",
-        }),
+        row(
+          {
+            creator_display_name: null,
+            creator_first_name: "Orit",
+            creator_last_name: "Shemesh",
+            creator_email: "tal@example.com",
+          },
+          "child-2"
+        ),
+        row(
+          {
+            creator_first_name: null,
+            creator_last_name: null,
+            creator_email: "tal@example.com",
+          },
+          "child-3"
+        ),
       ],
       error: null,
     };
@@ -2009,6 +2015,22 @@ describe("childrenApi.getAllChildren creator name", () => {
       "Orit Shemesh",
       "tal@example.com",
     ]);
+  });
+
+  it("returns a child linked to two parents once", async () => {
+    // Before migration 052 the RPC returned one row per parent link.
+    mockRpcResult = {
+      data: [
+        { ...row({}), has_parent: true },
+        { ...row({}), has_parent: true },
+        row({}, "child-2"),
+      ],
+      error: null,
+    };
+
+    const result = await childrenApi.getAllChildren();
+
+    expect(result.map(c => c.id)).toEqual(["child-1", "child-2"]);
   });
 });
 

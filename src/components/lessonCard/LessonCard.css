@@ -1,0 +1,55 @@
+@import "../../styles/class-card-text.css";
+
+/* Lesson card styles shared by every lesson card: the desktop grid's
+   ClassCard and OverrideCard, and the mobile day view's MobileLessonCard
+   (whose one-line layout is in MobileLessonCard.css). Variant classes come
+   from lessonCardClassName. Grid-cell styles stay in ScheduleTable.css. */
+
+/* Every card variant (selected, override, "N classes" placeholder) is a
+   direct child of .schedule-cell and should fill it exactly the same way
+   -- see .schedule-cell's own comment. Fills via flex-grow rather than
+   height: 100%, so a cell holding several cards (a conflict) stacks them
+   at their content height instead of giving each one the full cell
+   height and overflowing into the rows below. */
+.class-card {
+  position: relative;
+  width: 100%;
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.class-card .ant-card-body {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex: 1;
+}
+
+.continuation-suffix {
+  font-style: italic;
+  color: var(--schedule-accent-orange);
+  font-size: 0.75em;
+  margin-inline-start: 4px;
+}
+
+.double-card {
+  background: transparent;
+}
+
+/* Mandatory classes styles */
+.class-card.mandatory-card {
+  background: var(--schedule-double-bg);
+}
+
+/* Staff overrides: orange border, no fill -- deliberately distinct from
+   every other card style (mandatory's tinted fill, selected's plain
+   white), so an override is unmistakable at a glance on the grid. */
+.class-card.override-card {
+  background: transparent;
+  border: 2px solid rgba(250, 140, 22, 0.5);
+}

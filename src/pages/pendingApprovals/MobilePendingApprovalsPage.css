@@ -1,0 +1,56 @@
+.mobile-approvals {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-approvals-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mobile-approvals-title {
+  margin: 0 !important;
+  min-width: 0;
+}
+
+.mobile-approvals-refresh {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+}
+
+.mobile-approvals-last-refresh {
+  font-size: 12px;
+  margin-top: -8px;
+}
+
+.mobile-approvals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-approvals-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 48px 16px;
+}
+
+.mobile-approvals-empty-icon {
+  font-size: 48px;
+  color: #d9d9d9;
+  margin-bottom: 16px;
+}
+
+.mobile-approvals-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 64px 0;
+}

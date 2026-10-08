@@ -1,0 +1,42 @@
+.mobile-schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* The banners carry their own bottom margin for the desktop page. */
+.mobile-schedule .ant-alert {
+  margin-bottom: 0 !important;
+}
+
+.mobile-schedule-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mobile-schedule-refresh {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.mobile-schedule-toolbar .ant-radio-button-wrapper {
+  height: 44px;
+  line-height: 42px;
+}
+
+.mobile-schedule-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 64px 0;
+}
+
+/* The week strip sits right under the child tabs: cancel the column gap
+   between them (the gap below the strip stays). */
+.mobile-schedule > .schedule-tabs + .mobile-schedule-strip {
+  margin-top: -12px;
+}

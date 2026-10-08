@@ -1,0 +1,14 @@
+.class-card.mobile-lesson-card .ant-card-body {
+  padding: 10px;
+  justify-content: center;
+}
+
+/* The desktop title (.class-title: centered, same colour and weight) on a
+   single line: truncate rather than wrap. */
+.mobile-lesson-title {
+  margin-bottom: 0;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

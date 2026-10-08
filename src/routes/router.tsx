@@ -1,3 +1,4 @@
+import { lazy } from "react";
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import AppLayout from "../layouts/AppLayout";
 import LoginPage from "../pages/LoginPage";
@@ -5,11 +6,11 @@ import SignupPage from "../pages/SignupPage";
 import SignupVerifyEmailPage from "../pages/SignupVerifyEmailPage";
 import ProfileSetupPage from "../pages/ProfileSetupPage";
 import PendingApprovalPage from "../pages/PendingApprovalPage";
-import SchedulePage from "../pages/SchedulePage";
+import SchedulePage from "../pages/schedule/SchedulePage";
 import ClassManagementPage from "../pages/ClassManagementPage";
 import StudentsPage from "../pages/StudentsPage";
 import UserListPage from "../pages/UserListPage";
-import PendingApprovalsPage from "../pages/PendingApprovalsPage";
+import PendingApprovalsPage from "../pages/pendingApprovals/PendingApprovalsPage";
 import ProfileSettingsPage from "../pages/ProfileSettingsPage";
 import {
   AuthGate,
@@ -24,6 +25,16 @@ import {
 } from "./guards";
 import { ROUTES } from "./paths";
 import { RouteErrorFallback } from "../components/ErrorBoundary";
+import { ByUiMode } from "./ByUiMode";
+
+// Mobile-only components load on demand, so desktop never downloads them.
+const MobileAppLayout = lazy(() => import("../layouts/MobileAppLayout"));
+const MobileSchedulePage = lazy(
+  () => import("../pages/schedule/MobileSchedulePage")
+);
+const MobilePendingApprovalsPage = lazy(
+  () => import("../pages/pendingApprovals/MobilePendingApprovalsPage")
+);
 
 export const router = createBrowserRouter([
   {
@@ -62,13 +73,23 @@ export const router = createBrowserRouter([
         element: <AuthGate />,
         children: [
           {
-            element: <AppLayout />,
+            element: (
+              <ByUiMode desktop={<AppLayout />} mobile={<MobileAppLayout />} />
+            ),
             children: [
               {
                 index: true,
                 element: <Navigate to={ROUTES.SCHEDULE} replace />,
               },
-              { path: ROUTES.SCHEDULE, element: <SchedulePage /> },
+              {
+                path: ROUTES.SCHEDULE,
+                element: (
+                  <ByUiMode
+                    desktop={<SchedulePage />}
+                    mobile={<MobileSchedulePage />}
+                  />
+                ),
+              },
               {
                 element: <RequireClassManager />,
                 children: [
@@ -99,7 +120,12 @@ export const router = createBrowserRouter([
                   { path: "list", element: <UserListPage /> },
                   {
                     path: "pending-approvals",
-                    element: <PendingApprovalsPage />,
+                    element: (
+                      <ByUiMode
+                        desktop={<PendingApprovalsPage />}
+                        mobile={<MobilePendingApprovalsPage />}
+                      />
+                    ),
                   },
                 ],
               },

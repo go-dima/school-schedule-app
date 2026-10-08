@@ -1,22 +1,10 @@
 import React from "react";
-import { Layout, Menu, Badge } from "antd";
-import {
-  CalendarOutlined,
-  BookOutlined,
-  TeamOutlined,
-  UserOutlined,
-  SettingOutlined,
-  CheckCircleOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  UsergroupAddOutlined,
-} from "@ant-design/icons";
+import { Layout, Menu } from "antd";
+import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import { usePendingApprovals } from "../hooks/usePendingApprovals";
 import { ROUTES } from "../routes/paths";
-import type { MenuProps } from "antd";
+import { USER_MANAGEMENT_SUBMENU_KEY, useNavItems } from "./useNavItems";
 
 const { Sider } = Layout;
 
@@ -25,13 +13,8 @@ interface SidebarProps {
   onToggle?: () => void;
 }
 
-const USER_MANAGEMENT_SUBMENU_KEY = "user-management-submenu";
-
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
   const { t } = useTranslation();
-  const { roleFlags, permissions } = useAuth();
-  const isAdmin = roleFlags.isAdmin;
-  const { pendingApprovalsCount } = usePendingApprovals();
   const location = useLocation();
   const navigate = useNavigate();
   const [openKeys, setOpenKeys] = React.useState<string[]>([]);
@@ -55,65 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
     }
   };
 
-  const items: MenuProps["items"] = [
-    {
-      key: ROUTES.SCHEDULE,
-      icon: <CalendarOutlined />,
-      label: t("navigation.schedule"),
-    },
-    {
-      key: ROUTES.CLASS_MANAGEMENT,
-      icon: <BookOutlined />,
-      label: t("navigation.classManagement"),
-      style: permissions.canManageClasses ? {} : { display: "none" },
-    },
-    {
-      key: ROUTES.STUDENTS,
-      icon: <UsergroupAddOutlined />,
-      label: t("navigation.students"),
-      style: permissions.canManageRoster ? {} : { display: "none" },
-    },
-    isAdmin
-      ? {
-          key: USER_MANAGEMENT_SUBMENU_KEY,
-          icon: <TeamOutlined />,
-          label: t("navigation.userManagement"),
-          onTitleClick: () => navigate(ROUTES.USER_MANAGEMENT_LIST),
-          children: [
-            {
-              key: ROUTES.USER_MANAGEMENT_LIST,
-              icon: <UserOutlined />,
-              label: t("navigation.userList"),
-            },
-            {
-              key: ROUTES.USER_MANAGEMENT_PENDING_APPROVALS,
-              icon:
-                pendingApprovalsCount > 0 ? (
-                  <Badge count={pendingApprovalsCount} size="small" />
-                ) : (
-                  <CheckCircleOutlined />
-                ),
-              label: (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    width: "100%",
-                  }}>
-                  <span>{t("navigation.pendingApprovals")}</span>
-                </div>
-              ),
-            },
-          ],
-        }
-      : null,
-    {
-      key: ROUTES.PROFILE_SETTINGS,
-      icon: <SettingOutlined />,
-      label: t("navigation.profileSettings"),
-    },
-  ].filter(Boolean);
+  const items = useNavItems();
 
   return (
     <div className="sidebar-container">

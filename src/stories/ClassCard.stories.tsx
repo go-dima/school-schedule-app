@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import ClassCard from "../components/ClassCard";
+import ClassCard from "../components/lessonCard/ClassCard";
 import type { TimeSlot, ClassWithTimeSlot } from "../types";
 
 const meta: Meta<typeof ClassCard> = {

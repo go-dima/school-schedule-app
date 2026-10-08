@@ -1,14 +1,17 @@
 import React from "react";
-import { Dropdown, Avatar, Typography, Space } from "antd";
+import { Dropdown, Avatar, Typography, Space, Switch } from "antd";
 import {
   UserOutlined,
   EditOutlined,
   LogoutOutlined,
   DownOutlined,
+  DesktopOutlined,
+  MobileOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useUiMode } from "../contexts/UiModeContext";
 import { ROUTES } from "../routes/paths";
 import { ROLE_SOLID_COLORS } from "../constants/roleColors";
 import type { MenuProps } from "antd";
@@ -19,6 +22,7 @@ const ProfileDropdown: React.FC = () => {
   const { t } = useTranslation();
   const { user, signOut, currentRole } = useAuth();
   const navigate = useNavigate();
+  const { mode, detected, setOverride } = useUiMode();
 
   const handleEditProfile = () => {
     navigate(ROUTES.PROFILE_SETTINGS);
@@ -72,6 +76,42 @@ const ProfileDropdown: React.FC = () => {
         </Space>
       ),
       onClick: handleEditProfile,
+    },
+    // An on/off switch for the other UI Mode than the device's: "mobile
+    // view" on a computer, "desktop view" on a phone. Off (the default)
+    // follows the device; on pins the other mode.
+    {
+      key: "switch-ui-mode",
+      label: (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+          }}>
+          <Space>
+            {detected === "mobile" ? <DesktopOutlined /> : <MobileOutlined />}
+            {detected === "mobile"
+              ? t("profile.dropdown.desktopView")
+              : t("profile.dropdown.mobileView")}
+          </Space>
+          {/* Display only: the click lands on the menu item. */}
+          <Switch
+            size="small"
+            checked={mode !== detected}
+            style={{ flexShrink: 0 }}
+          />
+        </div>
+      ),
+      onClick: () =>
+        setOverride(
+          mode !== detected
+            ? null
+            : detected === "mobile"
+              ? "desktop"
+              : "mobile"
+        ),
     },
     {
       type: "divider",

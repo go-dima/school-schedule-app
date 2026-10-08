@@ -11,7 +11,8 @@ interface ChildTabsProps {
   childList: Child[];
   selectedChildId: string | null | undefined;
   onSelect: (child: Child) => void;
-  onAddClick: () => void;
+  /** Omit to hide the add-child tab. */
+  onAddClick?: () => void;
   disabled?: boolean;
   // Page actions shown at the end of the tab bar.
   extra?: ReactNode;
@@ -57,7 +58,11 @@ export function ChildTabs({
         label: <ChildTabLabel child={c} />,
         disabled,
       }))}
-      addTab={{ label: t("schedule.page.addChildButton"), onClick: onAddClick }}
+      addTab={
+        onAddClick
+          ? { label: t("schedule.page.addChildButton"), onClick: onAddClick }
+          : undefined
+      }
       extra={extra}
     />
   );
