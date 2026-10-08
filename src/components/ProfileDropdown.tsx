@@ -58,8 +58,24 @@ const ProfileDropdown: React.FC = () => {
             borderBottom: "1px solid #f0f0f0",
             marginBottom: 8,
           }}>
-          <Text strong>{getFullName(user?.firstName, user?.lastName)}</Text>
-          <br />
+          {/* Name on the right, the active role pill on the left (RTL), and
+              the email below. */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+            }}>
+            <Text strong>{getFullName(user?.firstName, user?.lastName)}</Text>
+            {currentRole && (
+              <Tag
+                className="profile-dropdown-role"
+                color={ROLE_TAG_COLORS[currentRole.role]}>
+                {t(`roles.${currentRole.role}`, currentRole.role)}
+              </Tag>
+            )}
+          </div>
           <Text type="secondary" style={{ fontSize: "12px" }}>
             {user?.email}
           </Text>
@@ -147,15 +163,6 @@ const ProfileDropdown: React.FC = () => {
             <Text className="profile-dropdown-name">
               {getFullName(user?.firstName, user?.lastName)}
             </Text>
-            {/* The active role as a pill, in the role tags' colours. RTL:
-                avatar, name, role, then the arrow. */}
-            {currentRole && (
-              <Tag
-                className="profile-dropdown-role"
-                color={ROLE_TAG_COLORS[currentRole.role]}>
-                {t(`roles.${currentRole.role}`, currentRole.role)}
-              </Tag>
-            )}
             <DownOutlined style={{ fontSize: "12px", color: "#8c8c8c" }} />
           </div>
         </div>
