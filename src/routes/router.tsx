@@ -6,7 +6,7 @@ import SignupPage from "../pages/SignupPage";
 import SignupVerifyEmailPage from "../pages/SignupVerifyEmailPage";
 import ProfileSetupPage from "../pages/ProfileSetupPage";
 import PendingApprovalPage from "../pages/PendingApprovalPage";
-import SchedulePage from "../pages/SchedulePage";
+import SchedulePage from "../pages/schedule/SchedulePage";
 import ClassManagementPage from "../pages/ClassManagementPage";
 import StudentsPage from "../pages/StudentsPage";
 import UserListPage from "../pages/UserListPage";

@@ -16,7 +16,7 @@ import {
   mockTimeSlots,
   mockWeeklySchedule,
 } from "./fixtures/scheduleFixtures";
-import "../pages/SchedulePage.css";
+import "../pages/schedule/SchedulePage.css";
 
 const t = i18n.t.bind(i18n);
 
