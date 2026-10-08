@@ -38,6 +38,7 @@ Changes to logic in services, utils and controller hooks come with vitest tests 
 ## Code
 
 - Business logic lives in the service layer (`src/services/`), so it can move to a backend later. Components render and dispatch.
+- **Resolved state** (ADR 0005, binding on all new work). Every decision that combines inputs (role, view state, platform) goes through a pure **resolver** with a matrix test, and components read its result instead of combining flags inline. **Permissions** say what the user may do, a page's **capabilities** say what the platform offers, and a control renders only when both allow it.
 - **Reuse first.** Before building UI, grep for an existing component and existing i18n keys that do the job. If one almost fits, extend it with a small backward-compatible change.
 - **Unify only if they change together.** Before merging similar code into one shared piece, ask: will these places always behave the same and change together? If yes, share. If no, keep them separate. Schedule print and schedule display are deliberately separate. State the answer when you propose the refactor.
 - New user-facing strings get a key in `src/locales/he.json`, reusing an existing key where one fits. Leave existing hardcoded Hebrew alone unless your change already touches it. Hebrew that is matched against stored data, such as time slot names in `src/utils/timeSlots.ts`, stays literal.
@@ -48,7 +49,7 @@ A page with both a desktop and a mobile view (UI Mode, see ADR 0001) gets its ow
 
 - the desktop page and the mobile page (`<Page>.tsx`, `Mobile<Page>.tsx`);
 - the page's controller hook (`use<Page>Controller.ts`, with its tests): the state and actions both views render from, so no logic is duplicated between them;
-- when the views offer different controls, one capabilities object per platform (`<page>Capabilities.ts`) that says which;
+- the page's capabilities (`<page>Capabilities.ts`, with its tests): one object per platform saying which controls that view offers (ADR 0005);
 - components used only by that page.
 
 Shared components stay in `src/components/` and app-wide hooks in `src/hooks/`. A family of shared components built on one model and one stylesheet gets a subfolder there, e.g. `src/components/lessonCard/`. Pages with a single view stay flat in `src/pages/`. Examples: `src/pages/pendingApprovals/`, `src/pages/schedule/`.
