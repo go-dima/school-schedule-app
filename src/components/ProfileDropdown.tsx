@@ -1,5 +1,5 @@
 import React from "react";
-import { Dropdown, Avatar, Typography, Space, Switch } from "antd";
+import { Dropdown, Avatar, Typography, Space, Switch, Tag } from "antd";
 import {
   UserOutlined,
   EditOutlined,
@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useUiMode } from "../contexts/UiModeContext";
 import { ROUTES } from "../routes/paths";
-import { ROLE_SOLID_COLORS } from "../constants/roleColors";
+import { ROLE_TAG_COLORS } from "../constants/roleColors";
 import type { MenuProps } from "antd";
 
 const { Text } = Typography;
@@ -136,13 +136,7 @@ const ProfileDropdown: React.FC = () => {
         placement="bottomLeft"
         trigger={["click"]}
         overlayClassName="profile-dropdown-overlay">
-        <div
-          className="profile-dropdown-trigger"
-          style={{
-            border: currentRole
-              ? `3px solid ${ROLE_SOLID_COLORS[currentRole.role]}`
-              : "none",
-          }}>
+        <div className="profile-dropdown-trigger">
           <div className="profile-dropdown-user">
             <Avatar
               className="profile-dropdown-avatar"
@@ -153,6 +147,15 @@ const ProfileDropdown: React.FC = () => {
             <Text className="profile-dropdown-name">
               {getFullName(user?.firstName, user?.lastName)}
             </Text>
+            {/* The active role as a pill, in the role tags' colours. RTL:
+                avatar, name, role, then the arrow. */}
+            {currentRole && (
+              <Tag
+                className="profile-dropdown-role"
+                color={ROLE_TAG_COLORS[currentRole.role]}>
+                {t(`roles.${currentRole.role}`, currentRole.role)}
+              </Tag>
+            )}
             <DownOutlined style={{ fontSize: "12px", color: "#8c8c8c" }} />
           </div>
         </div>

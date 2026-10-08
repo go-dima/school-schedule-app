@@ -45,9 +45,22 @@
   text-overflow: ellipsis;
 }
 
-/* Avatar only: the name doesn't fit next to the page title. */
+/* Avatar and role only: the name doesn't fit next to the page title. */
 .mobile-app-header .profile-dropdown-name {
   display: none;
+}
+
+/* One line inside the 56px header: the desktop trigger's padding and
+   rounded panel would make it taller than the bar. */
+.mobile-app-header .profile-dropdown-trigger {
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.mobile-app-header .profile-dropdown-user {
+  gap: 6px;
 }
 
 .mobile-app-menu .ant-drawer-body {

@@ -354,6 +354,10 @@
   text-overflow: ellipsis;
 }
 
+.profile-dropdown-role {
+  margin: 0;
+}
+
 /* Page content styles */
 .page-content {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
