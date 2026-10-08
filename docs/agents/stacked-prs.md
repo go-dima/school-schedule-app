@@ -6,6 +6,7 @@ Multi-part features ship as a stack of small PRs into `main`, managed with the o
 
 - Each layer is safe to deploy on its own: `main` deploys straight to production.
 - Run the verify checks from `AGENTS.md` before pushing each layer.
+- End each PR title with the layer, e.g. `Mobile Schedule: day view (3/4)`.
 - Fill the template's TRACK section: layer N of M, the PR it depends on, the next layer.
 
 ## Merging a layer

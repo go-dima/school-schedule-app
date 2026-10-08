@@ -4,6 +4,10 @@ Weekly class scheduling for an elementary school (grades 1–6). The UI is Hebre
 
 `main` deploys straight to production, and dev, preview and production share **one Supabase database**. Every merged PR and every applied migration reaches real users.
 
+## Real people's names
+
+The database holds real children, parents and staff. Their names stay out of everything the repo and GitHub keep: tests, fixtures, stories, commit messages, PR and issue text, and screenshots. Use **invented** names, or general terms ("a parent", "student A", "the staff member"). Take screenshots from Storybook fixtures or test-scope accounts.
+
 ## Docs
 
 - `CONTEXT.md`: the domain glossary (Time Slot, Class Slot, Group, Track, Locked Selection...). Name things with its terms.
@@ -29,6 +33,8 @@ Run `npx tsc --noEmit`, `npx vitest run` and `npm run lint`. Add `npm run build-
 
 Changes to logic in services, utils and controller hooks come with vitest tests next to the file (`*.test.ts`). A pure UI tweak doesn't need one.
 
+New components and pages get a story built on the shared fixtures, and visual changes are checked in Storybook before the PR. Storybook has no Supabase mocking. Stories render from the fixtures in `src/stories/fixtures/` (`mockAuth`, `scheduleFixtures`, `mobileShell`). Pick fixtures whose path never calls the API.
+
 ## Database
 
 - The agent writes migrations and the human applies them. Add `migrations/NNN_<name>.sql` plus its entry in `migrations/migrations.json`, write them at the **start** of the work, and tell the human the run order. Leave `npm run migrate` to the human.
@@ -41,7 +47,9 @@ Changes to logic in services, utils and controller hooks come with vitest tests 
 - **Resolved state** (ADR 0005, binding on all new work). Every decision that combines inputs (role, view state, platform) goes through a pure **resolver** with a matrix test, and components read its result instead of combining flags inline. **Permissions** say what the user may do, a page's **capabilities** say what the platform offers, and a control renders only when both allow it.
 - **Reuse first.** Before building UI, grep for an existing component and existing i18n keys that do the job. If one almost fits, extend it with a small backward-compatible change.
 - **Unify only if they change together.** Before merging similar code into one shared piece, ask: will these places always behave the same and change together? If yes, share. If no, keep them separate. Schedule print and schedule display are deliberately separate. State the answer when you propose the refactor.
-- New user-facing strings get a key in `src/locales/he.json`, reusing an existing key where one fits. Leave existing hardcoded Hebrew alone unless your change already touches it. Hebrew that is matched against stored data, such as time slot names in `src/utils/timeSlots.ts`, stays literal.
+- New components get a co-located `.css` file and no inline styles. Existing inline styles stay unless your change already touches them.
+- When a feature adds user actions, ask the human which ones to track. Their event names go in `AnalyticsEvent` (`src/utils/analytics.ts`).
+- All user-facing copy goes through `src/locales/he.json`, error fallbacks included, with no English defaults. Reuse an existing key where one fits. Hebrew that is matched against stored data stays literal: time slot names (`src/utils/timeSlots.ts`), and catalog class titles and teacher placeholders (`scheduleService.ts`, `staffScheduleService.ts`). #269 tracks the last UI leftovers.
 
 ### Page folders (desktop + mobile)
 
