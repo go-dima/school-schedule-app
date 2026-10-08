@@ -2,8 +2,8 @@ import React from "react";
 import { DAYS_OF_WEEK } from "../../types";
 import "./WeekStrip.css";
 
-// Sunday to Thursday with each day's date, the selected day highlighted
-// and today marked. RTL: Sunday renders rightmost.
+// Sunday to Thursday, each as its date number then its name, the selected
+// day highlighted and today marked. RTL: Sunday renders rightmost.
 export const WeekStrip: React.FC<{
   dates: Date[];
   selectedDay: number;
@@ -24,8 +24,9 @@ export const WeekStrip: React.FC<{
             day.key === today ? " is-today" : ""
           }`}
           onClick={() => onSelect(day.key)}>
-          <span className="week-strip-name">{day.name}</span>
+          {/* RTL: the date number renders rightmost, then the day name. */}
           <span className="week-strip-date">{dates[day.key]?.getDate()}</span>
+          <span className="week-strip-name">{day.name}</span>
         </button>
       );
     })}

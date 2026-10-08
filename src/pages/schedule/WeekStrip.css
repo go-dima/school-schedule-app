@@ -5,7 +5,7 @@
   direction: rtl;
 }
 
-/* Name and date on one line (RTL: name rightmost). */
+/* Date number and name on one line (RTL: number rightmost). */
 .week-strip-day {
   display: flex;
   flex-direction: row;
