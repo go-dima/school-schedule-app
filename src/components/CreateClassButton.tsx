@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 
 interface CreateClassButtonProps {
   onCreateClass: (timeSlotId: string, dayOfWeek: number) => void;
@@ -16,6 +17,7 @@ const CreateClassButton: React.FC<CreateClassButtonProps> = ({
   dayOfWeek,
   style,
 }) => {
+  const { t } = useTranslation();
   const handleClick = () => {
     onCreateClass(timeSlotId, dayOfWeek);
   };
@@ -28,9 +30,11 @@ const CreateClassButton: React.FC<CreateClassButtonProps> = ({
         onClick={handleClick}
         style={{ height: "auto", padding: "12px 0", ...style }}>
         <div>
-          <div style={{ fontSize: "14px", fontWeight: 500 }}>צור שיעור חדש</div>
+          <div style={{ fontSize: "14px", fontWeight: 500 }}>
+            {t("schedule.page.createNewClassModal")}
+          </div>
           <div style={{ fontSize: "12px", color: "#666", marginTop: 4 }}>
-            הוסף שיעור חדש לזמן זה
+            {t("schedule.page.createClassHint")}
           </div>
         </div>
       </Button>

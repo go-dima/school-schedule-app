@@ -3,6 +3,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { childrenApi } from "../services/api";
 import { withTimeout } from "../utils/asyncUtils";
 import type { Child } from "../types";
+import i18n from "../utils/i18n";
 
 export function useChildren() {
   const [children, setChildren] = useState<Child[]>([]);
@@ -44,7 +45,9 @@ export function useChildren() {
             );
           } else {
             setError(
-              err instanceof Error ? err.message : "Failed to load children"
+              err instanceof Error
+                ? err.message
+                : i18n.t("errors.fallback.loadChildren")
             );
           }
         }
@@ -83,7 +86,9 @@ export function useChildren() {
       return newChild;
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to create child";
+        err instanceof Error
+          ? err.message
+          : i18n.t("errors.fallback.createChild");
       setError(message);
       throw new Error(message);
     }
@@ -125,7 +130,9 @@ export function useChildren() {
       return updatedChild;
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to update child";
+        err instanceof Error
+          ? err.message
+          : i18n.t("errors.fallback.updateChild");
       setError(message);
       throw new Error(message);
     }
@@ -139,7 +146,9 @@ export function useChildren() {
       setChildren(prev => prev.filter(child => child.id !== childId));
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to remove child";
+        err instanceof Error
+          ? err.message
+          : i18n.t("errors.fallback.removeChild");
       setError(message);
       throw new Error(message);
     }

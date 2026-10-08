@@ -79,7 +79,6 @@
     "page": {
       "title": "מערכת שעות",
       "loading": "טוען את מערכת השעות...",
-      "error": "שגיאה בטעינת נתוני השעות",
       "timeSlotNotFound": "שגיאה: לא נמצא זמן השיעור המבוקש",
       "classCreated": "השיעור נוצר בהצלחה",
       "classCreationError": "שגיאה ביצירת השיעור",
@@ -168,7 +167,8 @@
       },
       "success": {
         "classCreated": "השיעור נוצר בהצלחה"
-      }
+      },
+      "createClassHint": "הוסף שיעור חדש לזמן זה"
     },
     "table": {
       "timeColumn": "זמן",
@@ -255,7 +255,16 @@
     "monday": "יום שני",
     "tuesday": "יום שלישי",
     "wednesday": "יום רביעי",
-    "thursday": "יום חמישי"
+    "thursday": "יום חמישי",
+    "short": {
+      "0": "ראשון",
+      "1": "שני",
+      "2": "שלישי",
+      "3": "רביעי",
+      "4": "חמישי",
+      "5": "שישי",
+      "6": "שבת"
+    }
   },
   "form": {
     "class": {
@@ -702,6 +711,59 @@
     "auth": {
       "title": "שגיאת אימות",
       "retry": "נסה שוב"
+    },
+    "boundary": {
+      "title": "משהו השתבש",
+      "tryAgain": "נסה שוב",
+      "refresh": "רענן את הדף",
+      "subtitle": "אירעה שגיאה בלתי צפויה. נסה לרענן את הדף."
+    },
+    "context": {
+      "login": "מעבר לדף ההתחברות",
+      "subtitle": "הייתה בעיה באימות. נסה להתחבר שוב."
+    },
+    "fallback": {
+      "loadScheduleData": "שגיאה בטעינת נתוני המערכת",
+      "loadSchedule": "שגיאה בטעינת מערכת השעות",
+      "selectClass": "שגיאה בבחירת השיעור",
+      "unselectClass": "שגיאה בביטול בחירת השיעור",
+      "loadDraftSelections": "שגיאה בטעינת הבחירות בטיוטה",
+      "loadStaffNames": "שגיאה בטעינת שמות הצוות",
+      "loadStaffSchedule": "שגיאה בטעינת מערכת הצוות",
+      "loadChildren": "שגיאה בטעינת הילדים",
+      "createChild": "שגיאה ביצירת הילד",
+      "updateChild": "שגיאה בעדכון הילד",
+      "removeChild": "שגיאה בהסרת הילד",
+      "loadOverrides": "שגיאה בטעינת החריגות",
+      "createOverride": "שגיאה ביצירת החריגה",
+      "updateOverride": "שגיאה בעדכון החריגה",
+      "deleteOverride": "שגיאה במחיקת החריגה",
+      "signOut": "שגיאה בהתנתקות",
+      "refreshProfile": "שגיאה בטעינת הפרופיל"
     }
+  },
+  "profileSetup": {
+    "title": "השלמת פרטים אישיים",
+    "subtitle": "אנא הזן את הפרטים האישיים שלך",
+    "submitButton": "שמור פרטים והמשך",
+    "footerNote": "פרטים אלו יעזרו לנו לזהות אותך במערכת. חשבונך ממתין לאישור מנהל."
+  },
+  "grades": {
+    "className": "כיתה {{grade}}",
+    "range": "כיתה {{from}} - {{to}}",
+    "short": {
+      "1": "א׳",
+      "2": "ב׳",
+      "3": "ג׳",
+      "4": "ד׳",
+      "5": "ה׳",
+      "6": "ו׳"
+    }
+  },
+  "timeSlots": {
+    "lessonDescription": "זמן לימוד - ניתן לבחור שיעורים",
+    "breakDescription": "הפסקה",
+    "meetingDescription": "מפגש כיתתי",
+    "unknownDescription": "זמן לא מוגדר"
   }
 }

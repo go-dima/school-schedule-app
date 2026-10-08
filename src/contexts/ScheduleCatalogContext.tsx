@@ -5,6 +5,7 @@ import type { ClassWithTimeSlot, TimeSlot, WeeklySchedule } from "../types";
 import log from "../utils/logger";
 import { useAuth } from "./AuthContext";
 import { ScheduleCatalogContext } from "./ScheduleCatalogContextObject";
+import i18n from "../utils/i18n";
 
 // The class/time-slot catalog: staff/admin see every class, everyone else
 // has staff-only placeholder classes (e.g. "חונכות", "שילוב") excluded.
@@ -62,7 +63,9 @@ export const ScheduleCatalogProvider: React.FC<{
       setWeeklySchedule(weeklySchedule);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to load schedule data"
+        err instanceof Error
+          ? err.message
+          : i18n.t("errors.fallback.loadScheduleData")
       );
     } finally {
       setLoading(false);

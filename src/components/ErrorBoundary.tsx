@@ -98,21 +98,18 @@ function DefaultErrorFallback({
       }}>
       <Result
         status="error"
-        title={t("errors.boundary.title", "Something went wrong")}
+        title={t("errors.boundary.title")}
         subTitle={
           process.env.NODE_ENV === "development"
             ? error.message
-            : t(
-                "errors.boundary.subtitle",
-                "An unexpected error occurred. Please try refreshing the page."
-              )
+            : t("errors.boundary.subtitle")
         }
         extra={[
           <Button type="primary" key="retry" onClick={reset}>
-            {t("errors.boundary.tryAgain", "Try Again")}
+            {t("errors.boundary.tryAgain")}
           </Button>,
           <Button key="refresh" onClick={handleRefresh}>
-            {t("errors.boundary.refresh", "Refresh Page")}
+            {t("errors.boundary.refresh")}
           </Button>,
         ]}
       />
@@ -143,14 +140,11 @@ function RouteErrorFallback() {
       }}>
       <Result
         status="error"
-        title={t("errors.boundary.title", "Something went wrong")}
-        subTitle={t(
-          "errors.boundary.subtitle",
-          "An unexpected error occurred. Please try refreshing the page."
-        )}
+        title={t("errors.boundary.title")}
+        subTitle={t("errors.boundary.subtitle")}
         extra={[
           <Button type="primary" key="refresh" onClick={handleRefresh}>
-            {t("errors.boundary.refresh", "Refresh Page")}
+            {t("errors.boundary.refresh")}
           </Button>,
         ]}
       />
@@ -195,20 +189,17 @@ export function ContextErrorBoundary({
         }}>
         <Result
           status="error"
-          title={t("errors.context.title", "Authentication Error")}
-          subTitle={t(
-            "errors.context.subtitle",
-            "There was a problem with authentication. Please try logging in again."
-          )}
+          title={t("errors.auth.title")}
+          subTitle={t("errors.context.subtitle")}
           extra={[
             <Button
               type="primary"
               key="login"
               onClick={() => (window.location.href = "/login")}>
-              {t("errors.context.login", "Go to Login")}
+              {t("errors.context.login")}
             </Button>,
             <Button key="refresh" onClick={() => window.location.reload()}>
-              {t("errors.context.refresh", "Refresh Page")}
+              {t("errors.boundary.refresh")}
             </Button>,
           ]}
         />

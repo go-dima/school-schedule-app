@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { scheduleOverridesApi } from "../services/api";
 import type { ScheduleOverride, ScheduleOverrideWithTimeSlot } from "../types";
+import i18n from "../utils/i18n";
 
 // A child's staff-authored one-off lessons. Fourth independent data-flow
 // hook alongside useScheduleCatalog, useSelectedSchedule and
@@ -42,7 +43,9 @@ export function useScheduleOverrides(childId: string | undefined) {
       } catch (err) {
         if (mounted) {
           setError(
-            err instanceof Error ? err.message : "Failed to load overrides"
+            err instanceof Error
+              ? err.message
+              : i18n.t("errors.fallback.loadOverrides")
           );
         }
       } finally {
@@ -79,7 +82,9 @@ export function useScheduleOverrides(childId: string | undefined) {
       await refetch();
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to create override";
+        err instanceof Error
+          ? err.message
+          : i18n.t("errors.fallback.createOverride");
       setError(message);
       throw new Error(message);
     }
@@ -96,7 +101,9 @@ export function useScheduleOverrides(childId: string | undefined) {
       await refetch();
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to update override";
+        err instanceof Error
+          ? err.message
+          : i18n.t("errors.fallback.updateOverride");
       setError(message);
       throw new Error(message);
     }
@@ -108,7 +115,9 @@ export function useScheduleOverrides(childId: string | undefined) {
       await refetch();
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to delete override";
+        err instanceof Error
+          ? err.message
+          : i18n.t("errors.fallback.deleteOverride");
       setError(message);
       throw new Error(message);
     }
