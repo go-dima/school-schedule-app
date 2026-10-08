@@ -20,8 +20,8 @@ import type {
   WeeklySchedule,
 } from "../types";
 import ClassSelectionDrawer from "./ClassSelectionDrawer";
-import ClassCard from "./ClassCard";
-import OverrideCard from "./OverrideCard";
+import ClassCard from "./lessonCard/ClassCard";
+import OverrideCard from "./lessonCard/OverrideCard";
 import "./ScheduleTable.css";
 import { EnrollmentService } from "../services/enrollmentService";
 import { OverrideSuffixButton } from "@/elements/OverrideSuffixButton";

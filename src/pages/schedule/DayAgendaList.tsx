@@ -1,7 +1,11 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Card } from "antd";
-import { MobileLessonCard } from "./MobileLessonCard";
+import { MobileLessonCard } from "../../components/lessonCard/MobileLessonCard";
+import {
+  classLesson,
+  overrideLesson,
+} from "../../components/lessonCard/lessonCardModel";
 import {
   getTimeSlotDisplayInfo,
   isBreakTimeSlot,
@@ -26,12 +30,7 @@ export const DayAgendaList: React.FC<{ entries: AgendaEntry[] }> = ({
         return (
           <div className="schedule-cell selected-classes">
             {entry.overrides.map(o => (
-              <MobileLessonCard
-                key={o.id}
-                title={o.title}
-                teacher={o.teacher}
-                isOverride
-              />
+              <MobileLessonCard key={o.id} lesson={overrideLesson(o)} />
             ))}
           </div>
         );
@@ -51,11 +50,9 @@ export const DayAgendaList: React.FC<{ entries: AgendaEntry[] }> = ({
             {entry.classes.map(cls => (
               <MobileLessonCard
                 key={cls.id}
-                title={cls.title}
-                teacher={cls.teacher}
-                isContinuation={entry.continuationIds.includes(cls.id)}
-                isDouble={cls.isDouble}
-                isMandatory={cls.isMandatory}
+                lesson={classLesson(cls, {
+                  isContinuation: entry.continuationIds.includes(cls.id),
+                })}
               />
             ))}
           </div>

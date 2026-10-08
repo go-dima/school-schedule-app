@@ -2,9 +2,11 @@ import React from "react";
 import { Card } from "antd";
 import { EditOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
-import type { ScheduleOverrideWithTimeSlot } from "../types";
+import type { ScheduleOverrideWithTimeSlot } from "../../types";
 import ClassCardHeader from "./ClassCardHeader";
+import { lessonCardClassName, overrideLesson } from "./lessonCardModel";
 import { OverrideSuffixButton } from "@/elements/OverrideSuffixButton";
+import "./LessonCard.css";
 
 interface OverrideCardProps {
   override: ScheduleOverrideWithTimeSlot;
@@ -21,14 +23,15 @@ interface OverrideCardProps {
 // second, more discoverable path on a lesson slot alongside the drawer.
 const OverrideCard: React.FC<OverrideCardProps> = ({ override, onEdit }) => {
   const { t } = useTranslation();
+  const lesson = overrideLesson(override);
 
   return (
-    <Card size="small" className="class-card selected-card override-card">
+    <Card size="small" className={lessonCardClassName(lesson)}>
       <ClassCardHeader
-        title={override.title}
+        title={lesson.title}
         isContinuation={false}
-        teacher={override.teacher}
-        room={override.room}
+        teacher={lesson.teacher}
+        room={lesson.room}
       />
       {onEdit && (
         <OverrideSuffixButton

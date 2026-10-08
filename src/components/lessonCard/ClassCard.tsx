@@ -1,10 +1,12 @@
 import React from "react";
 import { Card } from "antd";
-import type { ClassWithTimeSlot } from "../types";
+import type { ClassWithTimeSlot } from "../../types";
 import ClassCardHeader from "./ClassCardHeader";
+import { classLesson, lessonCardClassName } from "./lessonCardModel";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
 import { DoubleLessonTag } from "@/elements/DoubleLessonTag";
 import { EnrollmentCount } from "@/elements/EnrollmentCount";
+import "./LessonCard.css";
 
 interface ClassCardProps {
   cls: ClassWithTimeSlot;
@@ -14,6 +16,7 @@ interface ClassCardProps {
   style?: React.CSSProperties;
 }
 
+// The desktop grid's class card: title, teacher and room, and tags.
 const ClassCard: React.FC<ClassCardProps> = ({
   cls,
   isContinuation,
@@ -21,15 +24,13 @@ const ClassCard: React.FC<ClassCardProps> = ({
   enrollmentCount = 0,
   style,
 }) => {
-  const isMandatory = cls.isMandatory;
+  const lesson = classLesson(cls, { isContinuation });
 
   return (
     <Card
       key={cls.id}
       size="small"
-      className={`class-card selected-card ${
-        cls.isDouble ? "double-card" : ""
-      } ${isMandatory ? "mandatory-card" : ""}`}
+      className={lessonCardClassName(lesson)}
       style={style}>
       {showEnrollmentCount && (
         <div className="class-enrollment-badge">
@@ -37,15 +38,15 @@ const ClassCard: React.FC<ClassCardProps> = ({
         </div>
       )}
       <ClassCardHeader
-        title={cls.title}
-        isContinuation={isContinuation}
-        teacher={cls.teacher}
-        room={cls.room}
+        title={lesson.title}
+        isContinuation={lesson.isContinuation}
+        teacher={lesson.teacher}
+        room={lesson.room}
         reserveBadgeSpace={showEnrollmentCount}
         tags={
           <>
             <GradesRangeTag grades={cls.grades} color="green" />
-            {cls.isDouble && <DoubleLessonTag />}
+            {lesson.isDouble && <DoubleLessonTag />}
           </>
         }
       />
