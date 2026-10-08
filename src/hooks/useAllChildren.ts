@@ -3,6 +3,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { childrenApi } from "../services/api";
 import type { Child } from "../types";
 import { withTimeout } from "../utils/asyncUtils";
+import i18n from "../utils/i18n";
 
 type ChildWithParent = Child & { assignedParent: boolean };
 
@@ -46,7 +47,9 @@ export function useAllChildren() {
             );
           } else {
             setError(
-              err instanceof Error ? err.message : "Failed to load children"
+              err instanceof Error
+                ? err.message
+                : i18n.t("errors.fallback.loadChildren")
             );
           }
         }
@@ -75,7 +78,11 @@ export function useAllChildren() {
       setChildren(childrenData);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load children");
+      setError(
+        err instanceof Error
+          ? err.message
+          : i18n.t("errors.fallback.loadChildren")
+      );
     } finally {
       setLoading(false);
     }

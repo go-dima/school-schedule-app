@@ -137,7 +137,7 @@ const SignupPage: React.FC = () => {
               name="email"
               label={t("auth.signup.emailLabel")}
               rules={[
-                { required: true, message: t("auth.signup.emailRequired") },
+                { required: true, message: t("auth.login.emailRequired") },
                 { type: "email", message: t("auth.login.emailInvalid") },
               ]}>
               <Input

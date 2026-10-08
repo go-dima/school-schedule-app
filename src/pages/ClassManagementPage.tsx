@@ -165,7 +165,7 @@ const ClassManagementPage: React.FC = () => {
       setError(
         err instanceof Error
           ? err.message
-          : t("classManagement.page.loadDataError")
+          : t("classManagement.page.dataLoadingError")
       );
     } finally {
       setLoading(false);

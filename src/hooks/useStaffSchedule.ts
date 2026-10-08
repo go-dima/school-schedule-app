@@ -9,6 +9,7 @@ import type {
   StaffMember,
   StaffView,
 } from "../services/staffScheduleService";
+import i18n from "../utils/i18n";
 
 // The Staff View's data flow: the pickable staff members, and one staff
 // member's week. Independent of the student-view hooks (catalog,
@@ -45,7 +46,9 @@ export function useStaffSchedule(
       } catch (err) {
         if (mounted) {
           setError(
-            err instanceof Error ? err.message : "Failed to load staff names"
+            err instanceof Error
+              ? err.message
+              : i18n.t("errors.fallback.loadStaffNames")
           );
         }
       } finally {
@@ -77,7 +80,9 @@ export function useStaffSchedule(
         if (mounted) {
           setView(EMPTY_STAFF_VIEW);
           setError(
-            err instanceof Error ? err.message : "Failed to load staff schedule"
+            err instanceof Error
+              ? err.message
+              : i18n.t("errors.fallback.loadStaffSchedule")
           );
         }
       } finally {

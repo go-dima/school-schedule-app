@@ -6,6 +6,7 @@ import type { User, UserRole, UserRoleData } from "../types";
 import type { RequestableRole } from "../constants/roles";
 import { withTimeout } from "../utils/asyncUtils";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
+import i18n from "../utils/i18n";
 
 // Keep below App.tsx's 5s loading-timeout screen so a stuck query resolves to
 // the existing "proceed as signed out" fallback instead of that blunter screen.
@@ -123,7 +124,7 @@ export function useAuth() {
     try {
       await authApi.signIn(email, password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign in failed");
+      setError(err instanceof Error ? err.message : i18n.t("auth.login.error"));
       throw err;
     } finally {
       setLoading(false);
@@ -137,7 +138,9 @@ export function useAuth() {
     try {
       await authApi.signInWithGoogle(requestedRole);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Google sign in failed");
+      setError(
+        err instanceof Error ? err.message : i18n.t("auth.login.googleError")
+      );
       throw err;
     } finally {
       setLoading(false);
@@ -155,7 +158,9 @@ export function useAuth() {
     try {
       await authApi.signUp(email, password, requestedRole);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign up failed");
+      setError(
+        err instanceof Error ? err.message : i18n.t("auth.signup.error")
+      );
       throw err;
     } finally {
       setLoading(false);
@@ -168,7 +173,9 @@ export function useAuth() {
     try {
       await authApi.signOut();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign out failed");
+      setError(
+        err instanceof Error ? err.message : i18n.t("errors.fallback.signOut")
+      );
       throw err;
     } finally {
       // Don't rely solely on the onAuthStateChange listener to reach a
@@ -202,7 +209,9 @@ export function useAuth() {
       setUser(userProfile);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to refresh profile"
+        err instanceof Error
+          ? err.message
+          : i18n.t("errors.fallback.refreshProfile")
       );
     }
   };

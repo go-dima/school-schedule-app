@@ -25,14 +25,14 @@ function AppContent() {
         }}>
         <Result
           status="error"
-          title={t("errors.auth.title", "Authentication Error")}
+          title={t("errors.auth.title")}
           subTitle={error}
           extra={[
             <Button
               type="primary"
               key="retry"
               onClick={() => window.location.reload()}>
-              {t("errors.auth.retry", "Try Again")}
+              {t("errors.auth.retry")}
             </Button>,
           ]}
         />

@@ -708,6 +708,35 @@
     "auth": {
       "title": "שגיאת אימות",
       "retry": "נסה שוב"
+    },
+    "boundary": {
+      "title": "משהו השתבש",
+      "tryAgain": "נסה שוב",
+      "refresh": "רענן את הדף",
+      "subtitle": "אירעה שגיאה בלתי צפויה. נסה לרענן את הדף."
+    },
+    "context": {
+      "login": "מעבר לדף ההתחברות",
+      "subtitle": "הייתה בעיה באימות. נסה להתחבר שוב."
+    },
+    "fallback": {
+      "loadScheduleData": "שגיאה בטעינת נתוני המערכת",
+      "loadSchedule": "שגיאה בטעינת מערכת השעות",
+      "selectClass": "שגיאה בבחירת השיעור",
+      "unselectClass": "שגיאה בביטול בחירת השיעור",
+      "loadDraftSelections": "שגיאה בטעינת הבחירות בטיוטה",
+      "loadStaffNames": "שגיאה בטעינת שמות הצוות",
+      "loadStaffSchedule": "שגיאה בטעינת מערכת הצוות",
+      "loadChildren": "שגיאה בטעינת הילדים",
+      "createChild": "שגיאה ביצירת הילד",
+      "updateChild": "שגיאה בעדכון הילד",
+      "removeChild": "שגיאה בהסרת הילד",
+      "loadOverrides": "שגיאה בטעינת החריגות",
+      "createOverride": "שגיאה ביצירת החריגה",
+      "updateOverride": "שגיאה בעדכון החריגה",
+      "deleteOverride": "שגיאה במחיקת החריגה",
+      "signOut": "שגיאה בהתנתקות",
+      "refreshProfile": "שגיאה בטעינת הפרופיל"
     }
   },
   "profileSetup": {

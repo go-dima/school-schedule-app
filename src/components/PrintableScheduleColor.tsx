@@ -230,8 +230,11 @@ const PrintableScheduleColor: React.FC<PrintableScheduleColorProps> = ({
     <div className="printable-schedule">
       <div className="print-header">
         <h1 className="print-title">
-          מערכת של {child.firstName} {child.lastName} -{" "}
-          {GetGradeName(child.grade)}
+          {t("schedule.print.childTitle", {
+            firstName: child.firstName,
+            lastName: child.lastName,
+            grade: GetGradeName(child.grade),
+          })}
         </h1>
         {showDraftMarker && (
           <div className="print-draft-marker">{t("schedule.draftBanner")}</div>

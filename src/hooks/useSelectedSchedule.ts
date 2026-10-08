@@ -5,6 +5,7 @@ import type {
   ScheduleTarget,
   SelectionStatus,
 } from "../types";
+import i18n from "../utils/i18n";
 
 // A student's selected classes (see ScheduleTarget). Replaces the old
 // useChildSchedule and the selections half of the old useSchedule.
@@ -41,7 +42,9 @@ export function useSelectedSchedule(
       } catch (err) {
         if (mounted) {
           setError(
-            err instanceof Error ? err.message : "Failed to load schedule"
+            err instanceof Error
+              ? err.message
+              : i18n.t("errors.fallback.loadSchedule")
           );
         }
       } finally {
@@ -79,7 +82,9 @@ export function useSelectedSchedule(
       setSchedule(selectedSchedule);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to select class";
+        err instanceof Error
+          ? err.message
+          : i18n.t("errors.fallback.selectClass");
       setError(message);
       throw new Error(message);
     }
@@ -97,7 +102,9 @@ export function useSelectedSchedule(
       setSchedule(selectedSchedule);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to unselect class";
+        err instanceof Error
+          ? err.message
+          : i18n.t("errors.fallback.unselectClass");
       setError(message);
       throw new Error(message);
     }
