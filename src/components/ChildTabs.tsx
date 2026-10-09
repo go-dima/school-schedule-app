@@ -21,7 +21,7 @@ interface ChildTabsProps {
 
 function ChildTabLabel({ child }: { child: Child }) {
   return (
-    <Space className="child-tab-label">
+    <Space>
       <span className="child-tab-name">
         {child.firstName} {child.lastName}
       </span>

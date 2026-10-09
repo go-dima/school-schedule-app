@@ -1,10 +1,5 @@
 /* ChildTabs: the label inside each child's tab. */
 
-/* Keeps the name and the grade in RTL order inside the tab. */
-.child-tab-label {
-  direction: rtl;
-}
-
 /* The grade and group text in a child's tab, smaller than the name. */
 .child-tab-grade {
   font-size: 12px;
