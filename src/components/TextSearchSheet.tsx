@@ -1,70 +1,101 @@
 import { useState } from "react";
-import { Drawer, Input } from "antd";
+import { Button, Input } from "antd";
+import { CloseCircleFilled } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
-import { filterByText } from "@/utils/textSearch";
+import { BottomSheet } from "./BottomSheet";
+import { buildOptions, TEXT_SEARCH_EXTRA_VALUE } from "./textSearchOptions";
+import type { TextOption } from "./textSearchOptions";
 import type { TextSearchPickProps } from "./TextSearch";
 import "./TextSearchSheet.css";
 
 /**
  * Mobile counterpart of TextSearch mode="pick": a read-only field that opens
  * a bottom sheet with a search box and the matching rows. Same props, same
- * matching rule (`filterByText`) and the same `onSelect` contract (the picked
- * item, or undefined when cleared). Picking a row closes the sheet.
+ * rows (`buildOptions`: matching rule, dedupe by key, extra row) and the same
+ * `onSelect` contract (the picked item, or undefined when cleared). Picking a
+ * row closes the sheet.
  */
-export function TextSearchSheet<T>({
-  items,
-  getText,
-  getKey,
-  renderOption,
-  extraOption,
-  value,
-  onSelect,
-  placeholder,
-  style,
-  disabled,
-  loading,
-}: TextSearchPickProps<T>) {
+export function TextSearchSheet<T>(props: TextSearchPickProps<T>) {
+  const {
+    items,
+    getText,
+    getKey,
+    extraOption,
+    value,
+    onSelect,
+    placeholder,
+    style,
+    disabled,
+    loading,
+  } = props;
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
   const selected = value ? items.find(item => getKey(item) === value) : null;
-  const trimmed = query.trim();
-  const matches = filterByText(items, query, getText);
-  const showExtra = matches.length === 0 && trimmed !== "" && !!extraOption;
+  const options = buildOptions(
+    props,
+    query,
+    getKey,
+    getKey,
+    TEXT_SEARCH_EXTRA_VALUE
+  );
 
   const close = () => {
     setOpen(false);
     setQuery("");
   };
 
+  const pick = (option: TextOption) => {
+    const trimmed = query.trim();
+    close();
+    if (option.isExtra) {
+      extraOption?.onSelect(trimmed);
+      return;
+    }
+    onSelect(items.find(item => getKey(item) === option.value));
+  };
+
+  // rc-input never shows `allowClear` on a read-only field, so the field
+  // gets its own clear button instead (its only clear control).
+  const clearButton =
+    selected && !disabled ? (
+      <Button
+        type="text"
+        size="small"
+        className="text-search-sheet-clear"
+        icon={<CloseCircleFilled />}
+        aria-label={t("common.clear")}
+        onClick={() => onSelect(undefined)}
+      />
+    ) : (
+      // Keeps the affix wrapper mounted, so the field's DOM doesn't change.
+      <span />
+    );
+
   return (
     <>
       <Input
         className="text-search-sheet-trigger"
         readOnly
-        allowClear
         value={selected ? getText(selected) : ""}
         placeholder={placeholder}
         style={style}
         disabled={disabled}
+        suffix={clearButton}
         onClick={() => setOpen(true)}
-        onChange={e => {
-          // Only the clear icon changes a read-only field.
-          if (e.target.value === "") onSelect(undefined);
+        onKeyDown={e => {
+          if (e.key === "Enter") setOpen(true);
         }}
       />
-      <Drawer
+      <BottomSheet
         className="text-search-sheet"
-        placement="bottom"
-        height="85dvh"
         open={open}
         onClose={close}
         closeIcon={null}
         destroyOnHidden
         title={
           <Input
-            className="text-search-sheet-input"
             autoFocus
             allowClear
             value={query}
@@ -74,48 +105,30 @@ export function TextSearchSheet<T>({
           />
         }
         extra={
-          <button
-            type="button"
-            className="ant-btn ant-btn-link"
-            onClick={close}>
+          <Button type="link" onClick={close}>
             {t("common.close")}
-          </button>
+          </Button>
         }>
         <ul
           className="text-search-sheet-list"
           role="listbox"
           aria-busy={loading}>
-          {showExtra && extraOption ? (
-            <li>
+          {options.map(option => (
+            <li key={option.key}>
               <button
                 type="button"
+                role={option.isExtra ? undefined : "option"}
+                aria-selected={
+                  option.isExtra ? undefined : option.value === value
+                }
                 className="text-search-sheet-option"
-                onClick={() => {
-                  close();
-                  extraOption.onSelect(trimmed);
-                }}>
-                {extraOption.label(trimmed)}
+                onClick={() => pick(option)}>
+                {option.content}
               </button>
             </li>
-          ) : (
-            matches.map(item => (
-              <li key={getKey(item)}>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={getKey(item) === value}
-                  className="text-search-sheet-option"
-                  onClick={() => {
-                    close();
-                    onSelect(item);
-                  }}>
-                  {renderOption ? renderOption(item) : getText(item)}
-                </button>
-              </li>
-            ))
-          )}
+          ))}
         </ul>
-      </Drawer>
+      </BottomSheet>
     </>
   );
 }

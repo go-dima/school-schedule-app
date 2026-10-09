@@ -2,7 +2,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import "../utils/i18n";
+import i18n from "../utils/i18n";
 import { stubMatchMedia } from "../testUtils/antdDom";
 import { TextSearchSheet } from "./TextSearchSheet";
 
@@ -77,15 +77,48 @@ describe("TextSearchSheet", () => {
     expect((field() as HTMLInputElement).value).toBe("Yoav Levi");
   });
 
-  it("clearing reports undefined", () => {
+  it("shows no clear control while nothing is picked", () => {
+    render(<Demo />);
+    expect(
+      screen.queryByRole("button", { name: i18n.t("common.clear") })
+    ).toBeNull();
+  });
+
+  it("clears through a visible clear control, reporting undefined", () => {
     const onSelect = vi.fn();
     render(<Demo onSelect={onSelect} />);
     fireEvent.click(field());
     fireEvent.click(screen.getByRole("option", { name: "Noa Cohen" }));
     onSelect.mockClear();
 
-    fireEvent.click(document.querySelector(".ant-input-clear-icon")!);
+    // getByRole skips `visibility: hidden` elements, which is how rc-input
+    // hides `allowClear` on a read-only field.
+    const clear = screen.getByRole("button", { name: i18n.t("common.clear") });
+    expect(getComputedStyle(clear).visibility).not.toBe("hidden");
+    fireEvent.click(clear);
+
     expect(onSelect).toHaveBeenCalledWith(undefined);
+    expect((field() as HTMLInputElement).value).toBe("");
+    expect(screen.queryAllByRole("option")).toEqual([]);
+    expect(
+      screen.queryByRole("button", { name: i18n.t("common.clear") })
+    ).toBeNull();
+  });
+
+  it("lists an item whose key repeats only once", () => {
+    render(
+      <TextSearchSheet<Person>
+        mode="pick"
+        items={[...PEOPLE, { id: "p2", name: "Yoav Levi (copy)" }]}
+        getText={p => p.name}
+        getKey={p => p.id}
+        value={undefined}
+        placeholder="pick"
+        onSelect={() => {}}
+      />
+    );
+    fireEvent.click(field());
+    expect(options()).toEqual(["Noa Cohen", "Yoav Levi", "Dana Levi"]);
   });
 
   it("offers the extra row only when nothing matches", () => {
