@@ -17,7 +17,7 @@ This is the structure for all new work.
   - **Permissions:** what the user may do. Role rows → `getRoleFlags` (identity) → `getPermissions` (`PermissionsState`). Role differences live here and nowhere else.
   - **Capabilities:** what a platform's UI offers. A page with desktop and mobile views has `<page>Capabilities(platform)`: one object per platform, the same for every role.
   - A control renders only when both allow it, e.g. `canUseStaffView && caps.canPickView`.
-- **View resolvers** combine those with page state. Current ones: `resolveGate`, `resolveUiMode`, `ScheduleService.resolveSelectionStatus`, `ScheduleService.resolveScheduleView`, `ScheduleService.actsAsStaffInStudentView`.
+- **View resolvers** combine those with page state. Current ones: `resolveGate`, `resolveUiMode`, `ScheduleService.resolveSelectionStatus`, `ScheduleService.resolveScheduleView` (draft/committed), `ScheduleService.actsAsStaffInStudentView`, and the Schedule tab resolvers `resolveScheduleTab`, `defaultScheduleTab` and `viewParamFor` (`src/pages/schedule/scheduleView.ts`).
 - **One decision, one resolver.** Extend the resolver that owns a decision rather than adding a parallel check. Domain and role decisions go in `src/services/`, a page's capabilities in its page folder, routing in `src/routes/`.
 - **Matrix tests.** Each resolver has a `*.test.ts` that covers its full input matrix (every role combination, every platform, every toggle state).
 
