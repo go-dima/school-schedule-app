@@ -14,6 +14,7 @@ import { GroupMandatoryLockService } from "../../services/groupMandatoryLockServ
 import { ScheduleService } from "../../services/scheduleService";
 import type { Child, ScheduleTarget, SelectionStatus } from "../../types";
 import { trackWithActor, AnalyticsEvent } from "../../utils/analytics";
+import { classMatchesGrade } from "@/utils/grades";
 
 // The Schedule page's student view -- whose schedule is shown (a parent's
 // or child's own child, or the student staff picked), the draft/committed
@@ -286,7 +287,7 @@ export function useChildScheduleController() {
       ? classes
           .filter(
             cls =>
-              cls.grades.includes(currentTrackChild.grade) &&
+              classMatchesGrade(cls, currentTrackChild.grade) &&
               GroupMandatoryLockService.isLockedMatch(
                 cls,
                 currentTrackChild.groupNumber

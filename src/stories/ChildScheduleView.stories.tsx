@@ -17,6 +17,7 @@ import {
   mockWeeklySchedule,
 } from "./fixtures/scheduleFixtures";
 import "../pages/schedule/SchedulePage.css";
+import { classMatchesGrade } from "@/utils/grades";
 
 const t = i18n.t.bind(i18n);
 
@@ -49,7 +50,7 @@ const pickedIds = DAYS_OF_WEEK.map(
       cls =>
         cls.slots[0]?.dayOfWeek === day.key &&
         !cls.isMandatory &&
-        cls.grades.includes(linkedStudent.grade)
+        classMatchesGrade(cls, linkedStudent.grade)
     )?.id
 ).filter((id): id is string => Boolean(id));
 
