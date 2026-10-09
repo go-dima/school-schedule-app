@@ -52,7 +52,7 @@ import type {
 import "./SchedulePage.css";
 import { useChildScheduleController } from "./useChildScheduleController";
 import { scheduleCapabilities } from "./scheduleCapabilities";
-import { defaultScheduleView, resolveScheduleView } from "./scheduleView";
+import { resolveScheduleTab, viewParamFor } from "./scheduleView";
 import { useUiMode } from "../../contexts/UiModeContext";
 import { GetGradeName } from "@/utils/grades";
 import { printSchedule } from "../../utils/printSchedule";
@@ -88,7 +88,7 @@ const SchedulePageContent: React.FC = () => {
   const canUseMyView = canUseStaffView && !!user?.displayName;
   const viewParam = searchParams.get("view");
   // Staff on mobile land on My Schedule when the URL names no view.
-  const viewMode = resolveScheduleView({
+  const viewMode = resolveScheduleTab({
     platform,
     viewParam,
     canUseStaffView,
@@ -123,19 +123,15 @@ const SchedulePageContent: React.FC = () => {
     setSearchParams(
       prev => {
         const next = new URLSearchParams(prev);
-        // The default view needs no param; anything else (incl. "student"
-        // on mobile, where the default is My Schedule) is named explicitly.
-        if (
-          mode ===
-          defaultScheduleView({
-            platform,
-            canUseMyView,
-            canPickSchedule: permissions.canPickSchedule,
-          })
-        ) {
+        const param = viewParamFor(mode, {
+          platform,
+          canUseMyView,
+          canPickSchedule: permissions.canPickSchedule,
+        });
+        if (param === null) {
           next.delete("view");
         } else {
-          next.set("view", mode);
+          next.set("view", param);
         }
         if (mode !== "staff") next.delete("selected");
         return next;
