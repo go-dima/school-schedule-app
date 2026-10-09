@@ -28,16 +28,24 @@
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.profile-dropdown-overlay .ant-dropdown-menu .ant-dropdown-menu-item:hover {
+/* Skips the disabled user-info row, which is not clickable. */
+.profile-dropdown-overlay
+  .ant-dropdown-menu
+  .ant-dropdown-menu-item:not(.ant-dropdown-menu-item-disabled):hover {
   background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
   color: #2563eb;
 }
 
-.profile-dropdown-overlay
+/* The danger item (logout). antd's own danger hover (white text on solid
+   red) has the same selector minus the overlay class, so `.ant-dropdown` is
+   repeated here to outrank it. */
+.ant-dropdown.profile-dropdown-overlay
   .ant-dropdown-menu
-  .ant-dropdown-menu-item[data-menu-id$="logout"]:hover {
-  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
-  color: #dc2626;
+  .ant-dropdown-menu-item.ant-dropdown-menu-item-danger:not(
+    .ant-dropdown-menu-item-disabled
+  ):hover {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #b91c1c;
 }
 
 .profile-dropdown-trigger {
