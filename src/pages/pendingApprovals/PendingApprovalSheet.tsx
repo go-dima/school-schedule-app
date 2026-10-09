@@ -1,7 +1,8 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Drawer, Space } from "antd";
+import { Space } from "antd";
 import { UserOutlined } from "@ant-design/icons";
+import { BottomSheet } from "../../components/BottomSheet";
 import type { ApprovalFormController } from "./usePendingApprovalsController";
 import { PendingApprovalForm } from "./PendingApprovalForm";
 import "./PendingApprovalSheet.css";
@@ -14,10 +15,8 @@ export const PendingApprovalSheet: React.FC<{
 }> = ({ controller }) => {
   const { t } = useTranslation();
   return (
-    <Drawer
+    <BottomSheet
       className="pending-approval-sheet"
-      placement="bottom"
-      height="85dvh"
       open={controller.open}
       onClose={controller.close}
       maskClosable={!controller.submitting}
@@ -29,6 +28,6 @@ export const PendingApprovalSheet: React.FC<{
         </Space>
       }>
       <PendingApprovalForm controller={controller} />
-    </Drawer>
+    </BottomSheet>
   );
 };

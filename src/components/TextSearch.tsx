@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { AutoComplete, Select } from "antd";
-import { filterByText } from "@/utils/textSearch";
+import { buildOptions, TEXT_SEARCH_EXTRA_VALUE } from "./textSearchOptions";
+import type { TextOption } from "./textSearchOptions";
 
 /** An extra dropdown row (e.g. "add student") for a query nothing matches. */
 export interface TextSearchExtraOption {
@@ -8,7 +9,7 @@ export interface TextSearchExtraOption {
   onSelect: (query: string) => void;
 }
 
-interface TextSearchCommonProps<T> {
+export interface TextSearchCommonProps<T> {
   items: T[];
   getText: (item: T) => string;
   /** Dropdown row content; defaults to the text. */
@@ -46,56 +47,6 @@ export type TextSearchProps<T> =
   | TextSearchPickProps<T>
   | TextSearchFilterProps<T>;
 
-// Pick-mode value of the extra row; never a real key.
-const EXTRA_VALUE = "\u0000text-search-extra";
-
-interface TextOption {
-  key: string;
-  value: string;
-  label: React.ReactNode;
-  /** Dropdown row content (pick mode keeps `label` as the plain text). */
-  content: React.ReactNode;
-  isExtra?: boolean;
-}
-
-function buildOptions<T>(
-  { items, getText, renderOption, extraOption }: TextSearchCommonProps<T>,
-  query: string,
-  valueOf: (item: T) => string,
-  keyOf: (item: T, index: number) => string,
-  extraValue: string
-): TextOption[] {
-  const matches = filterByText(items, query, getText);
-  const trimmed = query.trim();
-  if (matches.length === 0 && trimmed && extraOption) {
-    const label = extraOption.label(trimmed);
-    return [
-      {
-        key: EXTRA_VALUE,
-        value: extraValue,
-        label,
-        content: label,
-        isExtra: true,
-      },
-    ];
-  }
-  // One row per value: a repeated pick key breaks the dropdown's row
-  // identity (stale, duplicated rows), and a repeated text is noise.
-  const seen = new Set<string>();
-  const unique = matches.filter(item => {
-    const value = valueOf(item);
-    if (seen.has(value)) return false;
-    seen.add(value);
-    return true;
-  });
-  return unique.map((item, index) => ({
-    key: keyOf(item, index),
-    value: valueOf(item),
-    label: getText(item),
-    content: renderOption ? renderOption(item) : getText(item),
-  }));
-}
-
 /**
  * The one search box over a closed list (people's names, class titles).
  * Matching always goes through `matchesText` (trimmed, case-insensitive
@@ -131,11 +82,17 @@ function PickTextSearch<T>(props: TextSearchPickProps<T>) {
   } = props;
   const [query, setQuery] = useState("");
 
-  const options = buildOptions(props, query, getKey, getKey, EXTRA_VALUE);
+  const options = buildOptions(
+    props,
+    query,
+    getKey,
+    getKey,
+    TEXT_SEARCH_EXTRA_VALUE
+  );
 
   const handleChange = (key: string | undefined) => {
     setQuery("");
-    if (key === EXTRA_VALUE) {
+    if (key === TEXT_SEARCH_EXTRA_VALUE) {
       extraOption?.onSelect(query.trim());
       return;
     }
