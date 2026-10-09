@@ -1,0 +1,12 @@
+/* `className` lands on .ant-drawer-content itself, so these rules target
+   its descendants. */
+.bottom-sheet .ant-drawer-body {
+  overscroll-behavior: contain;
+}
+
+/* iOS zooms into inputs under 16px; keep the sheet's fields at 16px. */
+.bottom-sheet input,
+.bottom-sheet .ant-select-selection-search-input,
+.bottom-sheet .ant-select-selection-item {
+  font-size: 16px;
+}

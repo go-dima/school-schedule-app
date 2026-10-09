@@ -1,17 +1,7 @@
-.pending-approval-sheet .ant-drawer-content {
-  border-radius: 16px 16px 0 0;
-}
-
+/* BottomSheet.css sets the shared sheet rules (scroll containment, 16px
+   inputs). */
 .pending-approval-sheet .ant-drawer-body {
   padding: 16px 16px 0;
-  overscroll-behavior: contain;
-}
-
-/* iOS zooms into inputs under 16px; keep the form's fields at 16px. */
-.pending-approval-sheet input,
-.pending-approval-sheet .ant-select-selection-search-input,
-.pending-approval-sheet .ant-select-selection-item {
-  font-size: 16px;
 }
 
 /* Pinned action row: stays reachable while the fields scroll. */
