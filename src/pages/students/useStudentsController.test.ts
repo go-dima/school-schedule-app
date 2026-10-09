@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 import { act, renderHook } from "@testing-library/react";
+import { message } from "antd";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Child } from "../../types";
+
+const auth = { isParent: false };
 
 const ctx = {
   children: [] as unknown[],
@@ -15,7 +18,7 @@ const trackEvent = vi.fn();
 
 vi.mock("../../contexts/AuthContext", () => ({
   useAuth: () => ({
-    roleFlags: { isAdmin: true, isParent: false },
+    roleFlags: { isAdmin: true, isParent: auth.isParent },
     permissions: { canManageRoster: true },
   }),
 }));
@@ -106,7 +109,10 @@ describe("filterStudents", () => {
 describe("useStudentsController", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(message, "success").mockImplementation(() => undefined as never);
+    vi.spyOn(message, "error").mockImplementation(() => undefined as never);
     ctx.children = students;
+    auth.isParent = false;
   });
 
   it("starts with every scope on and applies filters", () => {
@@ -165,5 +171,101 @@ describe("useStudentsController", () => {
     await act(() => result.current.handleClaimChild("a"));
     expect(claimChild).toHaveBeenCalledWith("a");
     expect(ctx.refetch).toHaveBeenCalled();
+  });
+
+  it("updates the student being edited and tracks it", async () => {
+    ctx.updateChild.mockResolvedValue({});
+    const { result } = renderHook(() => useStudentsController());
+    act(() => result.current.openEditModal(students[0]));
+    const data = {
+      firstName: "Dana",
+      lastName: "Levi",
+      grade: 5,
+      groupNumber: 2,
+    };
+    await act(() => result.current.handleUpdateChild(data));
+    expect(ctx.updateChild).toHaveBeenCalledWith("a", data);
+    expect(trackEvent).toHaveBeenCalledWith("student_saved", {
+      mode: "update",
+    });
+    expect(message.success).toHaveBeenCalled();
+    expect(result.current.isFormModalOpen).toBe(false);
+    expect(result.current.editingChild).toBeUndefined();
+    expect(result.current.formLoading).toBe(false);
+  });
+
+  it("does nothing on update when no student is being edited", async () => {
+    const { result } = renderHook(() => useStudentsController());
+    await act(() =>
+      result.current.handleUpdateChild({
+        firstName: "Dana",
+        lastName: "Levi",
+        grade: 5,
+        groupNumber: null,
+      })
+    );
+    expect(ctx.updateChild).not.toHaveBeenCalled();
+    expect(trackEvent).not.toHaveBeenCalled();
+  });
+
+  it("keeps the modal open and shows the error when an update fails", async () => {
+    ctx.updateChild.mockRejectedValue(new Error("update failed"));
+    const { result } = renderHook(() => useStudentsController());
+    act(() => result.current.openEditModal(students[1]));
+    await act(() =>
+      result.current.handleUpdateChild({
+        firstName: "Dani",
+        lastName: "Katz",
+        grade: 4,
+        groupNumber: null,
+      })
+    );
+    expect(message.error).toHaveBeenCalledWith("update failed");
+    expect(trackEvent).not.toHaveBeenCalled();
+    expect(result.current.isFormModalOpen).toBe(true);
+    expect(result.current.editingChild?.id).toBe("b");
+    expect(result.current.formLoading).toBe(false);
+  });
+
+  it("deletes a student", async () => {
+    ctx.removeChild.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useStudentsController());
+    await act(() => result.current.handleDeleteChild("c"));
+    expect(ctx.removeChild).toHaveBeenCalledWith("c");
+    expect(message.success).toHaveBeenCalled();
+    expect(message.error).not.toHaveBeenCalled();
+  });
+
+  it("shows the error when a delete fails", async () => {
+    ctx.removeChild.mockRejectedValue(new Error("delete failed"));
+    const { result } = renderHook(() => useStudentsController());
+    await act(() => result.current.handleDeleteChild("c"));
+    expect(message.error).toHaveBeenCalledWith("delete failed");
+    expect(message.success).not.toHaveBeenCalled();
+  });
+
+  describe("canClaim", () => {
+    const unassigned = {
+      ...students[0],
+      assignedParent: false,
+    } as Child & { assignedParent: boolean };
+
+    it("lets a parent claim a student with no parent", () => {
+      auth.isParent = true;
+      const { result } = renderHook(() => useStudentsController());
+      expect(result.current.canClaim(unassigned)).toBe(true);
+    });
+
+    it("does not let a parent claim a student who has a parent", () => {
+      auth.isParent = true;
+      const { result } = renderHook(() => useStudentsController());
+      expect(result.current.canClaim(students[0])).toBe(false);
+    });
+
+    it("does not let a non-parent claim, assigned or not", () => {
+      const { result } = renderHook(() => useStudentsController());
+      expect(result.current.canClaim(unassigned)).toBe(false);
+      expect(result.current.canClaim(students[0])).toBe(false);
+    });
   });
 });

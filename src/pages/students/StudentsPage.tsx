@@ -59,7 +59,7 @@ const StudentsPage: React.FC = () => {
   const {
     canManageRoster,
     isAdmin,
-    isCurrentUserParent,
+    canClaim,
     loading,
     error,
     filteredChildren,
@@ -151,7 +151,7 @@ const StudentsPage: React.FC = () => {
             icon: <EditOutlined />,
             onClick: () => openEditModal(record),
           },
-          ...(isCurrentUserParent && !record.assignedParent
+          ...(canClaim(record)
             ? [
                 {
                   key: "claim",

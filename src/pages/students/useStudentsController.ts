@@ -157,6 +157,10 @@ export function useStudentsController() {
     [children, searchTerm, selectedGrade, selectedScopes]
   );
 
+  // A parent can claim a student who has no parent assigned yet.
+  const canClaim = (child: ChildWithParent) =>
+    isCurrentUserParent && !child.assignedParent;
+
   const handleChildAdded = (_newChild: Child) => {
     // No action needed: AllChildrenContext already appends the new child,
     // so filteredChildren updates automatically.
@@ -165,7 +169,7 @@ export function useStudentsController() {
   return {
     canManageRoster: permissions.canManageRoster,
     isAdmin,
-    isCurrentUserParent,
+    canClaim,
     loading,
     error,
     filteredChildren,
