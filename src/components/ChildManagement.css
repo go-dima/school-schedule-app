@@ -1,0 +1,30 @@
+/* ChildManagement: the child list on the profile settings page. */
+
+.child-management__loading {
+  text-align: center;
+  padding: 50px;
+}
+
+.child-management__header {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Scoped to the component so it outranks antd's h4 margin. */
+.child-management .child-management__title {
+  margin: 0;
+}
+
+.child-management__error {
+  margin-bottom: 16px;
+  color: red;
+}
+
+/* Child name on the left, grade and group tags on the right. */
+.child-management__card-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

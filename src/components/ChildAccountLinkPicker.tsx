@@ -9,6 +9,7 @@ import type {
   ChildLinkMode,
   ChildLinkNewChild,
 } from "./childAccountLink";
+import "./ChildAccountLinkPicker.css";
 
 interface ChildAccountLinkPickerProps {
   /** Students with no linked account yet; the caller does the filtering. */
@@ -36,7 +37,10 @@ export const ChildAccountLinkPicker: React.FC<ChildAccountLinkPickerProps> = ({
     onChange({ ...value, newChild: { ...value.newChild, ...patch } });
 
   return (
-    <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+    <Space
+      direction="vertical"
+      size="middle"
+      className="child-account-link-picker">
       <Segmented<ChildLinkMode>
         block
         disabled={disabled}
@@ -55,7 +59,7 @@ export const ChildAccountLinkPicker: React.FC<ChildAccountLinkPickerProps> = ({
         <Form layout="vertical" component="div">
           <Form.Item
             label={t("pendingApprovals.childLink.studentLabel")}
-            style={{ marginBottom: 0 }}>
+            className="child-account-link-picker__last-field">
             <Select
               showSearch
               allowClear
@@ -107,7 +111,7 @@ export const ChildAccountLinkPicker: React.FC<ChildAccountLinkPickerProps> = ({
           </Form.Item>
           <Form.Item
             label={t("form.child.groupLabel")}
-            style={{ marginBottom: 0 }}>
+            className="child-account-link-picker__last-field">
             <GroupTrackSelect
               value={value.newChild.groupNumber}
               onChange={groupNumber =>
@@ -115,7 +119,7 @@ export const ChildAccountLinkPicker: React.FC<ChildAccountLinkPickerProps> = ({
               }
               optionLabel={group => t("form.child.groupOption", { group })}
               placeholder={t("form.child.groupPlaceholder")}
-              style={{ width: "100%" }}
+              className="child-account-link-picker__group-track"
             />
           </Form.Item>
         </Form>
