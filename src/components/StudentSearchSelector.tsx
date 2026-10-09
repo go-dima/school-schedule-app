@@ -8,7 +8,6 @@ import { TextSearchSheet } from "./TextSearchSheet";
 import type { TextSearchExtraOption } from "./TextSearch";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import { useAuth } from "../contexts/AuthContext";
-import { useUiMode } from "../contexts/UiModeContext";
 import { GetGradeName } from "@/utils/grades";
 import { studentName } from "@/utils/personName";
 import type { Child } from "../types";
@@ -23,10 +22,15 @@ interface StudentSearchSelectorCommonProps {
   defaultGrade?: number;
 }
 
+/** How pick mode opens: the antd dropdown, or a bottom sheet (mobile). */
+export type StudentPicker = "dropdown" | "sheet";
+
 /** SchedulePage: pick one student; the value is their id. */
 interface StudentSearchSelectorPickProps
   extends StudentSearchSelectorCommonProps {
   mode: "pick";
+  /** From the page's capabilities; defaults to the dropdown. */
+  picker?: StudentPicker;
   selectedChildId?: string | null;
   onChildSelect: (childId: string | undefined) => void;
 }
@@ -61,8 +65,6 @@ export const StudentSearchSelector: React.FC<
   const { t } = useTranslation();
   const { roleFlags } = useAuth();
   const isAdmin = roleFlags.isAdmin;
-  // Mobile UI Mode swaps the pick dropdown for a bottom sheet (ADR 0001).
-  const { mode: uiMode } = useUiMode();
   const { createChild } = useAllChildrenContext();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Child | undefined>();
@@ -161,7 +163,7 @@ export const StudentSearchSelector: React.FC<
 
   return (
     <>
-      {props.mode === "pick" && uiMode === "mobile" ? (
+      {props.mode === "pick" && props.picker === "sheet" ? (
         <TextSearchSheet<Child>
           {...common}
           mode="pick"

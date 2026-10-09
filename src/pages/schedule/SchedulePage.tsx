@@ -599,6 +599,7 @@ const SchedulePageContent: React.FC = () => {
                 disabled={refreshing || staffStudent.loading}
                 defaultGrade={view.grade || 1}
                 mode="pick"
+                picker={caps.studentPicker}
               />
             </FilterField>
           </>
