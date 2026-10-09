@@ -20,6 +20,7 @@ import { useChildContext } from "../contexts/ChildContext";
 import { useAuth } from "../contexts/AuthContext";
 import type { Child, Scope } from "../types";
 import { GetGradeName } from "@/utils/grades";
+import "./ChildManagement.css";
 
 const { Title, Text } = Typography;
 
@@ -105,22 +106,16 @@ export function ChildManagement() {
 
   if (loading) {
     return (
-      <div style={{ textAlign: "center", padding: "50px" }}>
+      <div className="child-management__loading">
         <Spin size="large" />
       </div>
     );
   }
 
   return (
-    <div>
-      <div
-        style={{
-          marginBottom: 16,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}>
-        <Title level={4} style={{ margin: 0 }}>
+    <div className="child-management">
+      <div className="child-management__header">
+        <Title level={4} className="child-management__title">
           {t("child.management.title")}
         </Title>
         <Button
@@ -132,7 +127,7 @@ export function ChildManagement() {
       </div>
 
       {error && (
-        <div style={{ marginBottom: 16, color: "red" }}>
+        <div className="child-management__error">
           <Text type="danger">{error}</Text>
         </div>
       )}
@@ -179,12 +174,7 @@ export function ChildManagement() {
                 ]}>
                 <Card.Meta
                   title={
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}>
+                    <div className="child-management__card-title">
                       <span>
                         {child.firstName} {child.lastName}
                       </span>

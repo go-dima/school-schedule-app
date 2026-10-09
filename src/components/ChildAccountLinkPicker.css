@@ -1,0 +1,18 @@
+/* ChildAccountLinkPicker: the existing-or-new student picker in the approval
+   and role modals. */
+
+.child-account-link-picker {
+  width: 100%;
+}
+
+/* The last field in each mode drops the form item's bottom margin. Scoped
+   to the picker so it outranks antd's form item margin. */
+.child-account-link-picker
+  .child-account-link-picker__last-field.ant-form-item {
+  margin-bottom: 0;
+}
+
+/* The group select fills the form item's width. */
+.child-account-link-picker .child-account-link-picker__group-track {
+  width: 100%;
+}

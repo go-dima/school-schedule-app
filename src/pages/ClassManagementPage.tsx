@@ -33,7 +33,7 @@ import { FilterSelect } from "../components/FilterSelect";
 import { FiltersBar } from "../components/FiltersBar";
 import { trackEvent, trackWithActor, AnalyticsEvent } from "../utils/analytics";
 import "./ClassManagementPage.css";
-import { GetGradeName } from "@/utils/grades";
+import { GetGradeName, classMatchesGrade } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
 import { EnrollmentCount } from "@/elements/EnrollmentCount";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
@@ -108,7 +108,7 @@ const ClassManagementPage: React.FC = () => {
     }
 
     if (selectedGrade !== null) {
-      filtered = filtered.filter(cls => cls.grades?.includes(selectedGrade));
+      filtered = filtered.filter(cls => classMatchesGrade(cls, selectedGrade));
     }
 
     if (selectedTrack !== null) {

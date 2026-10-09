@@ -5,6 +5,7 @@ import type {
   ScheduleSelectionWithClass,
   SelectionStatus,
 } from "../types";
+import { classMatchesGrade } from "@/utils/grades";
 
 export interface GroupMandatoryChanges {
   toSelect: ClassWithTimeSlot[];
@@ -59,7 +60,7 @@ export const GroupMandatoryLockService = {
 
     const toSelect = allClasses.filter(
       cls =>
-        cls.grades.includes(child.grade) &&
+        classMatchesGrade(cls, child.grade) &&
         GroupMandatoryLockService.isLockedMatch(cls, child.groupNumber) &&
         !alreadySelectedIds.has(cls.id)
     );

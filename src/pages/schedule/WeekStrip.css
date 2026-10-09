@@ -1,7 +1,6 @@
 .week-strip {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 4px;
   direction: rtl;
 }
 
@@ -15,7 +14,6 @@
   min-height: 32px;
   padding: 2px 0;
   border: 0;
-  border-radius: 12px;
   background: transparent;
   color: #475569;
   font: inherit;
@@ -50,4 +48,30 @@
 .week-strip-day.is-selected .week-strip-name {
   color: #1677ff;
   font-weight: 600;
+}
+
+/* A thin divider between neighbouring days (not before the first): on the
+   start side, which is the right in RTL. Same colour as the line under the
+   strip. */
+.week-strip-day + .week-strip-day {
+  border-inline-start: 1px solid #e2e8f0;
+}
+
+/* Narrow phones (e.g. 320px): each day is about 64px wide, so a smaller
+   number circle, name and gap keep "חמישי" inside its column. */
+@media (max-width: 360px) {
+  .week-strip-day {
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .week-strip-name {
+    font-size: 11px;
+  }
+
+  .week-strip-date {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+  }
 }
