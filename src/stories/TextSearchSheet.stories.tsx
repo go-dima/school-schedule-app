@@ -1,31 +1,57 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
+import { PlusOutlined, UserOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import { TextSearchSheet } from "../components/TextSearchSheet";
+import { GetGradeName } from "../utils/grades";
+import { studentName } from "../utils/personName";
+import type { Child } from "../types";
+import { mockStudents } from "./fixtures/studentFixtures";
 
-interface Person {
-  id: string;
-  name: string;
-}
-
-const PEOPLE: Person[] = [
-  { id: "p1", name: "אורית שמש" },
-  { id: "p2", name: "מירב אלון" },
-  { id: "p3", name: "Dana Levi" },
-  { id: "p4", name: "עידו כץ" },
-];
-
-const Demo = () => {
-  const [value, setValue] = useState<string | undefined>();
+// The staff student picker's sheet: rows with an icon and the grade
+// (renderOption), and the "add student" row for a name nothing matches
+// (extraOption; type a name that isn't listed to see it).
+const Demo = ({
+  initial,
+  withExtra,
+}: {
+  initial?: string;
+  withExtra: boolean;
+}) => {
+  const { t } = useTranslation();
+  const [value, setValue] = useState<string | undefined>(initial);
+  const [added, setAdded] = useState<string>();
   return (
-    <TextSearchSheet<Person>
-      mode="pick"
-      items={PEOPLE}
-      getText={p => p.name}
-      getKey={p => p.id}
-      value={value}
-      onSelect={p => setValue(p?.id)}
-      placeholder="בחר תלמיד/ה"
-    />
+    <>
+      <TextSearchSheet<Child>
+        mode="pick"
+        items={mockStudents}
+        getText={studentName}
+        getKey={s => s.id}
+        renderOption={s => (
+          <span>
+            <UserOutlined /> {studentName(s)} - {GetGradeName(s.grade)}
+          </span>
+        )}
+        extraOption={
+          withExtra
+            ? {
+                label: query => (
+                  <span>
+                    <PlusOutlined />{" "}
+                    {t("students.search.addStudent", { name: query })}
+                  </span>
+                ),
+                onSelect: setAdded,
+              }
+            : undefined
+        }
+        value={value}
+        onSelect={s => setValue(s?.id)}
+        placeholder={t("schedule.page.placeholders.selectChildForStaff")}
+      />
+      {added && <p>{t("students.search.addStudent", { name: added })}</p>}
+    </>
   );
 };
 
@@ -35,5 +61,11 @@ const meta: Meta<typeof Demo> = {
   parameters: { layout: "padded", viewport: { defaultViewport: "mobile1" } },
 };
 export default meta;
+type Story = StoryObj<typeof Demo>;
 
-export const Default: StoryObj<typeof Demo> = {};
+export const Default: Story = { args: { withExtra: true } };
+
+/** A picked student shows in the field, with its clear button. */
+export const Picked: Story = {
+  args: { initial: mockStudents[2].id, withExtra: true },
+};
