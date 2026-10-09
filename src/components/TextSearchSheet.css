@@ -1,0 +1,49 @@
+/* The closed-list picker as a bottom sheet, for mobile UI Mode. The shared
+   sheet rules (scroll containment, 16px inputs) are in BottomSheet.css. */
+.text-search-sheet-trigger {
+  width: 100%;
+}
+
+.text-search-sheet-trigger input {
+  cursor: pointer;
+  /* iOS zooms into inputs under 16px. */
+  font-size: 16px;
+}
+
+/* Same tone as antd's own clear icon. */
+.text-search-sheet-trigger .text-search-sheet-clear.ant-btn {
+  color: rgba(0, 0, 0, 0.25);
+}
+
+.text-search-sheet .ant-drawer-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+}
+
+.text-search-sheet-list {
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.text-search-sheet-option {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 4px;
+  border: 0;
+  border-bottom: 1px solid #f0f0f0;
+  background: transparent;
+  font-size: 16px;
+  text-align: start;
+  cursor: pointer;
+}
+
+.text-search-sheet-option[aria-selected="true"] {
+  font-weight: 600;
+}
