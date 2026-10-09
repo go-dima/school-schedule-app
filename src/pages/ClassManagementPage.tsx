@@ -33,7 +33,7 @@ import { FilterSelect } from "../components/FilterSelect";
 import { FiltersBar } from "../components/FiltersBar";
 import { trackEvent, trackWithActor, AnalyticsEvent } from "../utils/analytics";
 import "./ClassManagementPage.css";
-import { GetGradeName } from "@/utils/grades";
+import { GetGradeName, classMatchesGrade } from "@/utils/grades";
 import { GetDayName } from "@/utils/days";
 import { EnrollmentCount } from "@/elements/EnrollmentCount";
 import { GradesRangeTag } from "@/elements/GradesRangeTag";
@@ -45,7 +45,6 @@ import { TextSearch } from "../components/TextSearch";
 import { filterByText } from "@/utils/textSearch";
 import { ALL_SCOPES } from "../constants/scopes";
 import { isTestScopeEnabled } from "../utils/env";
-import { classMatchesGrade } from "@/utils/classMatchesGrade";
 
 const { Title } = Typography;
 

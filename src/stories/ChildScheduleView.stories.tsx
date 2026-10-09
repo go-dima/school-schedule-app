@@ -17,7 +17,7 @@ import {
   mockWeeklySchedule,
 } from "./fixtures/scheduleFixtures";
 import "../pages/schedule/SchedulePage.css";
-import { classMatchesGrade } from "@/utils/classMatchesGrade";
+import { classMatchesGrade } from "@/utils/grades";
 
 const t = i18n.t.bind(i18n);
 

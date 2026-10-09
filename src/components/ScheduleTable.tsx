@@ -27,7 +27,7 @@ import { EnrollmentService } from "../services/enrollmentService";
 import { OverrideSuffixButton } from "@/elements/OverrideSuffixButton";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 import { matchesText } from "@/utils/textSearch";
-import { classMatchesGrade } from "@/utils/classMatchesGrade";
+import { classMatchesGrade } from "@/utils/grades";
 
 interface ScheduleTableProps {
   timeSlots: TimeSlot[];

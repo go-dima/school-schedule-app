@@ -5,7 +5,7 @@ import type {
   ScheduleSelectionWithClass,
   SelectionStatus,
 } from "../types";
-import { classMatchesGrade } from "@/utils/classMatchesGrade";
+import { classMatchesGrade } from "@/utils/grades";
 
 export interface GroupMandatoryChanges {
   toSelect: ClassWithTimeSlot[];

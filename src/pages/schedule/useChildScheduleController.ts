@@ -14,7 +14,7 @@ import { GroupMandatoryLockService } from "../../services/groupMandatoryLockServ
 import { ScheduleService } from "../../services/scheduleService";
 import type { Child, ScheduleTarget, SelectionStatus } from "../../types";
 import { trackWithActor, AnalyticsEvent } from "../../utils/analytics";
-import { classMatchesGrade } from "@/utils/classMatchesGrade";
+import { classMatchesGrade } from "@/utils/grades";
 
 // The Schedule page's student view -- whose schedule is shown (a parent's
 // or child's own child, or the student staff picked), the draft/committed

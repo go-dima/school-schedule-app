@@ -10,7 +10,7 @@ import type {
   WeeklySchedule,
 } from "../types";
 import { isLessonTimeSlot, isNonLessonTimeSlot } from "../utils/timeSlots";
-import { classMatchesGrade } from "@/utils/classMatchesGrade";
+import { classMatchesGrade } from "@/utils/grades";
 
 // Placeholder "all option" classes that only staff/admin may select; hidden
 // entirely from the schedule catalog for everyone else.

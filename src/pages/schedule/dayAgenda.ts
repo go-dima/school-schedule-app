@@ -7,7 +7,7 @@ import type {
   TimeSlot,
   WeeklySchedule,
 } from "../../types";
-import { classMatchesGrade } from "@/utils/classMatchesGrade";
+import { classMatchesGrade } from "@/utils/grades";
 
 /** What one time slot of the mobile day view shows. */
 export type AgendaEntry =

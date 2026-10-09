@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { classMatchesGrade } from "./classMatchesGrade";
+import { classMatchesGrade } from "./grades";
 
 describe("classMatchesGrade", () => {
   it("is true when the class is taught in the grade", () => {

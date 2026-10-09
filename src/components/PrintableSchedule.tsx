@@ -15,7 +15,7 @@ import type {
   ScheduleOverrideWithTimeSlot,
 } from "../types";
 import "./PrintableSchedule.css";
-import { classMatchesGrade } from "@/utils/classMatchesGrade";
+import { classMatchesGrade } from "@/utils/grades";
 
 export interface PrintableScheduleProps {
   title: string;
