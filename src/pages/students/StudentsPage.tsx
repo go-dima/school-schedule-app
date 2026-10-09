@@ -1,11 +1,10 @@
-import React, { useState, useMemo } from "react";
+import React from "react";
 import {
   Card,
   Button,
   Table,
   Modal,
   Typography,
-  message,
   Spin,
   Empty,
   Select,
@@ -22,26 +21,21 @@ import {
   MoreOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
-import { ChildForm } from "../components/ChildForm";
-import { StudentSearchSelector } from "../components/StudentSearchSelector";
-import { FiltersBar } from "../components/FiltersBar";
-import { GroupTrackTags } from "../components/GroupTrackTags";
-import { useAuth } from "../contexts/AuthContext";
-import { useAllChildrenContext } from "../contexts/AllChildrenContext";
-import { childrenApi } from "../services/api";
-import type { Child, Scope } from "../types";
-import { GRADES } from "../types";
-import { trackEvent, AnalyticsEvent } from "../utils/analytics";
-
-type ChildWithParent = Child & { assignedParent: boolean };
+import { ChildForm } from "../../components/ChildForm";
+import { StudentSearchSelector } from "../../components/StudentSearchSelector";
+import { FiltersBar } from "../../components/FiltersBar";
+import { GroupTrackTags } from "../../components/GroupTrackTags";
+import type { Scope } from "../../types";
+import {
+  useStudentsController,
+  type ChildWithParent,
+} from "./useStudentsController";
+import { GRADES } from "../../types";
 
 import { GetGradeName } from "@/utils/grades";
-import { ScopeTag } from "../components/ScopeTag";
-import { ScopeFilter } from "../components/ScopeSelector";
-import { ALL_SCOPES } from "../constants/scopes";
-import { filterByText } from "@/utils/textSearch";
-import { studentName } from "@/utils/personName";
-import { isTestScopeEnabled } from "../utils/env";
+import { ScopeTag } from "../../components/ScopeTag";
+import { ScopeFilter } from "../../components/ScopeSelector";
+import { isTestScopeEnabled } from "../../utils/env";
 
 const { Text } = Typography;
 
@@ -62,144 +56,7 @@ const ParentIcon: React.FC<{ assignedParent: boolean }> = ({
 
 const StudentsPage: React.FC = () => {
   const { t } = useTranslation();
-  const { permissions, roleFlags } = useAuth();
-  const {
-    children,
-    loading,
-    error,
-    createChild,
-    updateChild,
-    removeChild,
-    refetch,
-  } = useAllChildrenContext();
-  const isCurrentUserParent = roleFlags.isParent;
-  const isAdmin = roleFlags.isAdmin;
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [editingChild, setEditingChild] = useState<Child | undefined>();
-  const [formLoading, setFormLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedGrade, setSelectedGrade] = useState<number | undefined>(
-    undefined
-  );
-  // Admin-only (see the ToggleFilterGroup below) -- staff never see this
-  // filter. Both scopes start ON, equivalent to "no filter".
-  const [selectedScopes, setSelectedScopes] = useState<Scope[]>([
-    ...ALL_SCOPES,
-  ]);
-
-  const handleCreateChild = async (data: {
-    firstName: string;
-    lastName: string;
-    grade: number;
-    groupNumber: number | null;
-    scope?: "test" | "prod";
-  }) => {
-    setFormLoading(true);
-    try {
-      await createChild(
-        data.firstName,
-        data.lastName,
-        data.grade,
-        data.groupNumber,
-        data.scope || "prod"
-      );
-      setIsFormModalOpen(false);
-      setEditingChild(undefined);
-      message.success(t("students.page.addSuccess"));
-      trackEvent(AnalyticsEvent.StudentSaved, { mode: "create" });
-    } catch (err) {
-      message.error(
-        err instanceof Error ? err.message : t("students.page.addError")
-      );
-    } finally {
-      setFormLoading(false);
-    }
-  };
-
-  const handleUpdateChild = async (data: {
-    firstName: string;
-    lastName: string;
-    grade: number;
-    groupNumber: number | null;
-    scope?: "test" | "prod";
-  }) => {
-    if (!editingChild) return;
-
-    setFormLoading(true);
-    try {
-      await updateChild(editingChild.id, data);
-      setIsFormModalOpen(false);
-      setEditingChild(undefined);
-      message.success(t("students.page.updateSuccess"));
-      trackEvent(AnalyticsEvent.StudentSaved, { mode: "update" });
-    } catch (err) {
-      message.error(
-        err instanceof Error ? err.message : t("students.page.updateError")
-      );
-    } finally {
-      setFormLoading(false);
-    }
-  };
-
-  const handleDeleteChild = async (childId: string) => {
-    try {
-      await removeChild(childId);
-      message.success(t("students.page.deleteSuccess"));
-    } catch (err) {
-      message.error(
-        err instanceof Error ? err.message : t("students.page.deleteError")
-      );
-    }
-  };
-
-  const openEditModal = (child: Child) => {
-    setEditingChild(child);
-    setIsFormModalOpen(true);
-  };
-
-  const openCreateModal = () => {
-    setEditingChild(undefined);
-    setIsFormModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsFormModalOpen(false);
-    setEditingChild(undefined);
-  };
-
-  // Filter children based on search and grade
-  const filteredChildren = useMemo(() => {
-    let filtered = children as ChildWithParent[];
-
-    // Apply search filter
-    filtered = filterByText(filtered, searchTerm, studentName);
-
-    // Apply grade filter
-    if (selectedGrade !== undefined) {
-      filtered = filtered.filter(child => child.grade === selectedGrade);
-    }
-
-    // Apply scope filter (admin-only UI, but harmless to keep unconditional --
-    // non-admins never change selectedScopes away from its all-on default)
-    filtered = filtered.filter(child => selectedScopes.includes(child.scope));
-
-    return filtered;
-  }, [children, searchTerm, selectedGrade, selectedScopes]);
-
-  const handleChildAdded = (_newChild: Child) => {
-    // No action needed: AllChildrenContext already appends the new child,
-    // so filteredChildren updates automatically.
-  };
-
-  const handleClaimChild = async (childId: string) => {
-    try {
-      await childrenApi.claimChild(childId);
-      message.success(t("students.page.claimSuccess"));
-      await refetch();
-    } catch (err) {
-      message.error(err instanceof Error ? err.message : String(err));
-    }
-  };
+  const { access, list, filters, form, actions } = useStudentsController();
 
   const columns: ColumnsType<ChildWithParent> = [
     {
@@ -267,15 +124,15 @@ const StudentsPage: React.FC = () => {
             key: "edit",
             label: t("students.page.editButton"),
             icon: <EditOutlined />,
-            onClick: () => openEditModal(record),
+            onClick: () => form.openEdit(record),
           },
-          ...(isCurrentUserParent && !record.assignedParent
+          ...(access.canClaim(record)
             ? [
                 {
                   key: "claim",
                   label: t("students.page.claimAction"),
                   icon: <UserOutlined />,
-                  onClick: () => handleClaimChild(record.id),
+                  onClick: () => actions.claim(record.id),
                 },
               ]
             : []),
@@ -293,7 +150,7 @@ const StudentsPage: React.FC = () => {
                 content: t("students.page.deleteConfirmDescription"),
                 okText: t("students.page.confirmDelete"),
                 cancelText: t("common.buttons.cancel"),
-                onOk: () => handleDeleteChild(record.id),
+                onOk: () => actions.remove(record.id),
               });
             },
           },
@@ -317,7 +174,7 @@ const StudentsPage: React.FC = () => {
   ];
 
   // Check permissions
-  if (!permissions.canManageRoster) {
+  if (!access.canManageRoster) {
     return (
       <div className="page-content">
         <Card>
@@ -330,7 +187,7 @@ const StudentsPage: React.FC = () => {
     );
   }
 
-  if (loading) {
+  if (list.loading) {
     return (
       <div style={{ textAlign: "center", padding: "50px" }}>
         <Spin size="large" />
@@ -345,33 +202,33 @@ const StudentsPage: React.FC = () => {
       <FiltersBar
         actions={
           <>
-            {isAdmin && (
+            {access.isAdmin && (
               <ScopeFilter
-                value={selectedScopes}
-                onChange={setSelectedScopes}
+                value={filters.scopes}
+                onChange={filters.setScopes}
               />
             )}
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              onClick={openCreateModal}>
+              onClick={form.openCreate}>
               {t("students.page.addButton")}
             </Button>
           </>
         }>
         <StudentSearchSelector
-          children={filteredChildren}
-          onChildAdded={handleChildAdded}
-          onSearchChange={setSearchTerm}
+          children={list.items}
+          onChildAdded={actions.childAdded}
+          onSearchChange={filters.setSearch}
           placeholder={t("students.search.placeholder")}
           style={{ minWidth: 250 }}
           mode="filter"
-          value={searchTerm}
-          defaultGrade={selectedGrade || 1}
+          value={filters.search}
+          defaultGrade={filters.grade || 1}
         />
         <Select
-          value={selectedGrade}
-          onChange={setSelectedGrade}
+          value={filters.grade}
+          onChange={filters.setGrade}
           placeholder={t("students.filter.allGrades")}
           allowClear
           style={{ minWidth: 120 }}>
@@ -383,16 +240,16 @@ const StudentsPage: React.FC = () => {
         </Select>
       </FiltersBar>
 
-      {error && (
+      {list.error && (
         <div style={{ marginBottom: 16 }}>
-          <Text type="danger">{error}</Text>
+          <Text type="danger">{list.error}</Text>
         </div>
       )}
 
       <Card>
         <Table
           columns={columns}
-          dataSource={filteredChildren}
+          dataSource={list.items}
           rowKey="id"
           pagination={{
             pageSize: 50,
@@ -413,7 +270,7 @@ const StudentsPage: React.FC = () => {
                 <Button
                   type="primary"
                   icon={<PlusOutlined />}
-                  onClick={openCreateModal}>
+                  onClick={form.openCreate}>
                   {t("students.page.addFirstStudent")}
                 </Button>
               </Empty>
@@ -424,24 +281,21 @@ const StudentsPage: React.FC = () => {
 
       <Modal
         title={
-          editingChild
+          form.editing
             ? t("students.page.editModalTitle")
             : t("students.page.addModalTitle")
         }
-        open={isFormModalOpen}
-        onCancel={closeModal}
+        open={form.open}
+        onCancel={form.close}
         footer={null}
         destroyOnHidden>
         <ChildForm
-          child={editingChild}
-          onSubmit={editingChild ? handleUpdateChild : handleCreateChild}
-          onCancel={closeModal}
-          loading={formLoading}
-          showScope={isAdmin}
-          onDuplicateRedirect={childId => {
-            const match = children.find(c => c.id === childId);
-            if (match) openEditModal(match);
-          }}
+          child={form.editing}
+          onSubmit={form.editing ? actions.update : actions.create}
+          onCancel={form.close}
+          loading={form.loading}
+          showScope={access.isAdmin}
+          onDuplicateRedirect={actions.duplicateRedirect}
           canNavigateToEdit
         />
       </Modal>

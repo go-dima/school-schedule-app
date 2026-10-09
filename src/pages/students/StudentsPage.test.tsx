@@ -1,30 +1,30 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import "../utils/i18n";
-import i18n from "../utils/i18n";
-import type { Child } from "../types";
+import "../../utils/i18n";
+import i18n from "../../utils/i18n";
+import type { Child } from "../../types";
 import { GetGradeName } from "@/utils/grades";
 import {
   stubMatchMedia,
   visibleOptionElements,
   visibleOptions,
-} from "../testUtils/antdDom";
+} from "../../testUtils/antdDom";
 
-vi.mock("../contexts/AuthContext", () => ({
+vi.mock("../../contexts/AuthContext", () => ({
   useAuth: () => ({
     roleFlags: { isAdmin: false, isParent: false },
     user: { id: "me" },
     permissions: { canManageRoster: true },
   }),
 }));
-vi.mock("../services/api", () => ({ childrenApi: {} }));
-vi.mock("../utils/env", () => ({
+vi.mock("../../services/api", () => ({ childrenApi: {} }));
+vi.mock("../../utils/env", () => ({
   isTestScopeEnabled: () => false,
   getAllowedScopes: () => ["prod"],
   env: {},
 }));
-vi.mock("../utils/analytics", () => ({
+vi.mock("../../utils/analytics", () => ({
   trackEvent: vi.fn(),
   AnalyticsEvent: {},
 }));
@@ -55,7 +55,7 @@ const children = [
   makeChild("c3", "Dana", "Levi", 3),
 ];
 
-vi.mock("../contexts/AllChildrenContext", () => ({
+vi.mock("../../contexts/AllChildrenContext", () => ({
   useAllChildrenContext: () => ({
     children,
     loading: false,
