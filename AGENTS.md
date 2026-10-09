@@ -35,6 +35,15 @@ Changes to logic in services, utils and controller hooks come with vitest tests 
 
 New components and pages get a story built on the shared fixtures, and visual changes are checked in Storybook before the PR. Storybook has no Supabase mocking. Stories render from the fixtures in `src/stories/fixtures/` (`mockAuth`, `scheduleFixtures`, `mobileShell`). Pick fixtures whose path never calls the API.
 
+## PR labels
+
+Every PR gets one `size/*` and one `review/*` label. Set each on its own.
+
+- **Size** is the amount of change: additions + deletions. `size/xs` under 50, `size/s` 50–150, `size/m` 150–400, `size/l` over 400.
+- **Review effort** follows the scope of the change, not the number of files or lines. `review/quick` for mechanical or CSS-only changes, `review/normal` for moved or refactored logic (check behavior parity), `review/deep` for new behavior, decisions or UI.
+
+Many files don't mean a hard review: a rename across 30 files or a large deletion can be `size/l` and `review/quick`.
+
 ## Database
 
 - The agent writes migrations and the human applies them. Add `migrations/NNN_<name>.sql` plus its entry in `migrations/migrations.json`, write them at the **start** of the work, and tell the human the run order. Leave `npm run migrate` to the human.
