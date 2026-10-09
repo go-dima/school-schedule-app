@@ -1,11 +1,11 @@
 import { scheduleApi } from "./api";
-import { ScheduleService } from "./scheduleService";
 import type {
   Child,
   ClassWithTimeSlot,
   ScheduleSelectionWithClass,
   SelectionStatus,
 } from "../types";
+import { classMatchesGrade } from "@/utils/classMatchesGrade";
 
 export interface GroupMandatoryChanges {
   toSelect: ClassWithTimeSlot[];
@@ -60,7 +60,7 @@ export const GroupMandatoryLockService = {
 
     const toSelect = allClasses.filter(
       cls =>
-        ScheduleService.classMatchesGrade(cls, child.grade) &&
+        classMatchesGrade(cls, child.grade) &&
         GroupMandatoryLockService.isLockedMatch(cls, child.groupNumber) &&
         !alreadySelectedIds.has(cls.id)
     );

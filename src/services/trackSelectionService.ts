@@ -1,11 +1,11 @@
 import { classesApi, scheduleApi } from "./api";
-import { ScheduleService } from "./scheduleService";
 import type {
   Child,
   ClassWithTimeSlot,
   ScheduleSelectionWithClass,
   SelectionStatus,
 } from "../types";
+import { classMatchesGrade } from "@/utils/classMatchesGrade";
 
 export interface TrackClassChanges {
   toSelect: ClassWithTimeSlot[];
@@ -42,7 +42,7 @@ export const TrackSelectionService = {
         : allClasses.filter(
             cls =>
               cls.trackNumber === newTrackNumber &&
-              ScheduleService.classMatchesGrade(cls, grade) &&
+              classMatchesGrade(cls, grade) &&
               !alreadySelectedIds.has(cls.id)
           );
 

@@ -45,6 +45,7 @@ import { TextSearch } from "../components/TextSearch";
 import { filterByText } from "@/utils/textSearch";
 import { ALL_SCOPES } from "../constants/scopes";
 import { isTestScopeEnabled } from "../utils/env";
+import { classMatchesGrade } from "@/utils/classMatchesGrade";
 
 const { Title } = Typography;
 
@@ -108,9 +109,7 @@ const ClassManagementPage: React.FC = () => {
     }
 
     if (selectedGrade !== null) {
-      filtered = filtered.filter(cls =>
-        ScheduleService.classMatchesGrade(cls, selectedGrade)
-      );
+      filtered = filtered.filter(cls => classMatchesGrade(cls, selectedGrade));
     }
 
     if (selectedTrack !== null) {

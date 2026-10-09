@@ -9,7 +9,6 @@ import { ChildGroupTrackSelector } from "../components/ChildGroupTrackSelector";
 import type { Child } from "../types";
 import { DAYS_OF_WEEK } from "../types";
 import i18n from "../utils/i18n";
-import { ScheduleService } from "../services/scheduleService";
 import {
   buildUserSelections,
   mockClasses,
@@ -18,6 +17,7 @@ import {
   mockWeeklySchedule,
 } from "./fixtures/scheduleFixtures";
 import "../pages/schedule/SchedulePage.css";
+import { classMatchesGrade } from "@/utils/classMatchesGrade";
 
 const t = i18n.t.bind(i18n);
 
@@ -50,7 +50,7 @@ const pickedIds = DAYS_OF_WEEK.map(
       cls =>
         cls.slots[0]?.dayOfWeek === day.key &&
         !cls.isMandatory &&
-        ScheduleService.classMatchesGrade(cls, linkedStudent.grade)
+        classMatchesGrade(cls, linkedStudent.grade)
     )?.id
 ).filter((id): id is string => Boolean(id));
 

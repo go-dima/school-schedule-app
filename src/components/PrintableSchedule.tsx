@@ -15,6 +15,7 @@ import type {
   ScheduleOverrideWithTimeSlot,
 } from "../types";
 import "./PrintableSchedule.css";
+import { classMatchesGrade } from "@/utils/classMatchesGrade";
 
 export interface PrintableScheduleProps {
   title: string;
@@ -71,9 +72,7 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
     const filteredClasses =
       grade === undefined
         ? dayClasses
-        : dayClasses.filter(cls =>
-            ScheduleService.classMatchesGrade(cls, grade)
-          );
+        : dayClasses.filter(cls => classMatchesGrade(cls, grade));
 
     const displayInfo = getTimeSlotDisplayInfo(timeSlot);
 

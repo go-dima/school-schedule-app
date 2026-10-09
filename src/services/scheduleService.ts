@@ -10,6 +10,7 @@ import type {
   WeeklySchedule,
 } from "../types";
 import { isLessonTimeSlot, isNonLessonTimeSlot } from "../utils/timeSlots";
+import { classMatchesGrade } from "@/utils/classMatchesGrade";
 
 // Placeholder "all option" classes that only staff/admin may select; hidden
 // entirely from the schedule catalog for everyone else.
@@ -406,20 +407,9 @@ export class ScheduleService {
     grade?: number
   ): string[] {
     const inGrade = grade
-      ? classes.filter(cls => ScheduleService.classMatchesGrade(cls, grade))
+      ? classes.filter(cls => classMatchesGrade(cls, grade))
       : classes;
     return Array.from(new Set(inGrade.map(cls => cls.title))).sort();
-  }
-
-  /**
-   * True when the class is taught in the given grade. A class with no grades
-   * list matches no grade.
-   */
-  static classMatchesGrade(
-    cls: Pick<ClassWithTimeSlot, "grades">,
-    grade: number
-  ): boolean {
-    return cls.grades?.includes(grade) ?? false;
   }
 
   /** True for staff-only placeholder classes (e.g. "חונכות", "שילוב"). */
