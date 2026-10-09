@@ -71,9 +71,11 @@ const addRowText = (name: string) =>
 const Picker = ({
   initial,
   onChildSelect,
+  picker,
 }: {
   initial?: string;
   onChildSelect?: (id: string | undefined) => void;
+  picker?: "dropdown" | "sheet";
 }) => {
   const [selected, setSelected] = useState<string | undefined>(initial);
   return (
@@ -85,6 +87,7 @@ const Picker = ({
         onChildSelect?.(id);
       }}
       mode="pick"
+      picker={picker}
     />
   );
 };
@@ -272,6 +275,19 @@ describe("StudentSearchSelector", () => {
       await screen.findByText(i18n.t("students.page.addModalTitle"));
 
       expect(screen.getByText(i18n.t("scope.selector.label"))).toBeTruthy();
+    });
+  });
+
+  describe('picker="sheet"', () => {
+    it("opens a bottom sheet instead of the dropdown", () => {
+      const onSelect = vi.fn();
+      render(<Picker onChildSelect={onSelect} picker="sheet" />);
+      fireEvent.click(screen.getByRole("textbox"));
+
+      expect(document.querySelector(".ant-select")).toBeNull();
+      expect(screen.getAllByRole("option")).toHaveLength(3);
+      fireEvent.click(screen.getByRole("option", { name: /Dana Levi/ }));
+      expect(onSelect).toHaveBeenCalledWith("c3");
     });
   });
 });

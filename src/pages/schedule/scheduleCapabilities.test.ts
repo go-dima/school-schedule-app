@@ -10,6 +10,7 @@ describe("scheduleCapabilities", () => {
       canPrint: true,
       canAddChild: true,
       showReadOnlyNotice: true,
+      studentPicker: "dropdown",
     });
   });
 
@@ -22,5 +23,10 @@ describe("scheduleCapabilities", () => {
       canAddChild: false,
       showReadOnlyNotice: false,
     });
+  });
+
+  it("opens the student picker as a bottom sheet on mobile only", () => {
+    expect(scheduleCapabilities("mobile").studentPicker).toBe("sheet");
+    expect(scheduleCapabilities("desktop").studentPicker).toBe("dropdown");
   });
 });

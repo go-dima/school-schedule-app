@@ -4,7 +4,10 @@ import { PlusOutlined, UserOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { ChildForm } from "./ChildForm";
 import { TextSearch } from "./TextSearch";
-import type { TextSearchExtraOption } from "./TextSearch";
+import type {
+  TextSearchExtraOption,
+  TextSearchPresentation,
+} from "./TextSearch";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import { useAuth } from "../contexts/AuthContext";
 import { GetGradeName } from "@/utils/grades";
@@ -21,10 +24,15 @@ interface StudentSearchSelectorCommonProps {
   defaultGrade?: number;
 }
 
+/** How pick mode opens: the antd dropdown, or a bottom sheet (mobile). */
+export type StudentPicker = TextSearchPresentation;
+
 /** SchedulePage: pick one student; the value is their id. */
 interface StudentSearchSelectorPickProps
   extends StudentSearchSelectorCommonProps {
   mode: "pick";
+  /** From the page's capabilities; defaults to the dropdown. */
+  picker?: StudentPicker;
   selectedChildId?: string | null;
   onChildSelect: (childId: string | undefined) => void;
 }
@@ -161,6 +169,7 @@ export const StudentSearchSelector: React.FC<
         <TextSearch<Child>
           {...common}
           mode="pick"
+          presentation={props.picker}
           getKey={child => child.id}
           value={props.selectedChildId}
           onSelect={child => props.onChildSelect(child?.id)}

@@ -1,4 +1,5 @@
 import type { UiMode } from "../../services/uiMode";
+import type { StudentPicker } from "../../components/StudentSearchSelector";
 
 /** Which controls the Schedule page offers on a platform. One object per
  * platform, the same for every role; role permissions still apply on top
@@ -13,6 +14,9 @@ export interface ScheduleCapabilities {
   canAddChild: boolean;
   /** The "committed view is read only" notice. */
   showReadOnlyNotice: boolean;
+  /** How the staff student picker opens: an antd dropdown or a bottom
+   * sheet. */
+  studentPicker: StudentPicker;
 }
 
 const DESKTOP: ScheduleCapabilities = {
@@ -22,11 +26,13 @@ const DESKTOP: ScheduleCapabilities = {
   canPrint: true,
   canAddChild: true,
   showReadOnlyNotice: true,
+  studentPicker: "dropdown",
 };
 
 // Mobile is a read-only view for now. Staff and admins get the desktop page
 // in the mobile shell, so the view tabs stay: they open on My Schedule and the
-// student picker is one tap away. Only class managers see the tabs.
+// student picker is one tap away. Only class managers see the tabs. Their
+// student picker opens as a bottom sheet.
 const MOBILE: ScheduleCapabilities = {
   canChooseDraft: false,
   canPickView: true,
@@ -34,6 +40,7 @@ const MOBILE: ScheduleCapabilities = {
   canPrint: false,
   canAddChild: false,
   showReadOnlyNotice: false,
+  studentPicker: "sheet",
 };
 
 export function scheduleCapabilities(platform: UiMode): ScheduleCapabilities {
