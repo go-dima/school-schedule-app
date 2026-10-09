@@ -29,12 +29,13 @@ const DESKTOP: ScheduleCapabilities = {
   studentPicker: "dropdown",
 };
 
-// Mobile is a read-only view for now, so it needs none of these. This also
-// applies to staff and admins, who get the desktop page in the mobile shell;
-// their student picker opens as a bottom sheet.
+// Mobile is a read-only view for now. Staff and admins get the desktop page
+// in the mobile shell, so the view tabs stay: they open on My Schedule and the
+// student picker is one tap away. Only class managers see the tabs. Their
+// student picker opens as a bottom sheet.
 const MOBILE: ScheduleCapabilities = {
   canChooseDraft: false,
-  canPickView: false,
+  canPickView: true,
   canRefresh: false,
   canPrint: false,
   canAddChild: false,
