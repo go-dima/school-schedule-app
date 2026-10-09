@@ -27,6 +27,7 @@ import { EnrollmentService } from "../services/enrollmentService";
 import { OverrideSuffixButton } from "@/elements/OverrideSuffixButton";
 import { trackEvent, AnalyticsEvent } from "../utils/analytics";
 import { matchesText } from "@/utils/textSearch";
+import { classMatchesGrade } from "@/utils/grades";
 
 interface ScheduleTableProps {
   timeSlots: TimeSlot[];
@@ -170,7 +171,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     const dayClasses = weeklySchedule[dayOfWeek]?.[timeSlot.id] || [];
 
     let filteredClasses = userGrade
-      ? dayClasses.filter(cls => cls.grades?.includes(userGrade))
+      ? dayClasses.filter(cls => classMatchesGrade(cls, userGrade))
       : dayClasses;
     filteredClasses = filterByGroup(filteredClasses);
 
@@ -246,7 +247,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     }
 
     let filteredClasses = userGrade
-      ? dayClasses.filter(cls => cls.grades?.includes(userGrade))
+      ? dayClasses.filter(cls => classMatchesGrade(cls, userGrade))
       : dayClasses;
     filteredClasses = filterByGroup(filteredClasses);
 
@@ -561,7 +562,7 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           const classesForSlot = filterByGroup(
             (
               weeklySchedule[selectedDayOfWeek]?.[selectedTimeSlot.id] || []
-            ).filter(cls => !userGrade || cls.grades?.includes(userGrade))
+            ).filter(cls => !userGrade || classMatchesGrade(cls, userGrade))
           );
           const overridesForSlot = ScheduleService.getOverridesForCell(
             overrides,

@@ -7,6 +7,7 @@ import type {
   TimeSlot,
   WeeklySchedule,
 } from "../../types";
+import { classMatchesGrade } from "@/utils/grades";
 
 /** What one time slot of the mobile day view shows. */
 export type AgendaEntry =
@@ -82,7 +83,7 @@ export function buildDayAgenda(input: DayAgendaInput): AgendaEntry[] {
     }
 
     const inCell = (weeklySchedule[day]?.[timeSlot.id] || [])
-      .filter(cls => !userGrade || cls.grades?.includes(userGrade))
+      .filter(cls => !userGrade || classMatchesGrade(cls, userGrade))
       .filter(
         cls =>
           childGroupNumber === undefined ||
