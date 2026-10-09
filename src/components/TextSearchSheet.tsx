@@ -3,43 +3,23 @@ import { Button, Input } from "antd";
 import { CloseCircleFilled } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { BottomSheet } from "./BottomSheet";
-import { buildOptions, TEXT_SEARCH_EXTRA_VALUE } from "./textSearchOptions";
 import type { TextOption } from "./textSearchOptions";
 import type { TextSearchPickProps } from "./TextSearch";
+import { usePickSearch } from "./usePickSearch";
 import "./TextSearchSheet.css";
 
 /**
- * Mobile counterpart of TextSearch mode="pick": a read-only field that opens
- * a bottom sheet with a search box and the matching rows. Same props, same
- * rows (`buildOptions`: matching rule, dedupe by key, extra row) and the same
- * `onSelect` contract (the picked item, or undefined when cleared). Picking a
- * row closes the sheet.
+ * The bottom-sheet view of a pick-mode search (mobile): a read-only field
+ * that opens a sheet with a search box and the matching rows. The matching,
+ * rows and picking come from `usePickSearch`, the same as the dropdown view.
+ * Picking a row closes the sheet.
  */
 export function TextSearchSheet<T>(props: TextSearchPickProps<T>) {
-  const {
-    items,
-    getText,
-    getKey,
-    extraOption,
-    value,
-    onSelect,
-    placeholder,
-    style,
-    disabled,
-    loading,
-  } = props;
+  const { value, placeholder, style, disabled, loading } = props;
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-
-  const selected = value ? items.find(item => getKey(item) === value) : null;
-  const options = buildOptions(
-    props,
-    query,
-    getKey,
-    getKey,
-    TEXT_SEARCH_EXTRA_VALUE
-  );
+  const { query, setQuery, options, selectedText, hasSelection, choose } =
+    usePickSearch(props);
 
   const close = () => {
     setOpen(false);
@@ -47,26 +27,21 @@ export function TextSearchSheet<T>(props: TextSearchPickProps<T>) {
   };
 
   const pick = (option: TextOption) => {
-    const trimmed = query.trim();
     close();
-    if (option.isExtra) {
-      extraOption?.onSelect(trimmed);
-      return;
-    }
-    onSelect(items.find(item => getKey(item) === option.value));
+    choose(option.value);
   };
 
   // rc-input never shows `allowClear` on a read-only field, so the field
   // gets its own clear button instead (its only clear control).
   const clearButton =
-    selected && !disabled ? (
+    hasSelection && !disabled ? (
       <Button
         type="text"
         size="small"
         className="text-search-sheet-clear"
         icon={<CloseCircleFilled />}
         aria-label={t("common.clear")}
-        onClick={() => onSelect(undefined)}
+        onClick={() => choose(undefined)}
       />
     ) : (
       // Keeps the affix wrapper mounted, so the field's DOM doesn't change.
@@ -78,7 +53,7 @@ export function TextSearchSheet<T>(props: TextSearchPickProps<T>) {
       <Input
         className="text-search-sheet-trigger"
         readOnly
-        value={selected ? getText(selected) : ""}
+        value={selectedText}
         placeholder={placeholder}
         style={style}
         disabled={disabled}

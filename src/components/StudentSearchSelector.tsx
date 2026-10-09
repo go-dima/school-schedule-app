@@ -4,8 +4,10 @@ import { PlusOutlined, UserOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { ChildForm } from "./ChildForm";
 import { TextSearch } from "./TextSearch";
-import { TextSearchSheet } from "./TextSearchSheet";
-import type { TextSearchExtraOption } from "./TextSearch";
+import type {
+  TextSearchExtraOption,
+  TextSearchPresentation,
+} from "./TextSearch";
 import { useAllChildrenContext } from "../contexts/AllChildrenContext";
 import { useAuth } from "../contexts/AuthContext";
 import { GetGradeName } from "@/utils/grades";
@@ -23,7 +25,7 @@ interface StudentSearchSelectorCommonProps {
 }
 
 /** How pick mode opens: the antd dropdown, or a bottom sheet (mobile). */
-export type StudentPicker = "dropdown" | "sheet";
+export type StudentPicker = TextSearchPresentation;
 
 /** SchedulePage: pick one student; the value is their id. */
 interface StudentSearchSelectorPickProps
@@ -163,18 +165,11 @@ export const StudentSearchSelector: React.FC<
 
   return (
     <>
-      {props.mode === "pick" && props.picker === "sheet" ? (
-        <TextSearchSheet<Child>
-          {...common}
-          mode="pick"
-          getKey={child => child.id}
-          value={props.selectedChildId}
-          onSelect={child => props.onChildSelect(child?.id)}
-        />
-      ) : props.mode === "pick" ? (
+      {props.mode === "pick" ? (
         <TextSearch<Child>
           {...common}
           mode="pick"
+          presentation={props.picker}
           getKey={child => child.id}
           value={props.selectedChildId}
           onSelect={child => props.onChildSelect(child?.id)}

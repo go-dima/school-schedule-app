@@ -1,13 +1,18 @@
-import React, { useState } from "react";
+import React from "react";
 import { AutoComplete, Select } from "antd";
-import { buildOptions, TEXT_SEARCH_EXTRA_VALUE } from "./textSearchOptions";
+import { buildOptions } from "./textSearchOptions";
 import type { TextOption } from "./textSearchOptions";
+import { usePickSearch } from "./usePickSearch";
+import { TextSearchSheet } from "./TextSearchSheet";
 
 /** An extra dropdown row (e.g. "add student") for a query nothing matches. */
 export interface TextSearchExtraOption {
   label: (query: string) => React.ReactNode;
   onSelect: (query: string) => void;
 }
+
+/** How a pick-mode search opens: an antd dropdown, or a bottom sheet (mobile). */
+export type TextSearchPresentation = "dropdown" | "sheet";
 
 export interface TextSearchCommonProps<T> {
   items: T[];
@@ -27,6 +32,8 @@ export interface TextSearchCommonProps<T> {
 /** Pick one item: the value is its key. */
 export interface TextSearchPickProps<T> extends TextSearchCommonProps<T> {
   mode: "pick";
+  /** Defaults to the dropdown. */
+  presentation?: TextSearchPresentation;
   value: string | null | undefined;
   getKey: (item: T) => string;
   /** The picked item, or undefined when cleared. */
@@ -37,6 +44,7 @@ export interface TextSearchPickProps<T> extends TextSearchCommonProps<T> {
 /** Free text: the value is what was typed; a picked suggestion fills in its text. */
 export interface TextSearchFilterProps<T> extends TextSearchCommonProps<T> {
   mode: "filter";
+  presentation?: never;
   value: string;
   onChange: (text: string) => void;
   getKey?: never;
@@ -50,56 +58,27 @@ export type TextSearchProps<T> =
 /**
  * The one search box over a closed list (people's names, class titles).
  * Matching always goes through `matchesText` (trimmed, case-insensitive
- * substring), and every mode shows the matches as a dropdown.
+ * substring).
  *
- * - `mode="pick"` (antd Select): keeps the selection while typing, puts the
- *   selected text back on blur, Enter picks the highlighted row, clear
- *   reports undefined.
+ * - `mode="pick"`: the picked item is the value. `presentation` picks the
+ *   view: the antd Select dropdown (default), or a bottom sheet on mobile.
+ *   Both views run on `usePickSearch`, so they match and pick the same way.
  * - `mode="filter"` (antd AutoComplete): the value is the typed text; picking
  *   a suggestion fills in its text. Enter keeps the typed text.
  */
 export function TextSearch<T>(props: TextSearchProps<T>) {
-  return props.mode === "pick" ? (
-    <PickTextSearch {...props} />
+  if (props.mode === "filter") return <FilterTextSearch {...props} />;
+  return props.presentation === "sheet" ? (
+    <TextSearchSheet {...props} />
   ) : (
-    <FilterTextSearch {...props} />
+    <PickTextSearch {...props} />
   );
 }
 
 function PickTextSearch<T>(props: TextSearchPickProps<T>) {
-  const {
-    items,
-    getKey,
-    extraOption,
-    value,
-    onSelect,
-    placeholder,
-    style,
-    disabled,
-    loading,
-    autoFocus,
-    onBlur,
-  } = props;
-  const [query, setQuery] = useState("");
-
-  const options = buildOptions(
-    props,
-    query,
-    getKey,
-    getKey,
-    TEXT_SEARCH_EXTRA_VALUE
-  );
-
-  const handleChange = (key: string | undefined) => {
-    setQuery("");
-    if (key === TEXT_SEARCH_EXTRA_VALUE) {
-      extraOption?.onSelect(query.trim());
-      return;
-    }
-    onSelect(
-      key === undefined ? undefined : items.find(item => getKey(item) === key)
-    );
-  };
+  const { value, placeholder, style, disabled, loading, autoFocus, onBlur } =
+    props;
+  const { query, setQuery, options, choose } = usePickSearch(props);
 
   return (
     <Select<string, TextOption>
@@ -113,7 +92,10 @@ function PickTextSearch<T>(props: TextSearchPickProps<T>) {
       onOpenChange={open => {
         if (!open) setQuery("");
       }}
-      onChange={handleChange}
+      onChange={(key: string | undefined) => {
+        setQuery("");
+        choose(key);
+      }}
       filterOption={false}
       options={options}
       optionRender={option => option.data.content}
