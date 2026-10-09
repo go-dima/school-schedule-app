@@ -22,6 +22,7 @@ describe("scheduleCapabilities", () => {
       canPrint: false,
       canAddChild: false,
       showReadOnlyNotice: false,
+      studentPicker: "sheet",
     });
   });
 
