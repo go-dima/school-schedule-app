@@ -167,29 +167,44 @@ export function useStudentsController() {
   };
 
   return {
-    canManageRoster: permissions.canManageRoster,
-    isAdmin,
-    canClaim,
-    loading,
-    error,
-    filteredChildren,
-    searchTerm,
-    setSearchTerm,
-    selectedGrade,
-    setSelectedGrade,
-    selectedScopes,
-    setSelectedScopes,
-    isFormModalOpen,
-    editingChild,
-    formLoading,
-    openCreateModal,
-    openEditModal,
-    closeModal,
-    handleCreateChild,
-    handleUpdateChild,
-    handleDeleteChild,
-    handleClaimChild,
-    handleChildAdded,
-    handleDuplicateRedirect,
+    // Who is looking, and what they may do.
+    access: {
+      canManageRoster: permissions.canManageRoster,
+      isAdmin,
+      canClaim,
+    },
+    // The loaded list, as shown.
+    list: {
+      loading,
+      error,
+      items: filteredChildren,
+    },
+    // Search and filters over the list.
+    filters: {
+      search: searchTerm,
+      setSearch: setSearchTerm,
+      grade: selectedGrade,
+      setGrade: setSelectedGrade,
+      scopes: selectedScopes,
+      setScopes: setSelectedScopes,
+    },
+    // The add/edit modal.
+    form: {
+      open: isFormModalOpen,
+      editing: editingChild,
+      loading: formLoading,
+      openCreate: openCreateModal,
+      openEdit: openEditModal,
+      close: closeModal,
+    },
+    // Writes. Each one talks to the service layer and reports the outcome.
+    actions: {
+      create: handleCreateChild,
+      update: handleUpdateChild,
+      remove: handleDeleteChild,
+      claim: handleClaimChild,
+      childAdded: handleChildAdded,
+      duplicateRedirect: handleDuplicateRedirect,
+    },
   };
 }

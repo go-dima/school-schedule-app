@@ -117,28 +117,28 @@ describe("useStudentsController", () => {
 
   it("starts with every scope on and applies filters", () => {
     const { result } = renderHook(() => useStudentsController());
-    expect(result.current.filteredChildren).toHaveLength(4);
-    act(() => result.current.setSelectedGrade(3));
-    act(() => result.current.setSelectedScopes(["prod"]));
-    expect(ids(result.current.filteredChildren)).toEqual(["a"]);
+    expect(result.current.list.items).toHaveLength(4);
+    act(() => result.current.filters.setGrade(3));
+    act(() => result.current.filters.setScopes(["prod"]));
+    expect(ids(result.current.list.items)).toEqual(["a"]);
   });
 
   it("opens and closes the form modal", () => {
     const { result } = renderHook(() => useStudentsController());
-    act(() => result.current.openEditModal(students[0]));
-    expect(result.current.isFormModalOpen).toBe(true);
-    expect(result.current.editingChild?.id).toBe("a");
-    act(() => result.current.closeModal());
-    expect(result.current.isFormModalOpen).toBe(false);
-    expect(result.current.editingChild).toBeUndefined();
+    act(() => result.current.form.openEdit(students[0]));
+    expect(result.current.form.open).toBe(true);
+    expect(result.current.form.editing?.id).toBe("a");
+    act(() => result.current.form.close());
+    expect(result.current.form.open).toBe(false);
+    expect(result.current.form.editing).toBeUndefined();
   });
 
   it("creates a student as prod by default and tracks it", async () => {
     ctx.createChild.mockResolvedValue({});
     const { result } = renderHook(() => useStudentsController());
-    act(() => result.current.openCreateModal());
+    act(() => result.current.form.openCreate());
     await act(() =>
-      result.current.handleCreateChild({
+      result.current.actions.create({
         firstName: "Dana",
         lastName: "Levi",
         grade: 2,
@@ -155,20 +155,20 @@ describe("useStudentsController", () => {
     expect(trackEvent).toHaveBeenCalledWith("student_saved", {
       mode: "create",
     });
-    expect(result.current.isFormModalOpen).toBe(false);
+    expect(result.current.form.open).toBe(false);
   });
 
   it("redirects a duplicate to editing the existing student", () => {
     const { result } = renderHook(() => useStudentsController());
-    act(() => result.current.handleDuplicateRedirect("b"));
-    expect(result.current.editingChild?.id).toBe("b");
-    expect(result.current.isFormModalOpen).toBe(true);
+    act(() => result.current.actions.duplicateRedirect("b"));
+    expect(result.current.form.editing?.id).toBe("b");
+    expect(result.current.form.open).toBe(true);
   });
 
   it("claims a student and refetches", async () => {
     claimChild.mockResolvedValue(undefined);
     const { result } = renderHook(() => useStudentsController());
-    await act(() => result.current.handleClaimChild("a"));
+    await act(() => result.current.actions.claim("a"));
     expect(claimChild).toHaveBeenCalledWith("a");
     expect(ctx.refetch).toHaveBeenCalled();
   });
@@ -176,28 +176,28 @@ describe("useStudentsController", () => {
   it("updates the student being edited and tracks it", async () => {
     ctx.updateChild.mockResolvedValue({});
     const { result } = renderHook(() => useStudentsController());
-    act(() => result.current.openEditModal(students[0]));
+    act(() => result.current.form.openEdit(students[0]));
     const data = {
       firstName: "Dana",
       lastName: "Levi",
       grade: 5,
       groupNumber: 2,
     };
-    await act(() => result.current.handleUpdateChild(data));
+    await act(() => result.current.actions.update(data));
     expect(ctx.updateChild).toHaveBeenCalledWith("a", data);
     expect(trackEvent).toHaveBeenCalledWith("student_saved", {
       mode: "update",
     });
     expect(message.success).toHaveBeenCalled();
-    expect(result.current.isFormModalOpen).toBe(false);
-    expect(result.current.editingChild).toBeUndefined();
-    expect(result.current.formLoading).toBe(false);
+    expect(result.current.form.open).toBe(false);
+    expect(result.current.form.editing).toBeUndefined();
+    expect(result.current.form.loading).toBe(false);
   });
 
   it("does nothing on update when no student is being edited", async () => {
     const { result } = renderHook(() => useStudentsController());
     await act(() =>
-      result.current.handleUpdateChild({
+      result.current.actions.update({
         firstName: "Dana",
         lastName: "Levi",
         grade: 5,
@@ -211,9 +211,9 @@ describe("useStudentsController", () => {
   it("keeps the modal open and shows the error when an update fails", async () => {
     ctx.updateChild.mockRejectedValue(new Error("update failed"));
     const { result } = renderHook(() => useStudentsController());
-    act(() => result.current.openEditModal(students[1]));
+    act(() => result.current.form.openEdit(students[1]));
     await act(() =>
-      result.current.handleUpdateChild({
+      result.current.actions.update({
         firstName: "Dani",
         lastName: "Katz",
         grade: 4,
@@ -222,15 +222,15 @@ describe("useStudentsController", () => {
     );
     expect(message.error).toHaveBeenCalledWith("update failed");
     expect(trackEvent).not.toHaveBeenCalled();
-    expect(result.current.isFormModalOpen).toBe(true);
-    expect(result.current.editingChild?.id).toBe("b");
-    expect(result.current.formLoading).toBe(false);
+    expect(result.current.form.open).toBe(true);
+    expect(result.current.form.editing?.id).toBe("b");
+    expect(result.current.form.loading).toBe(false);
   });
 
   it("deletes a student", async () => {
     ctx.removeChild.mockResolvedValue(undefined);
     const { result } = renderHook(() => useStudentsController());
-    await act(() => result.current.handleDeleteChild("c"));
+    await act(() => result.current.actions.remove("c"));
     expect(ctx.removeChild).toHaveBeenCalledWith("c");
     expect(message.success).toHaveBeenCalled();
     expect(message.error).not.toHaveBeenCalled();
@@ -239,7 +239,7 @@ describe("useStudentsController", () => {
   it("shows the error when a delete fails", async () => {
     ctx.removeChild.mockRejectedValue(new Error("delete failed"));
     const { result } = renderHook(() => useStudentsController());
-    await act(() => result.current.handleDeleteChild("c"));
+    await act(() => result.current.actions.remove("c"));
     expect(message.error).toHaveBeenCalledWith("delete failed");
     expect(message.success).not.toHaveBeenCalled();
   });
@@ -253,19 +253,19 @@ describe("useStudentsController", () => {
     it("lets a parent claim a student with no parent", () => {
       auth.isParent = true;
       const { result } = renderHook(() => useStudentsController());
-      expect(result.current.canClaim(unassigned)).toBe(true);
+      expect(result.current.access.canClaim(unassigned)).toBe(true);
     });
 
     it("does not let a parent claim a student who has a parent", () => {
       auth.isParent = true;
       const { result } = renderHook(() => useStudentsController());
-      expect(result.current.canClaim(students[0])).toBe(false);
+      expect(result.current.access.canClaim(students[0])).toBe(false);
     });
 
     it("does not let a non-parent claim, assigned or not", () => {
       const { result } = renderHook(() => useStudentsController());
-      expect(result.current.canClaim(unassigned)).toBe(false);
-      expect(result.current.canClaim(students[0])).toBe(false);
+      expect(result.current.access.canClaim(unassigned)).toBe(false);
+      expect(result.current.access.canClaim(students[0])).toBe(false);
     });
   });
 });

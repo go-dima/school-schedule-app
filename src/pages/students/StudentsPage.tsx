@@ -56,32 +56,7 @@ const ParentIcon: React.FC<{ assignedParent: boolean }> = ({
 
 const StudentsPage: React.FC = () => {
   const { t } = useTranslation();
-  const {
-    canManageRoster,
-    isAdmin,
-    canClaim,
-    loading,
-    error,
-    filteredChildren,
-    searchTerm,
-    setSearchTerm,
-    selectedGrade,
-    setSelectedGrade,
-    selectedScopes,
-    setSelectedScopes,
-    isFormModalOpen,
-    editingChild,
-    formLoading,
-    openCreateModal,
-    openEditModal,
-    closeModal,
-    handleCreateChild,
-    handleUpdateChild,
-    handleDeleteChild,
-    handleClaimChild,
-    handleChildAdded,
-    handleDuplicateRedirect,
-  } = useStudentsController();
+  const { access, list, filters, form, actions } = useStudentsController();
 
   const columns: ColumnsType<ChildWithParent> = [
     {
@@ -149,15 +124,15 @@ const StudentsPage: React.FC = () => {
             key: "edit",
             label: t("students.page.editButton"),
             icon: <EditOutlined />,
-            onClick: () => openEditModal(record),
+            onClick: () => form.openEdit(record),
           },
-          ...(canClaim(record)
+          ...(access.canClaim(record)
             ? [
                 {
                   key: "claim",
                   label: t("students.page.claimAction"),
                   icon: <UserOutlined />,
-                  onClick: () => handleClaimChild(record.id),
+                  onClick: () => actions.claim(record.id),
                 },
               ]
             : []),
@@ -175,7 +150,7 @@ const StudentsPage: React.FC = () => {
                 content: t("students.page.deleteConfirmDescription"),
                 okText: t("students.page.confirmDelete"),
                 cancelText: t("common.buttons.cancel"),
-                onOk: () => handleDeleteChild(record.id),
+                onOk: () => actions.remove(record.id),
               });
             },
           },
@@ -199,7 +174,7 @@ const StudentsPage: React.FC = () => {
   ];
 
   // Check permissions
-  if (!canManageRoster) {
+  if (!access.canManageRoster) {
     return (
       <div className="page-content">
         <Card>
@@ -212,7 +187,7 @@ const StudentsPage: React.FC = () => {
     );
   }
 
-  if (loading) {
+  if (list.loading) {
     return (
       <div style={{ textAlign: "center", padding: "50px" }}>
         <Spin size="large" />
@@ -227,33 +202,33 @@ const StudentsPage: React.FC = () => {
       <FiltersBar
         actions={
           <>
-            {isAdmin && (
+            {access.isAdmin && (
               <ScopeFilter
-                value={selectedScopes}
-                onChange={setSelectedScopes}
+                value={filters.scopes}
+                onChange={filters.setScopes}
               />
             )}
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              onClick={openCreateModal}>
+              onClick={form.openCreate}>
               {t("students.page.addButton")}
             </Button>
           </>
         }>
         <StudentSearchSelector
-          children={filteredChildren}
-          onChildAdded={handleChildAdded}
-          onSearchChange={setSearchTerm}
+          children={list.items}
+          onChildAdded={actions.childAdded}
+          onSearchChange={filters.setSearch}
           placeholder={t("students.search.placeholder")}
           style={{ minWidth: 250 }}
           mode="filter"
-          value={searchTerm}
-          defaultGrade={selectedGrade || 1}
+          value={filters.search}
+          defaultGrade={filters.grade || 1}
         />
         <Select
-          value={selectedGrade}
-          onChange={setSelectedGrade}
+          value={filters.grade}
+          onChange={filters.setGrade}
           placeholder={t("students.filter.allGrades")}
           allowClear
           style={{ minWidth: 120 }}>
@@ -265,16 +240,16 @@ const StudentsPage: React.FC = () => {
         </Select>
       </FiltersBar>
 
-      {error && (
+      {list.error && (
         <div style={{ marginBottom: 16 }}>
-          <Text type="danger">{error}</Text>
+          <Text type="danger">{list.error}</Text>
         </div>
       )}
 
       <Card>
         <Table
           columns={columns}
-          dataSource={filteredChildren}
+          dataSource={list.items}
           rowKey="id"
           pagination={{
             pageSize: 50,
@@ -295,7 +270,7 @@ const StudentsPage: React.FC = () => {
                 <Button
                   type="primary"
                   icon={<PlusOutlined />}
-                  onClick={openCreateModal}>
+                  onClick={form.openCreate}>
                   {t("students.page.addFirstStudent")}
                 </Button>
               </Empty>
@@ -306,21 +281,21 @@ const StudentsPage: React.FC = () => {
 
       <Modal
         title={
-          editingChild
+          form.editing
             ? t("students.page.editModalTitle")
             : t("students.page.addModalTitle")
         }
-        open={isFormModalOpen}
-        onCancel={closeModal}
+        open={form.open}
+        onCancel={form.close}
         footer={null}
         destroyOnHidden>
         <ChildForm
-          child={editingChild}
-          onSubmit={editingChild ? handleUpdateChild : handleCreateChild}
-          onCancel={closeModal}
-          loading={formLoading}
-          showScope={isAdmin}
-          onDuplicateRedirect={handleDuplicateRedirect}
+          child={form.editing}
+          onSubmit={form.editing ? actions.update : actions.create}
+          onCancel={form.close}
+          loading={form.loading}
+          showScope={access.isAdmin}
+          onDuplicateRedirect={actions.duplicateRedirect}
           canNavigateToEdit
         />
       </Modal>
