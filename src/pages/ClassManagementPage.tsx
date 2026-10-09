@@ -108,7 +108,9 @@ const ClassManagementPage: React.FC = () => {
     }
 
     if (selectedGrade !== null) {
-      filtered = filtered.filter(cls => cls.grades?.includes(selectedGrade));
+      filtered = filtered.filter(cls =>
+        ScheduleService.classMatchesGrade(cls, selectedGrade)
+      );
     }
 
     if (selectedTrack !== null) {

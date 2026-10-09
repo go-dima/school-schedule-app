@@ -1,4 +1,5 @@
 import { classesApi, scheduleApi } from "./api";
+import { ScheduleService } from "./scheduleService";
 import type {
   Child,
   ClassWithTimeSlot,
@@ -41,7 +42,7 @@ export const TrackSelectionService = {
         : allClasses.filter(
             cls =>
               cls.trackNumber === newTrackNumber &&
-              cls.grades.includes(grade) &&
+              ScheduleService.classMatchesGrade(cls, grade) &&
               !alreadySelectedIds.has(cls.id)
           );
 

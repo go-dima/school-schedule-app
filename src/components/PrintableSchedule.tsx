@@ -71,7 +71,9 @@ const PrintableSchedule: React.FC<PrintableScheduleProps> = ({
     const filteredClasses =
       grade === undefined
         ? dayClasses
-        : dayClasses.filter(cls => cls.grades?.includes(grade));
+        : dayClasses.filter(cls =>
+            ScheduleService.classMatchesGrade(cls, grade)
+          );
 
     const displayInfo = getTimeSlotDisplayInfo(timeSlot);
 

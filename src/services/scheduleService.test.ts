@@ -952,3 +952,20 @@ describe("ScheduleService.actsAsStaffInStudentView", () => {
     }
   );
 });
+
+describe("ScheduleService.classMatchesGrade", () => {
+  it("is true when the class is taught in the grade", () => {
+    expect(ScheduleService.classMatchesGrade({ grades: [3, 4] }, 4)).toBe(true);
+  });
+
+  it("is false when the grade is not in the list", () => {
+    expect(ScheduleService.classMatchesGrade({ grades: [3, 4] }, 5)).toBe(
+      false
+    );
+  });
+
+  it("is false when the class has no grades list", () => {
+    const cls = {} as Pick<ClassWithTimeSlot, "grades">;
+    expect(ScheduleService.classMatchesGrade(cls, 4)).toBe(false);
+  });
+});

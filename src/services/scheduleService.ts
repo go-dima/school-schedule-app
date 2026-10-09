@@ -406,9 +406,20 @@ export class ScheduleService {
     grade?: number
   ): string[] {
     const inGrade = grade
-      ? classes.filter(cls => cls.grades?.includes(grade))
+      ? classes.filter(cls => ScheduleService.classMatchesGrade(cls, grade))
       : classes;
     return Array.from(new Set(inGrade.map(cls => cls.title))).sort();
+  }
+
+  /**
+   * True when the class is taught in the given grade. A class with no grades
+   * list matches no grade.
+   */
+  static classMatchesGrade(
+    cls: Pick<ClassWithTimeSlot, "grades">,
+    grade: number
+  ): boolean {
+    return cls.grades?.includes(grade) ?? false;
   }
 
   /** True for staff-only placeholder classes (e.g. "חונכות", "שילוב"). */

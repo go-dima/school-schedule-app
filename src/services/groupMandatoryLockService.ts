@@ -1,4 +1,5 @@
 import { scheduleApi } from "./api";
+import { ScheduleService } from "./scheduleService";
 import type {
   Child,
   ClassWithTimeSlot,
@@ -59,7 +60,7 @@ export const GroupMandatoryLockService = {
 
     const toSelect = allClasses.filter(
       cls =>
-        cls.grades.includes(child.grade) &&
+        ScheduleService.classMatchesGrade(cls, child.grade) &&
         GroupMandatoryLockService.isLockedMatch(cls, child.groupNumber) &&
         !alreadySelectedIds.has(cls.id)
     );

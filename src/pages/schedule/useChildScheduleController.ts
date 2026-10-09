@@ -286,7 +286,7 @@ export function useChildScheduleController() {
       ? classes
           .filter(
             cls =>
-              cls.grades.includes(currentTrackChild.grade) &&
+              ScheduleService.classMatchesGrade(cls, currentTrackChild.grade) &&
               GroupMandatoryLockService.isLockedMatch(
                 cls,
                 currentTrackChild.groupNumber

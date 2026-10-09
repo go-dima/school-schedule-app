@@ -66,7 +66,7 @@ vi.mock("./pages/schedule/SchedulePage", () => ({
   default: () => <div>schedule page</div>,
 }));
 vi.mock("./pages/ClassManagementPage", () => ({ default: () => null }));
-vi.mock("./pages/students/StudentsPage", () => ({ default: () => null }));
+vi.mock("./pages/StudentsPage", () => ({ default: () => null }));
 vi.mock("./pages/UserListPage", () => ({ default: () => null }));
 vi.mock("./pages/PendingApprovalsPage", () => ({ default: () => null }));
 vi.mock("./pages/ProfileSettingsPage", () => ({ default: () => null }));

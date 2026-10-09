@@ -9,6 +9,7 @@ import { ChildGroupTrackSelector } from "../components/ChildGroupTrackSelector";
 import type { Child } from "../types";
 import { DAYS_OF_WEEK } from "../types";
 import i18n from "../utils/i18n";
+import { ScheduleService } from "../services/scheduleService";
 import {
   buildUserSelections,
   mockClasses,
@@ -49,7 +50,7 @@ const pickedIds = DAYS_OF_WEEK.map(
       cls =>
         cls.slots[0]?.dayOfWeek === day.key &&
         !cls.isMandatory &&
-        cls.grades.includes(linkedStudent.grade)
+        ScheduleService.classMatchesGrade(cls, linkedStudent.grade)
     )?.id
 ).filter((id): id is string => Boolean(id));
 

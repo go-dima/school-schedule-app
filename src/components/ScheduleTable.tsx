@@ -170,7 +170,9 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     const dayClasses = weeklySchedule[dayOfWeek]?.[timeSlot.id] || [];
 
     let filteredClasses = userGrade
-      ? dayClasses.filter(cls => cls.grades?.includes(userGrade))
+      ? dayClasses.filter(cls =>
+          ScheduleService.classMatchesGrade(cls, userGrade)
+        )
       : dayClasses;
     filteredClasses = filterByGroup(filteredClasses);
 
@@ -246,7 +248,9 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
     }
 
     let filteredClasses = userGrade
-      ? dayClasses.filter(cls => cls.grades?.includes(userGrade))
+      ? dayClasses.filter(cls =>
+          ScheduleService.classMatchesGrade(cls, userGrade)
+        )
       : dayClasses;
     filteredClasses = filterByGroup(filteredClasses);
 
@@ -561,7 +565,10 @@ const ScheduleTable: React.FC<ScheduleTableProps> = ({
           const classesForSlot = filterByGroup(
             (
               weeklySchedule[selectedDayOfWeek]?.[selectedTimeSlot.id] || []
-            ).filter(cls => !userGrade || cls.grades?.includes(userGrade))
+            ).filter(
+              cls =>
+                !userGrade || ScheduleService.classMatchesGrade(cls, userGrade)
+            )
           );
           const overridesForSlot = ScheduleService.getOverridesForCell(
             overrides,

@@ -82,7 +82,9 @@ export function buildDayAgenda(input: DayAgendaInput): AgendaEntry[] {
     }
 
     const inCell = (weeklySchedule[day]?.[timeSlot.id] || [])
-      .filter(cls => !userGrade || cls.grades?.includes(userGrade))
+      .filter(
+        cls => !userGrade || ScheduleService.classMatchesGrade(cls, userGrade)
+      )
       .filter(
         cls =>
           childGroupNumber === undefined ||
