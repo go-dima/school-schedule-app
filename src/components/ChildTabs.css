@@ -1,0 +1,6 @@
+/* ChildTabs: the label inside each child's tab. */
+
+/* The grade and group text in a child's tab, smaller than the name. */
+.child-tab-grade {
+  font-size: 12px;
+}
