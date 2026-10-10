@@ -16,6 +16,8 @@
     "test": "vitest",
     "migrate": "tsx -r dotenv/config scripts/migrate.ts dotenv_config_path=.env.local",
     "migrate:status": "tsx -r dotenv/config scripts/migrate.ts --status dotenv_config_path=.env.local",
+    "docs:app-flow": "tsx scripts/gen-app-flow.ts",
+    "docs:app-flow:check": "tsx scripts/gen-app-flow.ts --check",
     "prepare": "husky"
   },
   "dependencies": {
