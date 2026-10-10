@@ -69,7 +69,7 @@ A page with both a desktop and a mobile view (UI Mode, see ADR 0001) gets its ow
 - the page's capabilities (`<page>Capabilities.ts`, with its tests): one object per platform saying which controls that view offers (ADR 0005);
 - components used only by that page.
 
-Shared components stay in `src/components/` and app-wide hooks in `src/hooks/`. A family of shared components built on one model and one stylesheet gets a subfolder there, e.g. `src/components/lessonCard/`. Pages with a single view stay flat in `src/pages/`. Examples: `src/pages/pendingApprovals/`, `src/pages/schedule/`.
+Shared components stay in `src/components/` and app-wide hooks in `src/hooks/`. A family of shared components built on one model and one stylesheet gets a subfolder there, e.g. `src/components/lessonCard/`. A page that will get a mobile view moves into its folder when its controller hook is extracted, before the mobile view exists (e.g. `src/pages/students/`). Other single-view pages stay flat in `src/pages/`. Examples: `src/pages/pendingApprovals/`, `src/pages/schedule/`.
 
 ## UI and RTL
 
