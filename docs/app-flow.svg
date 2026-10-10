@@ -1,0 +1,998 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="app-flow" viewBox="0 0 2651 1264" width="2651" height="1264" role="img" aria-labelledby="af-title">
+<title id="af-title">App flow: 126 modules, 273 imports</title>
+<style>
+.app-flow { --af-bg: #ffffff; --af-band: #f3f5f8; --af-band-line: #d9dee6; --af-text: #1f2328; --af-muted: #59636e; --af-edge: #8c959f; }
+@media (prefers-color-scheme: dark) {
+  .app-flow { --af-bg: #0d1117; --af-band: #151b23; --af-band-line: #30363d; --af-text: #e6edf3; --af-muted: #9198a1; --af-edge: #656c76; }
+}
+.af-bg { fill: var(--af-bg); }
+.af-band rect { fill: var(--af-band); stroke: var(--af-band-line); }
+.af-band-title { fill: var(--af-text); font: 600 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+.af-band-count, .af-legend text { fill: var(--af-muted); font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+.af-edge { fill: none; stroke: var(--af-edge); stroke-width: 1; opacity: 0.55; marker-end: url(#af-arrow); }
+.af-arrow { fill: var(--af-edge); }
+.af-legend .af-edge { opacity: 1; }
+.af-node rect, .af-legend rect { stroke-width: 1.5; }
+.af-node text { fill: #111827; font: 13px ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+.af-k-route rect { fill: #c4b5fd; stroke: #6d28d9; }
+.af-k-page rect { fill: #93c5fd; stroke: #1d4ed8; }
+.af-k-element rect { fill: #86efac; stroke: #15803d; }
+.af-k-hook rect { fill: #fde68a; stroke: #b45309; }
+.af-k-context rect { fill: #f9a8d4; stroke: #be185d; }
+.af-k-service rect { fill: #fdba74; stroke: #c2410c; }
+.af-k-api rect { fill: #67e8f9; stroke: #0e7490; }
+</style>
+<defs>
+<marker id="af-arrow" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path class="af-arrow" d="M0,0.5 L8,4 L0,7.5 z"/></marker>
+<marker id="af-arrow-out" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path class="af-arrow-out" d="M0,0.5 L8,4 L0,7.5 z"/></marker>
+<marker id="af-arrow-in" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path class="af-arrow-in" d="M0,0.5 L8,4 L0,7.5 z"/></marker>
+</defs>
+<rect class="af-bg" width="2651" height="1264"/>
+<g class="af-legend">
+<g class="af-k-route"><rect x="24" y="28" width="14" height="14" rx="3"/></g>
+<text x="44" y="40">Routing / layout</text>
+<g class="af-k-page"><rect x="180" y="28" width="14" height="14" rx="3"/></g>
+<text x="200" y="40">Page</text>
+<g class="af-k-element"><rect x="252" y="28" width="14" height="14" rx="3"/></g>
+<text x="272" y="40">Component / element</text>
+<g class="af-k-hook"><rect x="429" y="28" width="14" height="14" rx="3"/></g>
+<text x="449" y="40">Hook</text>
+<g class="af-k-context"><rect x="501" y="28" width="14" height="14" rx="3"/></g>
+<text x="521" y="40">Context</text>
+<g class="af-k-service"><rect x="594" y="28" width="14" height="14" rx="3"/></g>
+<text x="614" y="40">Service</text>
+<g class="af-k-api"><rect x="687" y="28" width="14" height="14" rx="3"/></g>
+<text x="707" y="40">API</text>
+<path class="af-edge" d="M752,35 L786,35"/>
+<text x="794" y="40">A → B: A imports B</text>
+</g>
+<g class="af-bands">
+<g class="af-band" data-layer="routing">
+<rect x="24" y="64" width="2603" height="90" rx="10"/>
+<text class="af-band-title" x="40" y="89">Routing &amp; Layouts</text>
+<text class="af-band-count" x="2611" y="89" text-anchor="end">8 modules</text>
+</g>
+<g class="af-band" data-layer="pages">
+<rect x="24" y="194" width="2603" height="134" rx="10"/>
+<text class="af-band-title" x="40" y="219">Pages</text>
+<text class="af-band-count" x="2611" y="219" text-anchor="end">21 modules</text>
+</g>
+<g class="af-band" data-layer="components">
+<rect x="24" y="368" width="2603" height="178" rx="10"/>
+<text class="af-band-title" x="40" y="393">Components</text>
+<text class="af-band-count" x="2611" y="393" text-anchor="end">42 modules</text>
+</g>
+<g class="af-band" data-layer="elements">
+<rect x="24" y="586" width="2603" height="90" rx="10"/>
+<text class="af-band-title" x="40" y="611">Elements</text>
+<text class="af-band-count" x="2611" y="611" text-anchor="end">8 modules</text>
+</g>
+<g class="af-band" data-layer="hooks">
+<rect x="24" y="716" width="2603" height="134" rx="10"/>
+<text class="af-band-title" x="40" y="741">Hooks</text>
+<text class="af-band-count" x="2611" y="741" text-anchor="end">17 modules</text>
+</g>
+<g class="af-band" data-layer="contexts">
+<rect x="24" y="890" width="2603" height="90" rx="10"/>
+<text class="af-band-title" x="40" y="915">Contexts</text>
+<text class="af-band-count" x="2611" y="915" text-anchor="end">5 modules</text>
+</g>
+<g class="af-band" data-layer="services">
+<rect x="24" y="1020" width="2603" height="90" rx="10"/>
+<text class="af-band-title" x="40" y="1045">Services</text>
+<text class="af-band-count" x="2611" y="1045" text-anchor="end">15 modules</text>
+</g>
+<g class="af-band" data-layer="api">
+<rect x="24" y="1150" width="2603" height="90" rx="10"/>
+<text class="af-band-title" x="40" y="1175">API</text>
+<text class="af-band-count" x="2611" y="1175" text-anchor="end">10 modules</text>
+</g>
+</g>
+<g class="af-edges">
+<path class="af-edge" data-from="AddChildButton" data-to="ChildContext" d="M1927.5,482 C1927.5,683.6 1300.4,728.4 1300.4,930"/>
+<path class="af-edge" data-from="AddChildButton" data-to="ChildForm" d="M1893.8,452 C1893.8,396 1449.5,396 1449.5,452"/>
+<path class="af-edge" data-from="AllChildrenContext" data-to="useAllChildren" d="M1578.1,930 C1578.1,885 1302,875 1302,830"/>
+<path class="af-edge" data-from="App" data-to="AllChildrenContext" d="M1621.8,134 C1621.8,492.2 1603.1,571.8 1603.1,930"/>
+<path class="af-edge" data-from="App" data-to="AuthContext" d="M1593.2,134 C1593.2,492.2 1020.1,571.8 1020.1,930"/>
+<path class="af-edge" data-from="App" data-to="ChildContext" d="M1607.5,134 C1607.5,492.2 1270.5,571.8 1270.5,930"/>
+<path class="af-edge" data-from="App" data-to="ErrorBoundary" d="M1614.6,134 C1614.6,257.3 1435.3,284.7 1435.3,408"/>
+<path class="af-edge" data-from="App" data-to="UiModeContext" d="M1600.4,134 C1600.4,492.2 1139.4,571.8 1139.4,930"/>
+<path class="af-edge" data-from="App" data-to="router" d="M1607.5,104 C1607.5,82.9 1556.1,82.9 1556.1,104"/>
+<path class="af-edge" data-from="AppLayout" data-to="Header" d="M1461.8,104 C1461.8,66.1 1680.5,66.1 1680.5,104"/>
+<path class="af-edge" data-from="AppLayout" data-to="Sidebar" d="M1414.2,104 C1414.2,48 974.5,48 974.5,104"/>
+<path class="af-edge" data-from="AuthContext" data-to="useAuth" d="M955.8,930 C955.8,885 584,875 584,830"/>
+<path class="af-edge" data-from="ByUiMode" data-to="UiModeContext" d="M1156,134 C1156,492.2 1091.9,571.8 1091.9,930"/>
+<path class="af-edge" data-from="ChildAccountLinkPicker" data-to="GroupTrackSelect" d="M1082,482 C1082,506 107.6,472 107.6,496"/>
+<path class="af-edge" data-from="ChildContext" data-to="AuthContext" d="M1225.6,930 C1225.6,890.9 994.4,890.9 994.4,930"/>
+<path class="af-edge" data-from="ChildContext" data-to="useChildren" d="M1255.5,930 C1255.5,885 1120,875 1120,830"/>
+<path class="af-edge" data-from="ChildForm" data-to="AuthContext" d="M1411.5,482 C1411.5,683.6 1007.3,728.4 1007.3,930"/>
+<path class="af-edge" data-from="ChildForm" data-to="GroupTrackSelect" d="M1379.8,482 C1379.8,506 137.4,472 137.4,496"/>
+<path class="af-edge" data-from="ChildForm" data-to="ScopeSelector" d="M1392.5,452 C1392.5,423.2 1264.5,423.2 1264.5,452"/>
+<path class="af-edge" data-from="ChildForm" data-to="childrenApi" d="M1443.2,482 C1443.2,800.6 1754.9,871.4 1754.9,1190"/>
+<path class="af-edge" data-from="ChildGroupTrackSelector" data-to="GroupTrackSelect" d="M2109.5,482 C2109.5,506 167.2,472 167.2,496"/>
+<path class="af-edge" data-from="ChildManagement" data-to="AuthContext" d="M1026.1,438 C1026.1,659.4 978.3,708.6 978.3,930"/>
+<path class="af-edge" data-from="ChildManagement" data-to="ChildContext" d="M1063.4,438 C1063.4,659.4 1240.6,708.6 1240.6,930"/>
+<path class="af-edge" data-from="ChildManagement" data-to="ChildForm" d="M1100.6,438 C1100.6,462 1373.5,428 1373.5,452"/>
+<path class="af-edge" data-from="ChildManagement" data-to="GroupTrackTags" d="M1137.9,438 C1137.9,462 1735.1,428 1735.1,452"/>
+<path class="af-edge" data-from="ChildTabs" data-to="ScheduleTabsBar" d="M2160.9,496 C2160.9,460.6 2354.7,460.6 2354.7,496"/>
+<path class="af-edge" data-from="ClassCard" data-to="ClassCardHeader" d="M840.3,496 C840.3,469.9 92.7,464.1 92.7,438"/>
+<path class="af-edge" data-from="ClassCard" data-to="DoubleLessonTag" d="M828.4,526 C828.4,571 930.5,581 930.5,626"/>
+<path class="af-edge" data-from="ClassCard" data-to="EnrollmentCount" d="M923.6,526 C923.6,571 1305.7,581 1305.7,626"/>
+<path class="af-edge" data-from="ClassCard" data-to="GradesRangeTag" d="M876,526 C876,571 1168.9,581 1168.9,626"/>
+<path class="af-edge" data-from="ClassEnrollmentDrawer" data-to="AddedByTooltip" d="M840.3,482 C840.3,546.8 779.5,561.2 779.5,626"/>
+<path class="af-edge" data-from="ClassEnrollmentDrawer" data-to="GradesRangeTag" d="M868.9,482 C868.9,546.8 1194.1,561.2 1194.1,626"/>
+<path class="af-edge" data-from="ClassEnrollmentDrawer" data-to="GroupTrackTags" d="M911.7,452 C911.7,396 1699.4,396 1699.4,452"/>
+<path class="af-edge" data-from="ClassEnrollmentDrawer" data-to="ScopeTag" d="M926,482 C926,506 1699.4,472 1699.4,496"/>
+<path class="af-edge" data-from="ClassEnrollmentDrawer" data-to="TeacherPicker" d="M940.3,482 C940.3,506 2499.9,472 2499.9,496"/>
+<path class="af-edge" data-from="ClassEnrollmentDrawer" data-to="TextSearch" d="M883.1,482 C883.1,506 1231,472 1231,496"/>
+<path class="af-edge" data-from="ClassEnrollmentDrawer" data-to="classesApi" d="M897.4,482 C897.4,800.6 1484.5,871.4 1484.5,1190"/>
+<path class="af-edge" data-from="ClassEnrollmentDrawer" data-to="scheduleApi" d="M911.7,482 C911.7,800.6 1595.1,871.4 1595.1,1190"/>
+<path class="af-edge" data-from="ClassEnrollmentDrawer" data-to="scheduleService" d="M811.7,482 C811.7,742.1 622,799.9 622,1060"/>
+<path class="af-edge" data-from="ClassEnrollmentDrawer" data-to="staffScheduleService" d="M854.6,482 C854.6,742.1 1060.5,799.9 1060.5,1060"/>
+<path class="af-edge" data-from="ClassEnrollmentDrawer" data-to="useStaffMembers" d="M826,482 C826,605.3 755.5,632.7 755.5,756"/>
+<path class="af-edge" data-from="ClassForm" data-to="GroupTrackSelect" d="M814.8,438 C814.8,464.1 77.8,469.9 77.8,496"/>
+<path class="af-edge" data-from="ClassForm" data-to="ScopeSelector" d="M916.8,438 C916.8,462 1249.2,428 1249.2,452"/>
+<path class="af-edge" data-from="ClassForm" data-to="TeacherPicker" d="M937.2,438 C937.2,464.1 2534.1,469.9 2534.1,496"/>
+<path class="af-edge" data-from="ClassForm" data-to="TimeSlotOption" d="M835.2,438 C835.2,462 525.3,428 525.3,452"/>
+<path class="af-edge" data-from="ClassForm" data-to="scheduleService" d="M855.6,438 C855.6,717.9 630.3,780.1 630.3,1060"/>
+<path class="af-edge" data-from="ClassForm" data-to="staffScheduleService" d="M896.4,438 C896.4,717.9 1077.6,780.1 1077.6,1060"/>
+<path class="af-edge" data-from="ClassForm" data-to="useStaffMembers" d="M876,438 C876,581.1 791.2,612.9 791.2,756"/>
+<path class="af-edge" data-from="ClassManagementPage" data-to="AuthContext" d="M1557.4,264 C1557.4,563.7 1013.7,630.3 1013.7,930"/>
+<path class="af-edge" data-from="ClassManagementPage" data-to="ClassEnrollmentDrawer" d="M1532.9,264 C1532.9,348.6 840.3,367.4 840.3,452"/>
+<path class="af-edge" data-from="ClassManagementPage" data-to="ClassForm" d="M1541.1,264 C1541.1,328.8 840.3,343.2 840.3,408"/>
+<path class="af-edge" data-from="ClassManagementPage" data-to="EnrollmentCount" d="M1590.1,264 C1590.1,426.9 1359.3,463.1 1359.3,626"/>
+<path class="af-edge" data-from="ClassManagementPage" data-to="FilterField" d="M1630.9,264 C1630.9,368.4 1893.8,391.6 1893.8,496"/>
+<path class="af-edge" data-from="ClassManagementPage" data-to="FilterSelect" d="M1647.3,264 C1647.3,328.8 2070.9,343.2 2070.9,408"/>
+<path class="af-edge" data-from="ClassManagementPage" data-to="FiltersBar" d="M1639.1,264 C1639.1,328.8 1889.6,343.2 1889.6,408"/>
+<path class="af-edge" data-from="ClassManagementPage" data-to="GradesRangeTag" d="M1565.6,264 C1565.6,426.9 1219.4,463.1 1219.4,626"/>
+<path class="af-edge" data-from="ClassManagementPage" data-to="GroupTrackTags" d="M1606.4,264 C1606.4,348.6 1770.9,367.4 1770.9,452"/>
+<path class="af-edge" data-from="ClassManagementPage" data-to="ScopeSelector" d="M1573.7,264 C1573.7,348.6 1279.8,367.4 1279.8,452"/>
+<path class="af-edge" data-from="ClassManagementPage" data-to="ScopeTag" d="M1614.6,264 C1614.6,368.4 1770.9,391.6 1770.9,496"/>
+<path class="af-edge" data-from="ClassManagementPage" data-to="TextSearch" d="M1581.9,264 C1581.9,368.4 1257.8,391.6 1257.8,496"/>
+<path class="af-edge" data-from="ClassManagementPage" data-to="classesApi" d="M1598.3,264 C1598.3,680.7 1523.2,773.3 1523.2,1190"/>
+<path class="af-edge" data-from="ClassManagementPage" data-to="enrollmentService" d="M1549.2,264 C1549.2,622.2 916.3,701.8 916.3,1060"/>
+<path class="af-edge" data-from="ClassManagementPage" data-to="scheduleService" d="M1524.7,264 C1524.7,622.2 663.2,701.8 663.2,1060"/>
+<path class="af-edge" data-from="ClassManagementPage" data-to="timeSlotsApi" d="M1622.8,264 C1622.8,680.7 1882.2,773.3 1882.2,1190"/>
+<path class="af-edge" data-from="ClassSelectionCard" data-to="GradesRangeTag" d="M723.6,526 C723.6,571 1143.6,581 1143.6,626"/>
+<path class="af-edge" data-from="ClassSelectionCard" data-to="TrackTag" d="M678,526 C678,571 1058,581 1058,626"/>
+<path class="af-edge" data-from="ClassSelectionCard" data-to="scheduleService" d="M632.4,526 C632.4,766.3 613.8,819.7 613.8,1060"/>
+<path class="af-edge" data-from="ClassSelectionDrawer" data-to="ClassSelectionCard" d="M326.9,496 C326.9,444.9 678,444.9 678,496"/>
+<path class="af-edge" data-from="ClassSelectionDrawer" data-to="CreateClassButton" d="M255.4,496 C255.4,472 122.5,506 122.5,482"/>
+<path class="af-edge" data-from="ClassSelectionDrawer" data-to="OverrideSelectionCard" d="M291.1,496 C291.1,469.9 309,464.1 309,438"/>
+<path class="af-edge" data-from="ClassSelectionDrawer" data-to="scheduleService" d="M309,526 C309,766.3 589,819.7 589,1060"/>
+<path class="af-edge" data-from="CreateClassModal" data-to="ClassForm" d="M2283.3,408 C2283.3,352 911.7,352 911.7,408"/>
+<path class="af-edge" data-from="DayAgendaList" data-to="MobileLessonCard" d="M2307.5,264 C2307.5,328.8 2517,343.2 2517,408"/>
+<path class="af-edge" data-from="FilterSelect" data-to="FilterField" d="M2109.5,438 C2109.5,464.1 1961.2,469.9 1961.2,496"/>
+<path class="af-edge" data-from="Header" data-to="ProfileDropdown" d="M1667,134 C1667,257.3 1291.3,284.7 1291.3,408"/>
+<path class="af-edge" data-from="Header" data-to="usePageInfo" d="M1694,134 C1694,433.7 1500.8,500.3 1500.8,800"/>
+<path class="af-edge" data-from="LoginPage" data-to="AuthContext" d="M1012,264 C1012,563.7 968.7,630.3 968.7,930"/>
+<path class="af-edge" data-from="MobileAppLayout" data-to="ProfileDropdown" d="M1295,134 C1295,257.3 1237.7,284.7 1237.7,408"/>
+<path class="af-edge" data-from="MobileAppLayout" data-to="useNavItems" d="M1253.5,134 C1253.5,433.7 975.6,500.3 975.6,800"/>
+<path class="af-edge" data-from="MobileAppLayout" data-to="usePageInfo" d="M1336.5,134 C1336.5,433.7 1444.2,500.3 1444.2,800"/>
+<path class="af-edge" data-from="MobilePendingApprovalsPage" data-to="PendingApprovalCard" d="M553.5,264 C553.5,288 372,254 372,278"/>
+<path class="af-edge" data-from="MobilePendingApprovalsPage" data-to="PendingApprovalSheet" d="M553.5,234 C553.5,196.4 337.8,196.4 337.8,234"/>
+<path class="af-edge" data-from="MobilePendingApprovalsPage" data-to="usePendingApprovalsController" d="M648.5,264 C648.5,485.4 546,534.6 546,756"/>
+<path class="af-edge" data-from="MobileSchedulePage" data-to="AuthContext" d="M1722.8,308 C1722.8,587.9 1026.5,650.1 1026.5,930"/>
+<path class="af-edge" data-from="MobileSchedulePage" data-to="MobileScheduleView" d="M1780,278 C1780,245.4 1946.3,245.4 1946.3,278"/>
+<path class="af-edge" data-from="MobileSchedulePage" data-to="ScheduleCatalogContext" d="M1751.4,308 C1751.4,587.9 1452.6,650.1 1452.6,930"/>
+<path class="af-edge" data-from="MobileSchedulePage" data-to="SchedulePage" d="M1827.6,278 C1827.6,254 1976.7,288 1976.7,264"/>
+<path class="af-edge" data-from="MobileSchedulePage" data-to="dayAgenda" d="M1808.6,308 C1808.6,646.4 1966.9,721.6 1966.9,1060"/>
+<path class="af-edge" data-from="MobileSchedulePage" data-to="scheduleCapabilities" d="M1837.2,308 C1837.2,646.4 2065.8,721.6 2065.8,1060"/>
+<path class="af-edge" data-from="MobileSchedulePage" data-to="useChildScheduleController" d="M1780,308 C1780,529.4 1958.6,578.6 1958.6,800"/>
+<path class="af-edge" data-from="MobileScheduleView" data-to="AddChildButton" d="M1999.9,308 C1999.9,372.8 1927.5,387.2 1927.5,452"/>
+<path class="af-edge" data-from="MobileScheduleView" data-to="ChildTabs" d="M2035.6,308 C2035.6,392.6 2058.1,411.4 2058.1,496"/>
+<path class="af-edge" data-from="MobileScheduleView" data-to="CommittedReadOnlyBanner" d="M1928.4,308 C1928.4,451.1 1673.9,482.9 1673.9,626"/>
+<path class="af-edge" data-from="MobileScheduleView" data-to="DraftBanner" d="M1964.1,308 C1964.1,451.1 1862.1,482.9 1862.1,626"/>
+<path class="af-edge" data-from="MobileScheduleView" data-to="ScheduleDayView" d="M2017.7,278 C2017.7,254 2147.1,288 2147.1,264"/>
+<path class="af-edge" data-from="OverrideCard" data-to="ClassCardHeader" d="M1387.8,496 C1387.8,469.9 152.3,464.1 152.3,438"/>
+<path class="af-edge" data-from="OverrideCard" data-to="OverrideSuffixButton" d="M1411.5,526 C1411.5,571 1541.2,581 1541.2,626"/>
+<path class="af-edge" data-from="PendingApprovalCard" data-to="usePendingApprovalsController" d="M372,308 C372,509.6 482.7,554.4 482.7,756"/>
+<path class="af-edge" data-from="PendingApprovalForm" data-to="ChildAccountLinkPicker" d="M826,264 C826,348.6 1044.8,367.4 1044.8,452"/>
+<path class="af-edge" data-from="PendingApprovalForm" data-to="ScopeSelector" d="M869.6,264 C869.6,348.6 1233.9,367.4 1233.9,452"/>
+<path class="af-edge" data-from="PendingApprovalPage" data-to="AuthContext" d="M1012,308 C1012,587.9 971.9,650.1 971.9,930"/>
+<path class="af-edge" data-from="PendingApprovalSheet" data-to="BottomSheet" d="M372,264 C372,348.6 309,367.4 309,452"/>
+<path class="af-edge" data-from="PendingApprovalSheet" data-to="PendingApprovalForm" d="M406.2,234 C406.2,178 826,178 826,234"/>
+<path class="af-edge" data-from="PendingApprovalsPage" data-to="PendingApprovalForm" d="M553.5,278 C553.5,254 782.4,288 782.4,264"/>
+<path class="af-edge" data-from="PendingApprovalsPage" data-to="usePendingApprovalsController" d="M601,308 C601,509.6 609.3,554.4 609.3,756"/>
+<path class="af-edge" data-from="PrintableSchedule" data-to="scheduleService" d="M495.5,438 C495.5,717.9 597.3,780.1 597.3,1060"/>
+<path class="af-edge" data-from="ProfileDropdown" data-to="AuthContext" d="M1237.7,438 C1237.7,659.4 997.6,708.6 997.6,930"/>
+<path class="af-edge" data-from="ProfileDropdown" data-to="UiModeContext" d="M1291.3,438 C1291.3,659.4 1115.6,708.6 1115.6,930"/>
+<path class="af-edge" data-from="ProfileSettingsPage" data-to="AuthContext" d="M1154.4,308 C1154.4,587.9 988,650.1 988,930"/>
+<path class="af-edge" data-from="ProfileSettingsPage" data-to="ChildManagement" d="M1198,308 C1198,353 1082,363 1082,408"/>
+<path class="af-edge" data-from="ProfileSettingsPage" data-to="usersApi" d="M1241.6,308 C1241.6,704.9 1395.1,793.1 1395.1,1190"/>
+<path class="af-edge" data-from="ProfileSetupPage" data-to="AuthContext" d="M1356.3,264 C1356.3,563.7 1004,630.3 1004,930"/>
+<path class="af-edge" data-from="ProfileSetupPage" data-to="usersApi" d="M1427.7,264 C1427.7,680.7 1411.4,773.3 1411.4,1190"/>
+<path class="af-edge" data-from="ScheduleCatalogContext" data-to="AuthContext" d="M1378.1,930 C1378.1,877.2 1010.5,877.2 1010.5,930"/>
+<path class="af-edge" data-from="ScheduleCatalogContext" data-to="classesApi" d="M1434,960 C1434,1063.5 1503.8,1086.5 1503.8,1190"/>
+<path class="af-edge" data-from="ScheduleCatalogContext" data-to="scheduleService" d="M1384.3,960 C1384.3,1005 655,1015 655,1060"/>
+<path class="af-edge" data-from="ScheduleCatalogContext" data-to="timeSlotsApi" d="M1483.7,960 C1483.7,1063.5 1859.8,1086.5 1859.8,1190"/>
+<path class="af-edge" data-from="ScheduleDayView" data-to="DayAgendaList" d="M2160.5,234 C2160.5,203.3 2307.5,203.3 2307.5,234"/>
+<path class="af-edge" data-from="ScheduleDayView" data-to="WeekStrip" d="M2173.9,264 C2173.9,288 2160.5,254 2160.5,278"/>
+<path class="af-edge" data-from="ScheduleDayView" data-to="scheduleDays" d="M2200.7,264 C2200.7,622.2 2395,701.8 2395,1060"/>
+<path class="af-edge" data-from="ScheduleDayView" data-to="useSwipe" d="M2120.3,264 C2120.3,485.4 1915.5,534.6 1915.5,756"/>
+<path class="af-edge" data-from="ScheduleOverrideForm" data-to="ScopeSelector" d="M678,452 C678,396 1218.6,396 1218.6,452"/>
+<path class="af-edge" data-from="ScheduleOverrideForm" data-to="TeacherPicker" d="M723.6,482 C723.6,506 2465.7,472 2465.7,496"/>
+<path class="af-edge" data-from="ScheduleOverrideForm" data-to="TimeSlotOption" d="M632.4,452 C632.4,419.3 465.7,419.3 465.7,452"/>
+<path class="af-edge" data-from="ScheduleOverrideForm" data-to="staffScheduleService" d="M678,482 C678,742.1 1026.3,799.9 1026.3,1060"/>
+<path class="af-edge" data-from="ScheduleOverrideForm" data-to="useStaffMembers" d="M632.4,482 C632.4,605.3 719.8,632.7 719.8,756"/>
+<path class="af-edge" data-from="ScheduleOverrideModal" data-to="ScheduleOverrideForm" d="M2283.3,452 C2283.3,396 723.6,396 723.6,452"/>
+<path class="af-edge" data-from="SchedulePage" data-to="AddChildButton" d="M1997.9,264 C1997.9,348.6 1961.2,367.4 1961.2,452"/>
+<path class="af-edge" data-from="SchedulePage" data-to="AuthContext" d="M1918.5,264 C1918.5,563.7 1033,630.3 1033,930"/>
+<path class="af-edge" data-from="SchedulePage" data-to="ChildGroupTrackSelector" d="M2019,264 C2019,348.6 2109.5,367.4 2109.5,452"/>
+<path class="af-edge" data-from="SchedulePage" data-to="ChildTabs" d="M2024.3,264 C2024.3,368.4 2109.5,391.6 2109.5,496"/>
+<path class="af-edge" data-from="SchedulePage" data-to="CommittedReadOnlyBanner" d="M1966.1,264 C1966.1,426.9 1751.1,463.1 1751.1,626"/>
+<path class="af-edge" data-from="SchedulePage" data-to="CreateClassModal" d="M2040.2,264 C2040.2,328.8 2354.7,343.2 2354.7,408"/>
+<path class="af-edge" data-from="SchedulePage" data-to="DraftBanner" d="M1987.3,264 C1987.3,426.9 1903.9,463.1 1903.9,626"/>
+<path class="af-edge" data-from="SchedulePage" data-to="FilterField" d="M2003.2,264 C2003.2,368.4 1927.5,391.6 1927.5,496"/>
+<path class="af-edge" data-from="SchedulePage" data-to="FilterSelect" d="M2029.6,264 C2029.6,328.8 2148.1,343.2 2148.1,408"/>
+<path class="af-edge" data-from="SchedulePage" data-to="FiltersBar" d="M2008.5,264 C2008.5,328.8 1965.4,343.2 1965.4,408"/>
+<path class="af-edge" data-from="SchedulePage" data-to="ScheduleCatalogContext" d="M1945,264 C1945,563.7 1489.9,630.3 1489.9,930"/>
+<path class="af-edge" data-from="SchedulePage" data-to="ScheduleOverrideModal" d="M2045.5,264 C2045.5,348.6 2354.7,367.4 2354.7,452"/>
+<path class="af-edge" data-from="SchedulePage" data-to="ScheduleTable" d="M1929.1,264 C1929.1,368.4 1137.9,391.6 1137.9,496"/>
+<path class="af-edge" data-from="SchedulePage" data-to="ScheduleTabsBar" d="M2050.8,264 C2050.8,368.4 2283.3,391.6 2283.3,496"/>
+<path class="af-edge" data-from="SchedulePage" data-to="StaffPicker" d="M1960.8,264 C1960.8,328.8 1566.5,343.2 1566.5,408"/>
+<path class="af-edge" data-from="SchedulePage" data-to="StudentSearchSelector" d="M1971.4,264 C1971.4,328.8 1788.7,343.2 1788.7,408"/>
+<path class="af-edge" data-from="SchedulePage" data-to="TextSearch" d="M1939.7,264 C1939.7,368.4 1298,391.6 1298,496"/>
+<path class="af-edge" data-from="SchedulePage" data-to="UiModeContext" d="M1934.4,264 C1934.4,563.7 1163.1,630.3 1163.1,930"/>
+<path class="af-edge" data-from="SchedulePage" data-to="classesApi" d="M1955.5,264 C1955.5,680.7 1532.9,773.3 1532.9,1190"/>
+<path class="af-edge" data-from="SchedulePage" data-to="scheduleCapabilities" d="M2013.8,264 C2013.8,622.2 2134.2,701.8 2134.2,1060"/>
+<path class="af-edge" data-from="SchedulePage" data-to="scheduleService" d="M1913.2,264 C1913.2,622.2 688,701.8 688,1060"/>
+<path class="af-edge" data-from="SchedulePage" data-to="scheduleView" d="M2034.9,264 C2034.9,622.2 2263,701.8 2263,1060"/>
+<path class="af-edge" data-from="SchedulePage" data-to="staffScheduleService" d="M1923.8,264 C1923.8,622.2 1128.9,701.8 1128.9,1060"/>
+<path class="af-edge" data-from="SchedulePage" data-to="timeSlotsApi" d="M1982,264 C1982,680.7 1904.6,773.3 1904.6,1190"/>
+<path class="af-edge" data-from="SchedulePage" data-to="useChildScheduleController" d="M1992.6,264 C1992.6,505.2 1987.4,558.8 1987.4,800"/>
+<path class="af-edge" data-from="SchedulePage" data-to="useStaffSchedule" d="M1950.2,264 C1950.2,485.4 1472.5,534.6 1472.5,756"/>
+<path class="af-edge" data-from="ScheduleTable" data-to="ClassCard" d="M1063.4,496 C1063.4,464.8 911.7,464.8 911.7,496"/>
+<path class="af-edge" data-from="ScheduleTable" data-to="ClassSelectionDrawer" d="M1026.1,496 C1026.1,440 362.6,440 362.6,496"/>
+<path class="af-edge" data-from="ScheduleTable" data-to="OverrideCard" d="M1100.6,496 C1100.6,446.5 1435.3,446.5 1435.3,496"/>
+<path class="af-edge" data-from="ScheduleTable" data-to="OverrideSuffixButton" d="M1131.7,526 C1131.7,571 1472.8,581 1472.8,626"/>
+<path class="af-edge" data-from="ScheduleTable" data-to="enrollmentService" d="M1082,526 C1082,766.3 856.7,819.7 856.7,1060"/>
+<path class="af-edge" data-from="ScheduleTable" data-to="scheduleService" d="M1032.3,526 C1032.3,766.3 646.7,819.7 646.7,1060"/>
+<path class="af-edge" data-from="ScopeSelector" data-to="ScopeTag" d="M1291.3,482 C1291.3,506 1735.1,472 1735.1,496"/>
+<path class="af-edge" data-from="ScopeSelector" data-to="ToggleFilterGroup" d="M1237.7,482 C1237.7,506 1536.7,472 1536.7,496"/>
+<path class="af-edge" data-from="Sidebar" data-to="useNavItems" d="M974.5,134 C974.5,433.7 884.4,500.3 884.4,800"/>
+<path class="af-edge" data-from="SignupPage" data-to="AuthContext" d="M858.7,308 C858.7,587.9 962.2,650.1 962.2,930"/>
+<path class="af-edge" data-from="SignupPage" data-to="ToggleRadioGroup" d="M793.3,308 C793.3,353 678,363 678,408"/>
+<path class="af-edge" data-from="StaffPicker" data-to="TextSearch" d="M1596.3,438 C1596.3,464.1 1244.4,469.9 1244.4,496"/>
+<path class="af-edge" data-from="StaffPicker" data-to="staffScheduleService" d="M1536.7,438 C1536.7,717.9 1111.8,780.1 1111.8,1060"/>
+<path class="af-edge" data-from="StudentSearchSelector" data-to="AllChildrenContext" d="M1806.6,438 C1806.6,659.4 1628,708.6 1628,930"/>
+<path class="af-edge" data-from="StudentSearchSelector" data-to="AuthContext" d="M1699.4,438 C1699.4,659.4 1023.3,708.6 1023.3,930"/>
+<path class="af-edge" data-from="StudentSearchSelector" data-to="ChildForm" d="M1770.9,438 C1770.9,462 1411.5,428 1411.5,452"/>
+<path class="af-edge" data-from="StudentSearchSelector" data-to="TextSearch" d="M1735.1,438 C1735.1,464.1 1284.6,469.9 1284.6,496"/>
+<path class="af-edge" data-from="StudentsPage" data-to="ChildForm" d="M1739.2,264 C1739.2,348.6 1430.5,367.4 1430.5,452"/>
+<path class="af-edge" data-from="StudentsPage" data-to="FiltersBar" d="M1820.8,264 C1820.8,328.8 1940.1,343.2 1940.1,408"/>
+<path class="af-edge" data-from="StudentsPage" data-to="GroupTrackTags" d="M1759.6,264 C1759.6,348.6 1806.6,367.4 1806.6,452"/>
+<path class="af-edge" data-from="StudentsPage" data-to="ScopeSelector" d="M1718.8,264 C1718.8,348.6 1310.4,367.4 1310.4,452"/>
+<path class="af-edge" data-from="StudentsPage" data-to="ScopeTag" d="M1780,264 C1780,368.4 1806.6,391.6 1806.6,496"/>
+<path class="af-edge" data-from="StudentsPage" data-to="StudentSearchSelector" d="M1800.4,264 C1800.4,328.8 1717.3,343.2 1717.3,408"/>
+<path class="af-edge" data-from="StudentsPage" data-to="useStudentsController" d="M1841.2,264 C1841.2,485.4 2137,534.6 2137,756"/>
+<path class="af-edge" data-from="TeacherPicker" data-to="TextSearch" d="M2568.3,496 C2568.3,440 1311.4,440 1311.4,496"/>
+<path class="af-edge" data-from="TextSearch" data-to="TextSearchSheet" d="M1217.6,496 C1217.6,440 525.3,440 525.3,496"/>
+<path class="af-edge" data-from="TextSearch" data-to="usePickSearch" d="M1264.5,526 C1264.5,649.3 782.3,676.7 782.3,800"/>
+<path class="af-edge" data-from="TextSearchSheet" data-to="BottomSheet" d="M465.7,496 C465.7,472 309,506 309,482"/>
+<path class="af-edge" data-from="TextSearchSheet" data-to="usePickSearch" d="M495.5,526 C495.5,649.3 728.7,676.7 728.7,800"/>
+<path class="af-edge" data-from="TimeSlotOption" data-to="scheduleService" d="M495.5,482 C495.5,742.1 605.5,799.9 605.5,1060"/>
+<path class="af-edge" data-from="UiModeContext" data-to="uiMode" d="M1127.5,960 C1127.5,1005 758.5,1015 758.5,1060"/>
+<path class="af-edge" data-from="UserListPage" data-to="AuthContext" d="M1165.3,264 C1165.3,563.7 991.2,630.3 991.2,930"/>
+<path class="af-edge" data-from="UserListPage" data-to="UserManagementPage" d="M1230.7,264 C1230.7,288 1586,254 1586,278"/>
+<path class="af-edge" data-from="UserManagementPage" data-to="AuthContext" d="M1527.2,308 C1527.2,587.9 1016.9,650.1 1016.9,930"/>
+<path class="af-edge" data-from="UserManagementPage" data-to="ChildAccountLinkPicker" d="M1540.2,308 C1540.2,372.8 1119.2,387.2 1119.2,452"/>
+<path class="af-edge" data-from="UserManagementPage" data-to="FiltersBar" d="M1644.8,308 C1644.8,353 1914.9,363 1914.9,408"/>
+<path class="af-edge" data-from="UserManagementPage" data-to="RoleTagPicker" d="M1605.6,308 C1605.6,372.8 1566.5,387.2 1566.5,452"/>
+<path class="af-edge" data-from="UserManagementPage" data-to="ScopeSelector" d="M1553.3,308 C1553.3,372.8 1295.1,387.2 1295.1,452"/>
+<path class="af-edge" data-from="UserManagementPage" data-to="TextSearch" d="M1566.4,308 C1566.4,392.6 1271.2,411.4 1271.2,496"/>
+<path class="af-edge" data-from="UserManagementPage" data-to="ToggleFilterGroup" d="M1618.7,308 C1618.7,392.6 1596.3,411.4 1596.3,496"/>
+<path class="af-edge" data-from="UserManagementPage" data-to="childrenApi" d="M1631.8,308 C1631.8,704.9 1766.9,793.1 1766.9,1190"/>
+<path class="af-edge" data-from="UserManagementPage" data-to="roleRules" d="M1592.5,308 C1592.5,646.4 1406,721.6 1406,1060"/>
+<path class="af-edge" data-from="UserManagementPage" data-to="usersApi" d="M1579.5,308 C1579.5,704.9 1419.6,793.1 1419.6,1190"/>
+<path class="af-edge" data-from="authApi" data-to="requestedRole" d="M841.5,1190 C841.5,1145 515.3,1135 515.3,1090"/>
+<path class="af-edge" data-from="authApi" data-to="supabase" d="M881.5,1190 C881.5,1160.1 742.1,1160.1 742.1,1190"/>
+<path class="af-edge" data-from="childrenApi" data-to="supabase" d="M1719.1,1190 C1719.1,1134 787.9,1134 787.9,1190"/>
+<path class="af-edge" data-from="classesApi" data-to="scheduleService" d="M1465.1,1190 C1465.1,1145 638.5,1135 638.5,1090"/>
+<path class="af-edge" data-from="classesApi" data-to="supabase" d="M1474.8,1190 C1474.8,1134 774.8,1134 774.8,1190"/>
+<path class="af-edge" data-from="dayAgenda" data-to="scheduleService" d="M1931.1,1060 C1931.1,1004 679.7,1004 679.7,1060"/>
+<path class="af-edge" data-from="enrollmentApi" data-to="supabase" d="M953.8,1190 C953.8,1153.5 748.7,1153.5 748.7,1190"/>
+<path class="af-edge" data-from="enrollmentService" data-to="enrollmentApi" d="M886.5,1090 C886.5,1135 1001.3,1145 1001.3,1190"/>
+<path class="af-edge" data-from="groupMandatoryLockService" data-to="scheduleApi" d="M1778.5,1090 C1778.5,1135 1654.8,1145 1654.8,1190"/>
+<path class="af-edge" data-from="guards" data-to="AuthContext" d="M1063.5,134 C1063.5,492.2 975.1,571.8 975.1,930"/>
+<path class="af-edge" data-from="permissions" data-to="roleFlags" d="M231.1,1060 C231.1,1032.1 350.1,1032.1 350.1,1060"/>
+<path class="af-edge" data-from="router" data-to="AppLayout" d="M1545.3,104 C1545.3,77.3 1438,77.3 1438,104"/>
+<path class="af-edge" data-from="router" data-to="ByUiMode" d="M1523.7,104 C1523.7,51.2 1156,51.2 1156,104"/>
+<path class="af-edge" data-from="router" data-to="ClassManagementPage" d="M1548,134 C1548,179 1586,189 1586,234"/>
+<path class="af-edge" data-from="router" data-to="ErrorBoundary" d="M1544.1,134 C1544.1,257.3 1387.8,284.7 1387.8,408"/>
+<path class="af-edge" data-from="router" data-to="LoginPage" d="M1521,134 C1521,179 1012,189 1012,234"/>
+<path class="af-edge" data-from="router" data-to="MobileAppLayout" d="M1534.5,104 C1534.5,64.1 1295,64.1 1295,104"/>
+<path class="af-edge" data-from="router" data-to="MobilePendingApprovalsPage" d="M1509.4,134 C1509.4,179 648.5,189 648.5,234"/>
+<path class="af-edge" data-from="router" data-to="MobileSchedulePage" d="M1551.8,134 C1551.8,198.8 1732.4,213.2 1732.4,278"/>
+<path class="af-edge" data-from="router" data-to="PendingApprovalPage" d="M1524.9,134 C1524.9,198.8 1012,213.2 1012,278"/>
+<path class="af-edge" data-from="router" data-to="PendingApprovalsPage" d="M1513.3,134 C1513.3,198.8 648.5,213.2 648.5,278"/>
+<path class="af-edge" data-from="router" data-to="ProfileSettingsPage" d="M1528.7,134 C1528.7,198.8 1198,213.2 1198,278"/>
+<path class="af-edge" data-from="router" data-to="ProfileSetupPage" d="M1536.4,134 C1536.4,179 1392,189 1392,234"/>
+<path class="af-edge" data-from="router" data-to="SchedulePage" d="M1559.6,134 C1559.6,179 1982,189 1982,234"/>
+<path class="af-edge" data-from="router" data-to="SignupPage" d="M1517.2,134 C1517.2,198.8 826,213.2 826,278"/>
+<path class="af-edge" data-from="router" data-to="SignupVerifyEmailPage" d="M1540.3,134 C1540.3,198.8 1392,213.2 1392,278"/>
+<path class="af-edge" data-from="router" data-to="StudentsPage" d="M1555.7,134 C1555.7,179 1780,189 1780,234"/>
+<path class="af-edge" data-from="router" data-to="UserListPage" d="M1532.6,134 C1532.6,179 1198,189 1198,234"/>
+<path class="af-edge" data-from="router" data-to="guards" d="M1512.9,104 C1512.9,48 1063.5,48 1063.5,104"/>
+<path class="af-edge" data-from="scheduleApi" data-to="supabase" d="M1583.2,1190 C1583.2,1134 781.3,1134 781.3,1190"/>
+<path class="af-edge" data-from="scheduleOverridesApi" data-to="supabase" d="M1098.4,1190 C1098.4,1139.7 755.2,1139.7 755.2,1190"/>
+<path class="af-edge" data-from="staffApi" data-to="supabase" d="M1274.7,1190 C1274.7,1134 761.7,1134 761.7,1190"/>
+<path class="af-edge" data-from="staffScheduleService" data-to="classesApi" d="M1086.1,1090 C1086.1,1135 1494.2,1145 1494.2,1190"/>
+<path class="af-edge" data-from="staffScheduleService" data-to="scheduleApi" d="M1120.3,1090 C1120.3,1135 1607.1,1145 1607.1,1190"/>
+<path class="af-edge" data-from="staffScheduleService" data-to="scheduleOverridesApi" d="M1017.7,1090 C1017.7,1135 1189.6,1145 1189.6,1190"/>
+<path class="af-edge" data-from="staffScheduleService" data-to="scheduleService" d="M1009.2,1060 C1009.2,1006.9 638.5,1006.9 638.5,1060"/>
+<path class="af-edge" data-from="staffScheduleService" data-to="staffApi" d="M1051.9,1090 C1051.9,1135 1307.3,1145 1307.3,1190"/>
+<path class="af-edge" data-from="supabase" data-to="requestedRole" d="M735.6,1190 C735.6,1145 467.8,1135 467.8,1090"/>
+<path class="af-edge" data-from="timeSlotsApi" data-to="supabase" d="M1837.4,1190 C1837.4,1134 794.4,1134 794.4,1190"/>
+<path class="af-edge" data-from="trackSelectionService" data-to="classesApi" d="M1525.3,1090 C1525.3,1135 1513.5,1145 1513.5,1190"/>
+<path class="af-edge" data-from="trackSelectionService" data-to="scheduleApi" d="M1596.7,1090 C1596.7,1135 1619,1145 1619,1190"/>
+<path class="af-edge" data-from="useAllChildren" data-to="AuthContext" d="M1260.5,830 C1260.5,875 1000.8,885 1000.8,930"/>
+<path class="af-edge" data-from="useAllChildren" data-to="childrenApi" d="M1343.5,830 C1343.5,992 1743,1028 1743,1190"/>
+<path class="af-edge" data-from="useAuth" data-to="authApi" d="M546,830 C546,992 861.5,1028 861.5,1190"/>
+<path class="af-edge" data-from="useAuth" data-to="permissions" d="M470,830 C470,933.5 272.9,956.5 272.9,1060"/>
+<path class="af-edge" data-from="useAuth" data-to="roleFlags" d="M508,830 C508,933.5 385.9,956.5 385.9,1060"/>
+<path class="af-edge" data-from="useAuth" data-to="usersApi" d="M622,830 C622,992 1362.4,1028 1362.4,1190"/>
+<path class="af-edge" data-from="useChildScheduleController" data-to="AllChildrenContext" d="M1958.6,830 C1958.6,875 1652.9,885 1652.9,930"/>
+<path class="af-edge" data-from="useChildScheduleController" data-to="AuthContext" d="M1872.4,830 C1872.4,875 1029.8,885 1029.8,930"/>
+<path class="af-edge" data-from="useChildScheduleController" data-to="ChildContext" d="M1901.1,830 C1901.1,875 1285.4,885 1285.4,930"/>
+<path class="af-edge" data-from="useChildScheduleController" data-to="groupMandatoryLockService" d="M1987.4,830 C1987.4,933.5 1778.5,956.5 1778.5,1060"/>
+<path class="af-edge" data-from="useChildScheduleController" data-to="scheduleService" d="M1843.6,830 C1843.6,933.5 671.5,956.5 671.5,1060"/>
+<path class="af-edge" data-from="useChildScheduleController" data-to="trackSelectionService" d="M1929.9,830 C1929.9,933.5 1561,956.5 1561,1060"/>
+<path class="af-edge" data-from="useChildScheduleController" data-to="useDraftSelectionAwareness" d="M1901.1,800 C1901.1,776 1717.6,810 1717.6,786"/>
+<path class="af-edge" data-from="useChildScheduleController" data-to="useScheduleCatalog" d="M1872.4,800 C1872.4,776 1333.2,810 1333.2,786"/>
+<path class="af-edge" data-from="useChildScheduleController" data-to="useScheduleOverrides" d="M1843.6,800 C1843.6,776 964.2,810 964.2,786"/>
+<path class="af-edge" data-from="useChildScheduleController" data-to="useSelectedSchedule" d="M1929.9,800 C1929.9,758.5 1674.5,758.5 1674.5,800"/>
+<path class="af-edge" data-from="useChildren" data-to="AuthContext" d="M1076.4,830 C1076.4,875 981.5,885 981.5,930"/>
+<path class="af-edge" data-from="useChildren" data-to="childrenApi" d="M1163.6,830 C1163.6,992 1731.1,1028 1731.1,1190"/>
+<path class="af-edge" data-from="useDraftSelectionAwareness" data-to="scheduleApi" d="M1631.4,786 C1631.4,967.8 1630.9,1008.2 1630.9,1190"/>
+<path class="af-edge" data-from="useNavItems" data-to="AuthContext" d="M930,830 C930,875 965.5,885 965.5,930"/>
+<path class="af-edge" data-from="useNavItems" data-to="usePendingApprovals" d="M930,800 C930,776 1076.4,810 1076.4,786"/>
+<path class="af-edge" data-from="usePendingApprovals" data-to="AuthContext" d="M1120,786 C1120,850.8 984.7,865.2 984.7,930"/>
+<path class="af-edge" data-from="usePendingApprovals" data-to="usersApi" d="M1163.6,786 C1163.6,967.8 1386.9,1008.2 1386.9,1190"/>
+<path class="af-edge" data-from="usePendingApprovalsController" data-to="AuthContext" d="M482.7,786 C482.7,850.8 959,865.2 959,930"/>
+<path class="af-edge" data-from="usePendingApprovalsController" data-to="childrenApi" d="M609.3,786 C609.3,967.8 1707.2,1008.2 1707.2,1190"/>
+<path class="af-edge" data-from="usePendingApprovalsController" data-to="usersApi" d="M546,786 C546,967.8 1370.6,1008.2 1370.6,1190"/>
+<path class="af-edge" data-from="useScheduleCatalog" data-to="ScheduleCatalogContext" d="M1270.8,786 C1270.8,850.8 1415.4,865.2 1415.4,930"/>
+<path class="af-edge" data-from="useScheduleOverrides" data-to="scheduleOverridesApi" d="M895.8,786 C895.8,967.8 1144,1008.2 1144,1190"/>
+<path class="af-edge" data-from="useSelectedSchedule" data-to="scheduleApi" d="M1674.5,830 C1674.5,992 1642.9,1028 1642.9,1190"/>
+<path class="af-edge" data-from="useStaffMembers" data-to="staffScheduleService" d="M755.5,786 C755.5,909.3 1043.4,936.7 1043.4,1060"/>
+<path class="af-edge" data-from="useStaffSchedule" data-to="staffScheduleService" d="M1472.5,786 C1472.5,909.3 1094.7,936.7 1094.7,1060"/>
+<path class="af-edge" data-from="useStudentsController" data-to="AllChildrenContext" d="M2137,786 C2137,850.8 1677.9,865.2 1677.9,930"/>
+<path class="af-edge" data-from="useStudentsController" data-to="AuthContext" d="M2089.4,786 C2089.4,850.8 1036.2,865.2 1036.2,930"/>
+<path class="af-edge" data-from="useStudentsController" data-to="childrenApi" d="M2184.6,786 C2184.6,967.8 1778.8,1008.2 1778.8,1190"/>
+<path class="af-edge" data-from="usersApi" data-to="notificationService" d="M1403.3,1190 C1403.3,1145 1259,1135 1259,1090"/>
+<path class="af-edge" data-from="usersApi" data-to="supabase" d="M1378.7,1190 C1378.7,1134 768.3,1134 768.3,1190"/>
+</g>
+<g class="af-nodes">
+<g class="af-node af-k-route" data-node="Sidebar" transform="translate(935 104)">
+<title>src/layouts/Sidebar.tsx</title>
+<rect width="79" height="30" rx="5"/>
+<text x="39.5" y="19.5" text-anchor="middle">Sidebar</text>
+</g>
+<g class="af-node af-k-route" data-node="guards" transform="translate(1028 104)">
+<title>src/routes/guards.tsx</title>
+<rect width="71" height="30" rx="5"/>
+<text x="35.5" y="19.5" text-anchor="middle">guards</text>
+</g>
+<g class="af-node af-k-route" data-node="ByUiMode" transform="translate(1113 104)">
+<title>src/routes/ByUiMode.tsx</title>
+<rect width="86" height="30" rx="5"/>
+<text x="43" y="19.5" text-anchor="middle">ByUiMode</text>
+</g>
+<g class="af-node af-k-route" data-node="MobileAppLayout" transform="translate(1213 104)">
+<title>src/layouts/MobileAppLayout.tsx</title>
+<rect width="164" height="30" rx="5"/>
+<text x="82" y="19.5" text-anchor="middle">📱 MobileAppLayout</text>
+</g>
+<g class="af-node af-k-route" data-node="AppLayout" transform="translate(1391 104)">
+<title>src/layouts/AppLayout.tsx</title>
+<rect width="94" height="30" rx="5"/>
+<text x="47" y="19.5" text-anchor="middle">AppLayout</text>
+</g>
+<g class="af-node af-k-route" data-node="router" transform="translate(1499 104)">
+<title>src/routes/router.tsx</title>
+<rect width="71" height="30" rx="5"/>
+<text x="35.5" y="19.5" text-anchor="middle">router</text>
+</g>
+<g class="af-node af-k-route" data-node="App" transform="translate(1584 104)">
+<title>src/App.tsx</title>
+<rect width="47" height="30" rx="5"/>
+<text x="23.5" y="19.5" text-anchor="middle">App</text>
+</g>
+<g class="af-node af-k-route" data-node="Header" transform="translate(1645 104)">
+<title>src/layouts/Header.tsx</title>
+<rect width="71" height="30" rx="5"/>
+<text x="35.5" y="19.5" text-anchor="middle">Header</text>
+</g>
+<g class="af-node af-k-element" data-node="PendingApprovalSheet" transform="translate(282 234)">
+<title>src/pages/pendingApprovals/PendingApprovalSheet.tsx</title>
+<rect width="180" height="30" rx="5"/>
+<text x="90" y="19.5" text-anchor="middle">PendingApprovalSheet</text>
+</g>
+<g class="af-node af-k-element" data-node="PendingApprovalCard" transform="translate(282 278)">
+<title>src/pages/pendingApprovals/PendingApprovalCard.tsx</title>
+<rect width="180" height="30" rx="5"/>
+<text x="90" y="19.5" text-anchor="middle">PendingApprovalCard</text>
+</g>
+<g class="af-node af-k-page" data-node="MobilePendingApprovalsPage" transform="translate(476 234)">
+<title>src/pages/pendingApprovals/MobilePendingApprovalsPage.tsx</title>
+<rect width="250" height="30" rx="5"/>
+<text x="125" y="19.5" text-anchor="middle">📱 MobilePendingApprovalsPage</text>
+</g>
+<g class="af-node af-k-page" data-node="PendingApprovalsPage" transform="translate(476 278)">
+<title>src/pages/pendingApprovals/PendingApprovalsPage.tsx</title>
+<rect width="250" height="30" rx="5"/>
+<text x="125" y="19.5" text-anchor="middle">PendingApprovalsPage</text>
+</g>
+<g class="af-node af-k-element" data-node="PendingApprovalForm" transform="translate(740 234)">
+<title>src/pages/pendingApprovals/PendingApprovalForm.tsx</title>
+<rect width="172" height="30" rx="5"/>
+<text x="86" y="19.5" text-anchor="middle">PendingApprovalForm</text>
+</g>
+<g class="af-node af-k-page" data-node="SignupPage" transform="translate(740 278)">
+<title>src/pages/SignupPage.tsx</title>
+<rect width="172" height="30" rx="5"/>
+<text x="86" y="19.5" text-anchor="middle">SignupPage</text>
+</g>
+<g class="af-node af-k-page" data-node="LoginPage" transform="translate(926 234)">
+<title>src/pages/LoginPage.tsx</title>
+<rect width="172" height="30" rx="5"/>
+<text x="86" y="19.5" text-anchor="middle">LoginPage</text>
+</g>
+<g class="af-node af-k-page" data-node="PendingApprovalPage" transform="translate(926 278)">
+<title>src/pages/PendingApprovalPage.tsx</title>
+<rect width="172" height="30" rx="5"/>
+<text x="86" y="19.5" text-anchor="middle">PendingApprovalPage</text>
+</g>
+<g class="af-node af-k-page" data-node="UserListPage" transform="translate(1112 234)">
+<title>src/pages/UserListPage.tsx</title>
+<rect width="172" height="30" rx="5"/>
+<text x="86" y="19.5" text-anchor="middle">UserListPage</text>
+</g>
+<g class="af-node af-k-page" data-node="ProfileSettingsPage" transform="translate(1112 278)">
+<title>src/pages/ProfileSettingsPage.tsx</title>
+<rect width="172" height="30" rx="5"/>
+<text x="86" y="19.5" text-anchor="middle">ProfileSettingsPage</text>
+</g>
+<g class="af-node af-k-page" data-node="ProfileSetupPage" transform="translate(1298 234)">
+<title>src/pages/ProfileSetupPage.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">ProfileSetupPage</text>
+</g>
+<g class="af-node af-k-page" data-node="SignupVerifyEmailPage" transform="translate(1298 278)">
+<title>src/pages/SignupVerifyEmailPage.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">SignupVerifyEmailPage</text>
+</g>
+<g class="af-node af-k-page" data-node="ClassManagementPage" transform="translate(1500 234)">
+<title>src/pages/ClassManagementPage.tsx</title>
+<rect width="172" height="30" rx="5"/>
+<text x="86" y="19.5" text-anchor="middle">ClassManagementPage</text>
+</g>
+<g class="af-node af-k-page" data-node="UserManagementPage" transform="translate(1500 278)">
+<title>src/pages/UserManagementPage.tsx</title>
+<rect width="172" height="30" rx="5"/>
+<text x="86" y="19.5" text-anchor="middle">UserManagementPage</text>
+</g>
+<g class="af-node af-k-page" data-node="StudentsPage" transform="translate(1686 234)">
+<title>src/pages/students/StudentsPage.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">StudentsPage</text>
+</g>
+<g class="af-node af-k-page" data-node="MobileSchedulePage" transform="translate(1686 278)">
+<title>src/pages/schedule/MobileSchedulePage.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">📱 MobileSchedulePage</text>
+</g>
+<g class="af-node af-k-page" data-node="SchedulePage" transform="translate(1888 234)">
+<title>src/pages/schedule/SchedulePage.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">SchedulePage</text>
+</g>
+<g class="af-node af-k-element" data-node="MobileScheduleView" transform="translate(1888 278)">
+<title>src/pages/schedule/MobileScheduleView.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">📱 MobileScheduleView</text>
+</g>
+<g class="af-node af-k-element" data-node="ScheduleDayView" transform="translate(2090 234)">
+<title>src/pages/schedule/ScheduleDayView.tsx</title>
+<rect width="141" height="30" rx="5"/>
+<text x="70.5" y="19.5" text-anchor="middle">ScheduleDayView</text>
+</g>
+<g class="af-node af-k-element" data-node="WeekStrip" transform="translate(2090 278)">
+<title>src/pages/schedule/WeekStrip.tsx</title>
+<rect width="141" height="30" rx="5"/>
+<text x="70.5" y="19.5" text-anchor="middle">WeekStrip</text>
+</g>
+<g class="af-node af-k-element" data-node="DayAgendaList" transform="translate(2245 234)">
+<title>src/pages/schedule/DayAgendaList.tsx</title>
+<rect width="125" height="30" rx="5"/>
+<text x="62.5" y="19.5" text-anchor="middle">DayAgendaList</text>
+</g>
+<g class="af-node af-k-element" data-node="ClassCardHeader" transform="translate(44 408)">
+<title>src/components/lessonCard/ClassCardHeader.tsx</title>
+<rect width="157" height="30" rx="5"/>
+<text x="78.5" y="19.5" text-anchor="middle">ClassCardHeader</text>
+</g>
+<g class="af-node af-k-element" data-node="CreateClassButton" transform="translate(44 452)">
+<title>src/components/CreateClassButton.tsx</title>
+<rect width="157" height="30" rx="5"/>
+<text x="78.5" y="19.5" text-anchor="middle">CreateClassButton</text>
+</g>
+<g class="af-node af-k-element" data-node="GroupTrackSelect" transform="translate(44 496)">
+<title>src/components/GroupTrackSelect.tsx</title>
+<rect width="157" height="30" rx="5"/>
+<text x="78.5" y="19.5" text-anchor="middle">GroupTrackSelect</text>
+</g>
+<g class="af-node af-k-element" data-node="OverrideSelectionCard" transform="translate(215 408)">
+<title>src/components/OverrideSelectionCard.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">OverrideSelectionCard</text>
+</g>
+<g class="af-node af-k-element" data-node="BottomSheet" transform="translate(215 452)">
+<title>src/components/BottomSheet.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">BottomSheet</text>
+</g>
+<g class="af-node af-k-element" data-node="ClassSelectionDrawer" transform="translate(215 496)">
+<title>src/components/ClassSelectionDrawer.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">ClassSelectionDrawer</text>
+</g>
+<g class="af-node af-k-element" data-node="PrintableSchedule" transform="translate(417 408)">
+<title>src/components/PrintableSchedule.tsx</title>
+<rect width="157" height="30" rx="5"/>
+<text x="78.5" y="19.5" text-anchor="middle">PrintableSchedule</text>
+</g>
+<g class="af-node af-k-element" data-node="TimeSlotOption" transform="translate(417 452)">
+<title>src/components/TimeSlotOption.tsx</title>
+<rect width="157" height="30" rx="5"/>
+<text x="78.5" y="19.5" text-anchor="middle">TimeSlotOption</text>
+</g>
+<g class="af-node af-k-element" data-node="TextSearchSheet" transform="translate(417 496)">
+<title>src/components/TextSearchSheet.tsx</title>
+<rect width="157" height="30" rx="5"/>
+<text x="78.5" y="19.5" text-anchor="middle">TextSearchSheet</text>
+</g>
+<g class="af-node af-k-element" data-node="ToggleRadioGroup" transform="translate(588 408)">
+<title>src/components/ToggleRadioGroup.tsx</title>
+<rect width="180" height="30" rx="5"/>
+<text x="90" y="19.5" text-anchor="middle">ToggleRadioGroup</text>
+</g>
+<g class="af-node af-k-element" data-node="ScheduleOverrideForm" transform="translate(588 452)">
+<title>src/components/ScheduleOverrideForm.tsx</title>
+<rect width="180" height="30" rx="5"/>
+<text x="90" y="19.5" text-anchor="middle">ScheduleOverrideForm</text>
+</g>
+<g class="af-node af-k-element" data-node="ClassSelectionCard" transform="translate(588 496)">
+<title>src/components/ClassSelectionCard.tsx</title>
+<rect width="180" height="30" rx="5"/>
+<text x="90" y="19.5" text-anchor="middle">ClassSelectionCard</text>
+</g>
+<g class="af-node af-k-element" data-node="ClassForm" transform="translate(782 408)">
+<title>src/components/ClassForm.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">ClassForm</text>
+</g>
+<g class="af-node af-k-element" data-node="ClassEnrollmentDrawer" transform="translate(782 452)">
+<title>src/components/ClassEnrollmentDrawer.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">ClassEnrollmentDrawer</text>
+</g>
+<g class="af-node af-k-element" data-node="ClassCard" transform="translate(782 496)">
+<title>src/components/lessonCard/ClassCard.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">ClassCard</text>
+</g>
+<g class="af-node af-k-element" data-node="ChildManagement" transform="translate(984 408)">
+<title>src/components/ChildManagement.tsx</title>
+<rect width="196" height="30" rx="5"/>
+<text x="98" y="19.5" text-anchor="middle">ChildManagement</text>
+</g>
+<g class="af-node af-k-element" data-node="ChildAccountLinkPicker" transform="translate(984 452)">
+<title>src/components/ChildAccountLinkPicker.tsx</title>
+<rect width="196" height="30" rx="5"/>
+<text x="98" y="19.5" text-anchor="middle">ChildAccountLinkPicker</text>
+</g>
+<g class="af-node af-k-element" data-node="ScheduleTable" transform="translate(984 496)">
+<title>src/components/ScheduleTable.tsx</title>
+<rect width="196" height="30" rx="5"/>
+<text x="98" y="19.5" text-anchor="middle">ScheduleTable</text>
+</g>
+<g class="af-node af-k-element" data-node="ProfileDropdown" transform="translate(1194 408)">
+<title>src/components/ProfileDropdown.tsx</title>
+<rect width="141" height="30" rx="5"/>
+<text x="70.5" y="19.5" text-anchor="middle">ProfileDropdown</text>
+</g>
+<g class="af-node af-k-element" data-node="ScopeSelector" transform="translate(1194 452)">
+<title>src/components/ScopeSelector.tsx</title>
+<rect width="141" height="30" rx="5"/>
+<text x="70.5" y="19.5" text-anchor="middle">ScopeSelector</text>
+</g>
+<g class="af-node af-k-element" data-node="TextSearch" transform="translate(1194 496)">
+<title>src/components/TextSearch.tsx</title>
+<rect width="141" height="30" rx="5"/>
+<text x="70.5" y="19.5" text-anchor="middle">TextSearch</text>
+</g>
+<g class="af-node af-k-element" data-node="ErrorBoundary" transform="translate(1349 408)">
+<title>src/components/ErrorBoundary.tsx</title>
+<rect width="125" height="30" rx="5"/>
+<text x="62.5" y="19.5" text-anchor="middle">ErrorBoundary</text>
+</g>
+<g class="af-node af-k-element" data-node="ChildForm" transform="translate(1349 452)">
+<title>src/components/ChildForm.tsx</title>
+<rect width="125" height="30" rx="5"/>
+<text x="62.5" y="19.5" text-anchor="middle">ChildForm</text>
+</g>
+<g class="af-node af-k-element" data-node="OverrideCard" transform="translate(1349 496)">
+<title>src/components/lessonCard/OverrideCard.tsx</title>
+<rect width="125" height="30" rx="5"/>
+<text x="62.5" y="19.5" text-anchor="middle">OverrideCard</text>
+</g>
+<g class="af-node af-k-element" data-node="StaffPicker" transform="translate(1488 408)">
+<title>src/components/StaffPicker.tsx</title>
+<rect width="157" height="30" rx="5"/>
+<text x="78.5" y="19.5" text-anchor="middle">StaffPicker</text>
+</g>
+<g class="af-node af-k-element" data-node="RoleTagPicker" transform="translate(1488 452)">
+<title>src/components/RoleTagPicker.tsx</title>
+<rect width="157" height="30" rx="5"/>
+<text x="78.5" y="19.5" text-anchor="middle">RoleTagPicker</text>
+</g>
+<g class="af-node af-k-element" data-node="ToggleFilterGroup" transform="translate(1488 496)">
+<title>src/components/ToggleFilterGroup.tsx</title>
+<rect width="157" height="30" rx="5"/>
+<text x="78.5" y="19.5" text-anchor="middle">ToggleFilterGroup</text>
+</g>
+<g class="af-node af-k-element" data-node="StudentSearchSelector" transform="translate(1659 408)">
+<title>src/components/StudentSearchSelector.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">StudentSearchSelector</text>
+</g>
+<g class="af-node af-k-element" data-node="GroupTrackTags" transform="translate(1659 452)">
+<title>src/components/GroupTrackTags.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">GroupTrackTags</text>
+</g>
+<g class="af-node af-k-element" data-node="ScopeTag" transform="translate(1659 496)">
+<title>src/components/ScopeTag.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">ScopeTag</text>
+</g>
+<g class="af-node af-k-element" data-node="FiltersBar" transform="translate(1861 408)">
+<title>src/components/FiltersBar.tsx</title>
+<rect width="133" height="30" rx="5"/>
+<text x="66.5" y="19.5" text-anchor="middle">FiltersBar</text>
+</g>
+<g class="af-node af-k-element" data-node="AddChildButton" transform="translate(1861 452)">
+<title>src/components/AddChildButton.tsx</title>
+<rect width="133" height="30" rx="5"/>
+<text x="66.5" y="19.5" text-anchor="middle">AddChildButton</text>
+</g>
+<g class="af-node af-k-element" data-node="FilterField" transform="translate(1861 496)">
+<title>src/components/FilterField.tsx</title>
+<rect width="133" height="30" rx="5"/>
+<text x="66.5" y="19.5" text-anchor="middle">FilterField</text>
+</g>
+<g class="af-node af-k-element" data-node="FilterSelect" transform="translate(2008 408)">
+<title>src/components/FilterSelect.tsx</title>
+<rect width="203" height="30" rx="5"/>
+<text x="101.5" y="19.5" text-anchor="middle">FilterSelect</text>
+</g>
+<g class="af-node af-k-element" data-node="ChildGroupTrackSelector" transform="translate(2008 452)">
+<title>src/components/ChildGroupTrackSelector.tsx</title>
+<rect width="203" height="30" rx="5"/>
+<text x="101.5" y="19.5" text-anchor="middle">ChildGroupTrackSelector</text>
+</g>
+<g class="af-node af-k-element" data-node="ChildTabs" transform="translate(2008 496)">
+<title>src/components/ChildTabs.tsx</title>
+<rect width="203" height="30" rx="5"/>
+<text x="101.5" y="19.5" text-anchor="middle">ChildTabs</text>
+</g>
+<g class="af-node af-k-element" data-node="CreateClassModal" transform="translate(2225 408)">
+<title>src/components/CreateClassModal.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">CreateClassModal</text>
+</g>
+<g class="af-node af-k-element" data-node="ScheduleOverrideModal" transform="translate(2225 452)">
+<title>src/components/ScheduleOverrideModal.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">ScheduleOverrideModal</text>
+</g>
+<g class="af-node af-k-element" data-node="ScheduleTabsBar" transform="translate(2225 496)">
+<title>src/components/ScheduleTabsBar.tsx</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">ScheduleTabsBar</text>
+</g>
+<g class="af-node af-k-element" data-node="MobileLessonCard" transform="translate(2427 408)">
+<title>src/components/lessonCard/MobileLessonCard.tsx</title>
+<rect width="180" height="30" rx="5"/>
+<text x="90" y="19.5" text-anchor="middle">📱 MobileLessonCard</text>
+</g>
+<g class="af-node af-k-element" data-node="PrintableClassRoster" transform="translate(2427 452)">
+<title>src/components/PrintableClassRoster.tsx</title>
+<rect width="180" height="30" rx="5"/>
+<text x="90" y="19.5" text-anchor="middle">PrintableClassRoster</text>
+</g>
+<g class="af-node af-k-element" data-node="TeacherPicker" transform="translate(2427 496)">
+<title>src/components/TeacherPicker.tsx</title>
+<rect width="180" height="30" rx="5"/>
+<text x="90" y="19.5" text-anchor="middle">TeacherPicker</text>
+</g>
+<g class="af-node af-k-element" data-node="AddedByTooltip" transform="translate(713 626)">
+<title>src/elements/AddedByTooltip.tsx</title>
+<rect width="133" height="30" rx="5"/>
+<text x="66.5" y="19.5" text-anchor="middle">AddedByTooltip</text>
+</g>
+<g class="af-node af-k-element" data-node="DoubleLessonTag" transform="translate(860 626)">
+<title>src/elements/DoubleLessonTag.tsx</title>
+<rect width="141" height="30" rx="5"/>
+<text x="70.5" y="19.5" text-anchor="middle">DoubleLessonTag</text>
+</g>
+<g class="af-node af-k-element" data-node="TrackTag" transform="translate(1015 626)">
+<title>src/elements/TrackTag.tsx</title>
+<rect width="86" height="30" rx="5"/>
+<text x="43" y="19.5" text-anchor="middle">TrackTag</text>
+</g>
+<g class="af-node af-k-element" data-node="GradesRangeTag" transform="translate(1115 626)">
+<title>src/elements/GradesRangeTag.tsx</title>
+<rect width="133" height="30" rx="5"/>
+<text x="66.5" y="19.5" text-anchor="middle">GradesRangeTag</text>
+</g>
+<g class="af-node af-k-element" data-node="EnrollmentCount" transform="translate(1262 626)">
+<title>src/elements/EnrollmentCount.tsx</title>
+<rect width="141" height="30" rx="5"/>
+<text x="70.5" y="19.5" text-anchor="middle">EnrollmentCount</text>
+</g>
+<g class="af-node af-k-element" data-node="OverrideSuffixButton" transform="translate(1417 626)">
+<title>src/elements/OverrideSuffixButton.tsx</title>
+<rect width="180" height="30" rx="5"/>
+<text x="90" y="19.5" text-anchor="middle">OverrideSuffixButton</text>
+</g>
+<g class="af-node af-k-element" data-node="CommittedReadOnlyBanner" transform="translate(1611 626)">
+<title>src/elements/CommittedReadOnlyBanner.tsx</title>
+<rect width="203" height="30" rx="5"/>
+<text x="101.5" y="19.5" text-anchor="middle">CommittedReadOnlyBanner</text>
+</g>
+<g class="af-node af-k-element" data-node="DraftBanner" transform="translate(1828 626)">
+<title>src/elements/DraftBanner.tsx</title>
+<rect width="110" height="30" rx="5"/>
+<text x="55" y="19.5" text-anchor="middle">DraftBanner</text>
+</g>
+<g class="af-node af-k-hook" data-node="usePendingApprovalsController" transform="translate(421 756)">
+<title>src/pages/pendingApprovals/usePendingApprovalsController.ts</title>
+<rect width="250" height="30" rx="5"/>
+<text x="125" y="19.5" text-anchor="middle">usePendingApprovalsController</text>
+</g>
+<g class="af-node af-k-hook" data-node="useAuth" transform="translate(421 800)">
+<title>src/hooks/useAuth.ts</title>
+<rect width="250" height="30" rx="5"/>
+<text x="125" y="19.5" text-anchor="middle">useAuth</text>
+</g>
+<g class="af-node af-k-hook" data-node="useStaffMembers" transform="translate(685 756)">
+<title>src/hooks/useStaffMembers.ts</title>
+<rect width="141" height="30" rx="5"/>
+<text x="70.5" y="19.5" text-anchor="middle">useStaffMembers</text>
+</g>
+<g class="af-node af-k-hook" data-node="usePickSearch" transform="translate(685 800)">
+<title>src/components/usePickSearch.ts</title>
+<rect width="141" height="30" rx="5"/>
+<text x="70.5" y="19.5" text-anchor="middle">usePickSearch</text>
+</g>
+<g class="af-node af-k-hook" data-node="useScheduleOverrides" transform="translate(840 756)">
+<title>src/hooks/useScheduleOverrides.ts</title>
+<rect width="180" height="30" rx="5"/>
+<text x="90" y="19.5" text-anchor="middle">useScheduleOverrides</text>
+</g>
+<g class="af-node af-k-hook" data-node="useNavItems" transform="translate(840 800)">
+<title>src/layouts/useNavItems.tsx</title>
+<rect width="180" height="30" rx="5"/>
+<text x="90" y="19.5" text-anchor="middle">useNavItems</text>
+</g>
+<g class="af-node af-k-hook" data-node="usePendingApprovals" transform="translate(1034 756)">
+<title>src/hooks/usePendingApprovals.ts</title>
+<rect width="172" height="30" rx="5"/>
+<text x="86" y="19.5" text-anchor="middle">usePendingApprovals</text>
+</g>
+<g class="af-node af-k-hook" data-node="useChildren" transform="translate(1034 800)">
+<title>src/hooks/useChildren.ts</title>
+<rect width="172" height="30" rx="5"/>
+<text x="86" y="19.5" text-anchor="middle">useChildren</text>
+</g>
+<g class="af-node af-k-hook" data-node="useScheduleCatalog" transform="translate(1220 756)">
+<title>src/hooks/useScheduleCatalog.ts</title>
+<rect width="164" height="30" rx="5"/>
+<text x="82" y="19.5" text-anchor="middle">useScheduleCatalog</text>
+</g>
+<g class="af-node af-k-hook" data-node="useAllChildren" transform="translate(1220 800)">
+<title>src/hooks/useAllChildren.ts</title>
+<rect width="164" height="30" rx="5"/>
+<text x="82" y="19.5" text-anchor="middle">useAllChildren</text>
+</g>
+<g class="af-node af-k-hook" data-node="useStaffSchedule" transform="translate(1398 756)">
+<title>src/hooks/useStaffSchedule.ts</title>
+<rect width="149" height="30" rx="5"/>
+<text x="74.5" y="19.5" text-anchor="middle">useStaffSchedule</text>
+</g>
+<g class="af-node af-k-hook" data-node="usePageInfo" transform="translate(1398 800)">
+<title>src/layouts/usePageInfo.tsx</title>
+<rect width="149" height="30" rx="5"/>
+<text x="74.5" y="19.5" text-anchor="middle">usePageInfo</text>
+</g>
+<g class="af-node af-k-hook" data-node="useDraftSelectionAwareness" transform="translate(1561 756)">
+<title>src/hooks/useDraftSelectionAwareness.ts</title>
+<rect width="227" height="30" rx="5"/>
+<text x="113.5" y="19.5" text-anchor="middle">useDraftSelectionAwareness</text>
+</g>
+<g class="af-node af-k-hook" data-node="useSelectedSchedule" transform="translate(1561 800)">
+<title>src/hooks/useSelectedSchedule.ts</title>
+<rect width="227" height="30" rx="5"/>
+<text x="113.5" y="19.5" text-anchor="middle">useSelectedSchedule</text>
+</g>
+<g class="af-node af-k-hook" data-node="useSwipe" transform="translate(1802 756)">
+<title>src/hooks/useSwipe.ts</title>
+<rect width="227" height="30" rx="5"/>
+<text x="113.5" y="19.5" text-anchor="middle">useSwipe</text>
+</g>
+<g class="af-node af-k-hook" data-node="useChildScheduleController" transform="translate(1802 800)">
+<title>src/pages/schedule/useChildScheduleController.ts</title>
+<rect width="227" height="30" rx="5"/>
+<text x="113.5" y="19.5" text-anchor="middle">useChildScheduleController</text>
+</g>
+<g class="af-node af-k-hook" data-node="useStudentsController" transform="translate(2043 756)">
+<title>src/pages/students/useStudentsController.ts</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">useStudentsController</text>
+</g>
+<g class="af-node af-k-context" data-node="AuthContext" transform="translate(941 930)">
+<title>src/contexts/AuthContext.tsx</title>
+<rect width="110" height="30" rx="5"/>
+<text x="55" y="19.5" text-anchor="middle">AuthContext</text>
+</g>
+<g class="af-node af-k-context" data-node="UiModeContext" transform="translate(1065 930)">
+<title>src/contexts/UiModeContext.tsx</title>
+<rect width="125" height="30" rx="5"/>
+<text x="62.5" y="19.5" text-anchor="middle">UiModeContext</text>
+</g>
+<g class="af-node af-k-context" data-node="ChildContext" transform="translate(1204 930)">
+<title>src/contexts/ChildContext.tsx</title>
+<rect width="118" height="30" rx="5"/>
+<text x="59" y="19.5" text-anchor="middle">ChildContext</text>
+</g>
+<g class="af-node af-k-context" data-node="ScheduleCatalogContext" transform="translate(1336 930)">
+<title>src/contexts/ScheduleCatalogContext.tsx</title>
+<rect width="196" height="30" rx="5"/>
+<text x="98" y="19.5" text-anchor="middle">ScheduleCatalogContext</text>
+</g>
+<g class="af-node af-k-context" data-node="AllChildrenContext" transform="translate(1546 930)">
+<title>src/contexts/AllChildrenContext.tsx</title>
+<rect width="164" height="30" rx="5"/>
+<text x="82" y="19.5" text-anchor="middle">AllChildrenContext</text>
+</g>
+<g class="af-node af-k-service" data-node="permissions" transform="translate(197 1060)">
+<title>src/services/permissions.ts</title>
+<rect width="110" height="30" rx="5"/>
+<text x="55" y="19.5" text-anchor="middle">permissions</text>
+</g>
+<g class="af-node af-k-service" data-node="roleFlags" transform="translate(321 1060)">
+<title>src/services/roleFlags.ts</title>
+<rect width="94" height="30" rx="5"/>
+<text x="47" y="19.5" text-anchor="middle">roleFlags</text>
+</g>
+<g class="af-node af-k-service" data-node="requestedRole" transform="translate(429 1060)">
+<title>src/services/requestedRole.ts</title>
+<rect width="125" height="30" rx="5"/>
+<text x="62.5" y="19.5" text-anchor="middle">requestedRole</text>
+</g>
+<g class="af-node af-k-service" data-node="scheduleService" transform="translate(568 1060)">
+<title>src/services/scheduleService.ts</title>
+<rect width="141" height="30" rx="5"/>
+<text x="70.5" y="19.5" text-anchor="middle">scheduleService</text>
+</g>
+<g class="af-node af-k-service" data-node="uiMode" transform="translate(723 1060)">
+<title>src/services/uiMode.ts</title>
+<rect width="71" height="30" rx="5"/>
+<text x="35.5" y="19.5" text-anchor="middle">uiMode</text>
+</g>
+<g class="af-node af-k-service" data-node="enrollmentService" transform="translate(808 1060)">
+<title>src/services/enrollmentService.ts</title>
+<rect width="157" height="30" rx="5"/>
+<text x="78.5" y="19.5" text-anchor="middle">enrollmentService</text>
+</g>
+<g class="af-node af-k-service" data-node="staffScheduleService" transform="translate(979 1060)">
+<title>src/services/staffScheduleService.ts</title>
+<rect width="180" height="30" rx="5"/>
+<text x="90" y="19.5" text-anchor="middle">staffScheduleService</text>
+</g>
+<g class="af-node af-k-service" data-node="notificationService" transform="translate(1173 1060)">
+<title>src/services/notificationService.ts</title>
+<rect width="172" height="30" rx="5"/>
+<text x="86" y="19.5" text-anchor="middle">notificationService</text>
+</g>
+<g class="af-node af-k-service" data-node="roleRules" transform="translate(1359 1060)">
+<title>src/services/roleRules.ts</title>
+<rect width="94" height="30" rx="5"/>
+<text x="47" y="19.5" text-anchor="middle">roleRules</text>
+</g>
+<g class="af-node af-k-service" data-node="trackSelectionService" transform="translate(1467 1060)">
+<title>src/services/trackSelectionService.ts</title>
+<rect width="188" height="30" rx="5"/>
+<text x="94" y="19.5" text-anchor="middle">trackSelectionService</text>
+</g>
+<g class="af-node af-k-service" data-node="groupMandatoryLockService" transform="translate(1669 1060)">
+<title>src/services/groupMandatoryLockService.ts</title>
+<rect width="219" height="30" rx="5"/>
+<text x="109.5" y="19.5" text-anchor="middle">groupMandatoryLockService</text>
+</g>
+<g class="af-node af-k-service" data-node="dayAgenda" transform="translate(1902 1060)">
+<title>src/pages/schedule/dayAgenda.ts</title>
+<rect width="94" height="30" rx="5"/>
+<text x="47" y="19.5" text-anchor="middle">dayAgenda</text>
+</g>
+<g class="af-node af-k-service" data-node="scheduleCapabilities" transform="translate(2010 1060)">
+<title>src/pages/schedule/scheduleCapabilities.ts</title>
+<rect width="180" height="30" rx="5"/>
+<text x="90" y="19.5" text-anchor="middle">scheduleCapabilities</text>
+</g>
+<g class="af-node af-k-service" data-node="scheduleView" transform="translate(2204 1060)">
+<title>src/pages/schedule/scheduleView.ts</title>
+<rect width="118" height="30" rx="5"/>
+<text x="59" y="19.5" text-anchor="middle">scheduleView</text>
+</g>
+<g class="af-node af-k-service" data-node="scheduleDays" transform="translate(2336 1060)">
+<title>src/pages/schedule/scheduleDays.ts</title>
+<rect width="118" height="30" rx="5"/>
+<text x="59" y="19.5" text-anchor="middle">scheduleDays</text>
+</g>
+<g class="af-node af-k-api" data-node="supabase" transform="translate(722 1190)">
+<title>src/services/supabase.ts</title>
+<rect width="86" height="30" rx="5"/>
+<text x="43" y="19.5" text-anchor="middle">supabase</text>
+</g>
+<g class="af-node af-k-api" data-node="authApi" transform="translate(822 1190)">
+<title>src/services/api.ts</title>
+<rect width="79" height="30" rx="5"/>
+<text x="39.5" y="19.5" text-anchor="middle">authApi</text>
+</g>
+<g class="af-node af-k-api" data-node="enrollmentApi" transform="translate(915 1190)">
+<title>src/services/api.ts</title>
+<rect width="125" height="30" rx="5"/>
+<text x="62.5" y="19.5" text-anchor="middle">enrollmentApi</text>
+</g>
+<g class="af-node af-k-api" data-node="scheduleOverridesApi" transform="translate(1054 1190)">
+<title>src/services/api.ts</title>
+<rect width="180" height="30" rx="5"/>
+<text x="90" y="19.5" text-anchor="middle">scheduleOverridesApi</text>
+</g>
+<g class="af-node af-k-api" data-node="staffApi" transform="translate(1248 1190)">
+<title>src/services/api.ts</title>
+<rect width="86" height="30" rx="5"/>
+<text x="43" y="19.5" text-anchor="middle">staffApi</text>
+</g>
+<g class="af-node af-k-api" data-node="usersApi" transform="translate(1348 1190)">
+<title>src/services/api.ts</title>
+<rect width="86" height="30" rx="5"/>
+<text x="43" y="19.5" text-anchor="middle">usersApi</text>
+</g>
+<g class="af-node af-k-api" data-node="classesApi" transform="translate(1448 1190)">
+<title>src/services/api.ts</title>
+<rect width="102" height="30" rx="5"/>
+<text x="51" y="19.5" text-anchor="middle">classesApi</text>
+</g>
+<g class="af-node af-k-api" data-node="scheduleApi" transform="translate(1564 1190)">
+<title>src/services/api.ts</title>
+<rect width="110" height="30" rx="5"/>
+<text x="55" y="19.5" text-anchor="middle">scheduleApi</text>
+</g>
+<g class="af-node af-k-api" data-node="childrenApi" transform="translate(1688 1190)">
+<title>src/services/api.ts</title>
+<rect width="110" height="30" rx="5"/>
+<text x="55" y="19.5" text-anchor="middle">childrenApi</text>
+</g>
+<g class="af-node af-k-api" data-node="timeSlotsApi" transform="translate(1812 1190)">
+<title>src/services/api.ts</title>
+<rect width="118" height="30" rx="5"/>
+<text x="59" y="19.5" text-anchor="middle">timeSlotsApi</text>
+</g>
+</g>
+</svg>
