@@ -129,7 +129,7 @@ const KINDS: { kind: Kind; label: string; fill: string; stroke: string }[] = [
 // Chart geometry in px. Node labels are monospace, so their width is known
 // without a browser.
 const GEOMETRY = {
-  maxContentWidth: 1460,
+  maxContentWidth: 2800,
   margin: 24,
   legendHeight: 40,
   bandGap: 40,
