@@ -1,12 +1,12 @@
 #!/usr/bin/env tsx
 /**
  * App flow chart generator: draws how routes, pages, components, hooks,
- * contexts, services and the API layer import each other, as a Mermaid
- * flowchart built from the real imports under src/.
+ * contexts, services and the API layer import each other, built from the
+ * real imports under src/. Each layer is one band, top to bottom.
  *
  * Usage:
- *   npm run docs:app-flow                        rewrite the chart in docs/app-flow.md
- *   npm run docs:app-flow:check                  exit 1 if docs/app-flow.md is stale
+ *   npm run docs:app-flow                        rewrite docs/app-flow.svg and the list in docs/app-flow.md
+ *   npm run docs:app-flow:check                  exit 1 if either is stale
  *   npm run docs:app-flow -- --html <out.html>   also write the interactive page
  */
 
@@ -18,6 +18,7 @@ import ts from "typescript";
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const SRC = path.join(ROOT, "src");
 const DOC = path.join(ROOT, "docs", "app-flow.md");
+const SVG = path.join(ROOT, "docs", "app-flow.svg");
 const API_FILE = "services/api.ts";
 const START_MARKER = "<!-- app-flow:start -->";
 const END_MARKER = "<!-- app-flow:end -->";
@@ -80,8 +81,8 @@ const CLASSIFY: [RegExp, Kind][] = [
   [/^services\//, "service"],
 ];
 
-// Chart columns, left to right; the first match wins.
-const COLUMNS: [string, string, (file: string, kind: Kind) => boolean][] = [
+// Chart layers, one band each, top to bottom; the first match wins.
+const LAYERS: [string, string, (file: string, kind: Kind) => boolean][] = [
   ["routing", "Routing & Layouts", (_, kind) => kind === "route"],
   [
     "pages",
@@ -125,6 +126,23 @@ const KINDS: { kind: Kind; label: string; fill: string; stroke: string }[] = [
   { kind: "api", label: "API", fill: "#67e8f9", stroke: "#0e7490" },
 ];
 
+// Chart geometry in px. Node labels are monospace, so their width is known
+// without a browser.
+const GEOMETRY = {
+  maxContentWidth: 1460,
+  margin: 24,
+  legendHeight: 40,
+  bandGap: 40,
+  bandPadX: 20,
+  bandHeader: 40,
+  bandPadBottom: 20,
+  nodeHeight: 30,
+  nodeGapX: 14,
+  nodeGapY: 14,
+  charWidth: 7.8, // 13px monospace
+  nodePadX: 12,
+};
+
 const SKIP = [
   /\.test\.tsx?$/,
   /\.stories\.tsx?$/,
@@ -133,25 +151,12 @@ const SKIP = [
   /^testUtils\//,
 ];
 
-const MERMAID_RESERVED = new Set([
-  "end",
-  "graph",
-  "flowchart",
-  "subgraph",
-  "direction",
-  "style",
-  "class",
-  "classDef",
-  "click",
-  "linkStyle",
-]);
-
 interface GraphNode {
   id: string;
   label: string;
   kind: Kind;
   file: string;
-  column: string;
+  layer: string;
   group: string;
 }
 
@@ -315,12 +320,11 @@ function classify(file: string): Kind | null {
 }
 
 function makeNode(file: string, kind: Kind, id: string): GraphNode {
-  const column = COLUMNS.find(([, , match]) => match(file, kind))?.[0];
-  if (!column) throw new Error(`No chart column for ${file} (${kind})`);
-  const folder = file.match(/^pages\/(\w+)\//)?.[1];
-  const group = column === "pages" ? (folder ?? "") : "";
+  const layer = LAYERS.find(([, , match]) => match(file, kind))?.[0];
+  if (!layer) throw new Error(`No chart layer for ${file} (${kind})`);
+  const group = file.match(/^pages\/(\w+)\//)?.[1] ?? "";
   const label = id.startsWith("Mobile") ? `📱 ${id}` : id;
-  return { id, label, kind, file: `src/${file}`, column, group };
+  return { id, label, kind, file: `src/${file}`, layer, group };
 }
 
 export function buildGraph(): Graph {
@@ -333,8 +337,6 @@ export function buildGraph(): Graph {
   const addNode = (node: GraphNode) => {
     if (!/^[A-Za-z][A-Za-z0-9]*$/.test(node.id))
       throw new Error(`Node id "${node.id}" is not a plain identifier`);
-    if (MERMAID_RESERVED.has(node.id))
-      throw new Error(`Node id "${node.id}" is a Mermaid keyword`);
     const existing = nodes.get(node.id);
     if (existing && existing.file !== node.file)
       throw new Error(
@@ -376,7 +378,7 @@ export function buildGraph(): Graph {
       label: name,
       kind: "api",
       file: `src/${API_FILE}`,
-      column: "api",
+      layer: "api",
       group: "",
     });
   }
@@ -418,57 +420,364 @@ function compare(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-export function renderMermaid(graph: Graph): string {
-  const lines = ["flowchart LR"];
-  const nodeLine = (n: GraphNode, indent: string) =>
-    `${indent}${n.id}["${n.label}"]:::${n.kind}`;
-
-  lines.push('  subgraph legend["Legend"]', "    direction TB");
-  for (const k of KINDS) {
-    const id = `legend${k.kind[0].toUpperCase()}${k.kind.slice(1)}`;
-    lines.push(`    ${id}["${k.label}"]:::${k.kind}`);
-  }
-  lines.push("  end");
-
-  for (const [column, title] of COLUMNS) {
-    const members = graph.nodes.filter(n => n.column === column);
-    if (members.length === 0) continue;
-    lines.push(`  subgraph ${column}Column["${title}"]`);
-    const groups = [...new Set(members.map(n => n.group))].sort(compare);
-    for (const group of groups) {
-      const inGroup = members.filter(n => n.group === group);
-      if (!group) {
-        inGroup.forEach(n => lines.push(nodeLine(n, "    ")));
-        continue;
-      }
-      lines.push(`    subgraph ${group}Folder["pages/${group}/"]`);
-      inGroup.forEach(n => lines.push(nodeLine(n, "      ")));
-      lines.push("    end");
-    }
-    lines.push("  end");
-  }
-
-  for (const [from, to] of graph.edges) lines.push(`  ${from} --> ${to}`);
-
-  for (const k of KINDS) {
-    lines.push(
-      `  classDef ${k.kind} fill:${k.fill},stroke:${k.stroke},color:#111827`
-    );
-  }
-  return lines.join("\n");
+function mean(values: number[]): number {
+  return values.reduce((sum, v) => sum + v, 0) / values.length;
 }
 
-function renderDocRegion(mermaid: string): string {
-  return [
+interface Box {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+interface Band {
+  id: string;
+  title: string;
+  nodes: GraphNode[];
+  box: Box;
+}
+
+interface Layout {
+  width: number;
+  height: number;
+  bands: Band[];
+  boxes: Map<string, Box>;
+}
+
+// Nodes of one band in a grid, filled column by column so that a node's
+// left-to-right position follows its sort order even when the band wraps.
+interface Grid {
+  width: number;
+  rows: number;
+  cells: Map<string, Box>; // relative to the grid's top-left corner
+}
+
+function labelWidth(label: string): number {
+  // Emoji are about two monospace cells wide.
+  const cells = [...label].reduce(
+    (n, ch) => n + (ch.codePointAt(0)! > 0xffff ? 2 : 1),
+    0
+  );
+  return Math.round(cells * GEOMETRY.charWidth + 2 * GEOMETRY.nodePadX);
+}
+
+function makeGrid(ids: string[], widths: Map<string, number>): Grid {
+  const g = GEOMETRY;
+  for (let rows = 1; ; rows++) {
+    const cols = Math.ceil(ids.length / rows);
+    const colWidths = Array.from({ length: cols }, (_, c) =>
+      Math.max(
+        ...ids.slice(c * rows, (c + 1) * rows).map(id => widths.get(id)!)
+      )
+    );
+    const width =
+      colWidths.reduce((sum, w) => sum + w, 0) + g.nodeGapX * (cols - 1);
+    if (width > g.maxContentWidth && cols > 1) continue;
+    const cells = new Map<string, Box>();
+    let x = 0;
+    colWidths.forEach((w, c) => {
+      ids.slice(c * rows, (c + 1) * rows).forEach((id, r) => {
+        const y = r * (g.nodeHeight + g.nodeGapY);
+        cells.set(id, { x, y, w, h: g.nodeHeight });
+      });
+      x += w + g.nodeGapX;
+    });
+    return { width, rows: Math.min(rows, ids.length), cells };
+  }
+}
+
+// One band per layer. Inside a band, nodes are ordered by the average
+// position of the nodes they connect to in other bands (a few sweeps down
+// and up), which keeps arrows short and mostly vertical. Pages stay grouped
+// by page folder.
+function layoutGraph(graph: Graph): Layout {
+  const g = GEOMETRY;
+  const widths = new Map(graph.nodes.map(n => [n.id, labelWidth(n.label)]));
+  const layerOf = new Map(graph.nodes.map(n => [n.id, n.layer]));
+  const neighbors = new Map<string, string[]>(graph.nodes.map(n => [n.id, []]));
+  for (const [a, b] of graph.edges) {
+    neighbors.get(a)!.push(b);
+    neighbors.get(b)!.push(a);
+  }
+
+  const bands = LAYERS.map(([id, title]) => ({
+    id,
+    title,
+    nodes: graph.nodes.filter(n => n.layer === id),
+  })).filter(b => b.nodes.length > 0);
+
+  const grids = new Map<string, Grid>();
+  const centerX = new Map<string, number>();
+  const place = (band: (typeof bands)[number]) => {
+    const grid = makeGrid(
+      band.nodes.map(n => n.id),
+      widths
+    );
+    grids.set(band.id, grid);
+    for (const [id, cell] of grid.cells) {
+      centerX.set(id, cell.x + cell.w / 2 - grid.width / 2);
+    }
+  };
+
+  for (const band of bands) {
+    band.nodes.sort((a, b) => compare(a.group, b.group) || compare(a.id, b.id));
+    place(band);
+  }
+  for (let sweep = 0; sweep < 6; sweep++) {
+    const order = sweep % 2 === 0 ? bands : [...bands].reverse();
+    for (const band of order) {
+      const bary = new Map<string, number>();
+      for (const n of band.nodes) {
+        const others = neighbors
+          .get(n.id)!
+          .filter(o => layerOf.get(o) !== band.id);
+        bary.set(
+          n.id,
+          others.length > 0
+            ? mean(others.map(o => centerX.get(o)!))
+            : centerX.get(n.id)!
+        );
+      }
+      const groupBary = new Map<string, number>();
+      for (const group of new Set(band.nodes.map(n => n.group))) {
+        const members = band.nodes.filter(n => n.group === group);
+        groupBary.set(group, mean(members.map(n => bary.get(n.id)!)));
+      }
+      band.nodes.sort(
+        (a, b) =>
+          groupBary.get(a.group)! - groupBary.get(b.group)! ||
+          compare(a.group, b.group) ||
+          bary.get(a.id)! - bary.get(b.id)! ||
+          compare(a.id, b.id)
+      );
+      place(band);
+    }
+  }
+
+  const contentWidth = Math.max(...[...grids.values()].map(gr => gr.width));
+  const bandWidth = contentWidth + 2 * g.bandPadX;
+  const boxes = new Map<string, Box>();
+  const placed: Band[] = [];
+  let y = g.margin + g.legendHeight;
+  for (const band of bands) {
+    const grid = grids.get(band.id)!;
+    const height =
+      g.bandHeader +
+      grid.rows * g.nodeHeight +
+      (grid.rows - 1) * g.nodeGapY +
+      g.bandPadBottom;
+    const left =
+      g.margin + g.bandPadX + Math.round((contentWidth - grid.width) / 2);
+    for (const [id, cell] of grid.cells) {
+      boxes.set(id, {
+        x: left + cell.x,
+        y: y + g.bandHeader + cell.y,
+        w: cell.w,
+        h: cell.h,
+      });
+    }
+    placed.push({ ...band, box: { x: g.margin, y, w: bandWidth, h: height } });
+    y += height + g.bandGap;
+  }
+
+  return {
+    width: bandWidth + 2 * g.margin,
+    height: y - g.bandGap + g.margin,
+    bands: placed,
+    boxes,
+  };
+}
+
+// Arrows leave a node from its bottom when the target is lower, from its top
+// when the target is higher or on the same row. Each side spreads its arrows
+// out, ordered by where the other end is, so they don't all meet at one point.
+function edgePaths(graph: Graph, layout: Layout): string[] {
+  const { boxes } = layout;
+  type Side = "top" | "bottom";
+  const ends = graph.edges.map(([from, to]) => {
+    const a = boxes.get(from)!;
+    const b = boxes.get(to)!;
+    if (b.y > a.y) return { from: "bottom", to: "top" } as const;
+    if (b.y < a.y) return { from: "top", to: "bottom" } as const;
+    return { from: "top", to: "top" } as const;
+  });
+
+  const ports = new Map<
+    string,
+    { edge: number; end: 0 | 1; otherX: number }[]
+  >();
+  graph.edges.forEach(([from, to], i) => {
+    const a = boxes.get(from)!;
+    const b = boxes.get(to)!;
+    const add = (id: string, side: Side, end: 0 | 1, other: Box) => {
+      const key = `${id} ${side}`;
+      if (!ports.has(key)) ports.set(key, []);
+      ports.get(key)!.push({ edge: i, end, otherX: other.x + other.w / 2 });
+    };
+    add(from, ends[i].from, 0, b);
+    add(to, ends[i].to, 1, a);
+  });
+
+  const points = graph.edges.map(() => [
+    [0, 0],
+    [0, 0],
+  ]);
+  for (const [key, list] of ports) {
+    const [id, side] = key.split(" ");
+    const box = boxes.get(id)!;
+    list.sort((p, q) => p.otherX - q.otherX || p.edge - q.edge);
+    list.forEach((p, i) => {
+      const x = box.x + box.w * (0.12 + (0.76 * (i + 0.5)) / list.length);
+      const y = side === "top" ? box.y : box.y + box.h;
+      points[p.edge][p.end] = [x, y];
+    });
+  }
+
+  const r = (v: number) => Math.round(v * 10) / 10;
+  return graph.edges.map((_, i) => {
+    const [[x1, y1], [x2, y2]] = points[i];
+    let c1: number;
+    let c2: number;
+    if (ends[i].from === "bottom") {
+      const k = Math.max(24, (y2 - y1) * 0.45);
+      [c1, c2] = [y1 + k, y2 - k];
+    } else if (ends[i].to === "bottom") {
+      const k = Math.max(24, (y1 - y2) * 0.45);
+      [c1, c2] = [y1 - k, y2 + k];
+    } else {
+      const lift = 16 + Math.min(40, Math.abs(x2 - x1) * 0.1);
+      [c1, c2] = [y1 - lift, y2 - lift];
+    }
+    return `M${r(x1)},${r(y1)} C${r(x1)},${r(c1)} ${r(x2)},${r(c2)} ${r(x2)},${r(y2)}`;
+  });
+}
+
+function escapeXml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+const SVG_STYLE = `
+.app-flow { --af-bg: #ffffff; --af-band: #f3f5f8; --af-band-line: #d9dee6; --af-text: #1f2328; --af-muted: #59636e; --af-edge: #8c959f; }
+@media (prefers-color-scheme: dark) {
+  .app-flow { --af-bg: #0d1117; --af-band: #151b23; --af-band-line: #30363d; --af-text: #e6edf3; --af-muted: #9198a1; --af-edge: #656c76; }
+}
+.af-bg { fill: var(--af-bg); }
+.af-band rect { fill: var(--af-band); stroke: var(--af-band-line); }
+.af-band-title { fill: var(--af-text); font: 600 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+.af-band-count, .af-legend text { fill: var(--af-muted); font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+.af-edge { fill: none; stroke: var(--af-edge); stroke-width: 1; opacity: 0.55; marker-end: url(#af-arrow); }
+.af-arrow { fill: var(--af-edge); }
+.af-legend .af-edge { opacity: 1; }
+.af-node rect, .af-legend rect { stroke-width: 1.5; }
+.af-node text { fill: #111827; font: 13px ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+${KINDS.map(k => `.af-k-${k.kind} rect { fill: ${k.fill}; stroke: ${k.stroke}; }`).join("\n")}
+`;
+
+function renderSvg(graph: Graph, layout: Layout): string {
+  const g = GEOMETRY;
+  const out: string[] = [];
+  const { width, height } = layout;
+  out.push(
+    `<svg xmlns="http://www.w3.org/2000/svg" class="app-flow" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-labelledby="af-title">`,
+    `<title id="af-title">App flow: ${graph.nodes.length} modules, ${graph.edges.length} imports</title>`,
+    `<style>${SVG_STYLE}</style>`,
+    "<defs>",
+    ...["", "-out", "-in"].map(
+      suffix =>
+        `<marker id="af-arrow${suffix}" viewBox="0 0 8 8" refX="7.5" refY="4" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path class="af-arrow${suffix}" d="M0,0.5 L8,4 L0,7.5 z"/></marker>`
+    ),
+    "</defs>",
+    `<rect class="af-bg" width="${width}" height="${height}"/>`
+  );
+
+  // Legend: one swatch per kind, then the arrow key.
+  out.push(`<g class="af-legend">`);
+  let x = g.margin;
+  const ly = g.margin + 4;
+  for (const k of KINDS) {
+    out.push(
+      `<g class="af-k-${k.kind}"><rect x="${x}" y="${ly}" width="14" height="14" rx="3"/></g>`,
+      `<text x="${x + 20}" y="${ly + 12}">${escapeXml(k.label)}</text>`
+    );
+    x += 20 + Math.round(k.label.length * 7) + 24;
+  }
+  out.push(
+    `<path class="af-edge" d="M${x},${ly + 7} L${x + 34},${ly + 7}"/>`,
+    `<text x="${x + 42}" y="${ly + 12}">A → B: A imports B</text>`,
+    "</g>"
+  );
+
+  out.push(`<g class="af-bands">`);
+  for (const band of layout.bands) {
+    const { x: bx, y: by, w, h } = band.box;
+    const count = `${band.nodes.length} ${band.nodes.length === 1 ? "module" : "modules"}`;
+    out.push(
+      `<g class="af-band" data-layer="${band.id}">`,
+      `<rect x="${bx}" y="${by}" width="${w}" height="${h}" rx="10"/>`,
+      `<text class="af-band-title" x="${bx + 16}" y="${by + 25}">${escapeXml(band.title)}</text>`,
+      `<text class="af-band-count" x="${bx + w - 16}" y="${by + 25}" text-anchor="end">${count}</text>`,
+      "</g>"
+    );
+  }
+  out.push("</g>");
+
+  out.push(`<g class="af-edges">`);
+  edgePaths(graph, layout).forEach((d, i) => {
+    const [from, to] = graph.edges[i];
+    out.push(
+      `<path class="af-edge" data-from="${from}" data-to="${to}" d="${d}"/>`
+    );
+  });
+  out.push("</g>");
+
+  out.push(`<g class="af-nodes">`);
+  for (const band of layout.bands) {
+    for (const n of band.nodes) {
+      const b = layout.boxes.get(n.id)!;
+      out.push(
+        `<g class="af-node af-k-${n.kind}" data-node="${n.id}" transform="translate(${b.x} ${b.y})">`,
+        `<title>${escapeXml(n.file)}</title>`,
+        `<rect width="${b.w}" height="${b.h}" rx="5"/>`,
+        `<text x="${b.w / 2}" y="${b.h / 2 + 4.5}" text-anchor="middle">${escapeXml(n.label)}</text>`,
+        "</g>"
+      );
+    }
+  }
+  out.push("</g>", "</svg>", "");
+  return out.join("\n");
+}
+
+// The doc shows the SVG, plus the same graph as text so that a diff of the
+// doc shows which imports changed.
+function renderDocRegion(graph: Graph, layout: Layout): string {
+  const outs = new Map<string, string[]>(graph.nodes.map(n => [n.id, []]));
+  for (const [from, to] of graph.edges) outs.get(from)!.push(to);
+  const lines = [
     START_MARKER,
     "<!-- Generated by scripts/gen-app-flow.ts. Run `npm run docs:app-flow` instead of editing. -->",
     "",
-    "```mermaid",
-    mermaid,
-    "```",
+    `[![App flow: ${graph.nodes.length} modules, ${graph.edges.length} imports](app-flow.svg)](app-flow.svg)`,
     "",
-    END_MARKER,
-  ].join("\n");
+    "<details>",
+    "<summary>The same graph as text: what each module imports</summary>",
+  ];
+  for (const band of layout.bands) {
+    lines.push("", `**${band.title}**`, "");
+    for (const n of [...band.nodes].sort((a, b) => compare(a.id, b.id))) {
+      const targets = outs.get(n.id)!;
+      const list = targets.length
+        ? targets.map(t => `\`${t}\``).join(", ")
+        : "nothing charted";
+      lines.push(`- \`${n.id}\` → ${list}`);
+    }
+  }
+  lines.push("", "</details>", "", END_MARKER);
+  return lines.join("\n");
 }
 
 function replaceRegion(doc: string, region: string): string {
@@ -480,9 +789,8 @@ function replaceRegion(doc: string, region: string): string {
   return doc.slice(0, start) + region + doc.slice(end + END_MARKER.length);
 }
 
-function renderHtml(graph: Graph, mermaid: string): string {
+function renderHtml(graph: Graph, svg: string): string {
   const data = JSON.stringify({
-    source: mermaid,
     nodes: graph.nodes.map(({ id, label, kind, file }) => ({
       id,
       label,
@@ -494,7 +802,12 @@ function renderHtml(graph: Graph, mermaid: string): string {
   }).replace(/</g, "\\u003c");
   return HTML_TEMPLATE.replace(/%NODE_COUNT%/g, String(graph.nodes.length))
     .replace(/%EDGE_COUNT%/g, String(graph.edges.length))
+    .replace("%SVG%", () => svg)
     .replace("%DATA%", () => data);
+}
+
+function readOrEmpty(file: string): string {
+  return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
 }
 
 function main() {
@@ -505,50 +818,56 @@ function main() {
   if (htmlIndex >= 0 && !htmlPath) throw new Error("--html needs a file path");
 
   const graph = buildGraph();
-  const mermaid = renderMermaid(graph);
-  const current = fs.readFileSync(DOC, "utf8");
-  const next = replaceRegion(current, renderDocRegion(mermaid));
+  const layout = layoutGraph(graph);
+  const svg = renderSvg(graph, layout);
+  const currentDoc = fs.readFileSync(DOC, "utf8");
+  const nextDoc = replaceRegion(currentDoc, renderDocRegion(graph, layout));
+  const currentSvg = readOrEmpty(SVG);
+  const changed = nextDoc !== currentDoc || svg !== currentSvg;
 
   if (check) {
-    if (next !== current) {
-      console.error("docs/app-flow.md is stale. Run `npm run docs:app-flow`.");
+    if (changed) {
+      console.error(
+        "docs/app-flow.md or docs/app-flow.svg is stale. Run `npm run docs:app-flow`."
+      );
       process.exit(1);
     }
-    console.log("docs/app-flow.md is up to date.");
+    console.log("docs/app-flow.md and docs/app-flow.svg are up to date.");
     return;
   }
 
-  if (next !== current) fs.writeFileSync(DOC, next);
+  if (nextDoc !== currentDoc) fs.writeFileSync(DOC, nextDoc);
+  if (svg !== currentSvg) fs.writeFileSync(SVG, svg);
   console.log(
-    `docs/app-flow.md: ${graph.nodes.length} nodes, ${graph.edges.length} edges` +
-      (next === current ? " (unchanged)" : " (updated)")
+    `docs/app-flow: ${graph.nodes.length} nodes, ${graph.edges.length} edges` +
+      (changed ? " (updated)" : " (unchanged)")
   );
   console.log(`Left out (no CLASSIFY rule): ${graph.leftOut.join(", ")}`);
 
   if (htmlPath) {
-    fs.writeFileSync(path.resolve(htmlPath), renderHtml(graph, mermaid));
+    fs.writeFileSync(path.resolve(htmlPath), renderHtml(graph, svg));
     console.log(`Wrote ${htmlPath}`);
   }
 }
 
-// The interactive page for --html. It loads Mermaid from a CDN and renders
-// the same source as the doc, with search, click-to-focus and pan/zoom.
+// The interactive page for --html: the same SVG with search, click-to-focus,
+// layer toggles and pan/zoom.
 const HTML_TEMPLATE = String.raw`<title>School Schedule App Flow</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-  /* Layout: a full-bleed drafting canvas for the import graph, a control strip
-     above it, and an inspector rail that lists what the selected module uses
-     and what uses it. */
+  /* Layout: a full-bleed drafting canvas holding the layer bands, a control
+     strip above it, and an inspector rail that lists what the selected module
+     uses and what uses it. */
   :root {
     --bg: #f2f4f7;
     --surface: #ffffff;
     --fg: #17202b;
     --muted: #5b6676;
     --line: #d6dce4;
-    --edge: #a2acba;
-    --cluster: #e8ecf1;
+    --edge: #98a2b0;
+    --band: #e9edf2;
     --out: #2453c9;
     --in: #b9400b;
     --ring: #17202b;
@@ -562,8 +881,8 @@ const HTML_TEMPLATE = String.raw`<title>School Schedule App Flow</title>
       --fg: #e3e8ee;
       --muted: #8e9aab;
       --line: #27313e;
-      --edge: #4b5767;
-      --cluster: #131a22;
+      --edge: #556173;
+      --band: #131a22;
       --out: #7fa3ff;
       --in: #fb9a52;
       --ring: #ffffff;
@@ -576,8 +895,8 @@ const HTML_TEMPLATE = String.raw`<title>School Schedule App Flow</title>
     --fg: #e3e8ee;
     --muted: #8e9aab;
     --line: #27313e;
-    --edge: #4b5767;
-    --cluster: #131a22;
+    --edge: #556173;
+    --band: #131a22;
     --out: #7fa3ff;
     --in: #fb9a52;
     --ring: #ffffff;
@@ -591,7 +910,7 @@ const HTML_TEMPLATE = String.raw`<title>School Schedule App Flow</title>
     font: 14px/1.45 var(--font-ui);
   }
   button, input { font: inherit; color: inherit; }
-  code, .mono { font-family: var(--font-mono); font-size: 12px; }
+  code { font-family: var(--font-mono); font-size: 12px; }
 
   .app { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); }
 
@@ -659,39 +978,11 @@ const HTML_TEMPLATE = String.raw`<title>School Schedule App Flow</title>
   .chip:has(input:not(:checked)) { color: var(--muted); border-style: dashed; }
   .chip:has(input:not(:checked)) .sw { background: transparent !important; }
 
-  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-  .seg button {
-    padding: 4px 10px;
-    border: 0;
-    background: transparent;
-    font-size: 12.5px;
-    cursor: pointer;
-  }
-  .seg button + button { border-left: 1px solid var(--line); }
-  .seg button[aria-pressed="true"] { background: var(--fg); color: var(--surface); }
-  .seg button:disabled { color: var(--muted); cursor: not-allowed; }
-  .seg button:focus-visible, .tool:focus-visible, .link:focus-visible, .go:focus-visible {
-    outline: 2px solid var(--out);
-    outline-offset: -2px;
-  }
-  .seg-label { font-size: 12px; color: var(--muted); margin-right: 6px; }
-
   .stage { display: grid; grid-template-columns: minmax(0, 1fr) 300px; min-height: 0; }
   .canvas { position: relative; overflow: hidden; min-height: 0; touch-action: none; }
-  .chart, .chart svg { width: 100%; height: 100%; }
-  .chart svg { display: block; cursor: grab; }
-  .chart svg:active { cursor: grabbing; }
-
-  .status {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    padding-inline: 24px;
-    color: var(--muted);
-    text-align: center;
-  }
-  .status.is-error { color: var(--in); }
+  .chart, .chart > svg { width: 100%; height: 100%; }
+  .chart > svg { display: block; cursor: grab; }
+  .chart > svg:active { cursor: grabbing; }
 
   .tools { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 4px; }
   .tool {
@@ -704,6 +995,7 @@ const HTML_TEMPLATE = String.raw`<title>School Schedule App Flow</title>
     cursor: pointer;
     font-size: 14px;
   }
+  .tool:focus-visible, .link:focus-visible, .go:focus-visible { outline: 2px solid var(--out); outline-offset: -2px; }
 
   .inspector {
     overflow: auto;
@@ -770,25 +1062,32 @@ const HTML_TEMPLATE = String.raw`<title>School Schedule App Flow</title>
   .keys div { display: flex; align-items: center; gap: 8px; }
   .keys .line { width: 18px; height: 3px; border-radius: 2px; flex: none; }
 
-  /* Mermaid output, restyled from the page tokens so it follows the theme. */
-  .chart .cluster rect { fill: var(--cluster) !important; stroke: var(--line) !important; }
-  .chart .cluster-label, .chart .cluster-label * { color: var(--muted) !important; fill: var(--muted) !important; font-weight: 600; }
-  .chart .flowchart-link { stroke: var(--edge) !important; transition: opacity 0.15s; }
-  .chart marker path { fill: var(--edge) !important; stroke: var(--edge) !important; }
-  .chart g.node { transition: opacity 0.15s; }
-  .chart g.node[data-node] { cursor: pointer; }
-  .chart.has-query g.node[data-node]:not(.is-match) { opacity: 0.14; }
-  .chart.has-query .flowchart-link { opacity: 0.08; }
-  .chart.has-focus g.node[data-node]:not(.is-focus):not(.is-near) { opacity: 0.14; }
-  .chart.has-focus .flowchart-link:not(.is-out):not(.is-in) { opacity: 0.05; }
-  .chart .flowchart-link.is-out { stroke: var(--out) !important; stroke-width: 2.5px !important; opacity: 1 !important; }
-  .chart .flowchart-link.is-in { stroke: var(--in) !important; stroke-width: 2.5px !important; opacity: 1 !important; }
-  .chart g.node.is-focus, .chart g.node.is-near, .chart g.node.is-match { opacity: 1 !important; }
-  .chart g.node.is-focus > rect, .chart g.node.is-match > rect { stroke: var(--ring) !important; stroke-width: 3px !important; }
+  /* The chart SVG (the same file as docs/app-flow.svg), restyled from the
+     page tokens so it follows the viewer's theme. */
+  .chart .app-flow {
+    --af-bg: var(--bg);
+    --af-band: var(--band);
+    --af-band-line: var(--line);
+    --af-text: var(--fg);
+    --af-muted: var(--muted);
+    --af-edge: var(--edge);
+  }
+  .chart .af-band-title { font-family: var(--font-ui); }
+  .chart .af-node { cursor: pointer; transition: opacity 0.15s; }
+  .chart .af-edge { transition: opacity 0.15s; }
+  .chart .af-arrow-out { fill: var(--out); }
+  .chart .af-arrow-in { fill: var(--in); }
+  .chart.has-query .af-node:not(.is-match) { opacity: 0.16; }
+  .chart.has-query .af-edges .af-edge { opacity: 0.08; }
+  .chart.has-focus .af-node:not(.is-focus):not(.is-near) { opacity: 0.16; }
+  .chart.has-focus .af-edges .af-edge:not(.is-out):not(.is-in) { opacity: 0.05; }
+  .chart .af-edges .af-edge.is-out { stroke: var(--out); stroke-width: 2.2; opacity: 1; marker-end: url(#af-arrow-out); }
+  .chart .af-edges .af-edge.is-in { stroke: var(--in); stroke-width: 2.2; opacity: 1; marker-end: url(#af-arrow-in); }
+  .chart .af-node.is-focus rect, .chart .af-node.is-match rect { stroke: var(--ring); stroke-width: 3; }
   .chart .is-off { display: none; }
 
   @media (prefers-reduced-motion: reduce) {
-    .chart .flowchart-link, .chart g.node { transition: none; }
+    .chart .af-node, .chart .af-edge { transition: none; }
   }
 
   @media (max-width: 760px) {
@@ -805,7 +1104,7 @@ const HTML_TEMPLATE = String.raw`<title>School Schedule App Flow</title>
   <header class="bar">
     <div class="brand">
       <h1>School Schedule app flow</h1>
-      <p>Every route, page, component, hook, context, service and API namespace in <code>src/</code>, joined by its real imports: <span class="stat">%NODE_COUNT%</span> modules, <span class="stat">%EDGE_COUNT%</span> import arrows.</p>
+      <p>Every route, page, component, hook, context, service and API namespace in <code>src/</code>, one band per layer, joined by its real imports: <span class="stat">%NODE_COUNT%</span> modules, <span class="stat">%EDGE_COUNT%</span> import arrows.</p>
     </div>
     <div class="controls">
       <label class="search" for="q">
@@ -813,20 +1112,12 @@ const HTML_TEMPLATE = String.raw`<title>School Schedule App Flow</title>
         <span class="count" id="q-count" aria-live="polite"></span>
       </label>
       <fieldset class="layers" id="layers"><legend>Show kinds</legend></fieldset>
-      <div>
-        <span class="seg-label">Layout</span>
-        <div class="seg" role="group" aria-label="Layout engine">
-          <button type="button" id="layout-elk" data-layout="elk">ELK</button>
-          <button type="button" id="layout-dagre" data-layout="dagre">Dagre</button>
-        </div>
-      </div>
     </div>
   </header>
 
   <main class="stage">
     <div class="canvas" id="canvas">
-      <div class="chart" id="chart"></div>
-      <div class="status" id="status">Drawing %NODE_COUNT% modules…</div>
+      <div class="chart" id="chart">%SVG%</div>
       <div class="tools">
         <button type="button" class="tool" id="zoom-in" aria-label="Zoom in">+</button>
         <button type="button" class="tool" id="zoom-out" aria-label="Zoom out">−</button>
@@ -842,9 +1133,6 @@ const HTML_TEMPLATE = String.raw`<title>School Schedule App Flow</title>
 <script>
 (function () {
   "use strict";
-  var MERMAID_URL = "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs";
-  var ELK_URL = "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.1.7/dist/mermaid-layout-elk.esm.min.mjs";
-
   var data = JSON.parse(document.getElementById("graph-data").textContent);
   var nodes = {};
   var outs = {};
@@ -857,23 +1145,15 @@ const HTML_TEMPLATE = String.raw`<title>School Schedule App Flow</title>
 
   var canvas = document.getElementById("canvas");
   var chart = document.getElementById("chart");
-  var statusEl = document.getElementById("status");
+  var svg = chart.querySelector("svg");
   var inspector = document.getElementById("inspector");
   var queryEl = document.getElementById("q");
   var countEl = document.getElementById("q-count");
 
-  var state = {
-    focus: null,
-    query: "",
-    hidden: readStore("app-flow-hidden", {}),
-    layout: readStore("app-flow-layout", "elk")
-  };
+  var state = { focus: null, query: "", hidden: readStore("app-flow-hidden", {}) };
   var nodeEls = {};
   var edgeEls = [];
   var panZoom = null;
-  var mermaid = null;
-  var elkLoaded = false;
-  var renders = 0;
 
   function readStore(key, fallback) {
     try {
@@ -917,119 +1197,25 @@ const HTML_TEMPLATE = String.raw`<title>School Schedule App Flow</title>
     layers.append(label);
   });
 
-  function showStatus(text, isError) {
-    statusEl.hidden = false;
-    statusEl.textContent = text;
-    statusEl.classList.toggle("is-error", !!isError);
-  }
+  svg.querySelectorAll(".af-node[data-node]").forEach(function (g) {
+    nodeEls[g.getAttribute("data-node")] = g;
+  });
+  svg.querySelectorAll(".af-edges .af-edge").forEach(function (path) {
+    edgeEls.push({ el: path, from: path.getAttribute("data-from"), to: path.getAttribute("data-to") });
+  });
 
-  async function loadMermaid() {
-    if (mermaid) return mermaid;
-    mermaid = (await import(MERMAID_URL)).default;
-    try {
-      var elk = (await import(ELK_URL)).default;
-      mermaid.registerLayoutLoaders(elk);
-      elkLoaded = true;
-    } catch (e) {
-      elkLoaded = false;
-    }
-    return mermaid;
-  }
-
-  function nodeIdOf(el) {
-    var id = el.getAttribute("data-id");
-    if (id && nodes[id]) return id;
-    var m = /flowchart-([A-Za-z0-9]+)-\d+$/.exec(el.id || "");
-    return m && nodes[m[1]] ? m[1] : null;
-  }
-
-  function edgeEndsOf(el) {
-    var key = el.getAttribute("data-id") || el.id || "";
-    var m = /L[-_]([A-Za-z0-9]+)[-_]([A-Za-z0-9]+)(?:[-_]\d+)+$/.exec(key);
-    return m && nodes[m[1]] && nodes[m[2]] ? [m[1], m[2]] : null;
-  }
-
-  function indexSvg(svg) {
-    nodeEls = {};
-    edgeEls = [];
-    svg.querySelectorAll("g.node").forEach(function (g) {
-      var id = nodeIdOf(g);
-      if (!id) return;
-      g.setAttribute("data-node", id);
-      nodeEls[id] = g;
-    });
-    svg.querySelectorAll("path.flowchart-link").forEach(function (path) {
-      var ends = edgeEndsOf(path);
-      if (ends) edgeEls.push({ el: path, from: ends[0], to: ends[1] });
-    });
-  }
-
-  function setupPanZoom(svg) {
-    if (panZoom) { panZoom.destroy(); panZoom = null; }
-    svg.removeAttribute("style");
-    svg.setAttribute("width", "100%");
-    svg.setAttribute("height", "100%");
-    if (typeof window.svgPanZoom !== "function") return;
+  svg.setAttribute("width", "100%");
+  svg.setAttribute("height", "100%");
+  if (typeof window.svgPanZoom === "function") {
     panZoom = window.svgPanZoom(svg, {
       zoomScaleSensitivity: 0.25,
-      minZoom: 0.3,
-      maxZoom: 40,
+      minZoom: 0.5,
+      maxZoom: 12,
       dblClickZoomEnabled: false,
       fit: true,
       center: true
     });
   }
-
-  async function draw() {
-    showStatus("Drawing " + data.nodes.length + " modules…");
-    try {
-      var m = await loadMermaid();
-      try { await document.fonts.load('14px "Instrument Sans"'); } catch (e) { /* fallback font */ }
-      var layout = state.layout === "elk" && elkLoaded ? "elk" : "dagre";
-      m.initialize({
-        startOnLoad: false,
-        securityLevel: "strict",
-        theme: "base",
-        layout: layout,
-        maxEdges: 5000,
-        maxTextSize: 500000,
-        fontFamily: '"Instrument Sans", system-ui, sans-serif',
-        themeVariables: { fontFamily: '"Instrument Sans", system-ui, sans-serif', fontSize: "14px" },
-        flowchart: { curve: "basis", nodeSpacing: 16, rankSpacing: 80, padding: 10 }
-      });
-      renders += 1;
-      var result = await m.render("app-flow-" + renders, data.source);
-      chart.innerHTML = result.svg;
-      var svg = chart.querySelector("svg");
-      indexSvg(svg);
-      setupPanZoom(svg);
-      statusEl.hidden = true;
-      syncLayoutButtons(layout);
-      applyState();
-      if (state.focus) centerOn(state.focus);
-    } catch (err) {
-      showStatus("The chart could not be drawn (" + (err && err.message ? err.message : err) +
-        "). The page loads Mermaid from cdn.jsdelivr.net, so check that it is reachable and reload.", true);
-    }
-  }
-
-  function syncLayoutButtons(active) {
-    document.querySelectorAll(".seg button").forEach(function (b) {
-      b.setAttribute("aria-pressed", String(b.dataset.layout === active));
-      if (b.dataset.layout === "elk" && !elkLoaded) {
-        b.disabled = true;
-        b.title = "The ELK layout could not be loaded";
-      }
-    });
-  }
-  document.querySelectorAll(".seg button").forEach(function (b) {
-    b.addEventListener("click", function () {
-      if (b.getAttribute("aria-pressed") === "true") return;
-      state.layout = b.dataset.layout;
-      writeStore("app-flow-layout", state.layout);
-      draw();
-    });
-  });
 
   function matchesQuery(n, q) {
     return n.label.toLowerCase().indexOf(q) >= 0 || n.file.toLowerCase().indexOf(q) >= 0;
@@ -1146,17 +1332,7 @@ const HTML_TEMPLATE = String.raw`<title>School Schedule App Flow</title>
         row.append(line, document.createTextNode(k[1]));
         keys.append(row);
       });
-      var copy = document.createElement("button");
-      copy.type = "button";
-      copy.className = "link";
-      copy.textContent = "Copy Mermaid source";
-      copy.addEventListener("click", function () {
-        var done = function () { copy.textContent = "Copied"; setTimeout(function () { copy.textContent = "Copy Mermaid source"; }, 1600); };
-        try {
-          navigator.clipboard.writeText(data.source).then(done, function () { copy.textContent = "Copy is blocked here"; });
-        } catch (e) { copy.textContent = "Copy is blocked here"; }
-      });
-      inspector.append(h, p, keys, copy);
+      inspector.append(h, p, keys);
       return;
     }
     var n = nodes[f];
@@ -1181,7 +1357,7 @@ const HTML_TEMPLATE = String.raw`<title>School Schedule App Flow</title>
   canvas.addEventListener("pointerdown", function (e) { down = { x: e.clientX, y: e.clientY }; });
   chart.addEventListener("click", function (e) {
     if (down && Math.abs(e.clientX - down.x) + Math.abs(e.clientY - down.y) > 6) return;
-    var g = e.target.closest ? e.target.closest("g.node[data-node]") : null;
+    var g = e.target.closest ? e.target.closest(".af-node[data-node]") : null;
     select(g ? g.getAttribute("data-node") : null);
   });
 
@@ -1208,8 +1384,8 @@ const HTML_TEMPLATE = String.raw`<title>School Schedule App Flow</title>
   });
   window.addEventListener("resize", function () { if (panZoom) panZoom.resize(); });
 
+  applyState();
   renderInspector();
-  draw();
 })();
 </script>
 `;
