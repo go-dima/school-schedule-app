@@ -734,7 +734,7 @@ describe("childrenApi.deleteChild", () => {
 
   it("throws instead of reporting false success when RLS silently filters the delete to 0 rows", async () => {
     const builder = {
-      delete: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       select: vi.fn().mockResolvedValue({ data: [], error: null }),
     };
@@ -747,7 +747,7 @@ describe("childrenApi.deleteChild", () => {
 
   it("resolves when the row was actually deleted", async () => {
     const builder = {
-      delete: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       select: vi
         .fn()
@@ -756,6 +756,27 @@ describe("childrenApi.deleteChild", () => {
     supabase.from = vi.fn().mockReturnValue(builder) as typeof supabase.from;
 
     await expect(childrenApi.deleteChild("child-1")).resolves.toBeUndefined();
+  });
+
+  it("soft-deletes: sets deleted_at, never deletes the row (#253)", async () => {
+    const builder = {
+      delete: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      select: vi
+        .fn()
+        .mockResolvedValue({ data: [{ id: "child-1" }], error: null }),
+    };
+    supabase.from = vi.fn().mockReturnValue(builder) as typeof supabase.from;
+
+    await childrenApi.deleteChild("child-1");
+
+    expect(supabase.from).toHaveBeenCalledWith("children");
+    expect(builder.delete).not.toHaveBeenCalled();
+    expect(builder.update).toHaveBeenCalledWith({
+      deleted_at: expect.any(String),
+    });
+    expect(builder.eq).toHaveBeenCalledWith("id", "child-1");
   });
 });
 
@@ -1952,7 +1973,7 @@ describe("Staff View queries", () => {
     const result = await scheduleOverridesApi.getOverridesByTeacher("דנה");
 
     expect(chains.schedule_overrides.select).toHaveBeenCalledWith(
-      "*, child:children(first_name, last_name)"
+      "*, child:children(first_name, last_name, deleted_at)"
     );
     expect(chains.schedule_overrides.in).toHaveBeenCalledWith("scope", [
       "prod",
@@ -2475,5 +2496,138 @@ describe("soft delete (#253)", () => {
 
       expect(result.map(s => s.class.id)).toEqual(["c-live"]);
     });
+  });
+
+  describe("children", () => {
+    beforeEach(() => {
+      (supabase.from as any).mockClear();
+      mockFromResult = { data: [], error: null };
+    });
+
+    afterEach(() => {
+      mockSingleResult = { data: null, error: { message: "no rows found" } };
+    });
+
+    it.each([
+      ["getChildById", "children", () => childrenApi.getChildById("k1")],
+      [
+        "getMyLinkedChild",
+        "children",
+        () => childrenApi.getMyLinkedChild("u1"),
+      ],
+      [
+        "getUnlinkedChildren",
+        "children",
+        () => childrenApi.getUnlinkedChildren(),
+      ],
+      [
+        "getChildWithParents",
+        "children_with_parents",
+        () => childrenApi.getChildWithParents("k1"),
+      ],
+    ])("childrenApi.%s filters deleted rows", async (_name, table, fetch) => {
+      mockSingleResult = {
+        data: { id: "k1", parents: [] },
+        error: null,
+      };
+
+      await fetch();
+
+      expect(fromChainFor(table).is).toHaveBeenCalledWith("deleted_at", null);
+    });
+
+    it("childrenApi.getParentChildren drops deleted children (their link is kept)", async () => {
+      mockTables({
+        parent_child_relationships: [
+          { child: { id: "k-live", scope: "prod", deleted_at: null } },
+          {
+            child: {
+              id: "k-deleted",
+              scope: "prod",
+              deleted_at: "2026-10-01T00:00:00Z",
+            },
+          },
+          { child: null },
+        ],
+      });
+
+      const result = await childrenApi.getParentChildren("p1");
+
+      expect(result.map(c => c.id)).toEqual(["k-live"]);
+    });
+
+    it("scheduleApi.getCommittedSelectionsMadeBy drops selections of a deleted child", async () => {
+      mockTables({
+        schedule_selections: [
+          {
+            child_id: "k-live",
+            class: liveClass,
+            child: { first_name: "נועה", deleted_at: null },
+          },
+          {
+            child_id: "k-deleted",
+            class: liveClass,
+            child: { first_name: "אבי", deleted_at: "2026-10-01T00:00:00Z" },
+          },
+        ],
+      });
+
+      const result = await scheduleApi.getCommittedSelectionsMadeBy("u1");
+
+      expect(chains.schedule_selections.select).toHaveBeenCalledWith(
+        "child_id, class:classes(*), child:children(first_name, last_name, deleted_at)"
+      );
+      expect(result.map(s => s.childId)).toEqual(["k-live"]);
+    });
+
+    it.each([
+      [
+        "getOverridesByTeacher",
+        () => scheduleOverridesApi.getOverridesByTeacher("דנה"),
+      ],
+      [
+        "getOverridesByUserId",
+        () => scheduleOverridesApi.getOverridesByUserId("u1"),
+      ],
+    ])(
+      "scheduleOverridesApi.%s drops overrides of a deleted child",
+      async (_name, fetch) => {
+        const override = {
+          title: "תגבור",
+          teacher: "דנה",
+          user_id: "u1",
+          room: "",
+          day_of_week: 1,
+          time_slot_id: "slot-1",
+          scope: "prod",
+        };
+        mockTables({
+          schedule_overrides: [
+            {
+              ...override,
+              id: "o-live",
+              child_id: "k-live",
+              child: { first_name: "נועה", deleted_at: null },
+            },
+            {
+              ...override,
+              id: "o-deleted",
+              child_id: "k-deleted",
+              child: {
+                first_name: "אבי",
+                deleted_at: "2026-10-01T00:00:00Z",
+              },
+            },
+          ],
+        });
+
+        const result = await fetch();
+
+        expect(chains.schedule_overrides.select).toHaveBeenCalledWith(
+          "*, child:children(first_name, last_name, deleted_at)"
+        );
+        expect(result.map(o => o.id)).toEqual(["o-live"]);
+      }
+    );
   });
 });
