@@ -205,7 +205,18 @@ const ClassManagementPage: React.FC = () => {
   const confirmDeleteClass = (classId: string, onDeleted?: () => void) => {
     Modal.confirm({
       title: t("classManagement.table.deleteConfirmTitle"),
-      content: t("classManagement.table.deleteConfirmDescription"),
+      // The enrolled-children count tells the admin who the delete affects
+      // (#253): the class's Selections are hidden along with it.
+      content: (
+        <>
+          <div>{t("classManagement.table.deleteConfirmDescription")}</div>
+          <div className="class-delete-confirm-enrollment">
+            {t("schedule.enrollment.students", {
+              count: enrollmentCounts.get(classId) || 0,
+            })}
+          </div>
+        </>
+      ),
       okText: t("classManagement.table.confirmYes"),
       cancelText: t("classManagement.table.confirmNo"),
       onOk: async () => {
