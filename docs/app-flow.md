@@ -1,5 +1,7 @@
 # App flow
 
+**Interactive version** (search, click to focus, pan and zoom): <https://go-dima.github.io/school-schedule-app/>. It is rebuilt from `main` whenever `src/` or the script changes.
+
 How the app is wired, from the router down to Supabase: which page renders which components, which hooks they call, and which services and API namespaces those reach. The chart is built from the real imports under `src/`, so it matches the code at the commit you are reading.
 
 ## How to read it

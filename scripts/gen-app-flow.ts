@@ -845,7 +845,9 @@ function main() {
   console.log(`Left out (no CLASSIFY rule): ${graph.leftOut.join(", ")}`);
 
   if (htmlPath) {
-    fs.writeFileSync(path.resolve(htmlPath), renderHtml(graph, svg));
+    const out = path.resolve(htmlPath);
+    fs.mkdirSync(path.dirname(out), { recursive: true });
+    fs.writeFileSync(out, renderHtml(graph, svg));
     console.log(`Wrote ${htmlPath}`);
   }
 }
