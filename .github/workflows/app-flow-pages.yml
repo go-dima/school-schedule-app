@@ -1,5 +1,5 @@
 # Publishes the interactive app-flow graph (scripts/gen-app-flow.ts --html)
-# to GitHub Pages: https://go-dima.github.io/school-schedule-app/
+# to GitHub Pages: https://go-dima.github.io/school-schedule-app/app-flow
 # One-time setup: Settings -> Pages -> Source: "GitHub Actions".
 name: App flow (GitHub Pages)
 
@@ -38,7 +38,19 @@ jobs:
 
       # Also rewrites docs/app-flow.md/.svg in the runner; nothing is committed.
       - name: Generate the interactive page
-        run: npm run docs:app-flow -- --html _site/index.html
+        run: npm run docs:app-flow -- --html _site/app-flow/index.html
+
+      # The site root redirects to the graph, so it isn't a 404.
+      - name: Add a redirect at the site root
+        run: |
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <meta charset="utf-8">
+          <title>App flow</title>
+          <meta http-equiv="refresh" content="0; url=app-flow/">
+          <link rel="canonical" href="app-flow/">
+          <p><a href="app-flow/">App flow</a></p>
+          HTML
 
       - uses: actions/configure-pages@v5
 
