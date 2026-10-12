@@ -1082,8 +1082,8 @@ function mapOverrideRow(
 
 /**
  * Maps fetched override rows, skipping (not throwing on) any whose time slot
- * is null or missing -- time_slot_id is ON DELETE SET NULL since migration
- * 053, so deleting a time slot leaves its Overrides behind with no slot.
+ * is null or missing. time_slot_id cascades on delete, so this is only a
+ * defensive guard: one bad row must not break a whole schedule.
  */
 function mapLiveOverrideRows<T>(
   rows: any[],
@@ -1120,7 +1120,6 @@ export const scheduleOverridesApi = {
         .from("schedule_overrides")
         .select("*")
         .in("scope", getAllowedScopes())
-        .is("deleted_at", null)
         .eq("child_id", childId),
       fetchTimeSlotsById(),
     ]);
@@ -1145,7 +1144,6 @@ export const scheduleOverridesApi = {
         .from("schedule_overrides")
         .select("*, child:children(first_name, last_name)")
         .in("scope", getAllowedScopes())
-        .is("deleted_at", null)
         .ilike("teacher", `%${escapeLikePattern(target)}%`),
       fetchTimeSlotsById(),
     ]);
@@ -1167,7 +1165,6 @@ export const scheduleOverridesApi = {
         .from("schedule_overrides")
         .select("*, child:children(first_name, last_name)")
         .in("scope", getAllowedScopes())
-        .is("deleted_at", null)
         .eq("user_id", userId),
       fetchTimeSlotsById(),
     ]);
@@ -1244,23 +1241,13 @@ export const scheduleOverridesApi = {
     return mapOverrideRow(data, timeSlotsById);
   },
 
-  /**
-   * Soft delete (#253): stamps deleted_at instead of removing the row; the
-   * guard trigger (migration 053) sets the server time and the caller.
-   */
   async deleteOverride(id: string): Promise<void> {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("schedule_overrides")
-      .update({ deleted_at: new Date().toISOString() })
-      .eq("id", id)
-      .select("id");
+      .delete()
+      .eq("id", id);
 
     if (error) throw new ApiError(error.message);
-    if (!data || data.length === 0) {
-      throw new ApiError(
-        "Delete failed: no matching override found or insufficient permissions."
-      );
-    }
   },
 };
 
