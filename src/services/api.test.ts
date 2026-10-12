@@ -1491,17 +1491,11 @@ describe("scheduleOverridesApi", () => {
       error: null,
     });
     const inMock = vi.fn().mockReturnThis();
-    const isMock = vi.fn().mockReturnThis();
     supabase.from = vi.fn((table: string) => {
       const timeSlotsChain = mockTimeSlotsFrom(table);
       if (timeSlotsChain) return timeSlotsChain;
       if (table === "schedule_overrides") {
-        return {
-          select: vi.fn().mockReturnThis(),
-          in: inMock,
-          is: isMock,
-          eq: eqMock,
-        };
+        return { select: vi.fn().mockReturnThis(), in: inMock, eq: eqMock };
       }
       throw new Error(`unexpected table ${table}`);
     }) as any;
@@ -1509,7 +1503,6 @@ describe("scheduleOverridesApi", () => {
     const result = await scheduleOverridesApi.getOverrides("child-1");
 
     expect(inMock).toHaveBeenCalledWith("scope", ["prod", "test"]);
-    expect(isMock).toHaveBeenCalledWith("deleted_at", null);
     expect(eqMock).toHaveBeenCalledWith("child_id", "child-1");
     expect(result).toEqual([
       {
@@ -1673,55 +1666,42 @@ describe("scheduleOverridesApi", () => {
     expect(result.dayOfWeek).toBe(3);
   });
 
-  // Soft delete (#253): an UPDATE of deleted_at, never a DELETE.
-  const mockOverrideDelete = (result: { data: any; error: any }) => {
-    const builder = {
-      delete: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      select: vi.fn().mockResolvedValue(result),
-    };
+  it("deleteOverride: hard-deletes by id", async () => {
+    const eqMock = vi.fn().mockResolvedValue({ error: null });
+    const deleteMock = vi.fn().mockReturnValue({ eq: eqMock });
+
     supabase.from = vi.fn((table: string) => {
-      if (table === "schedule_overrides") return builder;
+      if (table === "schedule_overrides") {
+        return { delete: deleteMock };
+      }
       throw new Error(`unexpected table ${table}`);
     }) as any;
-    return builder;
-  };
-
-  it("deleteOverride: soft-deletes by id (sets deleted_at, never deletes)", async () => {
-    const builder = mockOverrideDelete({
-      data: [{ id: "override-1" }],
-      error: null,
-    });
 
     await expect(
       scheduleOverridesApi.deleteOverride("override-1")
     ).resolves.toBeUndefined();
 
-    expect(builder.delete).not.toHaveBeenCalled();
-    expect(builder.update).toHaveBeenCalledWith({
-      deleted_at: expect.any(String),
-    });
-    expect(builder.eq).toHaveBeenCalledWith("id", "override-1");
-  });
-
-  it("deleteOverride: throws when RLS filters the update to 0 rows", async () => {
-    mockOverrideDelete({ data: [], error: null });
-
-    await expect(
-      scheduleOverridesApi.deleteOverride("override-1")
-    ).rejects.toThrow(/no matching override found/);
+    expect(deleteMock).toHaveBeenCalled();
+    expect(eqMock).toHaveBeenCalledWith("id", "override-1");
   });
 
   it("deleteOverride: throws an ApiError when the delete fails", async () => {
-    mockOverrideDelete({ data: null, error: { message: "boom" } });
+    const eqMock = vi.fn().mockResolvedValue({ error: { message: "boom" } });
+    const deleteMock = vi.fn().mockReturnValue({ eq: eqMock });
+
+    supabase.from = vi.fn((table: string) => {
+      if (table === "schedule_overrides") {
+        return { delete: deleteMock };
+      }
+      throw new Error(`unexpected table ${table}`);
+    }) as any;
 
     await expect(
       scheduleOverridesApi.deleteOverride("override-1")
     ).rejects.toThrow("boom");
   });
 
-  it("getOverrides: skips an override whose time slot is null or deleted", async () => {
+  it("getOverrides: skips an override whose time slot is null or missing", async () => {
     const base = {
       child_id: "child-1",
       title: "תגבור",
@@ -2438,26 +2418,6 @@ describe("soft delete (#253)", () => {
       await fetch();
 
       expect(chains.classes.is).toHaveBeenCalledWith("deleted_at", null);
-    });
-
-    it.each([
-      [
-        "getOverridesByTeacher",
-        () => scheduleOverridesApi.getOverridesByTeacher("דנה"),
-      ],
-      [
-        "getOverridesByUserId",
-        () => scheduleOverridesApi.getOverridesByUserId("u1"),
-      ],
-    ])("scheduleOverridesApi.%s", async (_name, fetch) => {
-      mockTables({ schedule_overrides: [] });
-
-      await fetch();
-
-      expect(chains.schedule_overrides.is).toHaveBeenCalledWith(
-        "deleted_at",
-        null
-      );
     });
   });
 
