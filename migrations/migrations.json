@@ -430,7 +430,7 @@
       "description": "Issue #253 part 2: nullable deleted_at/deleted_by on children; deleting sets them instead of removing the row (kept forever, nothing cascades). guard_soft_delete() gains an admin_or_staff check (parents may UPDATE their children but must delete through remove_child_for_parent) and clears children.user_id on soft delete (child role kept). remove_child_for_parent keeps the caller's last link and soft-deletes the child. committed_enrollments, get_class_enrolled_children, get_children_with_parent_status, find_child_matches, claim_child, set_track_draft, my_linked_child_id, approve_child_account skip deleted children; children_with_parents exposes deleted_at.",
       "file": "054_soft_delete_children.sql",
       "created_at": "2026-10-12T00:00:00Z",
-      "dependencies": ["053_soft_delete_classes_and_overrides"]
+      "dependencies": ["053_soft_delete_classes"]
     }
   ],
   "version": "1.0.0",

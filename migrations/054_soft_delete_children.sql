@@ -57,7 +57,6 @@ CREATE INDEX IF NOT EXISTS idx_children_scope_live
 -- TG_ARGV[0]:
 --   'admin_or_moderator' -> is_admin_or_moderator()            (classes)
 --   'admin_or_staff'     -> approved admin or staff role       (children)
---   'none'               -> the table's UPDATE policy suffices (overrides)
 
 CREATE OR REPLACE FUNCTION public.guard_soft_delete()
 RETURNS TRIGGER
