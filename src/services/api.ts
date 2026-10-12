@@ -936,7 +936,7 @@ export const scheduleApi = {
       supabase
         .from("schedule_selections")
         .select(
-          "child_id, class:classes(*), child:children(first_name, last_name)"
+          "child_id, class:classes(*), child:children(first_name, last_name, deleted_at)"
         )
         .eq("user_id", userId)
         .eq("status", "committed")
@@ -952,6 +952,7 @@ export const scheduleApi = {
         row =>
           row.class &&
           !row.class.deleted_at &&
+          !row.child?.deleted_at &&
           allowedScopes.includes(row.class.scope)
       )
       .map(row => ({
@@ -1091,6 +1092,8 @@ function mapLiveOverrideRows<T>(
   extend: (mapped: ScheduleOverrideWithTimeSlot, row: any) => T
 ): T[] {
   return rows.flatMap(row => {
+    // An override of a deleted child is hidden with the child (#253).
+    if (row.child?.deleted_at) return [];
     if (!row.time_slot_id || !timeSlotsById.has(row.time_slot_id)) {
       log.warn(
         `Schedule override "${row.title}" (${row.id}) has no time slot; skipped`
@@ -1142,7 +1145,7 @@ export const scheduleOverridesApi = {
     const [{ data, error }, timeSlotsById] = await Promise.all([
       supabase
         .from("schedule_overrides")
-        .select("*, child:children(first_name, last_name)")
+        .select("*, child:children(first_name, last_name, deleted_at)")
         .in("scope", getAllowedScopes())
         .ilike("teacher", `%${escapeLikePattern(target)}%`),
       fetchTimeSlotsById(),
@@ -1163,7 +1166,7 @@ export const scheduleOverridesApi = {
     const [{ data, error }, timeSlotsById] = await Promise.all([
       supabase
         .from("schedule_overrides")
-        .select("*, child:children(first_name, last_name)")
+        .select("*, child:children(first_name, last_name, deleted_at)")
         .in("scope", getAllowedScopes())
         .eq("user_id", userId),
       fetchTimeSlotsById(),
@@ -1288,10 +1291,14 @@ export const childrenApi = {
 
     if (error) throw new ApiError(error.message);
 
-    // Filter out children whose scope isn't allowed here
+    // Filter out children whose scope isn't allowed here, and deleted
+    // children (#253: a parent's last link to a deleted child is kept).
     const allowedScopes = getAllowedScopes();
-    const filteredData = data.filter((rel: any) =>
-      allowedScopes.includes(rel?.child?.scope)
+    const filteredData = data.filter(
+      (rel: any) =>
+        rel?.child &&
+        !rel.child.deleted_at &&
+        allowedScopes.includes(rel.child.scope)
     );
 
     return filteredData.map((rel: any) => ({
@@ -1428,10 +1435,16 @@ export const childrenApi = {
     if (error) throw new ApiError(error.message);
   },
 
+  /**
+   * Soft delete (#253): stamps deleted_at instead of removing the row. The
+   * guard trigger (migration 054) sets the server time and the caller,
+   * clears the child login link (user_id), and rejects non admin/staff
+   * callers. Selections, Overrides and parent links stay, hidden.
+   */
   async deleteChild(childId: string): Promise<void> {
     const { data, error } = await supabase
       .from("children")
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq("id", childId)
       .select("id");
 
@@ -1497,6 +1510,7 @@ export const childrenApi = {
       .select("*")
       .eq("id", childId)
       .in("scope", getAllowedScopes())
+      .is("deleted_at", null)
       .single();
 
     if (error) throw new ApiError(error.message);
@@ -1528,6 +1542,7 @@ export const childrenApi = {
       .select("*")
       .eq("user_id", userId)
       .in("scope", getAllowedScopes())
+      .is("deleted_at", null)
       .maybeSingle();
 
     if (error) throw new ApiError(error.message);
@@ -1555,6 +1570,7 @@ export const childrenApi = {
       .select("*")
       .is("user_id", null)
       .in("scope", getAllowedScopes())
+      .is("deleted_at", null)
       .order("last_name")
       .order("first_name");
 
@@ -1584,6 +1600,7 @@ export const childrenApi = {
       .select("*")
       .eq("id", childId)
       .in("scope", getAllowedScopes())
+      .is("deleted_at", null)
       .single();
 
     if (error) throw new ApiError(error.message);
