@@ -1,6 +1,21 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
+import { Modal } from "antd";
 import "../utils/i18n";
 import i18n from "../utils/i18n";
 import type { ClassWithTimeSlot, TimeSlot } from "../types";
@@ -58,16 +73,20 @@ const classes = [
   makeClass("k4", "ד דרמה", "Dana Levi", { trackNumber: 1 }),
 ];
 
-const { getClasses } = vi.hoisted(() => ({ getClasses: vi.fn() }));
+const { getClasses, deleteClass, getClassEnrollmentCounts } = vi.hoisted(
+  () => ({
+    getClasses: vi.fn(),
+    deleteClass: vi.fn(),
+    getClassEnrollmentCounts: vi.fn(),
+  })
+);
 
 vi.mock("../services/api", () => ({
-  classesApi: { getClasses },
+  classesApi: { getClasses, deleteClass },
   timeSlotsApi: { getTimeSlots: () => Promise.resolve([slot]) },
 }));
 vi.mock("../services/enrollmentService", () => ({
-  EnrollmentService: {
-    getClassEnrollmentCounts: () => Promise.resolve(new Map()),
-  },
+  EnrollmentService: { getClassEnrollmentCounts },
 }));
 vi.mock("../contexts/AuthContext", () => ({
   useAuth: () => ({
@@ -122,6 +141,10 @@ const renderPage = async () => {
 beforeEach(() => {
   getClasses.mockReset();
   getClasses.mockImplementation(() => Promise.resolve(classes));
+  deleteClass.mockReset();
+  deleteClass.mockResolvedValue(undefined);
+  getClassEnrollmentCounts.mockReset();
+  getClassEnrollmentCounts.mockResolvedValue(new Map());
 });
 
 describe("ClassManagementPage teacher filter", () => {
@@ -537,5 +560,75 @@ describe("ClassManagementPage title filter", () => {
     typeTeacher("dana");
 
     expect(rowTitles()).toEqual(["ב ביולוגיה"]);
+  });
+});
+
+// #253: deleting a class is a soft delete that hides its Selections, so the
+// confirmation shows how many children are enrolled before the admin agrees.
+describe("ClassManagementPage delete confirmation", () => {
+  beforeAll(stubMatchMedia);
+  // Modal.confirm renders outside the test's React tree, so a closing
+  // dialog from an earlier test lingers in the DOM. Drop it.
+  afterEach(() => {
+    Modal.destroyAll();
+    document.body
+      .querySelectorAll(".ant-modal-root")
+      .forEach(el => el.parentElement?.remove());
+  });
+
+  const openDeleteConfirm = async (title: string) => {
+    const row = Array.from(document.querySelectorAll(".ant-table-row")).find(
+      r => r.querySelector("td")?.textContent?.trim() === title
+    ) as HTMLElement;
+    fireEvent.click(
+      row.querySelector(
+        `button[title="${i18n.t("classManagement.table.actions.more")}"]`
+      ) as HTMLElement
+    );
+    fireEvent.click(
+      await screen.findByText(i18n.t("classManagement.table.deleteButton"))
+    );
+    const titles = await screen.findAllByText(
+      i18n.t("classManagement.table.deleteConfirmTitle")
+    );
+    return titles[titles.length - 1].closest(".ant-modal") as HTMLElement;
+  };
+
+  it("shows the class's enrolled-children count", async () => {
+    getClassEnrollmentCounts.mockResolvedValue(new Map([["k2", 7]]));
+    await renderPage();
+
+    const dialog = await openDeleteConfirm("ב ביולוגיה");
+
+    expect(dialog.textContent).toContain(
+      i18n.t("schedule.enrollment.students", { count: 7 })
+    );
+  });
+
+  it("shows a zero count for a class nobody enrolled in", async () => {
+    await renderPage();
+
+    const dialog = await openDeleteConfirm("א אמנות");
+
+    expect(dialog.textContent).toContain(
+      i18n.t("schedule.enrollment.students", { count: 0 })
+    );
+  });
+
+  it("deletes on confirm and drops the class from the list", async () => {
+    await renderPage();
+    const dialog = await openDeleteConfirm("א אמנות");
+    getClasses.mockImplementation(() =>
+      Promise.resolve(classes.filter(cls => cls.id !== "k1"))
+    );
+
+    fireEvent.click(
+      within(dialog).getByRole("button", {
+        name: i18n.t("classManagement.table.confirmYes"),
+      })
+    );
+
+    await waitFor(() => expect(deleteClass).toHaveBeenCalledWith("k1"));
+    await waitFor(() => expect(rowTitles()).not.toContain("א אמנות"));
   });
 });

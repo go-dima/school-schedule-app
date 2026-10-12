@@ -1470,11 +1470,17 @@ describe("scheduleOverridesApi", () => {
       error: null,
     });
     const inMock = vi.fn().mockReturnThis();
+    const isMock = vi.fn().mockReturnThis();
     supabase.from = vi.fn((table: string) => {
       const timeSlotsChain = mockTimeSlotsFrom(table);
       if (timeSlotsChain) return timeSlotsChain;
       if (table === "schedule_overrides") {
-        return { select: vi.fn().mockReturnThis(), in: inMock, eq: eqMock };
+        return {
+          select: vi.fn().mockReturnThis(),
+          in: inMock,
+          is: isMock,
+          eq: eqMock,
+        };
       }
       throw new Error(`unexpected table ${table}`);
     }) as any;
@@ -1482,6 +1488,7 @@ describe("scheduleOverridesApi", () => {
     const result = await scheduleOverridesApi.getOverrides("child-1");
 
     expect(inMock).toHaveBeenCalledWith("scope", ["prod", "test"]);
+    expect(isMock).toHaveBeenCalledWith("deleted_at", null);
     expect(eqMock).toHaveBeenCalledWith("child_id", "child-1");
     expect(result).toEqual([
       {
@@ -1645,39 +1652,83 @@ describe("scheduleOverridesApi", () => {
     expect(result.dayOfWeek).toBe(3);
   });
 
-  it("deleteOverride: deletes by id", async () => {
-    const eqMock = vi.fn().mockResolvedValue({ error: null });
-    const deleteMock = vi.fn().mockReturnValue({ eq: eqMock });
-
+  // Soft delete (#253): an UPDATE of deleted_at, never a DELETE.
+  const mockOverrideDelete = (result: { data: any; error: any }) => {
+    const builder = {
+      delete: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockResolvedValue(result),
+    };
     supabase.from = vi.fn((table: string) => {
-      if (table === "schedule_overrides") {
-        return { delete: deleteMock };
-      }
+      if (table === "schedule_overrides") return builder;
       throw new Error(`unexpected table ${table}`);
     }) as any;
+    return builder;
+  };
+
+  it("deleteOverride: soft-deletes by id (sets deleted_at, never deletes)", async () => {
+    const builder = mockOverrideDelete({
+      data: [{ id: "override-1" }],
+      error: null,
+    });
 
     await expect(
       scheduleOverridesApi.deleteOverride("override-1")
     ).resolves.toBeUndefined();
 
-    expect(deleteMock).toHaveBeenCalled();
-    expect(eqMock).toHaveBeenCalledWith("id", "override-1");
+    expect(builder.delete).not.toHaveBeenCalled();
+    expect(builder.update).toHaveBeenCalledWith({
+      deleted_at: expect.any(String),
+    });
+    expect(builder.eq).toHaveBeenCalledWith("id", "override-1");
+  });
+
+  it("deleteOverride: throws when RLS filters the update to 0 rows", async () => {
+    mockOverrideDelete({ data: [], error: null });
+
+    await expect(
+      scheduleOverridesApi.deleteOverride("override-1")
+    ).rejects.toThrow(/no matching override found/);
   });
 
   it("deleteOverride: throws an ApiError when the delete fails", async () => {
-    const eqMock = vi.fn().mockResolvedValue({ error: { message: "boom" } });
-    const deleteMock = vi.fn().mockReturnValue({ eq: eqMock });
-
-    supabase.from = vi.fn((table: string) => {
-      if (table === "schedule_overrides") {
-        return { delete: deleteMock };
-      }
-      throw new Error(`unexpected table ${table}`);
-    }) as any;
+    mockOverrideDelete({ data: null, error: { message: "boom" } });
 
     await expect(
       scheduleOverridesApi.deleteOverride("override-1")
     ).rejects.toThrow("boom");
+  });
+
+  it("getOverrides: skips an override whose time slot is null or deleted", async () => {
+    const base = {
+      child_id: "child-1",
+      title: "תגבור",
+      teacher: "",
+      room: "",
+      day_of_week: 1,
+      scope: "prod",
+    };
+    const chain: any = {
+      select: vi.fn(() => chain),
+      in: vi.fn(() => chain),
+      is: vi.fn(() => chain),
+      eq: vi.fn().mockResolvedValue({
+        data: [
+          { ...base, id: "live", time_slot_id: "slot-1" },
+          { ...base, id: "null-slot", time_slot_id: null },
+          { ...base, id: "gone-slot", time_slot_id: "slot-deleted" },
+        ],
+        error: null,
+      }),
+    };
+    supabase.from = vi.fn(
+      (table: string) => mockTimeSlotsFrom(table) ?? chain
+    ) as any;
+
+    const result = await scheduleOverridesApi.getOverrides("child-1");
+
+    expect(result.map(o => o.id)).toEqual(["live"]);
   });
 });
 
@@ -1697,7 +1748,7 @@ describe("Staff View queries", () => {
   // filter method recorded so tests can assert on the query shape.
   const makeChain = (result: { data: any; error: any }) => {
     const chain: any = {};
-    ["select", "eq", "in", "ilike", "order", "not"].forEach(method => {
+    ["select", "eq", "in", "is", "ilike", "order", "not"].forEach(method => {
       chain[method] = vi.fn(() => chain);
     });
     chain.then = (resolve: any, reject: any) =>
@@ -2250,6 +2301,179 @@ describe("user scope (#108)", () => {
       expect(supabase.rpc).toHaveBeenCalledWith("get_staff_directory", {
         p_scopes: ["prod", "test"],
       });
+    });
+  });
+});
+
+// Soft delete (#253): deletes stamp deleted_at, and every low-level fetch
+// returns live rows only -- plain fetches through `.is("deleted_at", null)`,
+// embedded rows by dropping those whose parent row is deleted.
+describe("soft delete (#253)", () => {
+  const originalFrom = supabase.from;
+
+  const rawTimeSlot = {
+    id: "slot-1",
+    name: "שיעור ראשון",
+    start_time: "08:00",
+    end_time: "08:45",
+    created_at: "",
+    updated_at: "",
+  };
+
+  const makeChain = (result: { data: any; error: any }) => {
+    const chain: any = {};
+    ["select", "eq", "in", "is", "ilike", "order", "not"].forEach(method => {
+      chain[method] = vi.fn(() => chain);
+    });
+    chain.then = (resolve: any, reject: any) =>
+      Promise.resolve(result).then(resolve, reject);
+    return chain;
+  };
+
+  let chains: Record<string, any>;
+
+  const mockTables = (rows: Record<string, any[]>) => {
+    chains = {};
+    supabase.from = vi.fn((table: string) => {
+      const data = table === "time_slots" ? [rawTimeSlot] : (rows[table] ?? []);
+      chains[table] = makeChain({ data, error: null });
+      return chains[table];
+    }) as any;
+  };
+
+  const liveClass = {
+    id: "c-live",
+    title: "מתמטיקה",
+    teacher: "דנה",
+    scope: "prod",
+    slots: [{ dayOfWeek: 0, timeSlotId: "slot-1" }],
+    deleted_at: null,
+  };
+  const deletedClass = {
+    ...liveClass,
+    id: "c-deleted",
+    deleted_at: "2026-10-01T00:00:00Z",
+  };
+
+  afterEach(() => {
+    supabase.from = originalFrom;
+  });
+
+  describe("classesApi.deleteClass", () => {
+    const mockDelete = (result: { data: any; error: any }) => {
+      const builder = {
+        delete: vi.fn().mockReturnThis(),
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        select: vi.fn().mockResolvedValue(result),
+      };
+      supabase.from = vi.fn().mockReturnValue(builder) as any;
+      return builder;
+    };
+
+    it("sets deleted_at instead of deleting the row", async () => {
+      const builder = mockDelete({ data: [{ id: "c1" }], error: null });
+
+      await expect(classesApi.deleteClass("c1")).resolves.toBeUndefined();
+
+      expect(supabase.from).toHaveBeenCalledWith("classes");
+      expect(builder.delete).not.toHaveBeenCalled();
+      expect(builder.update).toHaveBeenCalledWith({
+        deleted_at: expect.any(String),
+      });
+      expect(builder.eq).toHaveBeenCalledWith("id", "c1");
+      expect(builder.select).toHaveBeenCalledWith("id");
+    });
+
+    it("throws when RLS or the guard trigger matches 0 rows", async () => {
+      mockDelete({ data: [], error: null });
+
+      await expect(classesApi.deleteClass("c1")).rejects.toThrow(
+        /no matching class found or insufficient permissions/
+      );
+    });
+
+    it("throws the database error (e.g. the guard trigger's 42501)", async () => {
+      mockDelete({
+        data: null,
+        error: { message: "Only admins and moderators can delete classes" },
+      });
+
+      await expect(classesApi.deleteClass("c1")).rejects.toThrow(
+        /Only admins and moderators/
+      );
+    });
+  });
+
+  describe("plain fetches filter deleted rows", () => {
+    it.each([
+      ["getClasses", () => classesApi.getClasses()],
+      ["getTeacherTitlePairs", () => classesApi.getTeacherTitlePairs()],
+      ["getClassesByUserId", () => classesApi.getClassesByUserId("u1")],
+      ["getClassesByTeacher", () => classesApi.getClassesByTeacher("דנה")],
+    ])("classesApi.%s", async (_name, fetch) => {
+      mockTables({ classes: [] });
+
+      await fetch();
+
+      expect(chains.classes.is).toHaveBeenCalledWith("deleted_at", null);
+    });
+
+    it.each([
+      [
+        "getOverridesByTeacher",
+        () => scheduleOverridesApi.getOverridesByTeacher("דנה"),
+      ],
+      [
+        "getOverridesByUserId",
+        () => scheduleOverridesApi.getOverridesByUserId("u1"),
+      ],
+    ])("scheduleOverridesApi.%s", async (_name, fetch) => {
+      mockTables({ schedule_overrides: [] });
+
+      await fetch();
+
+      expect(chains.schedule_overrides.is).toHaveBeenCalledWith(
+        "deleted_at",
+        null
+      );
+    });
+  });
+
+  describe("embedded rows of a deleted class are hidden", () => {
+    it("scheduleApi.getSelectedSchedule drops selections of a deleted class", async () => {
+      mockTables({
+        schedule_selections: [
+          { id: "s1", child_id: "k1", class_id: "c-live", class: liveClass },
+          {
+            id: "s2",
+            child_id: "k1",
+            class_id: "c-deleted",
+            class: deletedClass,
+          },
+          { id: "s3", child_id: "k1", class_id: "c-gone", class: null },
+        ],
+      });
+
+      const result = await scheduleApi.getSelectedSchedule(
+        { childId: "k1" },
+        "draft"
+      );
+
+      expect(result.map(s => s.id)).toEqual(["s1"]);
+    });
+
+    it("scheduleApi.getCommittedSelectionsMadeBy drops selections of a deleted class", async () => {
+      mockTables({
+        schedule_selections: [
+          { child_id: "k1", class: liveClass, child: { first_name: "נועה" } },
+          { child_id: "k2", class: deletedClass, child: { first_name: "אבי" } },
+        ],
+      });
+
+      const result = await scheduleApi.getCommittedSelectionsMadeBy("u1");
+
+      expect(result.map(s => s.class.id)).toEqual(["c-live"]);
     });
   });
 });
