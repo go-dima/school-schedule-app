@@ -198,6 +198,9 @@ LEFT JOIN (
 ) enrollment_data ON c.id = enrollment_data.class_id
 WHERE c.deleted_at IS NULL;
 
+-- Soft delete is the only way to delete a class: remove the hard DELETE policy.
+DROP POLICY IF EXISTS "Admins and moderators can delete classes" ON public.classes;
+
 COMMIT;
 
 -- Verification (run manually after applying) ---------------------------------
@@ -213,3 +216,6 @@ COMMIT;
 -- 4. A deleted class drops out of the enrollment RPCs:
 --    SELECT * FROM get_class_enrollment_counts() WHERE class_id = '<id>';  -- 0 rows
 --    SELECT get_class_enrollment_count('<id>');                            -- 0
+-- 5. No DELETE policy remains on classes:
+--    SELECT policyname FROM pg_policies
+--    WHERE schemaname = 'public' AND tablename = 'classes' AND cmd = 'DELETE';  -- 0 rows
