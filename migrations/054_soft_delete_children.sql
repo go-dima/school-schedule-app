@@ -548,6 +548,10 @@ GROUP BY c.id, c.first_name, c.last_name, c.grade, c.group_number, c.scope,
     c.created_at, c.updated_at, c.track_number_draft, c.track_number_committed,
     c.deleted_at;
 
+-- Soft delete is the only way to delete a child: remove the hard DELETE policies.
+DROP POLICY IF EXISTS "Parents can delete their children if they are primary parent" ON public.children;
+DROP POLICY IF EXISTS "Staff and admins can delete any child" ON public.children;
+
 COMMIT;
 
 -- Verification (run manually after applying) ---------------------------------
@@ -564,3 +568,6 @@ COMMIT;
 --    SELECT * FROM parent_child_relationships WHERE child_id = '<id>';  -- still there
 -- 5. children_with_parents exposes deleted_at:
 --    SELECT id, deleted_at FROM children_with_parents LIMIT 1;
+-- 6. No DELETE policy remains on children:
+--    SELECT policyname FROM pg_policies
+--    WHERE schemaname = 'public' AND tablename = 'children' AND cmd = 'DELETE';  -- 0 rows
