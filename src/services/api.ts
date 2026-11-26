@@ -718,7 +718,8 @@ export const classesApi = {
     const query = supabase
       .from("classes")
       .select("*")
-      .in("scope", getAllowedScopes());
+      .in("scope", getAllowedScopes())
+      .is("deleted_at", null);
 
     const [{ data, error }, timeSlotsById] = await Promise.all([
       query.order("title", { ascending: true }),
@@ -739,7 +740,8 @@ export const classesApi = {
     const { data, error } = await supabase
       .from("classes")
       .select("teacher, title, user_id")
-      .in("scope", getAllowedScopes());
+      .in("scope", getAllowedScopes())
+      .is("deleted_at", null);
 
     if (error) throw new ApiError(error.message);
     return (data || []).map(row => ({
@@ -756,6 +758,7 @@ export const classesApi = {
         .from("classes")
         .select("*")
         .in("scope", getAllowedScopes())
+        .is("deleted_at", null)
         .eq("user_id", userId)
         .order("title", { ascending: true }),
       fetchTimeSlotsById(),
@@ -777,6 +780,7 @@ export const classesApi = {
         .from("classes")
         .select("*")
         .in("scope", getAllowedScopes())
+        .is("deleted_at", null)
         .ilike("teacher", `%${escapeLikePattern(target)}%`)
         .order("title", { ascending: true }),
       fetchTimeSlotsById(),
@@ -850,10 +854,25 @@ export const classesApi = {
     return data[0];
   },
 
+  /**
+   * Soft delete (#253): stamps deleted_at instead of removing the row. The
+   * guard trigger (migration 053) overwrites the stamp with the server's
+   * now() and the caller, and rejects non admin/moderator callers. The
+   * class's Selections stay in place and are hidden by the fetches below.
+   */
   async deleteClass(id: string) {
-    const { error } = await supabase.from("classes").delete().eq("id", id);
+    const { data, error } = await supabase
+      .from("classes")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id)
+      .select("id");
 
     if (error) throw new ApiError(error.message);
+    if (!data || data.length === 0) {
+      throw new ApiError(
+        "Delete failed: no matching class found or insufficient permissions."
+      );
+    }
   },
 };
 
@@ -884,10 +903,14 @@ export const scheduleApi = {
 
     if (error) throw new ApiError(error.message);
 
-    // Filter out schedule selections whose class scope isn't allowed here
+    // Filter out schedule selections whose class scope isn't allowed here,
+    // and those of a deleted class (#253: its Selections are kept, hidden).
     const allowedScopes = getAllowedScopes();
-    const filteredData = data.filter(selection =>
-      allowedScopes.includes(selection.class.scope)
+    const filteredData = data.filter(
+      selection =>
+        selection.class &&
+        !selection.class.deleted_at &&
+        allowedScopes.includes(selection.class.scope)
     );
     return filteredData.map(selection => ({
       id: selection.id,
@@ -925,7 +948,12 @@ export const scheduleApi = {
 
     const allowedScopes = getAllowedScopes();
     return (data as any[])
-      .filter(row => row.class && allowedScopes.includes(row.class.scope))
+      .filter(
+        row =>
+          row.class &&
+          !row.class.deleted_at &&
+          allowedScopes.includes(row.class.scope)
+      )
       .map(row => ({
         class: mapClassRow(row.class, timeSlotsById),
         childId: row.child_id,
@@ -1052,6 +1080,39 @@ function mapOverrideRow(
   };
 }
 
+/**
+ * Maps fetched override rows, skipping (not throwing on) any whose time slot
+ * is null or missing. time_slot_id cascades on delete, so this is only a
+ * defensive guard: one bad row must not break a whole schedule.
+ */
+function mapLiveOverrideRows<T>(
+  rows: any[],
+  timeSlotsById: Map<string, TimeSlot>,
+  extend: (mapped: ScheduleOverrideWithTimeSlot, row: any) => T
+): T[] {
+  return rows.flatMap(row => {
+    if (!row.time_slot_id || !timeSlotsById.has(row.time_slot_id)) {
+      log.warn(
+        `Schedule override "${row.title}" (${row.id}) has no time slot; skipped`
+      );
+      return [];
+    }
+    return [extend(mapOverrideRow(row, timeSlotsById), row)];
+  });
+}
+
+function withChildName(
+  mapped: ScheduleOverrideWithTimeSlot,
+  row: any
+): ScheduleOverrideWithChildName {
+  return {
+    ...mapped,
+    childName: [row.child?.first_name, row.child?.last_name]
+      .filter(Boolean)
+      .join(" "),
+  };
+}
+
 export const scheduleOverridesApi = {
   async getOverrides(childId: string): Promise<ScheduleOverrideWithTimeSlot[]> {
     const [{ data, error }, timeSlotsById] = await Promise.all([
@@ -1064,7 +1125,7 @@ export const scheduleOverridesApi = {
     ]);
 
     if (error) throw new ApiError(error.message);
-    return data.map(row => mapOverrideRow(row, timeSlotsById));
+    return mapLiveOverrideRows(data, timeSlotsById, mapped => mapped);
   },
 
   /**
@@ -1088,14 +1149,11 @@ export const scheduleOverridesApi = {
     ]);
 
     if (error) throw new ApiError(error.message);
-    return data
-      .filter(row => (row.teacher ?? "").trim() === target)
-      .map(row => ({
-        ...mapOverrideRow(row, timeSlotsById),
-        childName: [row.child?.first_name, row.child?.last_name]
-          .filter(Boolean)
-          .join(" "),
-      }));
+    return mapLiveOverrideRows(
+      data.filter(row => (row.teacher ?? "").trim() === target),
+      timeSlotsById,
+      withChildName
+    );
   },
 
   /** Overrides across all children assigned to the teaching user `userId`. */
@@ -1112,12 +1170,7 @@ export const scheduleOverridesApi = {
     ]);
 
     if (error) throw new ApiError(error.message);
-    return data.map(row => ({
-      ...mapOverrideRow(row, timeSlotsById),
-      childName: [row.child?.first_name, row.child?.last_name]
-        .filter(Boolean)
-        .join(" "),
-    }));
+    return mapLiveOverrideRows(data, timeSlotsById, withChildName);
   },
 
   async createOverride(

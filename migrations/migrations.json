@@ -415,8 +415,16 @@
       "file": "052_dedupe_children_with_parent_status.sql",
       "created_at": "2026-10-07T00:00:00Z",
       "dependencies": ["051_create_profile_on_signup"]
+    },
+    {
+      "id": "053_soft_delete_classes",
+      "name": "Soft Delete Classes",
+      "description": "Issue #253 part 1: nullable deleted_at/deleted_by on classes; deleting sets them instead of removing the row (kept forever). guard_soft_delete() BEFORE INSERT/UPDATE OF deleted_at, deleted_by trigger requires is_admin_or_moderator() from app sessions (staff may UPDATE but not DELETE classes); stamps server now() and auth.uid(); INSERT always starts live. committed_enrollments, get_class_enrollment_counts, get_class_enrollment_count and classes_with_enrollment skip deleted classes. Overrides stay hard-deleted.",
+      "file": "053_soft_delete_classes.sql",
+      "created_at": "2026-10-12T00:00:00Z",
+      "dependencies": ["052_dedupe_children_with_parent_status"]
     }
   ],
   "version": "1.0.0",
-  "schema_version": 52
+  "schema_version": 53
 }
