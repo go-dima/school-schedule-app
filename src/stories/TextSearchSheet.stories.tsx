@@ -57,6 +57,7 @@ const Demo = ({
 
 const meta: Meta<typeof Demo> = {
   title: "Components/TextSearchSheet",
+  tags: ["visual-mobile"],
   component: Demo,
   parameters: { layout: "padded", viewport: { defaultViewport: "mobile1" } },
 };

@@ -49,6 +49,7 @@ npm run build        # Build the application
 npm run preview      # Preview production build
 npm run test         # Run tests
 npm run lint         # Check code quality
+npm run test:visual  # Visual diff of every Storybook story against main (needs Docker)
 
 # Storybook
 npm run build-storybook  # Build Storybook for production
@@ -346,6 +347,51 @@ describe("MyService", () => {
   });
 });
 ```
+
+### Visual diff
+
+`npm run test:visual` shows which Storybook stories look different on your branch than on `main`. It is separate from `npm test`, and a green visual run does not replace `npm test`. Run it before and after a refactor that must not change how the app looks.
+
+**Needs:** Docker running, and `npm ci` done (it installs the pinned `@playwright/test`).
+
+**What it does**
+
+1. Builds Storybook for the base ref (default `main`) in a temporary git worktree outside the repo, with that ref's own lockfile and `.storybook` config.
+2. Builds Storybook for your working tree, uncommitted changes included.
+3. Starts the pinned Playwright container and screenshots every story at 1280x800 and 375x812. A story tagged `visual-mobile` is shot only at 375x812, one tagged `visual-desktop` only at 1280x800.
+4. Compares the images and prints a summary. Nothing is committed.
+
+The browser clock is frozen, the timezone is `Asia/Jerusalem`, animations are off and `Math.random` is seeded. Any request that leaves localhost is blocked and fails the run.
+
+**Flags** (pass them after `--`: `npm run test:visual -- --base my-branch`)
+
+| Flag              | Effect                                                                           |
+| ----------------- | -------------------------------------------------------------------------------- |
+| `--base <ref>`    | Compare with this ref instead of `main`. Use the parent branch for a stacked PR. |
+| `--fresh`         | Ignore the cache and rebuild the base.                                           |
+| `--open`          | Open the HTML report even when nothing changed.                                  |
+| `--allow-removed` | Do not fail on removed stories (for example after a deliberate rename).          |
+
+**Exit codes**
+
+| Code | Meaning                                                                                                                                                             |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | No changed or removed stories. New stories are allowed.                                                                                                             |
+| 1    | At least one story changed or was removed. The HTML report opens with base, branch and diff images.                                                                 |
+| 2    | Infrastructure error: Docker is not running, the base ref is missing, a build failed, a story shows Storybook's error screen, or a story requested an external URL. |
+
+**Reading the result.** The summary counts changed, new, removed and unstable stories. A renamed story is one removed plus one new. An unstable story gave two different images on the base side, so it is listed but cannot fail the run: run again. The HTML report is in `visual-report/` (reopen it with `npx playwright show-report visual-report`).
+
+**Cache.** The base build and base images are cached in `.visual-cache/`, keyed by base SHA, Playwright version, CPU architecture, the base ref's `package-lock.json` and the `visual/` folder. Delete `.visual-cache/` to clear it, or pass `--fresh`.
+
+**Reviewing a sweep.** A PR that changes most images on purpose (for example the antd theme-token move, #304) fails the run by design. Review it from the report. For a stacked PR, run `npm run test:visual -- --base <parent-branch>` so only the differences this layer adds show up.
+
+**Known limits**
+
+- Hover and focus states, print layout, routed-page RTL, behavior, and container-query behavior at widths other than 1280 and 375 are not covered. `npm test` is still needed.
+- The Storybook preview wrapper (`MemoryRouter`, `ConfigProvider`, `<div dir="rtl">`) can hide an RTL bug, so routed pages still need a manual check.
+- Results do not carry across machines or CPU architectures.
+- Local `main` can be behind `origin/main`. The summary warns about it. Use `--base origin/main` to compare with the remote.
 
 ## Styling and RTL
 

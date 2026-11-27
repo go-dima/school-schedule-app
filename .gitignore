@@ -72,3 +72,8 @@ build/
 .next/
 out/
 .vercel
+
+# Visual diff harness (npm run test:visual)
+visual-report/
+.visual-cache/
+test-results/

@@ -9,6 +9,7 @@
   "ignorePatterns": [
     "dist",
     "node_modules",
+    "visual",
     "*.stories.tsx",
     "supabase/functions"
   ],

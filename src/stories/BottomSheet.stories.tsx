@@ -34,6 +34,7 @@ const Demo = ({ withSearch }: { withSearch: boolean }) => {
 
 const meta: Meta<typeof Demo> = {
   title: "Components/BottomSheet",
+  tags: ["visual-mobile"],
   component: Demo,
   parameters: {
     layout: "fullscreen",

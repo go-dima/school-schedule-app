@@ -50,6 +50,7 @@ const children = [child("c1", "נועה", 2), child("c2", "איתי", 4)];
 // fed from fixtures instead of useChildScheduleController.
 const meta: Meta<typeof MobileScheduleView> = {
   title: "Pages/Schedule/Mobile",
+  tags: ["visual-mobile"],
   component: MobileScheduleView,
   args: {
     caps: scheduleCapabilities("mobile"),
