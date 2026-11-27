@@ -58,14 +58,5 @@
     "typescript": "^5.2.2",
     "vite": "^5.0.8",
     "vitest": "^1.0.4"
-  },
-  "lint-staged": {
-    "*.{ts,tsx}": [
-      "prettier --write",
-      "eslint --fix"
-    ],
-    "*.{js,jsx,json,css,md}": [
-      "prettier --write"
-    ]
   }
 }
