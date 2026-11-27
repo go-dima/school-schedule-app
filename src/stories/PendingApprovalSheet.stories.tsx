@@ -96,6 +96,7 @@ function SheetHarness({
 
 const meta: Meta<typeof SheetHarness> = {
   title: "Components/PendingApprovalSheet",
+  tags: ["visual-mobile"],
   component: SheetHarness,
   parameters: {
     layout: "fullscreen",

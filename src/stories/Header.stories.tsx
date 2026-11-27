@@ -10,6 +10,7 @@ import "../layouts/layouts.css";
 // the role as a pill next to the name.
 const meta: Meta<typeof Header> = {
   title: "Layouts/Header",
+  tags: ["visual-desktop"],
   component: Header,
   parameters: { layout: "fullscreen" },
   decorators: [

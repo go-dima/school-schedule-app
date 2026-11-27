@@ -7,6 +7,7 @@ const page = <Card>תוכן העמוד מוצג כאן ברוחב מלא</Card>;
 
 const meta: Meta<typeof MobileAppLayout> = {
   title: "Layouts/MobileAppLayout",
+  tags: ["visual-mobile"],
   component: MobileAppLayout,
   parameters: {
     layout: "fullscreen",

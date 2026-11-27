@@ -13,6 +13,7 @@ This is a school schedule management application for elementary school (grades 1
 - **Database**: Supabase for data storage and authentication
 - **Development Tools**: Storybook for component development
 - **Testing**: Unit tests for business logic
+- **Visual regression**: `npm run test:visual` (Playwright in Docker). Run before and after refactors.
 
 ## Architecture Principles
 

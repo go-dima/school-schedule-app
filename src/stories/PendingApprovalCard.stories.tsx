@@ -26,6 +26,7 @@ const approval = (
 
 const meta: Meta<typeof PendingApprovalCard> = {
   title: "Components/PendingApprovalCard",
+  tags: ["visual-mobile"],
   component: PendingApprovalCard,
   args: { busy: false, onApprove: () => {}, onReject: () => {} },
   parameters: { viewport: { defaultViewport: "mobile1" } },

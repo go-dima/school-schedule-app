@@ -1,0 +1,38 @@
+# Visual diff harness (npm run test:visual). Separate from
+# docker-compose.local.yml. scripts/test-visual.sh exports every ${VAR} below
+# and runs `docker compose -f docker-compose.visual.yml run --rm playwright`.
+#
+# The container only serves the two Storybook builds and shoots them. The
+# builds happen on the host.
+services:
+  playwright:
+    # The tag follows the pinned @playwright/test version in package.json.
+    image: mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble
+    ipc: host
+    # Report files are owned by the host user, not root.
+    user: "${HOST_UID}:${HOST_GID}"
+    working_dir: /work
+    environment:
+      HOME: /work/.home
+      VISUAL_PASS: ${VISUAL_PASS}
+      CI: "1"
+    volumes:
+      # Read-write scratch folder: @playwright/test is installed here at the
+      # pinned version when the container starts.
+      - ${VISUAL_WORK}:/work
+      # Read-only: the harness and both Storybook builds.
+      - ./visual:/work/visual:ro
+      - ${VISUAL_BASE_BUILD}:/builds/base:ro
+      - ${VISUAL_BRANCH_BUILD}:/builds/branch:ro
+      # Read-write: the base images and the report.
+      - ${VISUAL_SNAPSHOTS}:/work/snapshots
+      - ./visual-report:/work/visual-report
+    command:
+      - sh
+      - -c
+      - >
+        cd /work &&
+        npm install --no-audit --no-fund --no-save --prefix /work
+        @playwright/test@${PLAYWRIGHT_VERSION} &&
+        node_modules/.bin/playwright test -c visual/playwright.config.ts
+        ${PLAYWRIGHT_ARGS}
