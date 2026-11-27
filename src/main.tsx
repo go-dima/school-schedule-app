@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/react";
 import heIL from "antd/locale/he_IL";
 import { env } from "./utils/env";
 import "./utils/i18n";
+import { theme } from "./theme";
 import App from "./App.tsx";
 import "./index.css";
 
@@ -13,15 +14,7 @@ document.title = env.appTitle;
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <ConfigProvider
-      locale={heIL}
-      direction="rtl"
-      theme={{
-        token: {
-          fontFamily:
-            'Assistant, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        },
-      }}>
+    <ConfigProvider locale={heIL} direction="rtl" theme={theme}>
       <App />
       <Analytics />
     </ConfigProvider>
