@@ -59,6 +59,14 @@ npm run migrate          # Check migration status and get instructions
 npm run migrate:status   # Show current migration status
 ```
 
+### Pre-commit hook
+
+The hook runs `lint-staged` (see `lint-staged.config.js`). For staged `.ts` and `.tsx` files it runs `prettier --write`, then `eslint --fix --max-warnings 0 --report-unused-disable-directives`. A warning blocks the commit, the same as `npm run lint`. Fixable problems are fixed first and do not block.
+
+- Files that ESLint ignores get prettier only. To ignore a new path, add it to `ignorePatterns` in `.eslintrc.json`. Do not add it to the hook.
+- The hook checks staged files only. A rule that depends on other files is not re-checked on files that did not change.
+- `git commit --no-verify` bypasses the hook.
+
 ## Database Migrations
 
 The application uses a custom migration system to manage database schema changes. All migrations are located in the `migrations/` folder at the project root.
