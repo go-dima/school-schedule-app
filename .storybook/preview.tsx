@@ -3,6 +3,7 @@ import React from "react";
 import { ConfigProvider } from "antd";
 import heIL from "antd/locale/he_IL";
 import { MemoryRouter } from "react-router-dom";
+import { theme } from "../src/theme";
 import "../src/utils/i18n";
 import "../src/index.css";
 
@@ -17,7 +18,7 @@ const preview: Preview = {
   },
   decorators: [
     Story => (
-      <ConfigProvider locale={heIL} direction="rtl">
+      <ConfigProvider locale={heIL} direction="rtl" theme={theme}>
         <div dir="rtl">
           <MemoryRouter>
             <Story />
