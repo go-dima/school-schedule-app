@@ -44,3 +44,47 @@ export const mockParentAuth: AuthContextType = {
     isChild: false,
   },
 };
+
+const adminRole: UserRoleData = {
+  id: "role-admin-1",
+  userId: "admin-1",
+  role: "admin",
+  approved: true,
+  createdAt: "2024-01-01T00:00:00Z",
+  updatedAt: "2024-01-01T00:00:00Z",
+};
+
+// An admin with every permission, for the admin-only pages. Unlike
+// mockParentAuth it has a user id, so hooks that wait for one start loading.
+// Use it only on pages (not the app shell, which calls Supabase for admins),
+// with their service calls stubbed (see stubApis.tsx).
+export const mockAdminAuth: AuthContextType = {
+  ...mockParentAuth,
+  user: {
+    id: "admin-1",
+    firstName: "אורית",
+    lastName: "שמש",
+    email: "orit@example.com",
+  },
+  userRoles: [adminRole],
+  currentRole: adminRole,
+  hasRole: () => true,
+  permissions: {
+    canManageClasses: true,
+    canCreateClasses: true,
+    canDeleteClasses: true,
+    canViewAllSchedules: true,
+    canManageRoster: true,
+    canApproveSignups: true,
+    canAdjustRoles: true,
+    canPickSchedule: false,
+    canManageChildren: false,
+  },
+  roleFlags: {
+    isAdmin: true,
+    isStaff: false,
+    isModerator: false,
+    isParent: false,
+    isChild: false,
+  },
+};
